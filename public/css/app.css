@@ -448,3 +448,4 @@ input::-webkit-date-and-time-value { text-align: center; }
 #types { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 #types .choice span { min-height: 92px; font-size: .8rem; line-height: 1.2; overflow-wrap: normal; word-break: normal; }
 @media (max-width: 374px) { #types { grid-template-columns: repeat(2, minmax(0, 1fr)); } #types .choice span { min-height: 80px; } }
+.btn-center { display: flex; width: fit-content; margin-left: auto; margin-right: auto; }
