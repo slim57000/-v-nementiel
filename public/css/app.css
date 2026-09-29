@@ -449,3 +449,8 @@ input::-webkit-date-and-time-value { text-align: center; }
 #types .choice span { min-height: 92px; font-size: .8rem; line-height: 1.2; overflow-wrap: normal; word-break: normal; }
 @media (max-width: 374px) { #types { grid-template-columns: repeat(2, minmax(0, 1fr)); } #types .choice span { min-height: 80px; } }
 .btn-center { display: flex; width: fit-content; margin-left: auto; margin-right: auto; }
+
+/* Styles de faire-part : 4 rectangles identiques sur une seule ligne */
+#styles { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+#styles .choice span { min-height: 64px !important; padding: 6px 2px; font-size: .74rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#styles .choice span b { font-size: 1.15rem; }
