@@ -19,7 +19,8 @@
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.5; }
+body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.5; overflow-x: clip; }
+img, video, iframe { max-width: 100%; }
 img { max-width: 100%; display: block; }
 a { color: var(--primary); }
 h1, h2, h3 { font-family: var(--font-title); font-weight: 800; letter-spacing: -.01em; line-height: 1.2; margin: 0 0 .5em; }
@@ -62,7 +63,7 @@ textarea { min-height: 110px; resize: vertical; }
 .choices { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
 .choice { position: relative; }
 .choice input { position: absolute; opacity: 0; inset: 0; pointer-events: none; }
-.choice span { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 64px; padding: 8px; border: 1.5px solid var(--border); border-radius: 12px; background: #fff; text-align: center; font-size: .82rem; font-weight: 600; cursor: pointer; }
+.choice span { min-width: 0; overflow-wrap: anywhere; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 64px; padding: 8px; border: 1.5px solid var(--border); border-radius: 12px; background: #fff; text-align: center; font-size: .82rem; font-weight: 600; cursor: pointer; }
 .choice span b { font-size: 1.4rem; font-weight: 400; }
 .choice input:checked + span { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); }
 .choice input:focus-visible + span { outline: 2px solid var(--primary); }

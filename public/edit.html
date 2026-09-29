@@ -45,7 +45,7 @@
 
       <section class="card">
         <h2>2. Accès</h2>
-        <div class="choices" style="grid-template-columns:1fr 1fr">
+        <div class="choices" style="grid-template-columns:repeat(2,minmax(0,1fr))">
           <label class="choice" style="margin:0"><input type="radio" name="visibility" value="public" checked><span><b>🔓</b>Public<small class="muted">Toute personne ayant le lien</small></span></label>
           <label class="choice" style="margin:0"><input type="radio" name="visibility" value="private"><span><b>🔒</b>Privé<small class="muted">Accès avec un code</small></span></label>
         </div>
@@ -61,7 +61,7 @@
       <section class="card">
         <h2>3. Faire-part</h2>
         <label>Style</label>
-        <div class="choices" style="grid-template-columns:repeat(4,1fr)">
+        <div class="choices" style="grid-template-columns:repeat(4,minmax(0,1fr))">
           <label class="choice" style="margin:0"><input type="radio" name="style" value="classique" checked><span><b>📜</b>Classique</span></label>
           <label class="choice" style="margin:0"><input type="radio" name="style" value="moderne"><span><b>✨</b>Moderne</span></label>
           <label class="choice" style="margin:0"><input type="radio" name="style" value="elegant"><span><b>🥂</b>Élégant</span></label>
@@ -80,7 +80,7 @@
         <button type="button" id="regen-text" class="btn btn-ghost btn-sm" style="margin-top:8px">↺ Texte proposé automatiquement</button>
 
         <label>Photo du faire-part</label>
-        <div class="choices" style="grid-template-columns:repeat(3,1fr)">
+        <div class="choices" style="grid-template-columns:repeat(3,minmax(0,1fr))">
           <label class="choice" style="margin:0"><input type="radio" name="inv-photo" value="cover" checked><span>Photo de couverture</span></label>
           <label class="choice" style="margin:0"><input type="radio" name="inv-photo" value="custom"><span>Autre photo</span></label>
           <label class="choice" style="margin:0"><input type="radio" name="inv-photo" value="none"><span>Sans photo</span></label>
