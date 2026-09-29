@@ -28,7 +28,7 @@ export function renderInvite(container, event, invite, style, photoUrl) {
     <div class="invite-kicker">${esc(invite.kicker)}</div>
     ${style === "classique" && photoUrl ? `<img class="invite-photo" src="${esc(photoUrl)}" alt="">` : ""}
     <h2 class="invite-title">${esc(invite.title || event.name)}</h2>
-    ${style === "elegant" && photoUrl ? `<img class="invite-photo" src="${esc(photoUrl)}" alt="">` : ""}
+    ${(style === "elegant" || style === "fleuri") && photoUrl ? `<img class="invite-photo" src="${esc(photoUrl)}" alt="">` : ""}
     <hr>
     <p class="invite-text">${esc(invite.text)}</p>
     ${when ? `<div class="invite-when">${esc(when)}</div>` : ""}
