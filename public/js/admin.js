@@ -43,7 +43,13 @@ const views = {
       <div class="segments" id="platform">
         <button data-p="youtube" class="${s.defaultLivePlatform === "youtube" ? "active" : ""}">YouTube</button>
         <button data-p="twitch" class="${s.defaultLivePlatform === "twitch" ? "active" : ""}">Twitch</button>
-      </div></section>`;
+      </div></section>
+      <section class="card">
+      <h2 style="font-size:1rem">Événements de démonstration</h2>
+      <p class="muted small">50 faux événements (mariages, anniversaires…) créés sous le compte demo@evermoments.app, pour remplir Découvrir et l'accueil.</p>
+      <button class="btn btn-block" data-demo="add">➕ Créer 50 événements</button>
+      <button class="btn btn-ghost btn-block" data-demo="del" style="margin-top:8px">🗑️ Supprimer les événements de démo</button>
+      </section>`;
   },
 };
 
@@ -67,8 +73,15 @@ $("#tabs").addEventListener("click", (e) => {
 $("#q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(render, 300); });
 
 $("#content").addEventListener("click", async (e) => {
-  const { act, id, on, p } = e.target.dataset;
+  const { act, id, on, p, demo } = e.target.dataset;
   try {
+    if (demo) {
+      if (demo === "del" && !confirm("Supprimer tous les événements de démonstration ?")) return;
+      e.target.disabled = true;
+      const r = await api("/api/admin/demo", { method: demo === "add" ? "POST" : "DELETE" });
+      e.target.disabled = false;
+      return toast(demo === "add" ? `${r.created} événements créés ✔` : `${r.deleted} événements supprimés`);
+    }
     if (p) {
       await api("/api/admin/settings", { method: "PUT", body: { defaultLivePlatform: p } });
       toast("Réglage enregistré");

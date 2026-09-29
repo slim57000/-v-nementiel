@@ -2,6 +2,7 @@
 import { Router } from "express";
 import { currentOrganizer, isAdmin } from "./auth.js";
 import { destroyEvent } from "./events.js";
+import { seedDemo, demoEvents } from "../lib/demo.js";
 import {
   searchEvents, searchOrganizers, findEvent, findOrganizer, saveOrganizer, saveEvent, listEvents,
   listReports, deleteReport, countReports, getSetting, setSetting,
@@ -27,6 +28,16 @@ router.get("/events", async (req, res) => {
       reports: await countReports(e.id),
     };
   })));
+});
+
+// Événements de démonstration (compte dédié) : création et suppression en un clic.
+router.post("/demo", async (req, res) => {
+  res.json({ created: await seedDemo(Math.min(Number(req.body?.count) || 50, 100)) });
+});
+router.delete("/demo", async (req, res) => {
+  const list = await demoEvents();
+  for (const e of list) await destroyEvent(e);
+  res.json({ deleted: list.length });
 });
 
 router.post("/events/:id/suspend", async (req, res) => {
