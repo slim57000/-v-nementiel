@@ -144,3 +144,6 @@ export function setTheme(value) {
   write(THEME_KEY, value);
   applyTheme();
 }
+
+// Safari iOS ignore « user-scalable=no » : on bloque le zoom au pincement comme dans une application.
+for (const type of ["gesturestart", "gesturechange"]) document.addEventListener(type, (e) => e.preventDefault(), { passive: false });

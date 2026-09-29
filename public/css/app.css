@@ -43,6 +43,8 @@
 html { -webkit-text-size-adjust: 100%; }
 /* Aucun défilement gauche/droite sur tout le site (iOS compris) : clip ne casse pas les en-têtes collants. */
 html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
+/* Pas de zoom au double-tap (comportement d'application). */
+html { touch-action: manipulation; }
 @supports not (overflow: clip) { html, body { overflow-x: hidden; } }
 body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.5; overflow-x: clip; }
 img, video, iframe { max-width: 100%; }
