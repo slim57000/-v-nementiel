@@ -110,10 +110,10 @@ textarea { min-height: 110px; resize: vertical; }
 
 /* ---------- Charte EverMoments ---------- */
 .logo { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: var(--text); font-weight: 800; font-size: 1.2rem; letter-spacing: -.02em; }
-.logo img { width: 30px; height: 30px; }
+.logo img { width: 34px; height: 34px; object-fit: contain; }
 .logo b { color: var(--primary); font-weight: 800; }
 .logo-lg { flex-direction: column; font-size: 1.9rem; gap: 2px; }
-.logo-lg img { width: 58px; height: 58px; }
+.logo-lg img { width: 72px; height: 72px; }
 
 /* Barre d'onglets (mobile) */
 .has-tabbar { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
@@ -255,7 +255,7 @@ textarea { min-height: 110px; resize: vertical; }
 .legal .todo { background: #fff4e0; padding: 0 4px; border-radius: 4px; }
 
 /* ---------- Fidélité maquettes ---------- */
-.hero-collage { width: 100%; border-radius: 26px; margin: 4px 0 14px; -webkit-mask-image: linear-gradient(#000 80%, transparent); mask-image: linear-gradient(#000 80%, transparent); }
+.hero-collage { width: calc(100% + 24px); max-width: none; margin: 0 -12px 10px; -webkit-mask-image: linear-gradient(#000 80%, transparent); mask-image: linear-gradient(#000 80%, transparent); }
 .features i svg { display: block; }
 .socials button { display: flex; align-items: center; justify-content: center; }
 .i { display: inline-block; vertical-align: middle; flex: none; }
