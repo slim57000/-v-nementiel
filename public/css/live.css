@@ -1,0 +1,54 @@
+/* Page live : thème sombre immersif (maquette « Live »). */
+.live { --live-bg: #0b0b0d; --live-card: #17161a; --live-muted: #a09aa6; background: var(--live-bg); color: #fff; min-height: 100vh; }
+.live-bar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: rgba(11,11,13,.92); backdrop-filter: blur(8px); }
+.live-badge { background: var(--primary); color: #fff; font-weight: 800; font-size: .8rem; padding: 4px 10px; border-radius: 8px; letter-spacing: .04em; }
+.live-bar h1 { flex: 1; font-size: 1rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.live-bar button, .live-bar a { background: none; border: 0; color: #fff; font-size: 1.3rem; cursor: pointer; text-decoration: none; padding: 4px; }
+
+.live-stage { position: relative; background: #000; aspect-ratio: 16 / 9; width: 100%; max-width: 960px; margin: 0 auto; }
+.live-stage iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.live-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--live-muted); text-align: center; padding: 16px; }
+
+.live-pot { position: absolute; top: 10px; right: 10px; z-index: 2; display: flex; align-items: center; gap: 8px; background: rgba(20,18,24,.82); border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 8px 12px; color: #fff; text-decoration: none; font-size: .8rem; backdrop-filter: blur(6px); }
+.live-pot b { display: block; font-size: .95rem; }
+.live-pot span:first-child { font-size: 1.6rem; }
+
+/* Réactions qui s'envolent au-dessus du lecteur */
+.floaters { position: absolute; right: 12px; bottom: 0; width: 48px; height: 100%; pointer-events: none; z-index: 2; overflow: hidden; }
+.floaters span { position: absolute; bottom: 0; left: 50%; font-size: 1.8rem; animation: floatUp 2.4s ease-out forwards; }
+@keyframes floatUp {
+  from { transform: translate(-50%, 0) scale(.6); opacity: 0; }
+  15% { opacity: 1; transform: translate(-50%, -20px) scale(1); }
+  to { transform: translate(calc(-50% + var(--dx, 0px)), -260px) scale(1.1); opacity: 0; }
+}
+
+.live-body { max-width: 960px; margin: 0 auto; padding: 14px; }
+.live-section { display: flex; justify-content: space-between; align-items: baseline; margin: 20px 0 10px; }
+.live-section h2 { font-size: 1rem; margin: 0; }
+.live-section .soon { color: var(--primary); font-size: .8rem; font-weight: 600; }
+
+.chat-input { display: flex; align-items: center; gap: 8px; background: var(--live-card); border-radius: 16px; padding: 6px 6px 6px 14px; }
+.chat-input input { background: transparent; border: 0; color: #fff; padding: 10px 0; }
+.chat-input input:focus { outline: none; }
+.chat-input input::placeholder { color: var(--live-muted); }
+.chat-input button { background: none; border: 0; color: #fff; font-size: 1.2rem; padding: 8px; cursor: pointer; }
+
+.reactions { display: grid; grid-template-columns: repeat(5, 1fr) auto; gap: 4px; align-items: center; background: var(--live-card); border-radius: 18px; padding: 10px 8px; margin-top: 10px; }
+.reactions button { background: none; border: 0; color: #fff; font: inherit; font-size: .72rem; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 4px 0; border-radius: 12px; }
+.reactions button:active { transform: scale(.92); }
+.reactions button i { font-style: normal; font-size: 1.7rem; line-height: 1.1; }
+.reactions .pot-btn { width: 52px; height: 52px; border-radius: 14px; background: var(--primary); font-size: 1.6rem; justify-content: center; }
+
+.cams { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
+.cams::-webkit-scrollbar { display: none; }
+.cam { flex: none; width: 112px; height: 76px; border-radius: 12px; border: 2px solid transparent; background: linear-gradient(135deg, #3a1020, #17161a); color: #fff; font: inherit; font-size: .8rem; font-weight: 600; display: flex; align-items: flex-end; justify-content: center; padding: 6px; position: relative; cursor: pointer; }
+.cam.active { border-color: var(--primary); }
+.cam.active::before { content: "LIVE"; position: absolute; top: 6px; left: 6px; background: var(--primary); font-size: .62rem; font-weight: 800; padding: 1px 6px; border-radius: 5px; }
+.cam::after { content: "🎥"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -70%); font-size: 1.4rem; opacity: .6; }
+
+.photo-strip { display: grid; grid-template-columns: repeat(4, 1fr) 60px; gap: 8px; }
+.photo-strip div { aspect-ratio: 1; border-radius: 12px; background: var(--live-card); }
+.photo-strip button { border-radius: 12px; border: 0; background: var(--primary); color: #fff; font-size: 1.6rem; cursor: pointer; }
+.live .toast { background: #fff; color: #111; }
+
+@media (min-width: 960px) { .live-stage { border-radius: 0 0 18px 18px; overflow: hidden; } }

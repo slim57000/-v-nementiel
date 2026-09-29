@@ -109,6 +109,11 @@ form.addEventListener("submit", async (e) => {
   }
   const body = {
     ...values(),
+    cameras: [...document.querySelectorAll(".camera-row")].map((row) => ({
+      name: row.querySelector("[name=cam-name]").value,
+      url: row.querySelector("[name=cam-url]").value,
+    })),
+    cagnotteUrl: $("#cagnotte").value,
     invite: { ...invite(), photo: choice === "custom" ? state.invitePhoto : choice },
     coverData: state.coverData,
     removeCover: state.removeCover,
@@ -125,6 +130,26 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
+// Lignes « caméra » du live (6 max).
+function addCamera(cam = {}) {
+  const list = $("#cameras");
+  if (list.children.length >= 6) return toast("6 caméras maximum");
+  const n = list.children.length + 1;
+  list.insertAdjacentHTML("beforeend", `
+    <div class="camera-row row" style="margin-bottom:8px">
+      <input name="cam-name" maxlength="40" placeholder="Caméra ${n}" style="flex:1 1 90px">
+      <input name="cam-url" type="url" inputmode="url" maxlength="300" placeholder="https://youtube.com/live/…" style="flex:3 1 180px">
+      <button type="button" class="btn btn-ghost btn-sm" data-remove style="flex:none" aria-label="Retirer">✕</button>
+    </div>`);
+  const row = list.lastElementChild;
+  row.querySelector("[name=cam-name]").value = cam.name || "";
+  row.querySelector("[name=cam-url]").value = cam.url || "";
+}
+$("#add-camera").addEventListener("click", () => addCamera());
+$("#cameras").addEventListener("click", (e) => {
+  if (e.target.matches("[data-remove]")) e.target.closest(".camera-row").remove();
+});
+
 async function init() {
   if (!id) {
     try { await api("/api/auth/me"); } catch { return goLogin(); }
@@ -135,6 +160,8 @@ async function init() {
   try {
     const ev = await api(`/api/events/${id}`);
     for (const key of ["name", "date", "time", "location", "description"]) field(key).value = ev[key];
+    ev.cameras.forEach(addCamera);
+    $("#cagnotte").value = ev.cagnotteUrl;
     form.querySelector(`[name=type][value="${ev.type}"]`).checked = true;
     form.querySelector(`[name=visibility][value="${ev.visibility}"]`).checked = true;
     form.querySelector(`[name=style][value="${ev.inviteStyle}"]`).checked = true;

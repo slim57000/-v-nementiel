@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b0d">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap">
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/live.css">
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <title>Live — EverMoments</title>
+</head>
+<body class="live">
+  <header class="live-bar">
+    <span class="live-badge">LIVE</span>
+    <h1 id="title">Chargement…</h1>
+    <button id="share" aria-label="Partager">↗</button>
+    <a id="close" href="/" aria-label="Fermer">✕</a>
+  </header>
+
+  <div class="live-stage" id="stage">
+    <div class="live-empty" id="empty"><span style="font-size:2rem">📡</span>Le direct n'a pas encore commencé.</div>
+    <a class="live-pot hidden" id="pot" target="_blank" rel="noopener">
+      <span>🎁</span><span><b>Cagnotte</b>Participer ›</span>
+    </a>
+    <div class="floaters" id="floaters" aria-hidden="true"></div>
+  </div>
+
+  <main class="live-body">
+    <form class="chat-input" id="chat">
+      <input id="chat-text" placeholder="Écrire un message…" maxlength="200" aria-label="Message">
+      <button aria-label="Envoyer">➤</button>
+    </form>
+
+    <div class="reactions" id="reactions">
+      <button data-emoji="❤️"><i>❤️</i>J'aime</button>
+      <button data-emoji="👏"><i>👏</i>Applaudir</button>
+      <button data-emoji="😍"><i>😍</i>Cœur</button>
+      <button data-emoji="🎆"><i>🎆</i>Feu d'artifice</button>
+      <button data-emoji="🍾"><i>🍾</i>Champagne</button>
+      <a class="btn pot-btn hidden" id="pot-btn" target="_blank" rel="noopener" aria-label="Cagnotte">🎁</a>
+    </div>
+
+    <section id="cams-section" class="hidden">
+      <div class="live-section"><h2>Changer de caméra</h2></div>
+      <div class="cams" id="cams"></div>
+    </section>
+
+    <section>
+      <div class="live-section"><h2>Photos des invités</h2><span class="soon">Bientôt</span></div>
+      <div class="photo-strip">
+        <div></div><div></div><div></div><div></div>
+        <button id="add-photo" aria-label="Ajouter une photo">+</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/js/live.js"></script>
+</body>
+</html>

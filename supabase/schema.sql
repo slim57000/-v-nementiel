@@ -26,6 +26,10 @@ create table if not exists events (
   updated_at    timestamptz not null default now()
 );
 
+-- Live et cagnotte (ajoutés en V0.2).
+alter table events add column if not exists cameras jsonb not null default '[]';
+alter table events add column if not exists cagnotte_url text;
+
 create index if not exists events_organizer_idx on events (organizer_id);
 
 -- Sécurité : RLS activé sans règle = aucune lecture/écriture avec la clé publique (anon).

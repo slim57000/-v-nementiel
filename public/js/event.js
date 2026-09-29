@@ -57,6 +57,15 @@ function showEvent(ev) {
   $("#description").textContent = ev.description;
   $("#description").classList.toggle("hidden", !ev.description);
 
+  if (ev.cameras.length) {
+    $("#live-link").href = `/live?e=${encodeURIComponent(ev.slug)}`;
+    $("#live-link").classList.remove("hidden");
+  }
+  if (ev.cagnotteUrl) {
+    $("#cagnotte-link").href = ev.cagnotteUrl;
+    $("#cagnotte-link").classList.remove("hidden");
+  }
+
   renderInvite($("#invite"), ev, ev.invite, ev.inviteStyle, invitePhotoUrl(ev.invite, ev.cover));
   startCountdown(new Date(`${ev.date}T${ev.time}`));
 
