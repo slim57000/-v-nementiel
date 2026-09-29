@@ -24,7 +24,7 @@ router.get("/", async (req, res) => {
 // Événement privé non déverrouillé : on ne renvoie que le strict minimum pour l'écran cadenas.
 router.get("/:slug", async (req, res) => {
   const event = await findEventBySlug(req.params.slug);
-  if (!event) return res.status(404).json({ error: "Événement introuvable." });
+  if (!event || event.suspended) return res.status(404).json({ error: "Événement introuvable." });
   if (!(await hasAccess(req, event))) {
     return res.json({ locked: true, name: event.name, type: event.type, visibility: "private" });
   }

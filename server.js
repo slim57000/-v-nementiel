@@ -7,6 +7,8 @@ import eventRoutes from "./routes/events.js";
 import publicRoutes from "./routes/public.js";
 import socialRoutes from "./routes/social.js";
 import cameramanRoutes from "./routes/cameraman.js";
+import adminRoutes from "./routes/admin.js";
+import { getSetting } from "./lib/store.js";
 import { UPLOAD_DIR } from "./lib/uploads.js";
 import { findEventBySlug } from "./lib/store.js";
 import { ON_VERCEL, missingConfig } from "./lib/config.js";
@@ -30,7 +32,10 @@ if (missingConfig.length) {
 }
 
 // Réglages publics lus par le navigateur (identifiant Google Analytics, facultatif).
-app.get("/api/config", (req, res) => res.json({ gaId: process.env.GA_MEASUREMENT_ID || "" }));
+app.get("/api/config", async (req, res) => res.json({
+  gaId: process.env.GA_MEASUREMENT_ID || "",
+  defaultLivePlatform: (await getSetting("defaultLivePlatform").catch(() => null)) || "youtube",
+}));
 
 // QR code (SVG) d'un lien : faire-part, invitation au live.
 app.get("/api/qr", async (req, res) => {
@@ -45,6 +50,7 @@ app.use("/api/events", eventRoutes);
 app.use("/api/public", publicRoutes);
 app.use("/api/public/:slug", socialRoutes);
 app.use("/api/cameraman", cameramanRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Page publique : on injecte titre + balises Open Graph pour un bel aperçu dans WhatsApp/SMS.
 const eventTemplate = readFileSync(new URL("./public/event.html", import.meta.url), "utf8");

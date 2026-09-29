@@ -1,4 +1,4 @@
-import { api, $, toast, resizeImage, goLogin, EVENT_TYPES } from "./common.js";
+import { api, $, toast, resizeImage, goLogin, EVENT_TYPES, livePlaceholder } from "./common.js";
 import { defaultInvite, renderInvite, invitePhotoUrl } from "./invitation.js";
 
 const form = $("#form");
@@ -134,6 +134,8 @@ form.addEventListener("submit", async (e) => {
 });
 
 // Lignes « caméra » du live (6 max).
+let camPlaceholder = "https://youtube.com/live/…";
+livePlaceholder().then((p) => { camPlaceholder = p; });
 function addCamera(cam = {}) {
   const list = $("#cameras");
   if (list.children.length >= 6) return toast("6 caméras maximum");
@@ -141,7 +143,7 @@ function addCamera(cam = {}) {
   list.insertAdjacentHTML("beforeend", `
     <div class="camera-row row" style="margin-bottom:8px">
       <input name="cam-name" maxlength="40" placeholder="Caméra ${n}" style="flex:1 1 90px">
-      <input name="cam-url" type="url" inputmode="url" maxlength="300" placeholder="https://youtube.com/live/…" style="flex:3 1 180px">
+      <input name="cam-url" type="url" inputmode="url" maxlength="300" placeholder="${camPlaceholder}" style="flex:3 1 180px">
       <button type="button" class="btn btn-ghost btn-sm" data-remove style="flex:none" aria-label="Retirer">✕</button>
     </div>`);
   const row = list.lastElementChild;

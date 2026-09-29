@@ -330,3 +330,8 @@ export function shareSheet({ title, text, url }) {
 
 // URL de l'image QR code d'un lien.
 export const qrUrl = (link) => `/api/qr?data=${encodeURIComponent(link)}`;
+
+// Exemple de lien affiché dans les champs « caméra », selon la plateforme choisie par l'administration.
+export const livePlaceholder = () => fetch("/api/config").then((r) => r.json())
+  .then((c) => (c.defaultLivePlatform === "twitch" ? "https://twitch.tv/votre-chaine" : "https://youtube.com/live/…"))
+  .catch(() => "https://youtube.com/live/…");

@@ -29,7 +29,7 @@ function tooFast(key, max, windowMs) {
 // Charge l'événement et vérifie l'accès (public, code saisi ou organisateur).
 router.use(async (req, res, next) => {
   const event = await findEventBySlug(req.params.slug);
-  if (!event) return res.status(404).json({ error: "Événement introuvable." });
+  if (!event || event.suspended) return res.status(404).json({ error: "Événement introuvable." });
   if (!(await hasAccess(req, event))) return res.status(403).json({ error: "Accès réservé aux invités." });
   req.event = event;
   req.author = guestAuthor(req, res);

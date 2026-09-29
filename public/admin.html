@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#d81f4f">
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap">
+  <link rel="stylesheet" href="/css/app.css?v=7">
+  <link rel="icon" href="/img/logo.png" type="image/png">
+  <title>Administration — EverMoments</title>
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="/dashboard"><img src="/img/logo.png" alt=""><span>Ever<b>Moments</b></span></a>
+    <span class="badge cam-badge">Admin</span>
+  </header>
+  <main class="container" style="max-width:860px">
+    <h1>Administration</h1>
+    <div class="segments" id="tabs">
+      <button class="active" data-tab="events">Événements</button>
+      <button data-tab="organizers">Utilisateurs</button>
+      <button data-tab="reports">Signalements</button>
+      <button data-tab="settings">Réglages</button>
+    </div>
+    <input id="q" type="search" placeholder="Rechercher…" aria-label="Rechercher" style="margin-bottom:14px">
+    <div id="content"></div>
+  </main>
+  <script type="module" src="/js/admin.js"></script>
+</body>
+</html>

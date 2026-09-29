@@ -33,6 +33,7 @@ router.post("/login", async (req, res) => {
     return res.json({ created: true, code: created.loginCode });
   }
 
+  if (organizer.blocked) return res.status(403).json({ error: "Ce compte a été suspendu. Contactez le support." });
   if (!code) return res.status(401).json({ needCode: true });
   if (tooManyFailures(email)) return res.status(429).json({ error: "Trop d'essais, réessayez dans 15 minutes." });
   if (code !== organizer.loginCode) {
@@ -52,7 +53,7 @@ router.post("/logout", (req, res) => {
 router.get("/me", async (req, res) => {
   const organizer = await currentOrganizer(req);
   if (!organizer) return res.status(401).json({ error: "Non connecté." });
-  res.json({ email: organizer.email, code: organizer.loginCode });
+  res.json({ email: organizer.email, code: organizer.loginCode, isAdmin: isAdmin(organizer) });
 });
 
 // Suppression du compte (RGPD / exigence App Store et Play Store) : compte, événements et fichiers.
@@ -68,8 +69,13 @@ router.delete("/me", async (req, res) => {
 
 export async function currentOrganizer(req) {
   const id = getSigned(req, "org");
-  return id ? findOrganizer(id) : null;
+  const organizer = id ? await findOrganizer(id) : null;
+  return organizer?.blocked ? null : organizer;
 }
+
+// Administrateurs : emails listés dans ADMIN_EMAILS (séparés par des virgules).
+const ADMINS = (process.env.ADMIN_EMAILS || "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+export const isAdmin = (organizer) => Boolean(organizer && ADMINS.includes(organizer.email));
 
 export async function requireOrganizer(req, res, next) {
   req.organizer = await currentOrganizer(req);

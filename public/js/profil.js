@@ -6,6 +6,7 @@ try {
   const me = await api("/api/auth/me");
   $("#email").textContent = me.email;
   $("#code").textContent = me.code;
+  $("#admin-link").classList.toggle("hidden", !me.isAdmin);
   $("#count").textContent = (await api("/api/events")).length;
 } catch {
   goLogin();

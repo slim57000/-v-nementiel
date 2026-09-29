@@ -31,7 +31,7 @@ router.post("/login", async (req, res) => {
 // Vérifie le cookie caméraman de l'événement.
 router.use("/:slug", async (req, res, next) => {
   const event = await findEventBySlug(req.params.slug);
-  if (!event || !event.cameramanCode || getSigned(req, `cam${event.id}`) !== fingerprint(event)) {
+  if (!event || event.suspended || !event.cameramanCode || getSigned(req, `cam${event.id}`) !== fingerprint(event)) {
     return res.status(401).json({ error: "Saisissez votre code caméraman." });
   }
   req.event = event;

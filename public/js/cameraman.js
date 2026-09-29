@@ -1,7 +1,10 @@
-import { api, $, toast, formatDate, pickAndUploadPhoto } from "./common.js";
+import { api, $, toast, formatDate, pickAndUploadPhoto, livePlaceholder } from "./common.js";
 
 const params = new URLSearchParams(location.search);
 let slug = params.get("e") || "";
+
+let camPlaceholder = "https://youtube.com/live/…";
+livePlaceholder().then((p) => { camPlaceholder = p; });
 
 // Une ligne « caméra » éditable (6 max).
 function addCamera(cam = {}) {
@@ -11,7 +14,7 @@ function addCamera(cam = {}) {
   list.insertAdjacentHTML("beforeend", `
     <div class="camera-row row" style="margin-bottom:8px">
       <input name="cam-name" maxlength="40" placeholder="Caméra ${n}" style="flex:1 1 90px">
-      <input name="cam-url" type="url" inputmode="url" maxlength="300" placeholder="https://youtube.com/live/…" style="flex:3 1 180px">
+      <input name="cam-url" type="url" inputmode="url" maxlength="300" placeholder="${camPlaceholder}" style="flex:3 1 180px">
       <button type="button" class="btn btn-ghost btn-sm" data-remove style="flex:none" aria-label="Retirer">✕</button>
     </div>`);
   const row = list.lastElementChild;
