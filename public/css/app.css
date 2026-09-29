@@ -307,3 +307,4 @@ textarea { min-height: 110px; resize: vertical; }
 .live-card .tag.is-live { background: var(--primary); }
 .live-card .tag.is-live::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #fff; }
 .live-card .heart { position: absolute; right: 8px; bottom: 12px; color: #fff; font-style: normal; }
+.site-footer .footer-cam { display: block; margin-top: 18px; }
