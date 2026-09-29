@@ -194,3 +194,46 @@ export function pickAndUploadPhoto(slug) {
     input.click();
   });
 }
+
+// --- Cookies et traceurs ---
+// Cookies strictement nécessaires (session, accès aux événements privés) : toujours actifs.
+// Mesure d'audience (Google Analytics) : chargée uniquement après accord explicite.
+const CONSENT_KEY = "em-consent";
+
+const readConsent = () => { try { return localStorage.getItem(CONSENT_KEY); } catch { return "refused"; } };
+
+// Identifiant GA4 fourni par le serveur (variable GA_MEASUREMENT_ID) ; rien n'est chargé sans lui.
+async function loadAnalytics() {
+  if (window.gtag) return;
+  const { gaId: GA_ID } = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
+  if (!GA_ID) return;
+  const script = Object.assign(document.createElement("script"), { async: true, src: `https://www.googletagmanager.com/gtag/js?id=${GA_ID}` });
+  document.head.append(script);
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function gtag() { window.dataLayer.push(arguments); };
+  window.gtag("js", new Date());
+  window.gtag("config", GA_ID, { anonymize_ip: true });
+}
+
+export function cookieBanner() {
+  document.getElementById("cookie-banner")?.remove();
+  document.body.insertAdjacentHTML("beforeend", `
+    <div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="Cookies">
+      <p><b>🍪 Cookies</b> — Nous utilisons des cookies indispensables au fonctionnement du site (connexion, accès aux événements privés) et, avec votre accord, des cookies de mesure d'audience. <a href="/confidentialite#cookies">En savoir plus</a></p>
+      <div class="row"><button class="btn btn-ghost btn-sm" data-consent="refused">Refuser</button><button class="btn btn-sm" data-consent="accepted">Accepter</button></div>
+    </div>`);
+  document.getElementById("cookie-banner").addEventListener("click", (e) => {
+    const choice = e.target.dataset.consent;
+    if (!choice) return;
+    try { localStorage.setItem(CONSENT_KEY, choice); } catch { /* ignoré */ }
+    document.getElementById("cookie-banner").remove();
+    if (choice === "accepted") loadAnalytics();
+  });
+}
+
+if (readConsent() === "accepted") loadAnalytics();
+else if (!readConsent()) addEventListener("DOMContentLoaded", cookieBanner);
+// Tout lien [data-cookies] rouvre le choix.
+document.addEventListener("click", (e) => {
+  if (e.target.closest("[data-cookies]")) { e.preventDefault(); cookieBanner(); }
+});

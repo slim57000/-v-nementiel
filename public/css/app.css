@@ -243,3 +243,13 @@ textarea { min-height: 110px; resize: vertical; }
 .gb-entry footer button { font: inherit; font-size: .82rem; font-weight: 600; border: 1px solid var(--border); background: #fff; border-radius: 99px; padding: 5px 12px; cursor: pointer; color: var(--text); }
 .gb-entry footer .gb-like.on { background: var(--primary-light); border-color: #f6c9d4; color: var(--primary); }
 .gb-entry footer .danger { color: var(--danger); }
+
+/* Bandeau cookies */
+.cookie-banner { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 70; max-width: 520px; margin: 0 auto; background: #fff; color: var(--text); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,.2); padding: 14px 16px; font-size: .85rem; }
+.cookie-banner p { margin: 0 0 10px; }
+.has-tabbar .cookie-banner { bottom: calc(84px + env(safe-area-inset-bottom)); }
+.site-footer { text-align: center; font-size: .8rem; color: var(--muted); padding: 24px 16px 32px; }
+.site-footer a { color: var(--muted); }
+.legal h2 { font-size: 1.1rem; margin-top: 1.6em; }
+.legal p, .legal li { color: #3b3640; }
+.legal .todo { background: #fff4e0; padding: 0 4px; border-radius: 4px; }

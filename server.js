@@ -27,6 +27,9 @@ if (missingConfig.length) {
   });
 }
 
+// Réglages publics lus par le navigateur (identifiant Google Analytics, facultatif).
+app.get("/api/config", (req, res) => res.json({ gaId: process.env.GA_MEASUREMENT_ID || "" }));
+
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/public", publicRoutes);

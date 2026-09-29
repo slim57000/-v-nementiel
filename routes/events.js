@@ -83,16 +83,21 @@ router.put("/:id", handle(async (req, res) => {
 router.delete("/:id", handle(async (req, res) => {
   const event = await findOwned(req);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
+  await destroyEvent(event);
+  res.json({ ok: true });
+}));
+
+// Supprime un événement et tous ses fichiers (couverture, faire-part, photos, livre d'or).
+export async function destroyEvent(event) {
   const photos = await listPhotos(event.id, 1000);
   const entries = await listGuestbook(event.id);
   await deleteEvent(event);
   await Promise.all([
     ...photos.map((p) => removeUpload(p.url)),
     ...entries.flatMap((e) => [removeUpload(e.photoUrl), removeUpload(e.audioUrl)]),
+    removeUpload(event.cover),
+    removeUpload(event.invite?.photo),
   ]);
-  await removeUpload(event.cover);
-  await removeUpload(event.invite?.photo);
-  res.json({ ok: true });
-}));
+}
 
 export default router;

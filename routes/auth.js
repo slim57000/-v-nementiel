@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { findOrganizerByEmail, findOrganizer, createOrganizer } from "../lib/store.js";
+import { findOrganizerByEmail, findOrganizer, createOrganizer, deleteOrganizer, listEvents } from "../lib/store.js";
 import { loginCode } from "../lib/codes.js";
 import { setSigned, getSigned } from "../lib/session.js";
 
@@ -53,6 +53,17 @@ router.get("/me", async (req, res) => {
   const organizer = await currentOrganizer(req);
   if (!organizer) return res.status(401).json({ error: "Non connecté." });
   res.json({ email: organizer.email, code: organizer.loginCode });
+});
+
+// Suppression du compte (RGPD / exigence App Store et Play Store) : compte, événements et fichiers.
+router.delete("/me", async (req, res) => {
+  const organizer = await currentOrganizer(req);
+  if (!organizer) return res.status(401).json({ error: "Non connecté." });
+  const { destroyEvent } = await import("./events.js");
+  for (const event of await listEvents(organizer.id)) await destroyEvent(event);
+  await deleteOrganizer(organizer);
+  res.clearCookie("org");
+  res.json({ ok: true });
 });
 
 export async function currentOrganizer(req) {
