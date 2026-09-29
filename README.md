@@ -4,10 +4,15 @@ Prototype web de validation : création d'événement, faire-part (3 styles), pa
 
 ## Stack
 
-- **Node.js ≥ 20** + **Express**, déployé sur **Vercel** (fonction serverless)
-- **Upstash Redis** (ex-Vercel KV) pour les données, **Vercel Blob** pour les images
-- Front en HTML / CSS / JS natif, sans build, mobile-first (servi par le CDN Vercel)
-- En local sans clés : données en mémoire et images dans `./uploads` (pour tester)
+- **Node.js ≥ 22.13** + **Express** — le même code tourne sur **Vercel** ou sur un serveur classique (**Render**, Railway, VPS)
+- Front en HTML / CSS / JS natif, sans build, mobile-first
+
+Le stockage est choisi automatiquement selon les variables d'environnement :
+
+| | Vercel | Render / serveur / local |
+|---|---|---|
+| Données | Upstash Redis (`KV_REST_API_*`) | SQLite dans `DATA_DIR` |
+| Images | Vercel Blob (`BLOB_READ_WRITE_TOKEN`) | Disque dans `UPLOAD_DIR` |
 
 ## Lancer en local
 
@@ -28,6 +33,12 @@ npm run dev        # http://localhost:3000
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Base Upstash Redis |
 | `BLOB_READ_WRITE_TOKEN` | Stockage des images |
 | `SESSION_SECRET` | Signature des cookies (obligatoire sur Vercel) |
+
+## Déploiement sur Render (ou autre serveur)
+
+1. Nouveau **Web Service** à partir du dépôt — Build : `npm install` — Start : `npm start`.
+2. Ajouter un **disque persistant** monté sur `/var/data`.
+3. Variables : `DATA_DIR=/var/data/db`, `UPLOAD_DIR=/var/data/uploads`, `SESSION_SECRET` (chaîne aléatoire longue), `NODE_ENV=production`.
 
 ## Structure
 
