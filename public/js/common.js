@@ -211,9 +211,11 @@ export function contentMenu({ slug, kind, item, isOwner, onDelete, onChange }) {
 export function viewPhoto(photo, onDelete, onMore) {
   document.body.insertAdjacentHTML("beforeend", `
     <div class="viewer" id="viewer" role="dialog" aria-modal="true">
-      <img src="${esc(photo.url)}" alt="">
+      ${isVideo(photo.url)
+        ? `<video src="${esc(photo.url)}" controls autoplay playsinline></video>`
+        : `<img src="${esc(photo.url)}" alt="">`}
       <div class="viewer-bar">
-        <span>📷 ${esc(photo.name)}</span>
+        <span>${isVideo(photo.url) ? "🎬" : "📷"} ${esc(photo.name)}</span>
         ${onMore ? '<button class="btn btn-light btn-sm" data-more aria-label="Plus d\'actions">⋯</button>' : ""}
         ${onDelete ? '<button class="btn btn-danger btn-sm" data-del>Supprimer</button>' : ""}
         <button class="btn btn-light btn-sm" data-close>Fermer</button>
@@ -230,17 +232,57 @@ export function viewPhoto(photo, onDelete, onMore) {
   });
 }
 
-// Choisit une photo, la redimensionne et l'envoie comme photo d'invité. Renvoie la photo créée.
+// --- Vidéos courtes (stories, photos du live, livre d'or) ---
+export const MAX_VIDEO_SECONDS = 30;
+export const isVideo = (url) => /\.(mp4|mov|webm)(\?|$)/i.test(url || "");
+
+// Durée d'une vidéo locale (en secondes), lue sans l'envoyer.
+function videoDuration(file) {
+  return new Promise((resolve) => {
+    const v = document.createElement("video");
+    v.preload = "metadata";
+    v.onloadedmetadata = () => { URL.revokeObjectURL(v.src); resolve(v.duration); };
+    v.onerror = () => resolve(0);
+    v.src = URL.createObjectURL(file);
+  });
+}
+
+const readAsDataUrl = (file) => new Promise((resolve, reject) => {
+  const r = new FileReader();
+  r.onload = () => resolve(r.result);
+  r.onerror = () => reject(new Error("Vidéo illisible."));
+  r.readAsDataURL(file);
+});
+
+// Envoie une vidéo courte : directement vers le stockage (Supabase) si possible, sinon via l'API.
+// Renvoie les champs à joindre à la requête ({ videoUrl } ou { video }).
+export async function uploadVideo(slug, file) {
+  const duration = await videoDuration(file);
+  if (duration > MAX_VIDEO_SECONDS + 0.5) throw new Error(`Vidéo trop longue (${MAX_VIDEO_SECONDS} secondes maximum).`);
+  const type = file.type || "video/mp4";
+  const target = await api(`/api/public/${encodeURIComponent(slug)}/upload-url`, { method: "POST", body: { type, size: file.size } });
+  if (target.mode === "direct") {
+    const res = await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": type }, body: file });
+    if (!res.ok) throw new Error("Envoi de la vidéo impossible, réessayez.");
+    return { videoUrl: target.publicUrl };
+  }
+  if (file.size > 4 * 1024 * 1024) throw new Error("Vidéo trop lourde (4 Mo maximum).");
+  return { video: await readAsDataUrl(file) };
+}
+
+// Choisit une photo ou une vidéo courte et l'envoie comme média d'invité. Renvoie le média créé.
 export function pickAndUploadPhoto(slug) {
   return new Promise((resolve, reject) => {
-    const input = Object.assign(document.createElement("input"), { type: "file", accept: "image/*" });
+    const input = Object.assign(document.createElement("input"), { type: "file", accept: "image/*,video/*" });
     input.addEventListener("change", async () => {
       const file = input.files[0];
       if (!file) return;
       try {
-        const [image, name] = await Promise.all([resizeImage(file, 1600), guestName()]);
-        toast("Envoi de la photo…");
-        resolve(await api(`/api/public/${encodeURIComponent(slug)}/photos`, { method: "POST", body: { name, image } }));
+        const name = await guestName();
+        const media = file.type.startsWith("video/")
+          ? (toast("Envoi de la vidéo…"), await uploadVideo(slug, file))
+          : (toast("Envoi de la photo…"), { image: await resizeImage(file, 1600) });
+        resolve(await api(`/api/public/${encodeURIComponent(slug)}/photos`, { method: "POST", body: { name, ...media } }));
       } catch (err) {
         toast(err.message);
         reject(err);

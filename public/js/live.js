@@ -1,4 +1,4 @@
-import { api, $, esc, shareSheet, toast, guestName, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden } from "./common.js";
+import { api, $, esc, shareSheet, toast, guestName, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo } from "./common.js";
 import { icon } from "./icons.js";
 
 const slug = new URLSearchParams(location.search).get("e") || "";
@@ -216,7 +216,9 @@ let photos = [];
 async function loadPhotos() {
   try { photos = (await api(`${base}/photos`)).filter((p) => !isHidden(p.author)); } catch { return; }
   $("#photo-count").textContent = photos.length ? ` ${photos.length}` : "";
-  const thumbs = photos.slice(0, 4).map((p, i) => `<img src="${esc(p.url)}" alt="Photo de ${esc(p.name)}" data-i="${i}" loading="lazy">`);
+  const thumbs = photos.slice(0, 4).map((p, i) => (isVideo(p.url)
+    ? `<div class="vid" data-i="${i}"><video src="${esc(p.url)}#t=0.1" muted playsinline preload="metadata"></video></div>`
+    : `<img src="${esc(p.url)}" alt="Photo de ${esc(p.name)}" data-i="${i}" loading="lazy">`));
   while (thumbs.length < 4) thumbs.push('<div class="ph"></div>');
   $("#photo-strip").innerHTML = `${thumbs.join("")}<button id="add-photo" aria-label="Ajouter une photo">+</button>`;
 }
@@ -226,7 +228,7 @@ $("#photo-strip").addEventListener("click", async (e) => {
     await pickAndUploadPhoto(slug).catch(() => null);
     return loadPhotos();
   }
-  const photo = photos[e.target.dataset.i];
+  const photo = photos[e.target.closest("[data-i]")?.dataset.i];
   if (!photo) return;
   const remove = async () => { await api(`${base}/photos/${photo.id}`, { method: "DELETE" }); loadPhotos(); };
   viewPhoto(photo, isOwner ? remove : null,

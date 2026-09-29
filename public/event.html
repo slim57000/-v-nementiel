@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#d81f4f">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Great+Vibes&family=Inter:wght@400;600;800&display=swap">
-  <link rel="stylesheet" href="/css/app.css?v=10">
+  <link rel="stylesheet" href="/css/app.css?v=11">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="stylesheet" href="/css/invitation.css?v=6">
   <!--META-->
@@ -43,7 +43,7 @@
       <section class="stories-preview">
         <h2>Aperçu des stories</h2>
         <div class="stories-row" id="stories-row"></div>
-        <button id="add-story" class="btn btn-light btn-sm hidden" style="margin-top:10px">📷 Ajouter une photo</button>
+        <button id="add-story" class="btn btn-light btn-sm hidden" style="margin-top:10px">📷 Ajouter une photo ou une vidéo</button>
       </section>
 
       <a id="live-link" class="btn btn-block hidden" style="margin-bottom:16px">● Rejoindre le live</a>
@@ -89,9 +89,11 @@
       <h2 id="gb-title">Un mot pour le livre d'or</h2>
       <textarea id="gb-text" maxlength="1000" placeholder="Vos vœux, un souvenir, un message…"></textarea>
       <img id="gb-photo-preview" class="hidden" alt="" style="margin-top:10px;border-radius:12px;max-height:180px">
+      <video id="gb-video-preview" class="hidden" controls playsinline style="width:100%;margin-top:10px;border-radius:12px"></video>
       <audio id="gb-audio-preview" class="hidden" controls style="width:100%;margin-top:10px"></audio>
       <div class="row" style="margin-top:10px">
         <label class="btn btn-light btn-sm" style="margin:0;font-weight:600">📷 Photo<input id="gb-photo" type="file" accept="image/*" hidden></label>
+        <label class="btn btn-light btn-sm" style="margin:0;font-weight:600">🎬 Vidéo<input id="gb-video" type="file" accept="video/*" hidden></label>
         <button type="button" id="gb-record" class="btn btn-light btn-sm">🎙️ Message vocal</button>
       </div>
       <p id="gb-error" class="error" role="alert"></p>

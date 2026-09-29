@@ -1,5 +1,5 @@
 // Livre d'or multimédia de la page événement : texte, photo, message vocal, likes, filtres, recherche.
-import { api, $, esc, toast, guestName, resizeImage, viewPhoto, contentMenu, isHidden } from "./common.js";
+import { api, $, esc, toast, guestName, resizeImage, viewPhoto, contentMenu, isHidden, isVideo, uploadVideo } from "./common.js";
 
 const MAX_VOICE_SECONDS = 60;
 
@@ -33,7 +33,8 @@ export function initGuestbook(ev) {
       <header><i>${esc(e.name.charAt(0).toUpperCase())}</i><div><b>${esc(e.name)}</b>
         <span class="muted small">${new Date(e.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}${e.pinned ? " · ⭐ À la une" : ""}</span></div></header>
       ${e.text ? `<p>${esc(e.text)}</p>` : ""}
-      ${e.photoUrl ? `<img src="${esc(e.photoUrl)}" alt="Photo de ${esc(e.name)}" loading="lazy" data-photo>` : ""}
+      ${e.photoUrl && isVideo(e.photoUrl) ? `<video src="${esc(e.photoUrl)}" controls playsinline preload="metadata"></video>` : ""}
+      ${e.photoUrl && !isVideo(e.photoUrl) ? `<img src="${esc(e.photoUrl)}" alt="Photo de ${esc(e.name)}" loading="lazy" data-photo>` : ""}
       ${e.audioUrl ? `<audio controls preload="none" src="${esc(e.audioUrl)}"></audio>` : ""}
       <footer>
         <button class="gb-like ${liked.has(e.id) ? "on" : ""}" data-like>❤️ ${e.likes || 0}</button>
@@ -86,10 +87,11 @@ export function initGuestbook(ev) {
   });
 
   // --- Formulaire d'écriture ---
-  const draft = { image: null, audio: null };
+  const draft = { image: null, audio: null, videoFile: null };
   const sheet = $("#gb-sheet");
   const resetDraft = () => {
-    draft.image = draft.audio = null;
+    draft.image = draft.audio = draft.videoFile = null;
+    $("#gb-video-preview").classList.add("hidden");
     $("#gb-text").value = "";
     $("#gb-photo-preview").classList.add("hidden");
     $("#gb-audio-preview").classList.add("hidden");
@@ -104,9 +106,23 @@ export function initGuestbook(ev) {
     if (!file) return;
     try {
       draft.image = await resizeImage(file, 1400);
+      draft.videoFile = null;
+      $("#gb-video-preview").classList.add("hidden");
       $("#gb-photo-preview").src = draft.image;
       $("#gb-photo-preview").classList.remove("hidden");
     } catch (err) { toast(err.message); }
+    e.target.value = "";
+  });
+
+  // Vidéo courte (30 s max) : envoyée à la publication.
+  $("#gb-video").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    draft.videoFile = file;
+    draft.image = null;
+    $("#gb-photo-preview").classList.add("hidden");
+    $("#gb-video-preview").src = URL.createObjectURL(file);
+    $("#gb-video-preview").classList.remove("hidden");
     e.target.value = "";
   });
 
@@ -155,15 +171,16 @@ export function initGuestbook(ev) {
     stopRecording();
     $("#gb-error").textContent = "";
     const text = $("#gb-text").value.trim();
-    if (!text && !draft.image && !draft.audio) {
-      $("#gb-error").textContent = "Écrivez un message, ajoutez une photo ou un vocal.";
+    if (!text && !draft.image && !draft.audio && !draft.videoFile) {
+      $("#gb-error").textContent = "Écrivez un message, ajoutez une photo, une vidéo ou un vocal.";
       return;
     }
     const button = e.submitter;
     button.disabled = true;
     try {
       const name = await guestName();
-      const entry = await api(base, { method: "POST", body: { name, text, image: draft.image, audio: draft.audio } });
+      const video = draft.videoFile ? await uploadVideo(ev.slug, draft.videoFile) : {};
+      const entry = await api(base, { method: "POST", body: { name, text, image: draft.image, audio: draft.audio, ...video } });
       entries.unshift(entry);
       render();
       resetDraft();

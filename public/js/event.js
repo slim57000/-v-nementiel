@@ -1,4 +1,4 @@
-import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, EVENT_TYPES } from "./common.js";
+import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, EVENT_TYPES } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 import { initGuestbook } from "./guestbook.js";
 
@@ -104,7 +104,9 @@ async function renderStories(ev) {
     const dayAgo = Date.now() - 24 * 3600 * 1000;
     const stories = (await api(`${base}/photos`).catch(() => [])).filter((p) => new Date(p.createdAt) > dayAgo && !isHidden(p.author));
     $("#stories-row").innerHTML = stories.length
-      ? stories.map((p, i) => `<button class="story-circle" data-i="${i}" aria-label="Photo de ${esc(p.name)}"><div style="background-image:url('${esc(p.url)}')"></div></button>`).join("")
+      ? stories.map((p, i) => (isVideo(p.url)
+        ? `<button class="story-circle is-video" data-i="${i}" aria-label="Vidéo de ${esc(p.name)}"><div style="background:#2b2530"></div></button>`
+        : `<button class="story-circle" data-i="${i}" aria-label="Photo de ${esc(p.name)}"><div style="background-image:url('${esc(p.url)}')"></div></button>`)).join("")
       : '<p class="muted small" style="margin:0">Aucune story pour l\'instant. Partagez la première photo !</p>';
     $("#stories-row").onclick = (e) => {
       const photo = stories[e.target.closest("[data-i]")?.dataset.i];

@@ -61,7 +61,7 @@
 .chat-msg b { display: block; font-size: .85rem; }
 .chat-empty { color: var(--live-muted); font-size: .85rem; text-align: center; padding: 6px; }
 @keyframes chatIn { from { opacity: 0; transform: translateY(6px); } }
-.photo-strip img, .photo-strip .ph { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; background: var(--live-card); cursor: pointer; }
+.photo-strip img, .photo-strip video, .photo-strip .ph { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; background: var(--live-card); cursor: pointer; }
 .live-section .count { color: var(--primary); margin-left: 6px; }
 
 /* Fidélité maquette : vignettes réelles, fond, barre d'onglets */
@@ -74,3 +74,6 @@
 .live-tabs a { display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--live-muted); text-decoration: none; font-size: .7rem; }
 .live-tabs a:hover, .live-tabs a:focus { color: var(--primary); }
 .viewers { display: inline-flex; align-items: center; gap: 4px; font-size: .85rem; font-weight: 600; color: #fff; white-space: nowrap; }
+.photo-strip .vid { position: relative; }
+.photo-strip .vid::after { content: "▶"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; pointer-events: none; text-shadow: 0 1px 6px rgba(0,0,0,.7); }
+.photo-strip .vid video { pointer-events: none; }

@@ -249,7 +249,7 @@ textarea { min-height: 110px; resize: vertical; }
 
 /* Visionneuse photo plein écran */
 .viewer { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.92); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
-.viewer img { max-width: 100%; max-height: calc(100vh - 110px); border-radius: 12px; object-fit: contain; }
+.viewer img, .viewer video { max-width: 100%; max-height: calc(100vh - 110px); border-radius: 12px; object-fit: contain; }
 .viewer-bar { display: flex; align-items: center; gap: 10px; margin-top: 14px; color: #fff; font-size: .9rem; }
 .viewer-bar span { margin-right: auto; }
 .stories-row .story-circle { cursor: pointer; border: 0; }
@@ -412,3 +412,8 @@ textarea { min-height: 110px; resize: vertical; }
 .p-grid .pub-card { width: auto; }
 .fav-btn.on { background: var(--primary-light); color: var(--primary); }
 .footer-lang { display: block; margin-top: 12px; letter-spacing: .05em; }
+
+/* Vidéos courtes */
+.story-circle.is-video div { position: relative; }
+.story-circle.is-video div::after { content: "▶"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.2rem; text-shadow: 0 1px 6px rgba(0,0,0,.6); }
+.gb-entry video { width: 100%; max-height: 360px; margin-top: 10px; border-radius: 12px; background: #000; }
