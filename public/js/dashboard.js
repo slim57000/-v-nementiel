@@ -1,53 +1,87 @@
-import { api, $, esc, copy, share, toast, eventUrl, formatDate, EVENT_TYPES } from "./common.js";
+import { api, $, esc, copy, share, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES } from "./common.js";
 
-const params = new URLSearchParams(location.search);
-if (params.has("saved")) {
+tabbar("home");
+
+if (new URLSearchParams(location.search).has("saved")) {
   toast("Événement enregistré ✔");
   history.replaceState(null, "", "/dashboard");
 }
 
 let events = [];
+let filter = "all";
+const today = new Date().toISOString().slice(0, 10);
+const bg = (url) => (url ? `style="background-image:url('${esc(url)}')"` : "");
 
 async function load() {
   try {
-    const me = await api("/api/auth/me");
-    $("#account").innerHTML = `Connecté : <b>${esc(me.email)}</b> · code organisateur <b>${esc(me.code)}</b>`;
     events = await api("/api/events");
   } catch (err) {
-    if (err.status === 401) return location.replace("/");
+    if (err.status === 401) return goLogin();
     return toast(err.message);
   }
   render();
 }
 
-function render() {
-  $("#empty").classList.toggle("hidden", events.length > 0);
-  $("#list").innerHTML = events.map((ev) => {
-    const type = EVENT_TYPES[ev.type];
-    const isPrivate = ev.visibility === "private";
-    return `
-    <article class="card event-item" data-slug="${esc(ev.slug)}">
-      ${ev.cover ? `<img class="event-thumb" src="${esc(ev.cover)}" alt="">` : `<div class="event-thumb">${type.icon}</div>`}
-      <div>
-        <h3 style="margin:0">${esc(ev.name)}</h3>
-        <div class="muted small">${type.label} · ${esc(formatDate(ev.date, ev.time))}</div>
-        <div class="row" style="margin-top:6px;gap:6px">
-          <span class="badge ${isPrivate ? "private" : ""}" style="flex:none">${isPrivate ? "🔒 Privé" : "🔓 Public"}</span>
-          ${isPrivate ? `<span class="small" style="flex:none">Code : <b class="code" style="font-size:1rem">${esc(ev.accessCode)}</b></span>` : ""}
-        </div>
-      </div>
-      <div class="event-actions">
-        <a class="btn btn-light btn-sm" href="/e/${esc(ev.slug)}">Voir</a>
-        <button class="btn btn-light btn-sm" data-action="share">Partager</button>
-        <button class="btn btn-light btn-sm" data-action="link">Copier le lien</button>
-        ${isPrivate ? `<button class="btn btn-light btn-sm" data-action="code">Copier le code</button>
-        <button class="btn btn-light btn-sm" data-action="direct">Lien + code</button>` : ""}
-        <a class="btn btn-ghost btn-sm" href="/edit?id=${ev.id}">Modifier</a>
-        <button class="btn btn-danger btn-sm" data-action="delete">Supprimer</button>
-      </div>
-    </article>`;
-  }).join("");
+function renderStories() {
+  const upcoming = events.filter((e) => e.date >= today);
+  $("#stories").innerHTML = `
+    <a class="story new" href="/edit"><div class="story-img">+</div><span>Créer un événement</span></a>
+    ${upcoming.map((ev) => {
+      const badge = dayBadge(ev.date);
+      return `<a class="story" href="/e/${esc(ev.slug)}">
+        <div class="story-img" ${bg(ev.cover)}>${ev.cover ? "" : EVENT_TYPES[ev.type].icon}
+          <span class="story-badge ${badge === "Aujourd'hui" ? "today" : ""}">${badge}</span></div>
+        <span>${esc(ev.name)}</span></a>`;
+    }).join("")}`;
 }
+
+function card(ev) {
+  const type = EVENT_TYPES[ev.type];
+  const isPrivate = ev.visibility === "private";
+  return `
+  <article class="ev-card event-item" data-slug="${esc(ev.slug)}">
+    <div class="ev-head">
+      <div class="ev-avatar" ${bg(ev.cover)}>${ev.cover ? "" : type.icon}</div>
+      <div><h3>${esc(ev.name)}</h3><div class="muted">${type.label} · ${esc(ev.location)}</div></div>
+      <span class="badge ${isPrivate ? "private" : ""}">${isPrivate ? "🔒 Privé" : "🔓 Public"}</span>
+    </div>
+    <div class="ev-cover" ${bg(ev.cover)}>
+      <div class="when">${esc(dayBadge(ev.date))}</div>
+      <a class="btn btn-block" href="/e/${esc(ev.slug)}">Voir la page de l'événement</a>
+    </div>
+    <div class="ev-info">
+      <div><span>📍</span><span><b>Lieu</b>${esc(ev.location)}</span></div>
+      <div><span>📅</span><span><b>Date</b>${esc(formatDate(ev.date, ev.time))}</span></div>
+      ${isPrivate ? `<div style="grid-column:1/-1"><span>🔑</span><span><b>Code d'accès invités</b><span class="code" style="font-size:1.05rem">${esc(ev.accessCode)}</span></span></div>` : ""}
+    </div>
+    <div class="ev-tools">
+      <button class="btn btn-light btn-sm" data-action="share">Partager</button>
+      <button class="btn btn-light btn-sm" data-action="link">Copier le lien</button>
+      ${isPrivate ? `<button class="btn btn-light btn-sm" data-action="code">Copier le code</button>
+      <button class="btn btn-light btn-sm" data-action="direct">Lien + code</button>` : ""}
+      <a class="btn btn-ghost btn-sm" href="/edit?id=${ev.id}">Modifier</a>
+      <button class="btn btn-danger btn-sm" data-action="delete">Supprimer</button>
+    </div>
+  </article>`;
+}
+
+function render() {
+  renderStories();
+  const shown = events.filter((e) =>
+    filter === "upcoming" ? e.date >= today : filter === "past" ? e.date < today : true);
+  $("#empty").classList.toggle("hidden", shown.length > 0);
+  $("#empty-text").innerHTML = events.length
+    ? "Aucun événement dans cette catégorie."
+    : "Vous n'avez pas encore d'événement.<br>Créez le premier en quelques minutes !";
+  $("#list").innerHTML = shown.map(card).join("");
+}
+
+document.querySelector(".segments").addEventListener("click", (e) => {
+  if (!e.target.dataset.filter) return;
+  filter = e.target.dataset.filter;
+  document.querySelectorAll(".segments button").forEach((b) => b.classList.toggle("active", b === e.target));
+  render();
+});
 
 $("#list").addEventListener("click", async (e) => {
   const action = e.target.dataset.action;
@@ -75,11 +109,6 @@ $("#list").addEventListener("click", async (e) => {
       toast(err.message);
     }
   }
-});
-
-$("#logout").addEventListener("click", async () => {
-  await api("/api/auth/logout", { method: "POST" });
-  location.replace("/");
 });
 
 load();

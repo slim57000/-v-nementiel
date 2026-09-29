@@ -1,4 +1,4 @@
-import { api, $, toast, resizeImage, EVENT_TYPES } from "./common.js";
+import { api, $, toast, resizeImage, goLogin, EVENT_TYPES } from "./common.js";
 import { defaultInvite, renderInvite, invitePhotoUrl } from "./invitation.js";
 
 const form = $("#form");
@@ -119,7 +119,7 @@ form.addEventListener("submit", async (e) => {
     await api(id ? `/api/events/${id}` : "/api/events", { method: id ? "PUT" : "POST", body });
     location.href = "/dashboard?saved=1";
   } catch (err) {
-    if (err.status === 401) return location.replace("/");
+    if (err.status === 401) return goLogin();
     $("#error").textContent = err.message;
     $("#save").disabled = false;
   }
@@ -127,7 +127,7 @@ form.addEventListener("submit", async (e) => {
 
 async function init() {
   if (!id) {
-    try { await api("/api/auth/me"); } catch { return location.replace("/"); }
+    try { await api("/api/auth/me"); } catch { return goLogin(); }
     return refresh();
   }
   $("#page-title").textContent = "Modifier l'événement";
@@ -147,7 +147,7 @@ async function init() {
     state.inviteTouched = true;
     refresh();
   } catch (err) {
-    if (err.status === 401) return location.replace("/");
+    if (err.status === 401) return goLogin();
     toast(err.message);
   }
 }

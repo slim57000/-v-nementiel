@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#d81f4f">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;600;800&display=swap">
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <title>Découvrir — EverMoments</title>
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="/"><img src="/img/logo.svg" alt=""><span>Ever<b>Moments</b></span></a>
+  </header>
+  <main class="container">
+    <h1>Découvrir</h1>
+    <p class="muted">Les événements publics à venir.</p>
+    <style>#list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; } #list .pub-card { width: auto; }</style>
+    <div id="list"></div>
+    <p id="empty" class="card hidden" style="text-align:center">Aucun événement public à venir pour le moment.</p>
+  </main>
+  <script type="module">
+    import { api, publicCard, tabbar } from "/js/common.js";
+    // La barre d'onglets n'est utile qu'aux organisateurs connectés.
+    api("/api/auth/me").then(() => tabbar("discover")).catch(() => {});
+    const events = await api("/api/public?limit=50").catch(() => []);
+    document.getElementById("list").innerHTML = events.map(publicCard).join("");
+    document.getElementById("empty").classList.toggle("hidden", events.length > 0);
+  </script>
+</body>
+</html>

@@ -3,38 +3,58 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#6b4fd8">
+  <meta name="theme-color" content="#d81f4f">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;600;800&display=swap">
   <link rel="stylesheet" href="/css/app.css">
-  <title>Mes événements — Connexion</title>
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <title>EverMoments — Vos événements, ensemble</title>
+  <meta name="description" content="Créez votre événement, partagez le faire-part et invitez vos proches.">
 </head>
 <body>
-  <main class="container" style="max-width:440px;padding-top:10vh">
-    <h1>Créez et partagez vos événements</h1>
-    <p class="muted">Faire-part, page événement avec compte à rebours et accès privé pour vos invités.</p>
-
-    <form id="login" class="card" novalidate>
-      <label for="email">Votre adresse email</label>
-      <input id="email" type="email" autocomplete="email" inputmode="email" required placeholder="vous@exemple.fr">
-
-      <div id="code-block" class="hidden">
-        <label for="code">Votre code organisateur (6 chiffres)</label>
-        <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" class="code-input">
-      </div>
-
-      <p id="error" class="error" role="alert"></p>
-      <button class="btn btn-block" style="margin-top:8px">Continuer</button>
-      <p class="muted small">Première visite ? Votre espace est créé automatiquement.</p>
-    </form>
-
-    <div id="created" class="card hidden">
-      <h2>Votre espace est prêt 🎉</h2>
-      <p>Voici votre <b>code organisateur</b>. Notez-le : il vous sera demandé pour vous reconnecter depuis un autre appareil.</p>
-      <div class="notice code" id="new-code"></div>
-      <a href="/dashboard" class="btn btn-block">J'ai noté mon code, continuer</a>
+  <main class="container" style="max-width:480px">
+    <div class="collage" aria-hidden="true">
+      <div>💍</div><div>🍼</div><div>🎓</div><div>🎂</div><div>🕊️</div><div>🎉</div>
     </div>
+
+    <p style="text-align:center;margin:0">
+      <span class="logo logo-lg"><img src="/img/logo.svg" alt=""><span>Ever<b>Moments</b></span></span>
+    </p>
+
+    <div class="features">
+      <div><i>📷</i>Live multicaméra</div>
+      <div><i>🎁</i>Cadeaux &amp; Cagnotte</div>
+      <div><i>🖼️</i>Album photo collaboratif</div>
+    </div>
+
+    <a id="create" href="/connexion?next=/edit" class="btn btn-block">Créer mon événement gratuitement</a>
+    <button id="invited" class="btn btn-ghost btn-block" style="margin-top:10px;color:var(--text)">J'ai reçu une invitation</button>
+
+    <p class="divider">ou continuer avec</p>
+    <div class="socials">
+      <button data-social="Apple">Apple</button>
+      <button data-social="Google"><span style="color:#4285f4">G</span>oogle</button>
+      <button data-social="Facebook"><span style="color:#1877f2">f</span>acebook</button>
+    </div>
+    <p class="muted small" style="text-align:center">Déjà inscrit ? <a href="/connexion">Se connecter</a></p>
+
+    <section id="upcoming" class="hidden">
+      <div class="section-title"><h2>Événements à venir</h2><a href="/decouvrir" class="small">Voir tout</a></div>
+      <div class="h-scroll" id="upcoming-list"></div>
+    </section>
   </main>
-  <script type="module" src="/js/login.js"></script>
+
+  <div id="join" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="join-title">
+    <form class="card" id="join-form" novalidate>
+      <h2 id="join-title">J'ai reçu une invitation</h2>
+      <p class="muted">Saisissez le code à 6 caractères reçu avec votre faire-part, ou ouvrez directement le lien reçu.</p>
+      <input id="join-code" class="code-input" maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="CODE" aria-label="Code d'invitation">
+      <p id="join-error" class="error" role="alert"></p>
+      <button class="btn btn-block" style="margin-top:12px">Accéder à l'événement</button>
+      <button type="button" id="join-close" class="btn btn-ghost btn-block" style="margin-top:8px">Annuler</button>
+    </form>
+  </div>
+
+  <script type="module" src="/js/home.js"></script>
 </body>
 </html>

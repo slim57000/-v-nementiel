@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#d81f4f">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;600;800&display=swap">
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <title>Profil — EverMoments</title>
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="/dashboard"><img src="/img/logo.svg" alt=""><span>Ever<b>Moments</b></span></a>
+  </header>
+  <main class="container">
+    <h1>Mon profil</h1>
+    <section class="card">
+      <label>Adresse email</label>
+      <p id="email" style="margin:0"></p>
+      <label>Code organisateur</label>
+      <p class="muted small" style="margin:0 0 6px">À saisir pour vous reconnecter depuis un autre appareil.</p>
+      <div class="notice code" id="code"></div>
+    </section>
+    <section class="card">
+      <p style="margin-top:0"><b id="count">0</b> événement(s) créé(s)</p>
+      <a href="/dashboard" class="btn btn-light btn-block">Voir mes événements</a>
+    </section>
+    <button id="logout" class="btn btn-danger btn-block">Se déconnecter</button>
+  </main>
+  <script type="module" src="/js/profil.js"></script>
+</body>
+</html>

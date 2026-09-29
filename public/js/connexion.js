@@ -1,6 +1,10 @@
 import { api, $ } from "./common.js";
 
-api("/api/auth/me").then(() => location.replace("/dashboard")).catch(() => {});
+// Page de retour après connexion (chemin interne uniquement).
+const next = new URLSearchParams(location.search).get("next");
+const target = next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+
+api("/api/auth/me").then(() => location.replace(target)).catch(() => {});
 
 $("#login").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -17,7 +21,7 @@ $("#login").addEventListener("submit", async (e) => {
       $("#login").classList.add("hidden");
       $("#created").classList.remove("hidden");
     } else {
-      location.href = "/dashboard";
+      location.href = target;
     }
   } catch (err) {
     if (err.data?.needCode) {
@@ -29,3 +33,5 @@ $("#login").addEventListener("submit", async (e) => {
     button.disabled = false;
   }
 });
+
+$("#continue").addEventListener("click", () => { location.href = target; });

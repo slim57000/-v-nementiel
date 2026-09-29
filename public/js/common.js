@@ -89,3 +89,38 @@ export function resizeImage(file, maxSize = 1600) {
     img.src = URL.createObjectURL(file);
   });
 }
+
+// Nombre de jours avant l'événement : « J-6 », « Aujourd'hui » ou « Passé ».
+export function dayBadge(date) {
+  const today = new Date(new Date().toDateString());
+  const days = Math.round((new Date(`${date}T00:00`) - today) / 86400000);
+  return days > 0 ? `J-${days}` : days === 0 ? "Aujourd'hui" : "Passé";
+}
+
+// Vignette d'un événement public (accueil, Découvrir).
+export function publicCard(ev) {
+  const cover = ev.cover ? `style="background-image:url('${esc(ev.cover)}')"` : "";
+  return `<a class="pub-card" href="/e/${esc(ev.slug)}" ${cover}>
+    <span class="tag">${esc(dayBadge(ev.date))}</span>
+    <b>${esc(ev.name)}</b>
+    <span>${EVENT_TYPES[ev.type].icon} ${esc(ev.location)}</span>
+  </a>`;
+}
+
+// Barre d'onglets du bas (pages connectées). `active` : "home" | "discover" | "profile".
+export function tabbar(active) {
+  const tab = (key, href, ico, label) =>
+    `<a href="${href}" class="${active === key ? "active" : ""}"><span class="ico">${ico}</span>${label}</a>`;
+  document.body.classList.add("has-tabbar");
+  document.body.insertAdjacentHTML("beforeend", `
+    <nav class="tabbar" aria-label="Navigation">
+      ${tab("home", "/dashboard", "🏠", "Accueil")}
+      ${tab("discover", "/decouvrir", "🔍", "Découvrir")}
+      <a href="/edit" aria-label="Créer un événement"><span class="plus">+</span></a>
+      <span class="soon" title="Bientôt disponible"><span class="ico">💬</span>Messages</span>
+      ${tab("profile", "/profil", "👤", "Profil")}
+    </nav>`);
+}
+
+// Redirige vers la connexion en revenant ensuite sur la page courante.
+export const goLogin = () => location.replace(`/connexion?next=${encodeURIComponent(location.pathname + location.search)}`);

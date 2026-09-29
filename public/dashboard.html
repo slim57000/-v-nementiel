@@ -3,24 +3,32 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#6b4fd8">
+  <meta name="theme-color" content="#d81f4f">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;600;800&display=swap">
   <link rel="stylesheet" href="/css/app.css">
-  <title>Mes événements</title>
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <title>Accueil — EverMoments</title>
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="/dashboard">Mes événements</a>
-    <button id="logout" class="btn btn-ghost btn-sm">Déconnexion</button>
+    <a class="logo" href="/dashboard"><img src="/img/logo.svg" alt=""><span>Ever<b>Moments</b></span></a>
+    <a href="/profil" class="btn btn-ghost btn-sm" aria-label="Profil">👤</a>
   </header>
   <main class="container">
-    <p class="muted small" id="account"></p>
-    <a href="/edit" class="btn btn-block" style="margin-bottom:20px">+ Créer un événement</a>
+    <div class="stories" id="stories"></div>
+
+    <div class="segments" role="tablist">
+      <button class="active" data-filter="all">Pour vous</button>
+      <button data-filter="upcoming">À venir</button>
+      <button data-filter="past">Passés</button>
+    </div>
+
     <div id="list"></div>
     <div id="empty" class="card hidden" style="text-align:center">
       <p style="font-size:2.5rem;margin:0">🎉</p>
-      <p>Vous n'avez pas encore d'événement.<br>Créez le premier en quelques minutes !</p>
+      <p id="empty-text">Vous n'avez pas encore d'événement.<br>Créez le premier en quelques minutes !</p>
+      <a href="/edit" class="btn">+ Créer un événement</a>
     </div>
   </main>
   <script type="module" src="/js/dashboard.js"></script>
