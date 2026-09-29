@@ -184,3 +184,38 @@ textarea { min-height: 110px; resize: vertical; }
 .sheet { position: fixed; inset: 0; z-index: 50; background: rgba(20,10,15,.45); display: flex; align-items: flex-end; justify-content: center; }
 .sheet .card { width: 100%; max-width: 480px; border-radius: 22px 22px 0 0; margin: 0; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
 @media (min-width: 720px) { .sheet { align-items: center; } .sheet .card { border-radius: 22px; } }
+
+/* ---------- Page événement : carte d'invitation fleurie ---------- */
+.invite-hero { position: relative; overflow: hidden; text-align: center; padding: 34px 20px 52px; border-radius: 22px; margin-bottom: 18px;
+  background:
+    radial-gradient(circle at 0 0, rgba(233,180,170,.45), transparent 28%),
+    radial-gradient(circle at 100% 0, rgba(180,200,170,.45), transparent 26%),
+    radial-gradient(circle at 0 100%, rgba(180,200,170,.35), transparent 26%),
+    radial-gradient(circle at 100% 100%, rgba(233,180,170,.4), transparent 28%),
+    #fbf6f1;
+  box-shadow: var(--shadow); color: #2b2622; }
+.invite-hero::before, .invite-hero::after { position: absolute; font-size: 2rem; opacity: .55; pointer-events: none; }
+.invite-hero::before { content: "🌸🌿"; top: 6px; left: 8px; }
+.invite-hero::after { content: "🌿🌸"; bottom: 6px; right: 8px; }
+.invite-hero-heart { width: 44px; height: 44px; margin: 0 auto 6px; opacity: .55; filter: sepia(1) saturate(.6); }
+.lock-chip { position: absolute; top: 12px; right: 12px; font-size: .75rem; font-weight: 600; background: rgba(255,255,255,.8); padding: 3px 10px; border-radius: 99px; }
+.script { font-family: "Great Vibes", "Fraunces", cursive; font-weight: 400; font-size: 2.9rem; line-height: 1.1; margin: 8px 0 0; letter-spacing: 0; }
+.script-sub { font-family: "Great Vibes", "Fraunces", cursive; font-size: 1.6rem; margin: 4px 0 10px; color: #4a423c; }
+.date-big { font-size: 1.6rem; margin: 6px 0 4px; }
+.ornament { display: flex; align-items: center; gap: 8px; margin: 6px auto 12px; max-width: 240px; color: #c9a88a; font-size: .7rem; }
+.ornament::before, .ornament::after { content: ""; flex: 1; border-top: 1px solid #d9c7b6; }
+.countdown-plain { display: grid; grid-template-columns: repeat(4, 1fr); max-width: 320px; margin: 0 auto; }
+.countdown-plain strong { display: block; font-size: 1.9rem; font-weight: 600; }
+.countdown-plain span { font-size: .62rem; letter-spacing: .08em; text-transform: uppercase; color: #6d625a; }
+.countdown-plain.done { display: block; font-weight: 600; }
+.cta-stories { display: block; text-align: center; max-width: 300px; margin: 22px auto 0; line-height: 1.25; padding: 12px 18px; background: #e0457b; box-shadow: 0 10px 24px rgba(224,69,123,.3); }
+.cta-stories:hover { background: #c93a6b; }
+.cta-stories small { font-weight: 400; font-size: .9rem; }
+.stories-preview { margin-bottom: 18px; }
+.stories-preview h2 { font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+.soon-tag { font-size: .72rem; font-weight: 700; color: var(--primary); background: var(--primary-light); padding: 2px 8px; border-radius: 99px; }
+.stories-row { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; padding: 2px; }
+.stories-row::-webkit-scrollbar { display: none; }
+.story-circle { flex: none; width: 76px; height: 76px; border-radius: 50%; padding: 3px; background: linear-gradient(135deg, #e0457b, #f4b740); }
+.story-circle div { width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--bg); background: #eadfd6 center / cover; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+.story-circle.locked div { filter: blur(0); background: linear-gradient(135deg, #f1e4dc, #e3d3c7); }

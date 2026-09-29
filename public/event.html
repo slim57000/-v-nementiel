@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#d81f4f">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;600;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Great+Vibes&family=Inter:wght@400;600;800&display=swap">
   <link rel="stylesheet" href="/css/app.css">
   <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/invitation.css">
@@ -27,22 +27,26 @@
   </div>
 
   <div id="page" class="hidden">
-    <header id="hero" class="hero">
-      <div class="hero-content">
-        <span id="lock" class="lock"></span>
-        <h1 id="name"></h1>
-        <div id="type-label"></div>
-      </div>
-    </header>
+    <main class="container" style="padding-top:12px">
+      <!-- Carte d'invitation (maquette « faire-part fleuri ») -->
+      <section class="invite-hero">
+        <span id="lock" class="lock-chip"></span>
+        <img class="invite-hero-heart" src="/img/logo.svg" alt="">
+        <h1 id="name" class="script"></h1>
+        <p id="subtitle" class="script-sub"></p>
+        <p id="date-big" class="date-big"></p>
+        <div class="ornament" aria-hidden="true"><span>◆</span></div>
+        <div id="countdown" class="countdown-plain" aria-live="off"></div>
+        <a id="signup" class="btn btn-block cta-stories hidden">Créer votre compte<br><small>pour voir les stories</small></a>
+      </section>
 
-    <main class="container">
+      <section class="stories-preview">
+        <h2>Aperçu des stories <span id="stories-soon" class="soon-tag hidden">Bientôt</span></h2>
+        <div class="stories-row" id="stories-row"></div>
+      </section>
+
       <a id="live-link" class="btn btn-block hidden" style="margin-bottom:16px">● Rejoindre le live</a>
       <a id="cagnotte-link" class="btn btn-light btn-block hidden" style="margin-bottom:16px" target="_blank" rel="noopener">🎁 Participer à la cagnotte</a>
-
-      <section class="card">
-        <h2>Compte à rebours</h2>
-        <div id="countdown" class="countdown" aria-live="off"></div>
-      </section>
 
       <section class="card">
         <ul class="info-list">
