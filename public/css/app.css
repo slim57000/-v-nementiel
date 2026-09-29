@@ -294,3 +294,16 @@ textarea { min-height: 110px; resize: vertical; }
 .legal-others { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0 8px; }
 .legal-card { display: flex; align-items: center; gap: 10px; padding: 14px; border-radius: 16px; background: #fff; box-shadow: var(--shadow); text-decoration: none; color: var(--text); font-weight: 700; font-size: .9rem; }
 .legal-card span { font-size: 1.3rem; }
+
+/* « En direct actuellement » (accueil) */
+#upcoming .section-title h2 { font-size: .85rem; letter-spacing: .06em; }
+.see-all { font-size: .85rem; font-weight: 600; color: var(--text); text-decoration: none; }
+.live-card { flex: none; width: 150px; height: 200px; border-radius: 16px; overflow: hidden; position: relative; color: #fff; text-decoration: none; background: linear-gradient(135deg, #d81f4f, #4a0e22) center / cover; display: flex; flex-direction: column; justify-content: flex-end; padding: 10px 10px 12px; font-size: .72rem; box-shadow: var(--shadow); }
+.live-card::before { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.8), transparent 55%); }
+.live-card > * { position: relative; }
+.live-card b { font-size: .85rem; line-height: 1.2; margin-bottom: 2px; padding-right: 22px; }
+.live-card span:not(.tag) { opacity: .85; padding-right: 22px; }
+.live-card .tag { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,.55); padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: .66rem; display: inline-flex; align-items: center; gap: 4px; }
+.live-card .tag.is-live { background: var(--primary); }
+.live-card .tag.is-live::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #fff; }
+.live-card .heart { position: absolute; right: 8px; bottom: 12px; color: #fff; font-style: normal; }

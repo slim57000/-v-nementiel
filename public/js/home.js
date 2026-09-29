@@ -1,4 +1,4 @@
-import { api, $, toast, publicCard } from "./common.js";
+import { api, $, esc, toast, dayBadge } from "./common.js";
 import { icon, BRAND } from "./icons.js";
 
 // Pictogrammes et logos des boutons de connexion.
@@ -32,9 +32,31 @@ $("#join-form").addEventListener("submit", async (e) => {
   }
 });
 
-// Événements publics à venir.
-api("/api/public?limit=10").then((events) => {
-  if (!events.length) return;
-  $("#upcoming-list").innerHTML = events.map(publicCard).join("");
-  $("#upcoming").classList.remove("hidden");
-}).catch(() => {});
+// « En direct actuellement » : vrais événements publics (en direct aujourd'hui d'abord),
+// complétés par des exemples tant qu'il y en a moins de 3.
+const EXAMPLES = [
+  { name: "Aminata & Kevin", location: "Abidjan, Côte d'Ivoire", image: "/img/maquette/exemple-mariage.jpg" },
+  { name: "Sarah & William", location: "Paris, France", image: "/img/maquette/couple.jpg" },
+  { name: "Remise de diplôme de Junior", location: "Montréal, Canada", image: "/img/maquette/exemple-diplome.jpg" },
+];
+const today = new Date().toISOString().slice(0, 10);
+
+function liveCard({ href, image, tag, live, name, location }) {
+  return `<a class="live-card" ${href ? `href="${esc(href)}"` : ""} ${image ? `style="background-image:url('${esc(image)}')"` : ""}>
+    <span class="tag ${live ? "is-live" : ""}">${esc(tag)}</span>
+    <b>${esc(name)}</b><span>${esc(location)}</span>
+    <i class="heart">${icon("heart", 18)}</i>
+  </a>`;
+}
+
+api("/api/public?limit=10").catch(() => []).then((events) => {
+  const cards = events
+    .map((e) => ({ ...e, live: e.date === today && e.cameras?.length > 0 }))
+    .sort((a, b) => b.live - a.live)
+    .map((e) => liveCard({
+      href: e.live ? `/live?e=${encodeURIComponent(e.slug)}` : `/e/${encodeURIComponent(e.slug)}`,
+      image: e.cover || "/img/maquette/salle.jpg", tag: e.live ? "LIVE" : dayBadge(e.date), live: e.live, name: e.name, location: e.location,
+    }));
+  EXAMPLES.slice(0, Math.max(0, 3 - cards.length)).forEach((ex) => cards.push(liveCard({ ...ex, tag: "Exemple" })));
+  $("#upcoming-list").innerHTML = cards.join("");
+});
