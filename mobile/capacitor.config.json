@@ -1,0 +1,16 @@
+{
+  "appId": "com.evermoments.app",
+  "appName": "EverMoments",
+  "webDir": "www",
+  "server": {
+    "url": "https://evenementieldev.vercel.app",
+    "cleartext": false,
+    "allowNavigation": ["evenementieldev.vercel.app", "*.supabase.co"]
+  },
+  "ios": { "contentInset": "never", "backgroundColor": "#faf7f8" },
+  "android": { "backgroundColor": "#faf7f8" },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 1200, "backgroundColor": "#ffffff", "showSpinner": false },
+    "StatusBar": { "style": "LIGHT", "backgroundColor": "#ffffff" }
+  }
+}

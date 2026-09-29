@@ -43,6 +43,10 @@ npm run dev        # http://localhost:3000
 2. Ajouter un **disque persistant** monté sur `/var/data`.
 3. Variables : `DATA_DIR=/var/data/db`, `UPLOAD_DIR=/var/data/uploads`, `SESSION_SECRET` (chaîne aléatoire longue), `NODE_ENV=production`.
 
+## Applications mobiles
+
+Les applications iOS et Android se trouvent dans `mobile/` (Capacitor) : voir `mobile/README.md`.
+
 ## Structure
 
 ```

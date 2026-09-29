@@ -8,6 +8,13 @@ document.querySelectorAll("[data-social]").forEach((b) => { b.innerHTML = BRAND[
 // Déjà connecté : « Créer mon événement » mène directement au formulaire.
 api("/api/auth/me").then(() => { $("#create").href = "/edit"; }).catch(() => {});
 
+// Dans l'application iOS / Android, les connexions sociales (pas encore actives) sont masquées :
+// Apple refuse les boutons non fonctionnels.
+if (window.Capacitor?.isNativePlatform?.()) {
+  document.querySelector(".socials")?.remove();
+  document.querySelector(".divider")?.remove();
+}
+
 // Connexions sociales : prévues dans une prochaine version.
 document.querySelectorAll("[data-social]").forEach((b) =>
   b.addEventListener("click", () => toast(`Connexion ${b.dataset.social} : bientôt disponible`)));
