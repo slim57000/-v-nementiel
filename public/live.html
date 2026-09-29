@@ -28,6 +28,7 @@
   </div>
 
   <main class="live-body">
+    <div class="chat-list" id="chat-list" aria-live="polite"><p class="chat-empty">Soyez le premier à écrire un message 💬</p></div>
     <form class="chat-input" id="chat">
       <input id="chat-text" placeholder="Écrire un message…" maxlength="200" aria-label="Message">
       <button aria-label="Envoyer">➤</button>
@@ -48,9 +49,9 @@
     </section>
 
     <section>
-      <div class="live-section"><h2>Photos des invités</h2><span class="soon">Bientôt</span></div>
-      <div class="photo-strip">
-        <div></div><div></div><div></div><div></div>
+      <div class="live-section"><h2>Photos des invités<span class="count" id="photo-count"></span></h2></div>
+      <div class="photo-strip" id="photo-strip">
+        <div class="ph"></div><div class="ph"></div><div class="ph"></div><div class="ph"></div>
         <button id="add-photo" aria-label="Ajouter une photo">+</button>
       </div>
     </section>

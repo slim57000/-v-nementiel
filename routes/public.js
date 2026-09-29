@@ -6,7 +6,7 @@ import { currentOrganizer } from "./auth.js";
 
 const router = Router();
 
-const hasAccess = async (req, event) =>
+export const hasAccess = async (req, event) =>
   event.visibility === "public" ||
   getSigned(req, `ev${event.id}`) === codeFingerprint(event.accessCode) ||
   (await currentOrganizer(req))?.id === event.organizerId;
@@ -27,7 +27,8 @@ router.get("/:slug", async (req, res) => {
   if (!(await hasAccess(req, event))) {
     return res.json({ locked: true, name: event.name, type: event.type, visibility: "private" });
   }
-  res.json({ locked: false, ...publicView(event) });
+  const isOwner = (await currentOrganizer(req))?.id === event.organizerId;
+  res.json({ locked: false, isOwner, ...publicView(event) });
 });
 
 // Anti-bruteforce simple par IP (+ événement) (par instance).

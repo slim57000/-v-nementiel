@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import authRoutes from "./routes/auth.js";
 import eventRoutes from "./routes/events.js";
 import publicRoutes from "./routes/public.js";
+import socialRoutes from "./routes/social.js";
 import { UPLOAD_DIR } from "./lib/uploads.js";
 import { findEventBySlug } from "./lib/store.js";
 import { ON_VERCEL, missingConfig } from "./lib/config.js";
@@ -29,6 +30,7 @@ if (missingConfig.length) {
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/public", publicRoutes);
+app.use("/api/public/:slug", socialRoutes);
 
 // Page publique : on injecte titre + balises Open Graph pour un bel aperçu dans WhatsApp/SMS.
 const eventTemplate = readFileSync(new URL("./public/event.html", import.meta.url), "utf8");

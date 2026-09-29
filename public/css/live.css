@@ -52,3 +52,14 @@
 .live .toast { background: #fff; color: #111; }
 
 @media (min-width: 960px) { .live-stage { border-radius: 0 0 18px 18px; overflow: hidden; } }
+
+/* Chat */
+.chat-list { display: flex; flex-direction: column; gap: 8px; max-height: 210px; overflow-y: auto; margin-bottom: 10px; scrollbar-width: none; }
+.chat-list::-webkit-scrollbar { display: none; }
+.chat-msg { display: flex; gap: 10px; align-items: flex-start; font-size: .9rem; animation: chatIn .25s ease-out; }
+.chat-msg i { flex: none; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #d81f4f, #f4b740); display: flex; align-items: center; justify-content: center; font-style: normal; font-weight: 800; font-size: .85rem; }
+.chat-msg b { display: block; font-size: .85rem; }
+.chat-empty { color: var(--live-muted); font-size: .85rem; text-align: center; padding: 6px; }
+@keyframes chatIn { from { opacity: 0; transform: translateY(6px); } }
+.photo-strip img, .photo-strip .ph { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; background: var(--live-card); cursor: pointer; }
+.live-section .count { color: var(--primary); margin-left: 6px; }

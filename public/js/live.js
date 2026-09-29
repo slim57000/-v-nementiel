@@ -1,4 +1,4 @@
-import { api, $, esc, share, toast, eventUrl } from "./common.js";
+import { api, $, esc, share, toast, guestName, viewPhoto, pickAndUploadPhoto } from "./common.js";
 
 const slug = new URLSearchParams(location.search).get("e") || "";
 
@@ -21,6 +21,8 @@ export function embedUrl(url) {
 }
 
 let cameras = [];
+let isOwner = false;
+const base = `/api/public/${encodeURIComponent(slug)}`;
 
 function play(index) {
   const src = embedUrl(cameras[index]?.url);
@@ -58,10 +60,14 @@ async function load() {
     $("#reactions").style.gridTemplateColumns = "repeat(5, 1fr)";
   }
 
+  isOwner = ev.isOwner;
   cameras = ev.cameras;
   $("#cams").innerHTML = cameras.map((c, i) => `<button class="cam" data-index="${i}">${esc(c.name)}</button>`).join("");
   $("#cams-section").classList.toggle("hidden", cameras.length < 2);
   play(0);
+  poll();
+  loadPhotos();
+  setInterval(loadPhotos, 20000);
 }
 
 $("#cams").addEventListener("click", (e) => {
@@ -69,21 +75,94 @@ $("#cams").addEventListener("click", (e) => {
   if (btn) play(Number(btn.dataset.index));
 });
 
-// Réactions : animation à l'écran (le partage en temps réel arrive avec le chat).
-$("#reactions").addEventListener("click", (e) => {
-  const btn = e.target.closest("[data-emoji]");
-  if (!btn) return;
+// --- Chat et réactions : interrogation du serveur toutes les 3 s ---
+let lastId = 0;
+let firstLoad = true;
+const mine = new Set(); // ids de nos propres envois (déjà affichés / animés)
+
+function floatEmoji(emoji) {
   const el = document.createElement("span");
-  el.textContent = btn.dataset.emoji;
+  el.textContent = emoji;
   el.style.setProperty("--dx", `${Math.round(Math.random() * 40 - 20)}px`);
   $("#floaters").append(el);
   setTimeout(() => el.remove(), 2500);
+}
+
+const shown = new Set(); // messages déjà affichés (évite les doublons envoi / interrogation)
+
+function addChat(m) {
+  if (shown.has(m.id)) return;
+  shown.add(m.id);
+  const list = $("#chat-list");
+  list.querySelector(".chat-empty")?.remove();
+  list.insertAdjacentHTML("beforeend",
+    `<div class="chat-msg"><i>${esc(m.name.charAt(0).toUpperCase())}</i><div><b>${esc(m.name)}</b>${esc(m.text)}</div></div>`);
+  while (list.children.length > 50) list.firstElementChild.remove();
+  list.scrollTop = list.scrollHeight;
+}
+
+function handle(items) {
+  for (const m of items) {
+    lastId = Math.max(lastId, m.id);
+    if (mine.has(m.id)) continue;
+    if (m.kind === "chat") addChat(m);
+    else if (!firstLoad) floatEmoji(m.text);
+  }
+  firstLoad = false;
+}
+
+async function poll() {
+  if (!document.hidden) {
+    try { handle(await api(`${base}/feed?after=${lastId}`)); } catch { /* réseau : on réessaie */ }
+  }
+  setTimeout(poll, 3000);
+}
+
+$("#reactions").addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-emoji]");
+  if (!btn) return;
+  floatEmoji(btn.dataset.emoji);
+  let name = "Invité";
+  try { name = localStorage.getItem("em-name") || name; } catch { /* ignoré */ }
+  api(`${base}/reactions`, { method: "POST", body: { emoji: btn.dataset.emoji, name } })
+    .then((m) => mine.add(m.id), (err) => toast(err.message));
 });
 
-$("#chat").addEventListener("submit", (e) => {
+$("#chat").addEventListener("submit", async (e) => {
   e.preventDefault();
-  toast("Le chat en direct arrive très bientôt 💬");
+  const text = $("#chat-text").value.trim();
+  if (!text) return;
+  const name = await guestName();
+  try {
+    addChat(await api(`${base}/messages`, { method: "POST", body: { name, text } }));
+    $("#chat-text").value = "";
+  } catch (err) {
+    toast(err.message);
+  }
 });
-$("#add-photo").addEventListener("click", () => toast("L'envoi de photos arrive très bientôt 📷"));
+
+// --- Photos des invités ---
+let photos = [];
+
+async function loadPhotos() {
+  try { photos = await api(`${base}/photos`); } catch { return; }
+  $("#photo-count").textContent = photos.length ? ` ${photos.length}` : "";
+  const thumbs = photos.slice(0, 4).map((p, i) => `<img src="${esc(p.url)}" alt="Photo de ${esc(p.name)}" data-i="${i}" loading="lazy">`);
+  while (thumbs.length < 4) thumbs.push('<div class="ph"></div>');
+  $("#photo-strip").innerHTML = `${thumbs.join("")}<button id="add-photo" aria-label="Ajouter une photo">+</button>`;
+}
+
+$("#photo-strip").addEventListener("click", async (e) => {
+  if (e.target.id === "add-photo") {
+    await pickAndUploadPhoto(slug).catch(() => null);
+    return loadPhotos();
+  }
+  const photo = photos[e.target.dataset.i];
+  if (!photo) return;
+  viewPhoto(photo, isOwner ? async () => {
+    await api(`${base}/photos/${photo.id}`, { method: "DELETE" });
+    loadPhotos();
+  } : null);
+});
 
 load();

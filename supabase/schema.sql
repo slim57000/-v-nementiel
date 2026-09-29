@@ -32,10 +32,32 @@ alter table events add column if not exists cagnotte_url text;
 
 create index if not exists events_organizer_idx on events (organizer_id);
 
+-- Chat / réactions et photos des invités (ajoutés en V0.3).
+create table if not exists messages (
+  id          bigint generated always as identity primary key,
+  event_id    bigint not null references events(id) on delete cascade,
+  kind        text not null check (kind in ('chat', 'reaction')),
+  name        text not null,
+  text        text not null,
+  created_at  timestamptz not null default now()
+);
+create index if not exists messages_event_idx on messages (event_id, id);
+
+create table if not exists photos (
+  id          bigint generated always as identity primary key,
+  event_id    bigint not null references events(id) on delete cascade,
+  name        text not null,
+  url         text not null,
+  created_at  timestamptz not null default now()
+);
+create index if not exists photos_event_idx on photos (event_id, id);
+
 -- Sécurité : RLS activé sans règle = aucune lecture/écriture avec la clé publique (anon).
 -- Seul le serveur, avec la clé service_role, accède aux données.
 alter table organizers enable row level security;
 alter table events enable row level security;
+alter table messages enable row level security;
+alter table photos enable row level security;
 
 -- Bucket public pour les photos (couvertures et faire-part).
 insert into storage.buckets (id, name, public)

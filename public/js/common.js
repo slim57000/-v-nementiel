@@ -124,3 +124,73 @@ export function tabbar(active) {
 
 // Redirige vers la connexion en revenant ensuite sur la page courante.
 export const goLogin = () => location.replace(`/connexion?next=${encodeURIComponent(location.pathname + location.search)}`);
+
+// Prénom de l'invité (chat, réactions, photos) : demandé une fois puis mémorisé sur l'appareil.
+export function guestName() {
+  let saved = "";
+  try { saved = localStorage.getItem("em-name") || ""; } catch { /* stockage indisponible */ }
+  if (saved) return Promise.resolve(saved);
+  return new Promise((resolve) => {
+    document.body.insertAdjacentHTML("beforeend", `
+      <div class="sheet" id="name-sheet" role="dialog" aria-modal="true">
+        <form class="card" style="color:var(--text)">
+          <h2>Votre prénom</h2>
+          <p class="muted">Il s'affichera à côté de vos messages et de vos photos.</p>
+          <input name="n" maxlength="30" required autocomplete="given-name" placeholder="Ex. Sophie">
+          <button class="btn btn-block" style="margin-top:12px">Valider</button>
+        </form>
+      </div>`);
+    const sheet = document.getElementById("name-sheet");
+    const input = sheet.querySelector("input");
+    input.focus();
+    sheet.querySelector("form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = input.value.trim();
+      if (!name) return;
+      try { localStorage.setItem("em-name", name); } catch { /* ignoré */ }
+      sheet.remove();
+      resolve(name);
+    });
+  });
+}
+
+// Affiche une photo en plein écran. `onDelete` (facultatif) ajoute un bouton de suppression.
+export function viewPhoto(photo, onDelete) {
+  document.body.insertAdjacentHTML("beforeend", `
+    <div class="viewer" id="viewer" role="dialog" aria-modal="true">
+      <img src="${esc(photo.url)}" alt="">
+      <div class="viewer-bar">
+        <span>📷 ${esc(photo.name)}</span>
+        ${onDelete ? '<button class="btn btn-danger btn-sm" data-del>Supprimer</button>' : ""}
+        <button class="btn btn-light btn-sm" data-close>Fermer</button>
+      </div>
+    </div>`);
+  const viewer = document.getElementById("viewer");
+  viewer.addEventListener("click", async (e) => {
+    if (e.target.matches("[data-del]")) {
+      if (!confirm("Supprimer cette photo ?")) return;
+      await onDelete();
+      viewer.remove();
+    } else if (e.target.matches("[data-close]") || e.target === viewer) viewer.remove();
+  });
+}
+
+// Choisit une photo, la redimensionne et l'envoie comme photo d'invité. Renvoie la photo créée.
+export function pickAndUploadPhoto(slug) {
+  return new Promise((resolve, reject) => {
+    const input = Object.assign(document.createElement("input"), { type: "file", accept: "image/*" });
+    input.addEventListener("change", async () => {
+      const file = input.files[0];
+      if (!file) return;
+      try {
+        const [image, name] = await Promise.all([resizeImage(file, 1600), guestName()]);
+        toast("Envoi de la photo…");
+        resolve(await api(`/api/public/${encodeURIComponent(slug)}/photos`, { method: "POST", body: { name, image } }));
+      } catch (err) {
+        toast(err.message);
+        reject(err);
+      }
+    });
+    input.click();
+  });
+}

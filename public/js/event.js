@@ -1,4 +1,4 @@
-import { api, $, esc, copy, share, formatDate, eventUrl, EVENT_TYPES } from "./common.js";
+import { api, $, esc, copy, share, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, EVENT_TYPES } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 
 const slug = decodeURIComponent(location.pathname.split("/").pop());
@@ -84,16 +84,35 @@ const SUBTITLES = {
   retraite: "Départ en retraite", inauguration: "Inauguration", autre: "",
 };
 
-// Aperçu des stories : invitation à créer un compte tant que l'invité n'est pas connecté.
+// Stories : photos des invités des dernières 24 h, visibles une fois connecté.
 async function renderStories(ev) {
-  const loggedIn = await api("/api/auth/me").then(() => true, () => false);
-  const first = ev.cover ? `<div class="story-circle"><div style="background-image:url('${esc(ev.cover)}')"></div></div>` : "";
-  $("#stories-row").innerHTML = first + '<div class="story-circle locked"><div>🔒</div></div>'.repeat(ev.cover ? 3 : 4);
-  $("#stories-soon").classList.toggle("hidden", !loggedIn);
+  const loggedIn = ev.isOwner || (await api("/api/auth/me").then(() => true, () => false));
   if (!loggedIn) {
+    const first = ev.cover ? `<div class="story-circle"><div style="background-image:url('${esc(ev.cover)}')"></div></div>` : "";
+    $("#stories-row").innerHTML = first + '<div class="story-circle locked"><div>🔒</div></div>'.repeat(ev.cover ? 3 : 4);
     $("#signup").href = `/connexion?next=${encodeURIComponent(location.pathname)}`;
     $("#signup").classList.remove("hidden");
+    return;
   }
+  const base = `/api/public/${encodeURIComponent(ev.slug)}`;
+  const load = async () => {
+    const dayAgo = Date.now() - 24 * 3600 * 1000;
+    const stories = (await api(`${base}/photos`).catch(() => [])).filter((p) => new Date(p.createdAt) > dayAgo);
+    $("#stories-row").innerHTML = stories.length
+      ? stories.map((p, i) => `<button class="story-circle" data-i="${i}" aria-label="Photo de ${esc(p.name)}"><div style="background-image:url('${esc(p.url)}')"></div></button>`).join("")
+      : '<p class="muted small" style="margin:0">Aucune story pour l\'instant. Partagez la première photo !</p>';
+    $("#stories-row").onclick = (e) => {
+      const photo = stories[e.target.closest("[data-i]")?.dataset.i];
+      if (!photo) return;
+      viewPhoto(photo, ev.isOwner ? async () => {
+        await api(`${base}/photos/${photo.id}`, { method: "DELETE" });
+        load();
+      } : null);
+    };
+  };
+  $("#add-story").classList.remove("hidden");
+  $("#add-story").onclick = () => pickAndUploadPhoto(ev.slug).then(load, () => {});
+  load();
 }
 
 function startCountdown(target) {
