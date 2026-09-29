@@ -311,3 +311,5 @@ textarea { min-height: 110px; resize: vertical; }
 .live-card .tag.is-live::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #fff; }
 .live-card .heart { position: absolute; right: 8px; bottom: 12px; color: #fff; font-style: normal; }
 .site-footer .footer-cam { display: block; margin-top: 18px; }
+.cam-badge { flex: none; white-space: nowrap; gap: 6px; padding: 6px 12px; background: var(--primary-light); color: var(--primary); }
+.topbar .logo { min-width: 0; }
