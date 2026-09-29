@@ -6,12 +6,25 @@ import eventRoutes from "./routes/events.js";
 import publicRoutes from "./routes/public.js";
 import { UPLOAD_DIR } from "./lib/uploads.js";
 import { findEventBySlug } from "./lib/store.js";
+import { ON_VERCEL, missingConfig } from "./lib/config.js";
 
 const PUBLIC_DIR = fileURLToPath(new URL("./public", import.meta.url));
 
 const app = express();
 app.set("trust proxy", 1);
 app.use(express.json({ limit: "4.5mb" })); // images envoyées en base64 (limite Vercel)
+
+// Configuration incomplète : message explicite plutôt qu'un plantage.
+if (missingConfig.length) {
+  console.error("Configuration incomplète :", missingConfig.join(", "));
+  app.use((req, res) => {
+    res.status(503).type("html").send(`<meta name="viewport" content="width=device-width">
+      <div style="font-family:sans-serif;max-width:560px;margin:10vh auto;padding:16px">
+      <h1>Configuration incomplète</h1><p>Variables d'environnement manquantes sur Vercel :</p>
+      <ul>${missingConfig.map((v) => `<li><code>${v}</code></li>`).join("")}</ul>
+      <p>Ajoutez-les (Settings → Environment Variables / Storage) puis redéployez.</p></div>`);
+  });
+}
 
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
@@ -36,7 +49,7 @@ app.get("/e/:slug", async (req, res) => {
 });
 
 // En local uniquement : sur Vercel, public/ est servi par le CDN (cleanUrls dans vercel.json).
-if (!process.env.VERCEL) {
+if (!ON_VERCEL) {
   app.use("/uploads", express.static(UPLOAD_DIR, { maxAge: "30d", immutable: true }));
   app.use(express.static(PUBLIC_DIR, { extensions: ["html"] }));
   const port = process.env.PORT || 3000;
