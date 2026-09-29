@@ -114,6 +114,8 @@ form.addEventListener("submit", async (e) => {
       url: row.querySelector("[name=cam-url]").value,
     })),
     cagnotteUrl: $("#cagnotte").value,
+    cameramanNotes: $("#cameraman-notes").value,
+    regenerateCameramanCode: $("#regenerate-cam").checked,
     invite: { ...invite(), photo: choice === "custom" ? state.invitePhoto : choice },
     coverData: state.coverData,
     removeCover: state.removeCover,
@@ -162,6 +164,11 @@ async function init() {
     for (const key of ["name", "date", "time", "location", "description"]) field(key).value = ev[key];
     ev.cameras.forEach(addCamera);
     $("#cagnotte").value = ev.cagnotteUrl;
+    $("#cameraman-notes").value = ev.cameramanNotes;
+    if (ev.cameramanCode) {
+      $("#cameraman-code").textContent = ev.cameramanCode;
+      $("#cameraman-info").classList.remove("hidden");
+    }
     form.querySelector(`[name=type][value="${ev.type}"]`).checked = true;
     form.querySelector(`[name=visibility][value="${ev.visibility}"]`).checked = true;
     form.querySelector(`[name=style][value="${ev.inviteStyle}"]`).checked = true;

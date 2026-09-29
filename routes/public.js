@@ -9,6 +9,7 @@ const router = Router();
 export const hasAccess = async (req, event) =>
   event.visibility === "public" ||
   getSigned(req, `ev${event.id}`) === codeFingerprint(event.accessCode) ||
+  (event.cameramanCode && getSigned(req, `cam${event.id}`) === codeFingerprint(`cam:${event.cameramanCode}`)) ||
   (await currentOrganizer(req))?.id === event.organizerId;
 
 // Événements publics à venir : cartes de la page d'accueil et de « Découvrir ».

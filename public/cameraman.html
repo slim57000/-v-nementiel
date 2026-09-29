@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#d81f4f">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap">
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <title>Espace caméraman — EverMoments</title>
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="/"><img src="/img/logo.svg" alt=""><span>Ever<b>Moments</b></span></a>
+    <span class="badge" style="background:var(--primary-light);color:var(--primary)">🎥 Caméraman</span>
+  </header>
+
+  <main class="container" style="max-width:560px">
+    <form id="login" class="card hidden" novalidate>
+      <h1 style="font-size:1.4rem">Espace caméraman</h1>
+      <p class="muted">Saisissez le code caméraman transmis par l'organisateur.</p>
+      <input id="code" class="code-input" maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="CODE" aria-label="Code caméraman">
+      <p id="login-error" class="error" role="alert"></p>
+      <button class="btn btn-block" style="margin-top:12px">Accéder à mes missions</button>
+    </form>
+
+    <div id="space" class="hidden">
+      <h1 id="ev-name" style="margin-bottom:4px"></h1>
+      <p class="muted" id="ev-when"></p>
+
+      <section class="card">
+        <h2>📋 Consignes de l'organisateur</h2>
+        <p id="notes" style="white-space:pre-line;margin:0"></p>
+      </section>
+
+      <section class="card">
+        <h2>🎥 Mes caméras</h2>
+        <p class="muted small">Pour chaque caméra, collez le lien de votre direct YouTube Live ou Twitch. Les invités pourront passer d'un angle à l'autre.</p>
+        <div id="cameras"></div>
+        <button type="button" id="add-camera" class="btn btn-ghost btn-sm">+ Ajouter une caméra</button>
+        <p id="cam-error" class="error" role="alert"></p>
+        <button id="save" class="btn btn-block" style="margin-top:10px">Enregistrer les liens</button>
+      </section>
+
+      <section class="card">
+        <h2>📷 Partager des images</h2>
+        <p class="muted small">Les images apparaissent dans « Photos des invités » et dans les stories.</p>
+        <button id="share-photo" class="btn btn-light btn-block">Envoyer une photo</button>
+      </section>
+
+      <a id="open-live" class="btn btn-block">● Ouvrir le live</a>
+    </div>
+  </main>
+  <script type="module" src="/js/cameraman.js"></script>
+</body>
+</html>

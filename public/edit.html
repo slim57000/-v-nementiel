@@ -93,6 +93,15 @@
         <p class="muted small">Collez le lien YouTube Live ou Twitch de chaque caméra. Les invités pourront changer d'angle pendant le direct.</p>
         <div id="cameras"></div>
         <button type="button" id="add-camera" class="btn btn-ghost btn-sm">+ Ajouter une caméra</button>
+        <label for="cameraman-notes">Consignes pour le(s) caméraman(s)</label>
+        <textarea id="cameraman-notes" maxlength="1000" placeholder="Horaires, moments à filmer, emplacements des caméras…" style="min-height:80px"></textarea>
+        <div id="cameraman-info" class="notice hidden">
+          Code caméraman : <span class="code" id="cameraman-code"></span>
+          <p class="small muted" style="margin:4px 0 0">À transmettre au caméraman : il se connecte sur <b>/cameraman</b> pour gérer les liens du live.</p>
+          <label style="font-weight:400;display:flex;gap:8px;align-items:center;margin:8px 0 0">
+            <input type="checkbox" id="regenerate-cam" style="width:auto"> Générer un nouveau code caméraman
+          </label>
+        </div>
         <label for="cagnotte">Lien de la cagnotte (Leetchi, Lydia…)</label>
         <input id="cagnotte" type="url" inputmode="url" maxlength="300" placeholder="https://www.leetchi.com/c/…">
       </section>

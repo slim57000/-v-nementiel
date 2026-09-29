@@ -53,12 +53,14 @@ function card(ev) {
       <div><span>📍</span><span><b>Lieu</b>${esc(ev.location)}</span></div>
       <div><span>📅</span><span><b>Date</b>${esc(formatDate(ev.date, ev.time))}</span></div>
       ${isPrivate ? `<div style="grid-column:1/-1"><span>🔑</span><span><b>Code d'accès invités</b><span class="code" style="font-size:1.05rem">${esc(ev.accessCode)}</span></span></div>` : ""}
+      <div style="grid-column:1/-1"><span>🎥</span><span><b>Code caméraman</b><span class="code" style="font-size:1.05rem">${esc(ev.cameramanCode)}</span></span></div>
     </div>
     <div class="ev-tools">
       <button class="btn btn-light btn-sm" data-action="share">Partager</button>
       <button class="btn btn-light btn-sm" data-action="link">Copier le lien</button>
       ${isPrivate ? `<button class="btn btn-light btn-sm" data-action="code">Copier le code</button>
       <button class="btn btn-light btn-sm" data-action="direct">Lien + code</button>` : ""}
+      <button class="btn btn-light btn-sm" data-action="cameraman">Accès caméraman</button>
       <a class="btn btn-ghost btn-sm" href="/edit?id=${ev.id}">Modifier</a>
       <button class="btn btn-danger btn-sm" data-action="delete">Supprimer</button>
     </div>
@@ -93,6 +95,9 @@ $("#list").addEventListener("click", async (e) => {
   if (action === "code") copy(ev.accessCode, "Code copié !");
   // Lien qui déverrouille directement l'événement privé (à n'envoyer qu'aux invités).
   if (action === "direct") copy(`${url}?code=${ev.accessCode}`, "Lien avec code copié !");
+  if (action === "cameraman") {
+    copy(`Espace caméraman « ${ev.name} » : ${location.origin}/cameraman — code : ${ev.cameramanCode}`, "Accès caméraman copié !");
+  }
   if (action === "share") {
     const text = ev.visibility === "private"
       ? `Vous êtes invité·e à « ${ev.name} » ! Code d'accès : ${ev.accessCode}`

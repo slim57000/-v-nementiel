@@ -44,7 +44,12 @@ const handle = (fn) => async (req, res) => {
 };
 
 router.get("/", handle(async (req, res) => {
-  res.json((await listEvents(req.organizer.id)).map(ownerView));
+  const events = await listEvents(req.organizer.id);
+  // Événements créés avant l'espace caméraman : on leur attribue un code.
+  for (const event of events.filter((e) => !e.cameramanCode)) {
+    Object.assign(event, await saveEvent({ ...event, cameramanCode: randomCode() }));
+  }
+  res.json(events.map(ownerView));
 }));
 
 router.get("/:id", handle(async (req, res) => {
@@ -62,6 +67,7 @@ router.post("/", handle(async (req, res) => {
     organizerId: req.organizer.id,
     slug: slugify(input.name),
     accessCode: randomCode(),
+    cameramanCode: randomCode(),
   });
   res.status(201).json(ownerView(event));
 }));
@@ -76,6 +82,7 @@ router.put("/:id", handle(async (req, res) => {
     ...input,
     ...images,
     accessCode: req.body.regenerateCode ? randomCode() : existing.accessCode,
+    cameramanCode: req.body.regenerateCameramanCode || !existing.cameramanCode ? randomCode() : existing.cameramanCode,
   });
   res.json(ownerView(event));
 }));

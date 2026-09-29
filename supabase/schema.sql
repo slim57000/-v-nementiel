@@ -32,6 +32,11 @@ alter table events add column if not exists cagnotte_url text;
 
 create index if not exists events_organizer_idx on events (organizer_id);
 
+-- Espace caméraman (ajouté en V0.5).
+alter table events add column if not exists cameraman_code text;
+alter table events add column if not exists cameraman_notes text not null default '';
+create index if not exists events_cameraman_code_idx on events (cameraman_code);
+
 -- Chat / réactions et photos des invités (ajoutés en V0.3).
 create table if not exists messages (
   id          bigint generated always as identity primary key,
