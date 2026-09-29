@@ -16,7 +16,7 @@
 [data-theme="dark"] .badge { background: #16301f; }
 [data-theme="dark"] .badge.private, [data-theme="dark"] .report-badge, [data-theme="dark"] .legal .todo { background: #3a2a10; color: #f5c77a; }
 [data-theme="dark"] .notice { color: var(--text); }
-[data-theme="dark"] .hero-collage { opacity: .95; }
+[data-theme="dark"] .hero-collage { mix-blend-mode: normal; opacity: .95; }
 [data-theme="dark"] .legal-box p, [data-theme="dark"] .legal-box li { color: #d8d2de; }
 [data-theme="dark"] .toast { background: #f2eef5; color: #121014; }
 [data-theme="dark"] .see-all, [data-theme="dark"] .legal-card, [data-theme="dark"] .friend-row { color: var(--text); }
@@ -281,7 +281,17 @@ textarea { min-height: 110px; resize: vertical; }
 .legal .todo { background: #fff4e0; padding: 0 4px; border-radius: 4px; }
 
 /* ---------- Fidélité maquettes ---------- */
-.hero-collage { width: calc(100% + 24px); max-width: none; margin: 0 -12px 10px; -webkit-mask-image: linear-gradient(#000 80%, transparent); mask-image: linear-gradient(#000 80%, transparent); }
+/* Collage d'accueil fondu dans la page : blanc de l'image = fond de page (multiply), bords estompés, pleine largeur. */
+.hero-collage {
+  display: block; width: calc(100% + 32px); max-width: none; margin: -16px -16px 0;
+  mix-blend-mode: multiply;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 7%, #000 76%, transparent 100%), linear-gradient(to right, transparent 0, #000 5%, #000 95%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 7%, #000 76%, transparent 100%), linear-gradient(to right, transparent 0, #000 5%, #000 95%, transparent 100%);
+  mask-composite: intersect;
+}
+.hero-collage + p .logo-lg { margin-top: -18px; position: relative; }
+@media (min-width: 520px) { .hero-collage { border-radius: 0 0 32px 32px; } }
 .features i svg { display: block; }
 .socials button { display: flex; align-items: center; justify-content: center; }
 .i { display: inline-block; vertical-align: middle; flex: none; }
