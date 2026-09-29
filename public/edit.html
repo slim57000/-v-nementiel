@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#d81f4f">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Great+Vibes&family=Inter:wght@400;600;800&display=swap">
-  <link rel="stylesheet" href="/css/app.css?v=21">
+  <link rel="stylesheet" href="/css/app.css?v=22">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="stylesheet" href="/css/invitation.css?v=6">
   <title>Événement</title>
@@ -81,7 +81,10 @@
         <input id="inv-title" maxlength="150">
         <label for="inv-text">Texte</label>
         <textarea id="inv-text" maxlength="1500"></textarea>
-        <button type="button" id="regen-text" class="btn btn-ghost btn-sm" style="margin-top:8px">↺ Texte proposé automatiquement</button>
+        <div class="text-tools">
+          <button type="button" id="gen-text" class="btn btn-light btn-sm">✨ Générer un texte</button>
+          <button type="button" id="ready-texts" class="btn btn-ghost btn-sm">📚 Textes prêts</button>
+        </div>
 
         <label>Photo du faire-part</label>
         <div class="choices" style="grid-template-columns:repeat(3,minmax(0,1fr))">

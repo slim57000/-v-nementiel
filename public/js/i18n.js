@@ -37,6 +37,7 @@ const EN = {
   "Photo de couverture": "Cover photo", "Retirer la photo": "Remove photo", "2. Accès": "2. Access", "3. Faire-part": "3. Invitation",
   "Style": "Style", "Aperçu": "Preview", "Accroche": "Tagline", "Titre": "Title", "Texte": "Text",
   "↺ Texte proposé automatiquement": "↺ Suggested text", "Photo du faire-part": "Invitation photo", "Autre photo": "Other photo",
+  "✨ Générer un texte": "✨ Generate a text", "📚 Textes prêts": "📚 Ready-made texts",
   "Sans photo": "No photo", "+ Ajouter une caméra": "+ Add a camera", "Tout débloquer": "Unblock all",
   "Classique": "Classic", "Moderne": "Modern", "Élégant": "Elegant", "Fleuri": "Floral",
   "Mariage": "Wedding", "Anniversaire": "Birthday", "Baptême": "Baptism", "Communion": "Communion", "Fiançailles": "Engagement",

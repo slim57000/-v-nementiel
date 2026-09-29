@@ -1,5 +1,5 @@
-import { api, $, toast, resizeImage, goLogin, EVENT_TYPES, livePlaceholder } from "./common.js";
-import { defaultInvite, renderInvite, invitePhotoUrl } from "./invitation.js";
+import { api, $, esc, toast, resizeImage, goLogin, EVENT_TYPES, livePlaceholder } from "./common.js";
+import { defaultInvite, renderInvite, invitePhotoUrl, templatesFor } from "./invitation.js";
 
 const form = $("#form");
 const id = new URLSearchParams(location.search).get("id");
@@ -68,9 +68,41 @@ form.addEventListener("input", (e) => {
 });
 form.addEventListener("change", refresh);
 
-$("#regen-text").addEventListener("click", () => {
-  state.inviteTouched = false;
+// Textes du faire-part : « Générer » propose le texte suivant du type d'événement,
+// « Textes prêts » affiche toute la liste pour en choisir un.
+let textIndex = 0;
+function applyTemplate([kicker, text]) {
+  $("#inv-kicker").value = kicker;
+  $("#inv-text").value = text;
+  if (!$("#inv-title").value) $("#inv-title").value = field("name").value;
+  state.inviteTouched = true;
   refresh();
+}
+
+$("#gen-text").addEventListener("click", () => {
+  const list = templatesFor(field("type").value);
+  textIndex = (textIndex + 1) % list.length;
+  applyTemplate(list[textIndex]);
+  toast(`Texte ${textIndex + 1} / ${list.length}`);
+});
+
+$("#ready-texts").addEventListener("click", () => {
+  const list = templatesFor(field("type").value);
+  document.body.insertAdjacentHTML("beforeend", `
+    <div class="sheet" id="texts-sheet" role="dialog" aria-modal="true" aria-labelledby="texts-title">
+      <div class="card">
+        <h2 id="texts-title" style="font-size:1.1rem">Textes prêts</h2>
+        <div class="texts-list">${list.map(([k, t], i) => `
+          <button type="button" class="text-option" data-i="${i}"><b>${esc(k)}</b><span>${esc(t)}</span></button>`).join("")}</div>
+        <button type="button" class="btn btn-light btn-block" data-close style="margin-top:10px">Fermer</button>
+      </div>
+    </div>`);
+  const sheet = $("#texts-sheet");
+  sheet.addEventListener("click", (e) => {
+    const opt = e.target.closest("[data-i]");
+    if (opt) { textIndex = Number(opt.dataset.i); applyTemplate(list[textIndex]); }
+    if (opt || e.target.closest("[data-close]") || e.target === sheet) sheet.remove();
+  });
 });
 
 $("#cover").addEventListener("change", async (e) => {
