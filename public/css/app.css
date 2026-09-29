@@ -253,3 +253,20 @@ textarea { min-height: 110px; resize: vertical; }
 .legal h2 { font-size: 1.1rem; margin-top: 1.6em; }
 .legal p, .legal li { color: #3b3640; }
 .legal .todo { background: #fff4e0; padding: 0 4px; border-radius: 4px; }
+
+/* ---------- Fidélité maquettes ---------- */
+.hero-collage { width: 100%; border-radius: 26px; margin: 4px 0 14px; -webkit-mask-image: linear-gradient(#000 80%, transparent); mask-image: linear-gradient(#000 80%, transparent); }
+.features i svg { display: block; }
+.socials button { display: flex; align-items: center; justify-content: center; }
+.i { display: inline-block; vertical-align: middle; flex: none; }
+.tabbar .ico .i { width: 24px; height: 24px; }
+.tabbar .ico { filter: none; opacity: 1; }
+.live-tag { display: inline-flex; align-items: center; gap: 4px; background: var(--primary); color: #fff; font-size: .7rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; letter-spacing: .03em; }
+.live-tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #fff; }
+.ev-cover .live-now { display: flex; align-items: center; gap: 8px; font-size: 1.3rem; font-weight: 800; }
+.ev-cover .live-now::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 4px rgba(216,31,79,.35); }
+.ev-pot { margin: 0 14px 14px; padding: 12px; border-radius: 14px; background: var(--primary-light); display: flex; align-items: center; gap: 10px; }
+.ev-pot b { display: block; }
+.ev-pot .btn { margin-left: auto; }
+.story-circle.teaser div { background-size: cover; }
+.story-img.live { border-color: var(--primary); }

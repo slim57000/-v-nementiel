@@ -63,3 +63,13 @@
 @keyframes chatIn { from { opacity: 0; transform: translateY(6px); } }
 .photo-strip img, .photo-strip .ph { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; background: var(--live-card); cursor: pointer; }
 .live-section .count { color: var(--primary); margin-left: 6px; }
+
+/* Fidélité maquette : vignettes réelles, fond, barre d'onglets */
+.live-stage { background: #000 center / cover; }
+.cam.has-thumb { background-size: cover; background-position: center; text-shadow: 0 1px 4px rgba(0,0,0,.8); }
+.cam.has-thumb::after { display: none; }
+.cam { box-shadow: inset 0 -30px 30px -10px rgba(0,0,0,.7); }
+.has-live-tabs { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+.live-tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: grid; grid-template-columns: repeat(5, 1fr); background: rgba(17,16,20,.96); border-top: 1px solid #222; padding: 8px 4px calc(8px + env(safe-area-inset-bottom)); backdrop-filter: blur(8px); }
+.live-tabs a { display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--live-muted); text-decoration: none; font-size: .7rem; }
+.live-tabs a:hover, .live-tabs a:focus { color: var(--primary); }

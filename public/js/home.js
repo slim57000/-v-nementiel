@@ -1,15 +1,9 @@
 import { api, $, toast, publicCard } from "./common.js";
+import { icon, BRAND } from "./icons.js";
 
-// Collage : photos réelles de public/img/accueil/<nom>.jpg si présentes, sinon pastille + emoji.
-document.querySelectorAll("[data-photo]").forEach((tile) => {
-  const src = `/img/accueil/${tile.dataset.photo}.jpg`;
-  const img = new Image();
-  img.onload = () => {
-    tile.style.backgroundImage = `url("${src}")`;
-    tile.classList.add("has-photo");
-  };
-  img.src = src;
-});
+// Pictogrammes et logos des boutons de connexion.
+document.querySelectorAll("[data-icon]").forEach((el) => { el.innerHTML = icon(el.dataset.icon, 26); });
+document.querySelectorAll("[data-social]").forEach((b) => { b.innerHTML = BRAND[b.dataset.social.toLowerCase()]; });
 
 // Déjà connecté : « Créer mon événement » mène directement au formulaire.
 api("/api/auth/me").then(() => { $("#create").href = "/edit"; }).catch(() => {});

@@ -13,9 +13,7 @@
 </head>
 <body>
   <main class="container" style="max-width:480px">
-    <div class="collage" aria-hidden="true">
-      <div data-photo="mariage">💍</div><div data-photo="bebe">🍼</div><div data-photo="diplome">🎓</div>
-      <div data-photo="anniversaire">🎂</div><div data-photo="bapteme">🕊️</div><div data-photo="fete">🎉</div>
+    <img class="hero-collage" src="/img/maquette/collage.jpg" alt="Mariage, baptême, anniversaire, remise de diplôme : tous vos moments">
     </div>
 
     <p style="text-align:center;margin:0">
@@ -23,9 +21,9 @@
     </p>
 
     <div class="features">
-      <div><i>📷</i>Live multicaméra</div>
-      <div><i>🎁</i>Cadeaux &amp; Cagnotte</div>
-      <div><i>🖼️</i>Album photo collaboratif</div>
+      <div><i data-icon="camera" style="color:#d81f4f"></i>Live multicaméra</div>
+      <div><i data-icon="gift" style="color:#f0a020"></i>Cadeaux &amp; Cagnotte</div>
+      <div><i data-icon="camera" style="color:#2f6fe4"></i>Album photo collaboratif</div>
     </div>
 
     <a id="create" href="/connexion?next=/edit" class="btn btn-block">Créer mon événement gratuitement</a>
@@ -33,14 +31,14 @@
 
     <p class="divider">ou continuer avec</p>
     <div class="socials">
-      <button data-social="Apple">Apple</button>
-      <button data-social="Google"><span style="color:#4285f4">G</span>oogle</button>
-      <button data-social="Facebook"><span style="color:#1877f2">f</span>acebook</button>
+      <button data-social="Apple" aria-label="Continuer avec Apple"></button>
+      <button data-social="Google" aria-label="Continuer avec Google"></button>
+      <button data-social="Facebook" aria-label="Continuer avec Facebook"></button>
     </div>
     <p class="muted small" style="text-align:center">Déjà inscrit ? <a href="/connexion">Se connecter</a></p>
 
     <section id="upcoming" class="hidden">
-      <div class="section-title"><h2>Événements à venir</h2><a href="/decouvrir" class="small">Voir tout</a></div>
+      <div class="section-title"><h2>En direct &amp; à venir</h2><a href="/decouvrir" class="small">Voir tout</a></div>
       <div class="h-scroll" id="upcoming-list"></div>
     </section>
   </main>

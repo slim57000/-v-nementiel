@@ -13,15 +13,15 @@
 <body>
   <header class="topbar">
     <a class="logo" href="/dashboard"><img src="/img/logo.svg" alt=""><span>Ever<b>Moments</b></span></a>
-    <a href="/profil" class="btn btn-ghost btn-sm" aria-label="Profil">👤</a>
+    <a href="/profil" class="btn btn-ghost btn-sm" aria-label="Profil" id="profile-btn"></a>
   </header>
   <main class="container">
     <div class="stories" id="stories"></div>
 
     <div class="segments" role="tablist">
       <button class="active" data-filter="all">Pour vous</button>
+      <button data-filter="live">En direct</button>
       <button data-filter="upcoming">À venir</button>
-      <button data-filter="past">Passés</button>
     </div>
 
     <div id="list"></div>

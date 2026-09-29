@@ -11,7 +11,7 @@
   <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
   <title>Live — EverMoments</title>
 </head>
-<body class="live">
+<body class="live has-live-tabs">
   <header class="live-bar">
     <span class="live-badge">LIVE</span>
     <h1 id="title">Chargement…</h1>
@@ -56,6 +56,14 @@
       </div>
     </section>
   </main>
+
+  <nav class="live-tabs" aria-label="Sections du live">
+    <a href="#chat-list" data-nav-icon="chat">Chat</a>
+    <a href="#reactions" data-nav-icon="heart">Réactions</a>
+    <a href="#pot-btn" data-nav-icon="gift" id="nav-pot">Cagnotte</a>
+    <a href="#photo-strip" data-nav-icon="camera">Photos</a>
+    <a href="#cams-section" data-nav-icon="video">Caméras</a>
+  </nav>
 
   <script type="module" src="/js/live.js"></script>
 </body>

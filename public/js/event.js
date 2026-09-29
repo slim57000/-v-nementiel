@@ -91,7 +91,9 @@ async function renderStories(ev) {
   const loggedIn = ev.isOwner || (await api("/api/auth/me").then(() => true, () => false));
   if (!loggedIn) {
     const first = ev.cover ? `<div class="story-circle"><div style="background-image:url('${esc(ev.cover)}')"></div></div>` : "";
-    $("#stories-row").innerHTML = first + '<div class="story-circle locked"><div>🔒</div></div>'.repeat(ev.cover ? 3 : 4);
+    const teasers = [1, 2, 3, 4].slice(ev.cover ? 1 : 0)
+      .map((n) => `<div class="story-circle teaser"><div style="background-image:url('/img/maquette/story${n}.jpg')">🔒</div></div>`).join("");
+    $("#stories-row").innerHTML = first + teasers;
     $("#signup").href = `/connexion?next=${encodeURIComponent(location.pathname)}`;
     $("#signup").classList.remove("hidden");
     return;

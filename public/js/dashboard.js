@@ -1,4 +1,7 @@
 import { api, $, esc, copy, share, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES } from "./common.js";
+import { icon } from "./icons.js";
+
+$("#profile-btn").innerHTML = icon("user");
 
 tabbar("home");
 
@@ -10,6 +13,8 @@ if (new URLSearchParams(location.search).has("saved")) {
 let events = [];
 let filter = "all";
 const today = new Date().toISOString().slice(0, 10);
+// « En direct » : événement du jour avec au moins une caméra.
+const isLive = (e) => e.date === today && e.cameras?.length > 0;
 const bg = (url) => (url ? `style="background-image:url('${esc(url)}')"` : "");
 
 async function load() {
@@ -28,9 +33,10 @@ function renderStories() {
     <a class="story new" href="/edit"><div class="story-img">+</div><span>Créer un événement</span></a>
     ${upcoming.map((ev) => {
       const badge = dayBadge(ev.date);
+      const live = isLive(ev);
       return `<a class="story" href="/e/${esc(ev.slug)}">
-        <div class="story-img" ${bg(ev.cover)}>${ev.cover ? "" : EVENT_TYPES[ev.type].icon}
-          <span class="story-badge ${badge === "Aujourd'hui" ? "today" : ""}">${badge}</span></div>
+        <div class="story-img ${live ? "live" : ""}" ${bg(ev.cover)}>${ev.cover ? "" : EVENT_TYPES[ev.type].icon}
+          <span class="story-badge ${live || badge === "Aujourd'hui" ? "today" : ""}">${live ? "LIVE" : badge}</span></div>
         <span>${esc(ev.name)}</span></a>`;
     }).join("")}`;
 }
@@ -43,18 +49,23 @@ function card(ev) {
     <div class="ev-head">
       <div class="ev-avatar" ${bg(ev.cover)}>${ev.cover ? "" : type.icon}</div>
       <div><h3>${esc(ev.name)}</h3><div class="muted">${type.label} · ${esc(ev.location)}</div></div>
-      <span class="badge ${isPrivate ? "private" : ""}">${isPrivate ? "🔒 Privé" : "🔓 Public"}</span>
+      ${isLive(ev) ? '<span class="live-tag" style="margin-left:auto">LIVE</span>' : `<span class="badge ${isPrivate ? "private" : ""}">${isPrivate ? "🔒 Privé" : "🔓 Public"}</span>`}
     </div>
     <div class="ev-cover" ${bg(ev.cover)}>
-      <div class="when">${esc(dayBadge(ev.date))}</div>
-      <a class="btn btn-block" href="/e/${esc(ev.slug)}">Voir la page de l'événement</a>
+      ${isLive(ev)
+        ? `<div class="live-now">LIVE EN COURS</div>
+           <a class="btn btn-block" href="/live?e=${encodeURIComponent(ev.slug)}">${icon("play", 16)} Rejoindre le Live</a>`
+        : `<div class="when">${esc(dayBadge(ev.date))}</div>
+           <a class="btn btn-block" href="/e/${esc(ev.slug)}">Voir la page de l'événement</a>`}
     </div>
     <div class="ev-info">
-      <div><span>📍</span><span><b>Lieu</b>${esc(ev.location)}</span></div>
-      <div><span>📅</span><span><b>Date</b>${esc(formatDate(ev.date, ev.time))}</span></div>
+      <div><span style="color:var(--primary)">${icon("pin", 20)}</span><span><b>Lieu</b>${esc(ev.location)}</span></div>
+      <div><span style="color:var(--primary)">${icon("calendar", 20)}</span><span><b>Date</b>${esc(formatDate(ev.date, ev.time))}</span></div>
       ${isPrivate ? `<div style="grid-column:1/-1"><span>🔑</span><span><b>Code d'accès invités</b><span class="code" style="font-size:1.05rem">${esc(ev.accessCode)}</span></span></div>` : ""}
       <div style="grid-column:1/-1"><span>🎥</span><span><b>Code caméraman</b><span class="code" style="font-size:1.05rem">${esc(ev.cameramanCode)}</span></span></div>
     </div>
+    ${ev.cagnotteUrl ? `<div class="ev-pot"><span style="color:var(--primary)">${icon("gift")}</span><span><b>Cagnotte</b><span class="muted small">Plateforme externe</span></span>
+      <a class="btn btn-sm" href="${esc(ev.cagnotteUrl)}" target="_blank" rel="noopener">Voir la cagnotte</a></div>` : ""}
     <div class="ev-tools">
       <button class="btn btn-light btn-sm" data-action="share">Partager</button>
       <button class="btn btn-light btn-sm" data-action="link">Copier le lien</button>
@@ -70,7 +81,7 @@ function card(ev) {
 function render() {
   renderStories();
   const shown = events.filter((e) =>
-    filter === "upcoming" ? e.date >= today : filter === "past" ? e.date < today : true);
+    filter === "upcoming" ? e.date >= today : filter === "live" ? isLive(e) : true);
   $("#empty").classList.toggle("hidden", shown.length > 0);
   $("#empty-text").innerHTML = events.length
     ? "Aucun événement dans cette catégorie."

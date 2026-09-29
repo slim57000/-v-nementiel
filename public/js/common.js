@@ -1,4 +1,5 @@
 // Utilitaires partagés par toutes les pages.
+import { icon } from "./icons.js";
 
 export const EVENT_TYPES = {
   mariage: { label: "Mariage", icon: "💍" },
@@ -110,15 +111,15 @@ export function publicCard(ev) {
 // Barre d'onglets du bas (pages connectées). `active` : "home" | "discover" | "profile".
 export function tabbar(active) {
   const tab = (key, href, ico, label) =>
-    `<a href="${href}" class="${active === key ? "active" : ""}"><span class="ico">${ico}</span>${label}</a>`;
+    `<a href="${href}" class="${active === key ? "active" : ""}"><span class="ico">${icon(ico)}</span>${label}</a>`;
   document.body.classList.add("has-tabbar");
   document.body.insertAdjacentHTML("beforeend", `
     <nav class="tabbar" aria-label="Navigation">
-      ${tab("home", "/dashboard", "🏠", "Accueil")}
-      ${tab("discover", "/decouvrir", "🔍", "Découvrir")}
+      ${tab("home", "/dashboard", "home", "Accueil")}
+      ${tab("discover", "/decouvrir", "search", "Découvrir")}
       <a href="/edit" aria-label="Créer un événement"><span class="plus">+</span></a>
-      <span class="soon" title="Bientôt disponible"><span class="ico">💬</span>Messages</span>
-      ${tab("profile", "/profil", "👤", "Profil")}
+      <span class="soon" title="Bientôt disponible"><span class="ico">${icon("chat")}</span>Messages</span>
+      ${tab("profile", "/profil", "user", "Profil")}
     </nav>`);
 }
 

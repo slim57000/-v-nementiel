@@ -1,3 +1,0 @@
-Photos du collage de la page d'accueil (format carré ou portrait, ~800 px, JPEG) :
-  mariage.jpg  bebe.jpg  diplome.jpg  anniversaire.jpg  bapteme.jpg  fete.jpg
-Tant qu'une photo est absente, la vignette colorée avec emoji s'affiche.

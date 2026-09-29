@@ -1,4 +1,5 @@
 import { api, $, esc, share, toast, guestName, viewPhoto, pickAndUploadPhoto } from "./common.js";
+import { icon } from "./icons.js";
 
 const slug = new URLSearchParams(location.search).get("e") || "";
 
@@ -16,6 +17,20 @@ export function embedUrl(url) {
   if (host === "twitch.tv") {
     const channel = u.pathname.split("/")[1];
     if (channel) return `https://player.twitch.tv/?channel=${encodeURIComponent(channel)}&parent=${location.hostname}&muted=true`;
+  }
+  return null;
+}
+
+// Aperçu d'une caméra : miniature YouTube ou image du direct Twitch.
+export function thumbnailUrl(url) {
+  let u;
+  try { u = new URL(url); } catch { return null; }
+  const host = u.hostname.replace(/^www\.|^m\./, "");
+  const id = host === "youtu.be" ? u.pathname.slice(1)
+    : host === "youtube.com" ? u.searchParams.get("v") || u.pathname.match(/^\/(?:live|embed|shorts)\/([\w-]+)/)?.[1] : null;
+  if (id) return `https://i.ytimg.com/vi/${encodeURIComponent(id)}/mqdefault.jpg`;
+  if (host === "twitch.tv" && u.pathname.split("/")[1]) {
+    return `https://static-cdn.jtvnw.net/previews-ttv/live_user_${encodeURIComponent(u.pathname.split("/")[1].toLowerCase())}-320x180.jpg`;
   }
   return null;
 }
@@ -58,11 +73,18 @@ async function load() {
     }
   } else {
     $("#reactions").style.gridTemplateColumns = "repeat(5, 1fr)";
+    $("#nav-pot").remove();
+    document.querySelector(".live-tabs").style.gridTemplateColumns = "repeat(4, 1fr)";
   }
 
   isOwner = ev.isOwner;
   cameras = ev.cameras;
-  $("#cams").innerHTML = cameras.map((c, i) => `<button class="cam" data-index="${i}">${esc(c.name)}</button>`).join("");
+  $("#cams").innerHTML = cameras.map((c, i) => {
+    const thumb = thumbnailUrl(c.url);
+    return `<button class="cam ${thumb ? "has-thumb" : ""}" data-index="${i}" ${thumb ? `style="background-image:url('${esc(thumb)}')"` : ""}>${esc(c.name)}</button>`;
+  }).join("");
+  // Fond du lecteur avant le direct : couverture de l'événement, sinon visuel de salle.
+  $("#stage").style.backgroundImage = `linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.55)), url("${ev.cover || "/img/maquette/salle.jpg"}")`;
   $("#cams-section").classList.toggle("hidden", cameras.length < 2);
   play(0);
   poll();
@@ -164,5 +186,8 @@ $("#photo-strip").addEventListener("click", async (e) => {
     loadPhotos();
   } : null);
 });
+
+// Barre d'onglets du bas : accès rapide aux sections de la page.
+document.querySelectorAll("[data-nav-icon]").forEach((el) => { el.insertAdjacentHTML("afterbegin", icon(el.dataset.navIcon)); });
 
 load();
