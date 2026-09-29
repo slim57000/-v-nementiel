@@ -11,8 +11,7 @@
     "dev": "node --no-warnings --watch server.js"
   },
   "dependencies": {
-    "@upstash/redis": "^1.39.0",
-    "@vercel/blob": "^2.8.0",
-    "express": "^4.22.3"
+    "@supabase/supabase-js": "^2.117.2",
+    "express": "^5.2.1"
   }
 }

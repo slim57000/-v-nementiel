@@ -9,10 +9,10 @@ Prototype web de validation : création d'événement, faire-part (3 styles), pa
 
 Le stockage est choisi automatiquement selon les variables d'environnement :
 
-| | Vercel | Render / serveur / local |
+| | Supabase configuré (Vercel, production) | Sans Supabase (Render / serveur / local) |
 |---|---|---|
-| Données | Upstash Redis (`KV_REST_API_*`) | SQLite dans `DATA_DIR` |
-| Images | Vercel Blob (`BLOB_READ_WRITE_TOKEN`) | Disque dans `UPLOAD_DIR` |
+| Données | Postgres Supabase | SQLite dans `DATA_DIR` |
+| Images | Supabase Storage (bucket `evenements`) | Disque dans `UPLOAD_DIR` |
 
 ## Lancer en local
 
@@ -21,18 +21,19 @@ npm install
 npm run dev        # http://localhost:3000
 ```
 
-## Déploiement sur Vercel
+## Déploiement sur Vercel + Supabase
 
-1. Importer le dépôt dans Vercel (preset « Other », aucune commande de build).
-2. Onglet **Storage** : ajouter **Upstash Redis** (Marketplace) et **Blob**, puis les connecter au projet. Les variables `KV_REST_API_URL` / `KV_REST_API_TOKEN` (ou `UPSTASH_REDIS_REST_*`) et `BLOB_READ_WRITE_TOKEN` sont ajoutées automatiquement.
-3. **Settings → Environment Variables** : ajouter `SESSION_SECRET` (chaîne aléatoire longue, ex. `openssl rand -hex 32`).
-4. Redéployer. Le domaine peut ensuite être branché dans **Settings → Domains**.
+1. **Supabase** : créer un projet sur supabase.com, puis **SQL Editor → New query**, coller le contenu de `supabase/schema.sql` et cliquer **Run** (tables + bucket photos).
+2. **Vercel** : importer le dépôt (preset Express, aucune commande de build).
+3. **Settings → Environment Variables** :
 
-| Variable | Rôle |
+| Variable | Où la trouver |
 |---|---|
-| `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Base Upstash Redis |
-| `BLOB_READ_WRITE_TOKEN` | Stockage des images |
-| `SESSION_SECRET` | Signature des cookies (obligatoire sur Vercel) |
+| `SUPABASE_URL` | Supabase → Project Settings → API → Project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → clé `service_role` (secrète) |
+| `SESSION_SECRET` | chaîne aléatoire longue, ex. `openssl rand -hex 32` |
+
+4. Redéployer. Tant qu'une variable manque, le site affiche la liste de ce qui manque.
 
 ## Déploiement sur Render (ou autre serveur)
 
@@ -44,7 +45,8 @@ npm run dev        # http://localhost:3000
 
 ```
 server.js           Express : API + pages + balises Open Graph de /e/:slug
-lib/                store (Redis), uploads (Blob), session (cookies signés), codes, validation
+lib/                store (Supabase ou SQLite), uploads (Supabase Storage ou disque), session, codes, validation
+supabase/schema.sql Tables et bucket à créer dans Supabase
 routes/auth.js      Connexion organisateur : email + code à 6 chiffres
 routes/events.js    CRUD des événements de l'organisateur
 routes/public.js    Page publique + déverrouillage par code

@@ -48,6 +48,13 @@ app.get("/e/:slug", async (req, res) => {
   res.status(event ? 200 : 404).type("html").send(eventTemplate.replace("<!--META-->", meta));
 });
 
+// Erreur inattendue (base injoignable…) : réponse propre au lieu d'un plantage.
+app.use((err, req, res, next) => {
+  console.error(err);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: "Service momentanément indisponible, réessayez dans un instant." });
+});
+
 // En local uniquement : sur Vercel, public/ est servi par le CDN (cleanUrls dans vercel.json).
 if (!ON_VERCEL) {
   app.use("/uploads", express.static(UPLOAD_DIR, { maxAge: "30d", immutable: true }));

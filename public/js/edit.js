@@ -19,7 +19,7 @@ $("#types").innerHTML = Object.entries(EVENT_TYPES).map(([value, t], i) => `
     <span><b>${t.icon}</b>${t.label}</span>
   </label>`).join("");
 
-// Photo du faire-part choisie : data URL (nouvelle) ou URL déjà stockée (locale ou Vercel Blob).
+// Photo du faire-part choisie : data URL (nouvelle) ou URL déjà stockée (disque local ou Supabase Storage).
 const isImage = (v) => /^(data:|\/|https:)/.test(v);
 
 const field = (name) => form.elements[name];
