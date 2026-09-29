@@ -249,7 +249,7 @@ textarea { min-height: 110px; resize: vertical; }
 .cookie-banner p { margin: 0 0 10px; }
 .has-tabbar .cookie-banner { bottom: calc(84px + env(safe-area-inset-bottom)); }
 .site-footer { text-align: center; font-size: .8rem; color: var(--muted); padding: 24px 16px 32px; }
-.site-footer a { color: var(--muted); }
+.site-footer a { color: var(--muted); text-decoration: none; }
 .legal h2 { font-size: 1.1rem; margin-top: 1.6em; }
 .legal p, .legal li { color: #3b3640; }
 .legal .todo { background: #fff4e0; padding: 0 4px; border-radius: 4px; }
