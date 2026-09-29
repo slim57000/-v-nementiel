@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { db } from "../db.js";
+import { findOrganizerByEmail, findOrganizer, createOrganizer } from "../lib/store.js";
 import { loginCode } from "../lib/codes.js";
 import { setSigned, getSigned } from "../lib/session.js";
 
 const router = Router();
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Anti-bruteforce minimal en mémoire : 8 essais ratés par email toutes les 15 min.
+// Anti-bruteforce minimal en mémoire (par instance) : 8 essais ratés par email toutes les 15 min.
 const failures = new Map();
 const tooManyFailures = (email) => {
   const f = failures.get(email);
@@ -20,25 +20,22 @@ const recordFailure = (email) => {
 
 // Premier passage : crée le compte et renvoie le code (affiché une seule fois).
 // Passages suivants : email + code exigés.
-router.post("/login", (req, res) => {
+router.post("/login", async (req, res) => {
   const email = String(req.body.email || "").trim().toLowerCase();
   const code = String(req.body.code || "").trim();
   if (!EMAIL_RE.test(email)) return res.status(400).json({ error: "Adresse email invalide." });
 
-  const organizer = db.prepare("SELECT * FROM organizers WHERE email = ?").get(email);
+  const organizer = await findOrganizerByEmail(email);
 
   if (!organizer) {
-    const newCode = loginCode();
-    const { lastInsertRowid } = db
-      .prepare("INSERT INTO organizers (email, login_code) VALUES (?, ?)")
-      .run(email, newCode);
-    setSigned(res, "org", String(lastInsertRowid));
-    return res.json({ created: true, code: newCode });
+    const created = await createOrganizer(email, loginCode());
+    setSigned(res, "org", String(created.id));
+    return res.json({ created: true, code: created.loginCode });
   }
 
   if (!code) return res.status(401).json({ needCode: true });
   if (tooManyFailures(email)) return res.status(429).json({ error: "Trop d'essais, réessayez dans 15 minutes." });
-  if (code !== organizer.login_code) {
+  if (code !== organizer.loginCode) {
     recordFailure(email);
     return res.status(401).json({ needCode: true, error: "Code incorrect." });
   }
@@ -52,19 +49,19 @@ router.post("/logout", (req, res) => {
   res.json({ ok: true });
 });
 
-router.get("/me", (req, res) => {
-  const organizer = currentOrganizer(req);
+router.get("/me", async (req, res) => {
+  const organizer = await currentOrganizer(req);
   if (!organizer) return res.status(401).json({ error: "Non connecté." });
-  res.json({ email: organizer.email, code: organizer.login_code });
+  res.json({ email: organizer.email, code: organizer.loginCode });
 });
 
-export function currentOrganizer(req) {
+export async function currentOrganizer(req) {
   const id = getSigned(req, "org");
-  return id ? db.prepare("SELECT * FROM organizers WHERE id = ?").get(Number(id)) : null;
+  return id ? findOrganizer(id) : null;
 }
 
-export function requireOrganizer(req, res, next) {
-  req.organizer = currentOrganizer(req);
+export async function requireOrganizer(req, res, next) {
+  req.organizer = await currentOrganizer(req);
   if (!req.organizer) return res.status(401).json({ error: "Non connecté." });
   next();
 }

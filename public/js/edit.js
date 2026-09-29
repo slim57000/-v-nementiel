@@ -19,6 +19,9 @@ $("#types").innerHTML = Object.entries(EVENT_TYPES).map(([value, t], i) => `
     <span><b>${t.icon}</b>${t.label}</span>
   </label>`).join("");
 
+// Photo du faire-part choisie : data URL (nouvelle) ou URL déjà stockée (locale ou Vercel Blob).
+const isImage = (v) => /^(data:|\/|https:)/.test(v);
+
 const field = (name) => form.elements[name];
 const values = () => ({
   name: field("name").value,
@@ -54,7 +57,7 @@ function refresh() {
   $("#code-new").classList.toggle("hidden", !isPrivate || !!id);
 
   const photo = field("inv-photo").value === "custom"
-    ? (state.invitePhoto.startsWith?.("data:") || state.invitePhoto.startsWith?.("/") ? state.invitePhoto : null)
+    ? (isImage(state.invitePhoto) ? state.invitePhoto : null)
     : invitePhotoUrl({ photo: field("inv-photo").value }, coverShown);
   renderInvite($("#invite"), v, invite(), v.inviteStyle, photo);
 }
@@ -100,7 +103,7 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
   $("#error").textContent = "";
   const choice = field("inv-photo").value;
-  if (choice === "custom" && !/^(data:|\/)/.test(state.invitePhoto)) {
+  if (choice === "custom" && !isImage(state.invitePhoto)) {
     $("#error").textContent = "Choisissez la photo du faire-part ou une autre option.";
     return;
   }

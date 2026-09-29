@@ -4,42 +4,36 @@ Prototype web de validation : création d'événement, faire-part (3 styles), pa
 
 ## Stack
 
-- **Node.js ≥ 22.13** + **Express** (seule dépendance)
-- **SQLite** via le module intégré `node:sqlite` (aucune compilation native)
-- Front en HTML / CSS / JS natif, sans build, mobile-first
-- Images redimensionnées dans le navigateur puis stockées sur disque (`uploads/`)
+- **Node.js ≥ 20** + **Express**, déployé sur **Vercel** (fonction serverless)
+- **Upstash Redis** (ex-Vercel KV) pour les données, **Vercel Blob** pour les images
+- Front en HTML / CSS / JS natif, sans build, mobile-first (servi par le CDN Vercel)
+- En local sans clés : données en mémoire et images dans `./uploads` (pour tester)
 
 ## Lancer en local
 
 ```bash
-cd -v-nementiel
 npm install
 npm run dev        # http://localhost:3000
 ```
 
-## Variables d'environnement
+## Déploiement sur Vercel
 
-| Variable | Rôle | Défaut |
-|---|---|---|
-| `PORT` | Port HTTP | `3000` |
-| `DATA_DIR` | Dossier de la base SQLite (+ secret de session) | `./data` |
-| `UPLOAD_DIR` | Dossier des images | `./uploads` |
-| `SESSION_SECRET` | Clé de signature des cookies | générée dans `DATA_DIR/secret` |
-| `NODE_ENV` | `production` active les cookies `Secure` | — |
+1. Importer le dépôt dans Vercel (preset « Other », aucune commande de build).
+2. Onglet **Storage** : ajouter **Upstash Redis** (Marketplace) et **Blob**, puis les connecter au projet. Les variables `KV_REST_API_URL` / `KV_REST_API_TOKEN` (ou `UPSTASH_REDIS_REST_*`) et `BLOB_READ_WRITE_TOKEN` sont ajoutées automatiquement.
+3. **Settings → Environment Variables** : ajouter `SESSION_SECRET` (chaîne aléatoire longue, ex. `openssl rand -hex 32`).
+4. Redéployer. Le domaine peut ensuite être branché dans **Settings → Domains**.
 
-## Déploiement (Render / Railway)
-
-1. Nouveau service web à partir du dépôt, dossier racine du dépôt.
-2. Build : `npm install` — Start : `npm start`.
-3. Ajouter un **disque persistant** monté par ex. sur `/var/data`, puis `DATA_DIR=/var/data/db` et `UPLOAD_DIR=/var/data/uploads`.
-4. Définir `NODE_ENV=production` et `SESSION_SECRET` (chaîne aléatoire longue).
+| Variable | Rôle |
+|---|---|
+| `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Base Upstash Redis |
+| `BLOB_READ_WRITE_TOKEN` | Stockage des images |
+| `SESSION_SECRET` | Signature des cookies (obligatoire sur Vercel) |
 
 ## Structure
 
 ```
 server.js           Express : API + pages + balises Open Graph de /e/:slug
-db.js               Connexion SQLite et schéma
-lib/                codes (slug, codes), session (cookies signés), uploads, validation événements
+lib/                store (Redis), uploads (Blob), session (cookies signés), codes, validation
 routes/auth.js      Connexion organisateur : email + code à 6 chiffres
 routes/events.js    CRUD des événements de l'organisateur
 routes/public.js    Page publique + déverrouillage par code
