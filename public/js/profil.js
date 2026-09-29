@@ -31,8 +31,10 @@ try {
   $("#admin-link").classList.toggle("hidden", !auth.isAdmin);
   paintAvatar(me);
   showTab("favorites");
-} catch {
-  goLogin();
+} catch (err) {
+  // Seule une session absente renvoie vers la connexion (sinon boucle connexion ⇄ profil).
+  if (err.status === 401) goLogin();
+  else toast("Profil momentanément indisponible, réessayez plus tard.");
 }
 
 $("#edit-name").addEventListener("click", async () => {

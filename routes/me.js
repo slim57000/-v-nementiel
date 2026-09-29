@@ -33,7 +33,9 @@ function tooFast(key, max, windowMs) {
 // --- Profil ---
 router.get("/", async (req, res) => {
   const me = req.organizer;
-  const [events, history, friends] = await Promise.all([listEvents(me.id), listHistoryIds(me.id), listFriendIds(me.id)]);
+  // Une table manquante (schéma pas encore à jour) ne doit pas bloquer tout le profil.
+  const safe = (p) => p.catch((err) => { console.error("Profil :", err.message); return []; });
+  const [events, history, friends] = await Promise.all([safe(listEvents(me.id)), safe(listHistoryIds(me.id)), safe(listFriendIds(me.id))]);
   res.json({ ...person(me), email: me.email, displayName: me.displayName || "", stats: { events: events.length, participations: history.length, friends: friends.length } });
 });
 
