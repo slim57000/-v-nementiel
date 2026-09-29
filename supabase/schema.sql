@@ -76,6 +76,21 @@ language sql as $$
   update guestbook set likes = likes + 1 where id = entry_id returning *;
 $$;
 
+-- Modération : auteur anonyme, blocage, signalements (ajouté en V0.6).
+alter table messages add column if not exists author text;
+alter table photos add column if not exists author text;
+alter table guestbook add column if not exists author text;
+alter table events add column if not exists blocked_authors jsonb not null default '[]';
+create table if not exists reports (
+  id          bigint generated always as identity primary key,
+  event_id    bigint not null references events(id) on delete cascade,
+  kind        text not null,
+  item_id     bigint not null,
+  reason      text not null default '',
+  author      text,
+  created_at  timestamptz not null default now()
+);
+
 -- Sécurité : RLS activé sans règle = aucune lecture/écriture avec la clé publique (anon).
 -- Seul le serveur, avec la clé service_role, accède aux données.
 alter table organizers enable row level security;
@@ -83,6 +98,7 @@ alter table events enable row level security;
 alter table messages enable row level security;
 alter table photos enable row level security;
 alter table guestbook enable row level security;
+alter table reports enable row level security;
 
 -- Bucket public pour les photos (couvertures et faire-part).
 insert into storage.buckets (id, name, public)

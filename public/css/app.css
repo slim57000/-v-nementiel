@@ -327,3 +327,10 @@ textarea { min-height: 110px; resize: vertical; }
 .centered .notice.code { text-align: center; padding-left: .3em; padding-right: 0; letter-spacing: .3em; }
 .centered .card p { margin-left: auto; margin-right: auto; }
 .centered #list { text-align: left; }
+
+/* Menu de modération */
+.menu-card { display: grid; gap: 8px; }
+.menu-card .btn-ghost { color: var(--text); justify-content: flex-start; }
+.more-btn { background: none; border: 0; color: inherit; opacity: .6; font-size: 1.1rem; cursor: pointer; padding: 0 6px; margin-left: auto; }
+.report-badge { display: inline-block; margin-top: 4px; font-size: .75rem; font-weight: 700; color: #9a6400; background: #fff4e0; padding: 2px 8px; border-radius: 99px; text-decoration: none; }
+.chat-msg .more-btn { color: #fff; }

@@ -48,7 +48,8 @@ function card(ev) {
   <article class="ev-card event-item" data-slug="${esc(ev.slug)}">
     <div class="ev-head">
       <div class="ev-avatar" ${bg(ev.cover)}>${ev.cover ? "" : type.icon}</div>
-      <div><h3>${esc(ev.name)}</h3><div class="muted">${type.label} · ${esc(ev.location)}</div></div>
+      <div><h3>${esc(ev.name)}</h3><div class="muted">${type.label} · ${esc(ev.location)}</div>
+        ${ev.reports ? `<a class="report-badge" href="/e/${esc(ev.slug)}">⚠️ ${ev.reports} signalement${ev.reports > 1 ? "s" : ""}</a>` : ""}</div>
       ${isLive(ev) ? '<span class="live-tag" style="margin-left:auto">LIVE</span>' : `<span class="badge ${isPrivate ? "private" : ""}">${isPrivate ? "🔒 Privé" : "🔓 Public"}</span>`}
     </div>
     <div class="ev-cover" ${bg(ev.cover)}>

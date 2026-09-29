@@ -3,7 +3,7 @@ import { requireOrganizer } from "./auth.js";
 import { parseEventInput, ownerView } from "../lib/events.js";
 import { randomCode, slugify } from "../lib/codes.js";
 import { saveDataUrl, removeUpload, isOwnUpload } from "../lib/uploads.js";
-import { listEvents, findEvent, createEvent, saveEvent, deleteEvent, listPhotos, listGuestbook } from "../lib/store.js";
+import { listEvents, findEvent, createEvent, saveEvent, deleteEvent, listPhotos, listGuestbook, countReports } from "../lib/store.js";
 
 const router = Router();
 router.use(requireOrganizer);
@@ -49,7 +49,7 @@ router.get("/", handle(async (req, res) => {
   for (const event of events.filter((e) => !e.cameramanCode)) {
     Object.assign(event, await saveEvent({ ...event, cameramanCode: randomCode() }));
   }
-  res.json(events.map(ownerView));
+  res.json(await Promise.all(events.map(async (e) => ({ ...ownerView(e), reports: await countReports(e.id) }))));
 }));
 
 router.get("/:id", handle(async (req, res) => {

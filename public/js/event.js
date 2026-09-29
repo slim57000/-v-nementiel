@@ -1,4 +1,4 @@
-import { api, $, esc, copy, share, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, EVENT_TYPES } from "./common.js";
+import { api, $, esc, copy, share, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, EVENT_TYPES } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 import { initGuestbook } from "./guestbook.js";
 
@@ -101,17 +101,16 @@ async function renderStories(ev) {
   const base = `/api/public/${encodeURIComponent(ev.slug)}`;
   const load = async () => {
     const dayAgo = Date.now() - 24 * 3600 * 1000;
-    const stories = (await api(`${base}/photos`).catch(() => [])).filter((p) => new Date(p.createdAt) > dayAgo);
+    const stories = (await api(`${base}/photos`).catch(() => [])).filter((p) => new Date(p.createdAt) > dayAgo && !isHidden(p.author));
     $("#stories-row").innerHTML = stories.length
       ? stories.map((p, i) => `<button class="story-circle" data-i="${i}" aria-label="Photo de ${esc(p.name)}"><div style="background-image:url('${esc(p.url)}')"></div></button>`).join("")
       : '<p class="muted small" style="margin:0">Aucune story pour l\'instant. Partagez la première photo !</p>';
     $("#stories-row").onclick = (e) => {
       const photo = stories[e.target.closest("[data-i]")?.dataset.i];
       if (!photo) return;
-      viewPhoto(photo, ev.isOwner ? async () => {
-        await api(`${base}/photos/${photo.id}`, { method: "DELETE" });
-        load();
-      } : null);
+      const remove = async () => { await api(`${base}/photos/${photo.id}`, { method: "DELETE" }); load(); };
+      viewPhoto(photo, ev.isOwner ? remove : null,
+        () => contentMenu({ slug: ev.slug, kind: "photo", item: photo, isOwner: ev.isOwner, onDelete: remove, onChange: load }));
     };
   };
   $("#add-story").classList.remove("hidden");

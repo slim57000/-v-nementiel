@@ -155,19 +155,72 @@ export function guestName() {
   });
 }
 
-// Affiche une photo en plein écran. `onDelete` (facultatif) ajoute un bouton de suppression.
-export function viewPhoto(photo, onDelete) {
+// --- Modération côté invité : personnes masquées sur cet appareil ---
+const HIDDEN_KEY = "em-hidden";
+const hiddenSet = () => { try { return new Set(JSON.parse(localStorage.getItem(HIDDEN_KEY) || "[]")); } catch { return new Set(); } };
+export const isHidden = (author) => Boolean(author) && hiddenSet().has(author);
+function hide(author) {
+  const set = hiddenSet();
+  set.add(author);
+  try { localStorage.setItem(HIDDEN_KEY, JSON.stringify([...set])); } catch { /* ignoré */ }
+}
+
+// Menu « ⋯ » d'un contenu (message, photo, mot du livre d'or).
+// Invité : Signaler, Masquer cette personne. Organisateur : Supprimer, Bloquer cette personne.
+export function contentMenu({ slug, kind, item, isOwner, onDelete, onChange }) {
+  const base = `/api/public/${encodeURIComponent(slug)}`;
+  const actions = [
+    ["report", "🚩 Signaler ce contenu"],
+    ...(!isOwner && item.author ? [["hide", "🙈 Masquer cette personne"]] : []),
+    ...(isOwner && onDelete ? [["delete", "🗑️ Supprimer"]] : []),
+    ...(isOwner && item.author ? [["block", "⛔ Bloquer cette personne"]] : []),
+  ];
+  document.body.insertAdjacentHTML("beforeend", `
+    <div class="sheet" id="content-menu" role="dialog" aria-modal="true">
+      <div class="card menu-card">
+        ${actions.map(([a, label]) => `<button class="btn btn-ghost btn-block" data-a="${a}">${label}</button>`).join("")}
+        <button class="btn btn-light btn-block" data-a="close">Annuler</button>
+      </div>
+    </div>`);
+  const sheet = document.getElementById("content-menu");
+  sheet.addEventListener("click", async (e) => {
+    const a = e.target.dataset?.a || (e.target === sheet ? "close" : null);
+    if (!a) return;
+    sheet.remove();
+    try {
+      if (a === "report") {
+        const reason = prompt("Pourquoi signalez-vous ce contenu ? (facultatif)") ?? null;
+        if (reason === null) return;
+        await api(`${base}/reports`, { method: "POST", body: { kind, itemId: item.id, reason } });
+        toast("Merci, le signalement a été transmis.");
+      }
+      if (a === "hide") { hide(item.author); toast("Vous ne verrez plus les contenus de cette personne."); onChange?.(); }
+      if (a === "delete" && confirm("Supprimer ce contenu ?")) { await onDelete(); onChange?.(); }
+      if (a === "block" && confirm("Bloquer cette personne ? Ses contenus seront masqués et elle ne pourra plus publier.")) {
+        await api(`${base}/blocks`, { method: "POST", body: { author: item.author } });
+        toast("Personne bloquée.");
+        onChange?.();
+      }
+    } catch (err) { toast(err.message); }
+  });
+}
+
+// Affiche une photo en plein écran. `onDelete` (facultatif) ajoute un bouton de suppression,
+// `onMore` (facultatif) un bouton « ⋯ » (signaler, masquer, bloquer).
+export function viewPhoto(photo, onDelete, onMore) {
   document.body.insertAdjacentHTML("beforeend", `
     <div class="viewer" id="viewer" role="dialog" aria-modal="true">
       <img src="${esc(photo.url)}" alt="">
       <div class="viewer-bar">
         <span>📷 ${esc(photo.name)}</span>
+        ${onMore ? '<button class="btn btn-light btn-sm" data-more aria-label="Plus d\'actions">⋯</button>' : ""}
         ${onDelete ? '<button class="btn btn-danger btn-sm" data-del>Supprimer</button>' : ""}
         <button class="btn btn-light btn-sm" data-close>Fermer</button>
       </div>
     </div>`);
   const viewer = document.getElementById("viewer");
   viewer.addEventListener("click", async (e) => {
+    if (e.target.matches("[data-more]")) { viewer.remove(); onMore(); return; }
     if (e.target.matches("[data-del]")) {
       if (!confirm("Supprimer cette photo ?")) return;
       await onDelete();

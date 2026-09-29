@@ -1,4 +1,4 @@
-import { api, $, esc, share, toast, guestName, viewPhoto, pickAndUploadPhoto } from "./common.js";
+import { api, $, esc, share, toast, guestName, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden } from "./common.js";
 import { icon } from "./icons.js";
 
 const slug = new URLSearchParams(location.search).get("e") || "";
@@ -112,13 +112,16 @@ function floatEmoji(emoji) {
 
 const shown = new Set(); // messages déjà affichés (évite les doublons envoi / interrogation)
 
+const messages = new Map(); // id → message (pour le menu ⋯)
+
 function addChat(m) {
-  if (shown.has(m.id)) return;
+  if (shown.has(m.id) || isHidden(m.author)) return;
   shown.add(m.id);
+  messages.set(m.id, m);
   const list = $("#chat-list");
   list.querySelector(".chat-empty")?.remove();
   list.insertAdjacentHTML("beforeend",
-    `<div class="chat-msg"><i>${esc(m.name.charAt(0).toUpperCase())}</i><div><b>${esc(m.name)}</b>${esc(m.text)}</div></div>`);
+    `<div class="chat-msg" data-id="${m.id}"><i>${esc(m.name.charAt(0).toUpperCase())}</i><div><b>${esc(m.name)}</b>${esc(m.text)}</div><button class="more-btn" data-more aria-label="Plus d'actions">⋯</button></div>`);
   while (list.children.length > 50) list.firstElementChild.remove();
   list.scrollTop = list.scrollHeight;
 }
@@ -128,7 +131,7 @@ function handle(items) {
     lastId = Math.max(lastId, m.id);
     if (mine.has(m.id)) continue;
     if (m.kind === "chat") addChat(m);
-    else if (!firstLoad) floatEmoji(m.text);
+    else if (!firstLoad && !isHidden(m.author)) floatEmoji(m.text);
   }
   firstLoad = false;
 }
@@ -150,6 +153,23 @@ $("#reactions").addEventListener("click", async (e) => {
     .then((m) => mine.add(m.id), (err) => toast(err.message));
 });
 
+// Menu ⋯ d'un message : signaler, masquer ; organisateur : supprimer, bloquer.
+$("#chat-list").addEventListener("click", (e) => {
+  if (!e.target.matches("[data-more]")) return;
+  const el = e.target.closest("[data-id]");
+  const m = messages.get(Number(el.dataset.id));
+  contentMenu({
+    slug, kind: "message", item: m, isOwner,
+    onDelete: () => api(`${base}/messages/${m.id}`, { method: "DELETE" }),
+    onChange: () => {
+      document.querySelectorAll(".chat-msg").forEach((node) => {
+        const msg = messages.get(Number(node.dataset.id));
+        if (!msg || msg === m || isHidden(msg.author)) node.remove();
+      });
+    },
+  });
+});
+
 $("#chat").addEventListener("submit", async (e) => {
   e.preventDefault();
   const text = $("#chat-text").value.trim();
@@ -167,7 +187,7 @@ $("#chat").addEventListener("submit", async (e) => {
 let photos = [];
 
 async function loadPhotos() {
-  try { photos = await api(`${base}/photos`); } catch { return; }
+  try { photos = (await api(`${base}/photos`)).filter((p) => !isHidden(p.author)); } catch { return; }
   $("#photo-count").textContent = photos.length ? ` ${photos.length}` : "";
   const thumbs = photos.slice(0, 4).map((p, i) => `<img src="${esc(p.url)}" alt="Photo de ${esc(p.name)}" data-i="${i}" loading="lazy">`);
   while (thumbs.length < 4) thumbs.push('<div class="ph"></div>');
@@ -181,10 +201,9 @@ $("#photo-strip").addEventListener("click", async (e) => {
   }
   const photo = photos[e.target.dataset.i];
   if (!photo) return;
-  viewPhoto(photo, isOwner ? async () => {
-    await api(`${base}/photos/${photo.id}`, { method: "DELETE" });
-    loadPhotos();
-  } : null);
+  const remove = async () => { await api(`${base}/photos/${photo.id}`, { method: "DELETE" }); loadPhotos(); };
+  viewPhoto(photo, isOwner ? remove : null,
+    () => contentMenu({ slug, kind: "photo", item: photo, isOwner, onDelete: remove, onChange: loadPhotos }));
 });
 
 // Barre d'onglets du bas : accès rapide aux sections de la page.

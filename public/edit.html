@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#d81f4f">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Great+Vibes&family=Inter:wght@400;600;800&display=swap">
-  <link rel="stylesheet" href="/css/app.css?v=4">
+  <link rel="stylesheet" href="/css/app.css?v=5">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="stylesheet" href="/css/invitation.css?v=3">
   <title>Événement</title>
@@ -54,6 +54,10 @@
           <label style="font-weight:400;display:flex;gap:8px;align-items:center;margin:8px 0 0">
             <input type="checkbox" id="regenerate" style="width:auto"> Générer un nouveau code (l'ancien ne fonctionnera plus)
           </label>
+        </div>
+        <div id="blocked-info" class="notice hidden" style="display:flex;align-items:center;gap:10px">
+          <span>⛔ <b id="blocked-count">0</b> personne(s) bloquée(s)</span>
+          <button type="button" id="unblock-all" class="btn btn-ghost btn-sm" style="margin-left:auto">Tout débloquer</button>
         </div>
         <p id="code-new" class="muted small hidden">Un code sera généré automatiquement à l'enregistrement.</p>
       </section>

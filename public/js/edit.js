@@ -165,6 +165,15 @@ async function init() {
     ev.cameras.forEach(addCamera);
     $("#cagnotte").value = ev.cagnotteUrl;
     $("#cameraman-notes").value = ev.cameramanNotes;
+    if (ev.blockedCount) {
+      $("#blocked-count").textContent = ev.blockedCount;
+      $("#blocked-info").classList.remove("hidden");
+      $("#unblock-all").onclick = async () => {
+        await api(`/api/public/${encodeURIComponent(ev.slug)}/blocks`, { method: "DELETE" });
+        $("#blocked-info").classList.add("hidden");
+        toast("Toutes les personnes ont été débloquées");
+      };
+    }
     if (ev.cameramanCode) {
       $("#cameraman-code").textContent = ev.cameramanCode;
       $("#cameraman-info").classList.remove("hidden");

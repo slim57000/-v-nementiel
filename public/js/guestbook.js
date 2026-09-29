@@ -1,5 +1,5 @@
 // Livre d'or multimédia de la page événement : texte, photo, message vocal, likes, filtres, recherche.
-import { api, $, esc, toast, guestName, resizeImage, viewPhoto } from "./common.js";
+import { api, $, esc, toast, guestName, resizeImage, viewPhoto, contentMenu, isHidden } from "./common.js";
 
 const MAX_VOICE_SECONDS = 60;
 
@@ -13,7 +13,7 @@ export function initGuestbook(ev) {
   let filter = "all";
 
   async function load() {
-    try { entries = await api(base); } catch { return; }
+    try { entries = (await api(base)).filter((e) => !isHidden(e.author)); } catch { return; }
     render();
   }
 
@@ -37,6 +37,7 @@ export function initGuestbook(ev) {
       ${e.audioUrl ? `<audio controls preload="none" src="${esc(e.audioUrl)}"></audio>` : ""}
       <footer>
         <button class="gb-like ${liked.has(e.id) ? "on" : ""}" data-like>❤️ ${e.likes || 0}</button>
+        <button data-more aria-label="Plus d'actions">⋯</button>
         ${ev.isOwner ? `<button data-pin>${e.pinned ? "Retirer de la une" : "⭐ Mettre en avant"}</button><button data-del class="danger">Supprimer</button>` : ""}
       </footer>
     </article>`;
@@ -58,6 +59,12 @@ export function initGuestbook(ev) {
     const url = `${base}/${entry.id}`;
     try {
       if (e.target.matches("[data-photo]")) viewPhoto({ url: entry.photoUrl, name: entry.name });
+      if (e.target.matches("[data-more]")) {
+        contentMenu({
+          slug: ev.slug, kind: "guestbook", item: entry, isOwner: ev.isOwner,
+          onDelete: () => api(url, { method: "DELETE" }), onChange: load,
+        });
+      }
       if (e.target.matches("[data-like]") && !liked.has(entry.id)) {
         Object.assign(entry, await api(`${url}/like`, { method: "POST" }));
         liked.add(entry.id);
