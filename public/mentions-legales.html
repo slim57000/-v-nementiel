@@ -14,20 +14,35 @@
   <header class="topbar">
     <a class="logo" href="/"><img src="/img/logo.svg" alt=""><span>Ever<b>Moments</b></span></a>
   </header>
-  <main class="container legal">
-    <h1>Mentions légales</h1>
-    <p class="muted small">Dernière mise à jour : <span class="todo">[date]</span></p>
-
-    <h2>Éditeur</h2>
-    <p>EverMoments est édité par <span class="todo">[Raison sociale]</span>, <span class="todo">[forme juridique, capital]</span>, dont le siège est situé <span class="todo">[adresse]</span>, immatriculée sous le numéro <span class="todo">[SIREN / RCS]</span>.<br>
+  <main class="legal">
+    <header class="legal-hero">
+      <span class="legal-hero-ico">🏢</span>
+      <h1>Mentions légales</h1>
+      <p>Qui édite EverMoments, où sont hébergées les données et comment nous contacter.</p>
+      <span class="legal-date">Dernière mise à jour : <span class="todo">[date]</span></span>
+    </header>
+    <div class="container">
+      <nav class="legal-toc" aria-label="Sommaire"><a href="#s1">Éditeur</a><a href="#s2">Hébergement</a><a href="#s3">Propriété intellectuelle</a><a href="#s4">Signaler un contenu</a></nav>
+      <section class="legal-box" id="s1">
+        <div class="legal-box-head"><span class="legal-ico">🏢</span><h2>Éditeur</h2><span class="legal-num">01</span></div>
+        <p>EverMoments est édité par <span class="todo">[Raison sociale]</span>, <span class="todo">[forme juridique, capital]</span>, dont le siège est situé <span class="todo">[adresse]</span>, immatriculée sous le numéro <span class="todo">[SIREN / RCS]</span>.<br>
     Directeur de la publication : <span class="todo">[nom]</span>. Contact : <span class="todo">[email]</span>.</p>
-    <h2>Hébergement</h2>
-    <p>Site : Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis — vercel.com.<br>
+      </section>
+      <section class="legal-box" id="s2">
+        <div class="legal-box-head"><span class="legal-ico">🖥️</span><h2>Hébergement</h2><span class="legal-num">02</span></div>
+        <p>Site : Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis — vercel.com.<br>
     Données et fichiers : Supabase Inc., 970 Toa Payoh North #07-04, Singapour — supabase.com (serveurs situés dans l'Union européenne).</p>
-    <h2>Propriété intellectuelle</h2>
-    <p>La marque, le logo et les éléments graphiques d'EverMoments sont la propriété de <span class="todo">[Raison sociale]</span>. Les contenus publiés par les utilisateurs (photos, messages, vocaux) restent la propriété de leurs auteurs.</p>
-    <h2>Signaler un contenu</h2>
-    <p>Pour signaler un contenu illicite, écrivez à <span class="todo">[email]</span> en indiquant le lien de la page concernée.</p>
+      </section>
+      <section class="legal-box" id="s3">
+        <div class="legal-box-head"><span class="legal-ico">©️</span><h2>Propriété intellectuelle</h2><span class="legal-num">03</span></div>
+        <p>La marque, le logo et les éléments graphiques d'EverMoments sont la propriété de <span class="todo">[Raison sociale]</span>. Les contenus publiés par les utilisateurs (photos, messages, vocaux) restent la propriété de leurs auteurs.</p>
+      </section>
+      <section class="legal-box" id="s4">
+        <div class="legal-box-head"><span class="legal-ico">🚩</span><h2>Signaler un contenu</h2><span class="legal-num">04</span></div>
+        <p>Pour signaler un contenu illicite, écrivez à <span class="todo">[email]</span> en indiquant le lien de la page concernée.</p>
+      </section>
+      <div class="legal-others"><a href="/cgu" class="legal-card"><span>📜</span>Conditions générales ›</a><a href="/confidentialite" class="legal-card"><span>🔒</span>Confidentialité ›</a></div>
+    </div>
   </main>
   <footer class="site-footer">
     <a href="/mentions-legales">Mentions légales</a> · <a href="/cgu">CGU</a> · <a href="/confidentialite">Confidentialité</a> · <a href="#" data-cookies>Gérer les cookies</a>

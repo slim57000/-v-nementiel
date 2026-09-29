@@ -270,3 +270,27 @@ textarea { min-height: 110px; resize: vertical; }
 .ev-pot .btn { margin-left: auto; }
 .story-circle.teaser div { background-size: cover; }
 .story-img.live { border-color: var(--primary); }
+
+/* ---------- Pages légales : design moderne en encadrés ---------- */
+.legal-hero { text-align: center; color: #fff; padding: 36px 20px 64px; background: radial-gradient(circle at 20% 0, rgba(255,255,255,.18), transparent 40%), linear-gradient(135deg, #d81f4f, #7a1234); }
+.legal-hero h1 { font-size: 1.8rem; margin: 10px 0 6px; }
+.legal-hero p { max-width: 520px; margin: 0 auto 12px; color: #fff; opacity: .92; }
+.legal-hero-ico { display: inline-flex; width: 64px; height: 64px; border-radius: 20px; background: rgba(255,255,255,.18); align-items: center; justify-content: center; font-size: 2rem; }
+.legal-date { display: inline-block; font-size: .78rem; background: rgba(0,0,0,.18); padding: 4px 12px; border-radius: 99px; }
+.legal-date .todo { color: var(--text); }
+.legal .container { max-width: 760px; margin-top: -40px; position: relative; }
+.legal-toc { display: flex; gap: 8px; overflow-x: auto; padding: 12px; background: #fff; border-radius: 18px; box-shadow: var(--shadow); margin-bottom: 18px; scrollbar-width: none; }
+.legal-toc::-webkit-scrollbar { display: none; }
+.legal-toc a { flex: none; font-size: .8rem; font-weight: 600; color: var(--primary); background: var(--primary-light); padding: 6px 12px; border-radius: 99px; text-decoration: none; white-space: nowrap; }
+.legal-box { background: #fff; border-radius: 20px; box-shadow: var(--shadow); padding: 20px; margin-bottom: 14px; scroll-margin-top: 16px; border: 1px solid var(--border); }
+.legal-box-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.legal-box-head h2 { margin: 0; font-size: 1.05rem; }
+.legal-ico { width: 42px; height: 42px; border-radius: 14px; background: var(--primary-light); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex: none; }
+.legal-num { font-size: .75rem; font-weight: 800; color: var(--primary); margin-left: auto; opacity: .6; }
+.legal-box p, .legal-box li { color: #3b3640; font-size: .95rem; }
+.legal-box p:last-child, .legal-box ul:last-child { margin-bottom: 0; }
+.legal-box ul { padding-left: 18px; }
+.legal-box li { margin-bottom: 6px; }
+.legal-others { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0 8px; }
+.legal-card { display: flex; align-items: center; gap: 10px; padding: 14px; border-radius: 16px; background: #fff; box-shadow: var(--shadow); text-decoration: none; color: var(--text); font-weight: 700; font-size: .9rem; }
+.legal-card span { font-size: 1.3rem; }

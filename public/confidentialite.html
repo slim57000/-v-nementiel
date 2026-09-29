@@ -14,32 +14,53 @@
   <header class="topbar">
     <a class="logo" href="/"><img src="/img/logo.svg" alt=""><span>Ever<b>Moments</b></span></a>
   </header>
-  <main class="container legal">
-    <h1>Politique de confidentialité</h1>
-    <p class="muted small">Dernière mise à jour : <span class="todo">[date]</span></p>
-
-    <h2>Responsable du traitement</h2>
-    <p><span class="todo">[Raison sociale]</span>, <span class="todo">[adresse]</span> — contact : <span class="todo">[email]</span>.</p>
-    <h2>Données collectées</h2>
-    <ul>
+  <main class="legal">
+    <header class="legal-hero">
+      <span class="legal-hero-ico">🔒</span>
+      <h1>Politique de confidentialité</h1>
+      <p>Quelles données nous collectons, pourquoi, combien de temps, et comment exercer vos droits.</p>
+      <span class="legal-date">Dernière mise à jour : <span class="todo">[date]</span></span>
+    </header>
+    <div class="container">
+      <nav class="legal-toc" aria-label="Sommaire"><a href="#s1">Responsable du traitement</a><a href="#s2">Données collectées</a><a href="#s3">Finalités et base légale</a><a href="#s4">Durée de conservation</a><a href="#s5">Destinataires et hébergement</a><a href="#s6">Vos droits</a><a href="#cookies">Cookies</a></nav>
+      <section class="legal-box" id="s1">
+        <div class="legal-box-head"><span class="legal-ico">🏷️</span><h2>Responsable du traitement</h2><span class="legal-num">01</span></div>
+        <p><span class="todo">[Raison sociale]</span>, <span class="todo">[adresse]</span> — contact : <span class="todo">[email]</span>.</p>
+      </section>
+      <section class="legal-box" id="s2">
+        <div class="legal-box-head"><span class="legal-ico">📦</span><h2>Données collectées</h2><span class="legal-num">02</span></div>
+        <ul>
       <li><b>Organisateurs</b> : adresse email, informations des événements créés (nom, date, lieu, description, photos).</li>
       <li><b>Invités</b> : prénom saisi pour le chat, les photos et le livre d'or ; contenus publiés (messages, photos, vocaux).</li>
       <li><b>Technique</b> : adresse IP, utilisée temporairement pour limiter les abus.</li>
     </ul>
-    <h2>Finalités et base légale</h2>
-    <p>Ces données servent uniquement à fournir le service (exécution du contrat) et à le sécuriser (intérêt légitime). Elles ne sont ni vendues ni utilisées à des fins publicitaires.</p>
-    <h2>Durée de conservation</h2>
-    <p>Les données sont conservées tant que le compte existe. Les stories sont visibles 24 h. La suppression du compte ou d'un événement efface les contenus associés.</p>
-    <h2>Destinataires et hébergement</h2>
-    <p>Les données sont hébergées par Supabase (serveurs dans l'Union européenne) et le site par Vercel. Ces prestataires agissent en tant que sous-traitants.</p>
-    <h2>Vos droits</h2>
-    <p>Vous disposez d'un droit d'accès, de rectification, d'effacement, d'opposition et de portabilité. Écrivez à <span class="todo">[email]</span>. Vous pouvez également saisir la CNIL (cnil.fr).</p>
-    <h2 id="cookies">Cookies</h2>
-    <ul>
+      </section>
+      <section class="legal-box" id="s3">
+        <div class="legal-box-head"><span class="legal-ico">🎯</span><h2>Finalités et base légale</h2><span class="legal-num">03</span></div>
+        <p>Ces données servent uniquement à fournir le service (exécution du contrat) et à le sécuriser (intérêt légitime). Elles ne sont ni vendues ni utilisées à des fins publicitaires.</p>
+      </section>
+      <section class="legal-box" id="s4">
+        <div class="legal-box-head"><span class="legal-ico">⏳</span><h2>Durée de conservation</h2><span class="legal-num">04</span></div>
+        <p>Les données sont conservées tant que le compte existe. Les stories sont visibles 24 h. La suppression du compte ou d'un événement efface les contenus associés.</p>
+      </section>
+      <section class="legal-box" id="s5">
+        <div class="legal-box-head"><span class="legal-ico">🤝</span><h2>Destinataires et hébergement</h2><span class="legal-num">05</span></div>
+        <p>Les données sont hébergées par Supabase (serveurs dans l'Union européenne) et le site par Vercel. Ces prestataires agissent en tant que sous-traitants.</p>
+      </section>
+      <section class="legal-box" id="s6">
+        <div class="legal-box-head"><span class="legal-ico">✋</span><h2>Vos droits</h2><span class="legal-num">06</span></div>
+        <p>Vous disposez d'un droit d'accès, de rectification, d'effacement, d'opposition et de portabilité. Écrivez à <span class="todo">[email]</span>. Vous pouvez également saisir la CNIL (cnil.fr).</p>
+      </section>
+      <section class="legal-box" id="cookies">
+        <div class="legal-box-head"><span class="legal-ico">🍪</span><h2>Cookies</h2><span class="legal-num">07</span></div>
+        <ul>
       <li><b>Indispensables</b> (sans consentement) : cookie de session de l'organisateur, cookie mémorisant l'accès à un événement privé, préférences stockées sur l'appareil (prénom, likes, choix cookies).</li>
       <li><b>Mesure d'audience</b> (avec votre accord) : Google Analytics, avec adresse IP anonymisée.</li>
     </ul>
     <p>Vous pouvez modifier votre choix à tout moment : <a href="#" data-cookies>gérer les cookies</a>.</p>
+      </section>
+      <div class="legal-others"><a href="/mentions-legales" class="legal-card"><span>🏢</span>Mentions légales ›</a><a href="/cgu" class="legal-card"><span>📜</span>Conditions générales ›</a></div>
+    </div>
   </main>
   <footer class="site-footer">
     <a href="/mentions-legales">Mentions légales</a> · <a href="/cgu">CGU</a> · <a href="/confidentialite">Confidentialité</a> · <a href="#" data-cookies>Gérer les cookies</a>
