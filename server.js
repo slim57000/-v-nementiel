@@ -9,7 +9,8 @@ import socialRoutes from "./routes/social.js";
 import cameramanRoutes from "./routes/cameraman.js";
 import adminRoutes from "./routes/admin.js";
 import meRoutes from "./routes/me.js";
-import { getSetting } from "./lib/store.js";
+import { getSetting, listEventsOnDate, findOrganizer } from "./lib/store.js";
+import { EMAIL_ENABLED, sendEmail } from "./lib/email.js";
 import { UPLOAD_DIR } from "./lib/uploads.js";
 import { findEventBySlug } from "./lib/store.js";
 import { ON_VERCEL, missingConfig } from "./lib/config.js";
@@ -35,6 +36,7 @@ if (missingConfig.length) {
 // Réglages publics lus par le navigateur (identifiant Google Analytics, facultatif).
 app.get("/api/config", async (req, res) => res.json({
   gaId: process.env.GA_MEASUREMENT_ID || "",
+  emailEnabled: EMAIL_ENABLED,
   defaultLivePlatform: (await getSetting("defaultLivePlatform").catch(() => null)) || "youtube",
 }));
 
@@ -44,6 +46,29 @@ app.get("/api/qr", async (req, res) => {
   if (!/^https?:\/\//.test(data) || data.length > 400) return res.status(400).json({ error: "Lien invalide." });
   const svg = await QRCode.toString(data, { type: "svg", margin: 1, color: { dark: "#1d1a20", light: "#ffffff" } });
   res.type("image/svg+xml").set("Cache-Control", "public, max-age=86400").send(svg);
+});
+
+// Tâche quotidienne (Vercel Cron) : rappel à l'organisateur 2 jours avant la fin du replay (J+13).
+app.get("/api/cron/replay-reminders", async (req, res) => {
+  const secret = process.env.CRON_SECRET;
+  if (secret && req.get("authorization") !== `Bearer ${secret}`) return res.status(401).json({ error: "Non autorisé." });
+  const day = new Date(Date.now() - 13 * 86400000).toISOString().slice(0, 10);
+  let sent = 0;
+  for (const event of await listEventsOnDate(day)) {
+    if (!event.cameras?.length) continue;
+    const organizer = await findOrganizer(event.organizerId);
+    if (!organizer) continue;
+    const ok = await sendEmail({
+      to: organizer.email,
+      subject: `Le replay de « ${event.name} » expire dans 2 jours`,
+      title: "Pensez à récupérer votre replay",
+      body: `<p>Le replay de <b>${event.name.replace(/</g, "&lt;")}</b> ne sera plus proposé aux invités dans 2 jours.</p>
+        <p>Vos vidéos restent disponibles sur vos comptes YouTube / Twitch, d'où vous pouvez les télécharger :
+        YouTube Studio → Contenu → ⋮ → Télécharger.</p>`,
+    });
+    if (ok) sent++;
+  }
+  res.json({ day, sent });
 });
 
 app.use("/api/auth", authRoutes);

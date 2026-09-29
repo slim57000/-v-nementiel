@@ -18,6 +18,7 @@ $("#login").addEventListener("submit", async (e) => {
     });
     if (res.created) {
       $("#new-code").textContent = res.code;
+      $("#emailed").classList.toggle("hidden", !res.emailed);
       $("#login").classList.add("hidden");
       $("#created").classList.remove("hidden");
     } else {
@@ -35,3 +36,16 @@ $("#login").addEventListener("submit", async (e) => {
 });
 
 $("#continue").addEventListener("click", () => { location.href = target; });
+
+// « Code oublié » : proposé seulement si l'envoi d'emails est configuré.
+fetch("/api/config").then((r) => r.json()).then((c) => { if (c.emailEnabled) $("#forgot").classList.remove("hidden"); }).catch(() => {});
+$("#forgot").addEventListener("click", async (e) => {
+  e.preventDefault();
+  $("#error").textContent = "";
+  try {
+    await api("/api/auth/send-code", { method: "POST", body: { email: $("#email").value } });
+    $("#error").textContent = "📧 Si un compte existe pour cette adresse, le code vient d'y être envoyé.";
+  } catch (err) {
+    $("#error").textContent = err.message;
+  }
+});

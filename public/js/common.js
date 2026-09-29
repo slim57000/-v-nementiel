@@ -378,3 +378,13 @@ export const qrUrl = (link) => `/api/qr?data=${encodeURIComponent(link)}`;
 export const livePlaceholder = () => fetch("/api/config").then((r) => r.json())
   .then((c) => (c.defaultLivePlatform === "twitch" ? "https://twitch.tv/votre-chaine" : "https://youtube.com/live/…"))
   .catch(() => "https://youtube.com/live/…");
+
+// Replay : le live d'un événement reste visible 15 jours après la date de l'événement.
+export const REPLAY_DAYS = 15;
+export function liveState(ev) {
+  const today = new Date().toISOString().slice(0, 10);
+  if (ev.date >= today) return "live";
+  const end = new Date(`${ev.date}T00:00`);
+  end.setDate(end.getDate() + REPLAY_DAYS + 1);
+  return Date.now() < end ? "replay" : "expired";
+}

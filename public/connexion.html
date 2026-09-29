@@ -23,6 +23,7 @@
       <div id="code-block" class="hidden">
         <label for="code">Votre code organisateur (6 chiffres)</label>
         <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" class="code-input">
+        <p class="small" style="margin:8px 0 0"><a href="#" id="forgot" class="hidden">Code oublié ? Le recevoir par email</a></p>
       </div>
 
       <p id="error" class="error" role="alert"></p>
@@ -33,6 +34,7 @@
       <h2>Votre espace est prêt 🎉</h2>
       <p>Voici votre <b>code organisateur</b>. Notez-le : il vous sera demandé pour vous reconnecter depuis un autre appareil.</p>
       <div class="notice code" id="new-code"></div>
+      <p class="muted small hidden" id="emailed">📧 Une copie de ce code vient de vous être envoyée par email.</p>
       <button id="continue" class="btn btn-block">J'ai noté mon code, continuer</button>
     </div>
   </main>

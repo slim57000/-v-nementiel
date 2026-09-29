@@ -69,7 +69,8 @@ const EN = {
   "Personnes bloquées": "Blocked people", "Débloquer": "Unblock", "Dites bonjour 👋": "Say hello 👋",
   "Apparence": "Appearance", "Langue": "Language", "Automatique": "Automatic", "Clair": "Light", "Sombre": "Dark",
   "Mes faire-part": "My invitations", "Faire-part": "Invitation", "Invitation au live": "Live invitation", "Imprimer / PDF": "Print / PDF",
-  "Espace caméraman": "Camera operator area", "Accéder à mes missions": "Open my assignments", "Enregistrer les liens": "Save links",
+  "Espace caméraman": "Camera operator area", "▶ Voir le replay": "▶ Watch the replay",
+  "Code oublié ? Le recevoir par email": "Forgot your code? Get it by email", "Accéder à mes missions": "Open my assignments", "Enregistrer les liens": "Save links",
   "Envoyer une photo": "Send a photo", "● Ouvrir le live": "● Open the live",
   "Les événements publics à venir.": "Upcoming public events.", "Aucun événement public à venir pour le moment.": "No upcoming public events yet.",
 };

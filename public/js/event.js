@@ -1,4 +1,4 @@
-import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, EVENT_TYPES } from "./common.js";
+import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 import { initGuestbook } from "./guestbook.js";
 
@@ -63,8 +63,10 @@ function showEvent(ev) {
   $("#description").textContent = ev.description;
   $("#description").classList.toggle("hidden", !ev.description);
 
-  if (ev.cameras.length) {
+  const state = liveState(ev);
+  if (ev.cameras.length && state !== "expired") {
     $("#live-link").href = `/live?e=${encodeURIComponent(ev.slug)}`;
+    if (state === "replay") $("#live-link").textContent = "▶ Voir le replay";
     $("#live-link").classList.remove("hidden");
   }
   if (ev.cagnotteUrl) {

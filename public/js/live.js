@@ -1,4 +1,4 @@
-import { api, $, esc, shareSheet, toast, guestName, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo } from "./common.js";
+import { api, $, esc, shareSheet, toast, guestName, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState } from "./common.js";
 import { icon } from "./icons.js";
 
 const slug = new URLSearchParams(location.search).get("e") || "";
@@ -85,6 +85,16 @@ async function load() {
 
   isOwner = ev.isOwner;
   cameras = ev.cameras;
+  // Après l'événement : replay pendant 15 jours, puis plus de lecteur.
+  const state = liveState(ev);
+  if (state !== "live") {
+    $(".live-badge").textContent = "REPLAY";
+    $(".live-badge").classList.add("is-replay");
+  }
+  if (state === "expired") {
+    cameras = [];
+    $("#empty").innerHTML = '<span style="font-size:2rem">🎞️</span>Le replay n\'est plus disponible.<br><small>Merci d\'avoir partagé ce moment !</small>';
+  }
   $("#cams").innerHTML = cameras.map((c, i) => {
     const thumb = thumbnailUrl(c.url);
     return `<button class="cam ${thumb ? "has-thumb" : ""}" data-index="${i}" ${thumb ? `style="background-image:url('${esc(thumb)}')"` : ""}>${esc(c.name)}</button>`;

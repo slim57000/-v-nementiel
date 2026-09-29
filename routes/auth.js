@@ -2,6 +2,7 @@ import { Router } from "express";
 import { findOrganizerByEmail, findOrganizer, createOrganizer, deleteOrganizer, listEvents } from "../lib/store.js";
 import { loginCode } from "../lib/codes.js";
 import { setSigned, getSigned } from "../lib/session.js";
+import { codeEmail, EMAIL_ENABLED } from "../lib/email.js";
 
 const router = Router();
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -30,7 +31,8 @@ router.post("/login", async (req, res) => {
   if (!organizer) {
     const created = await createOrganizer(email, loginCode());
     setSigned(res, "org", String(created.id));
-    return res.json({ created: true, code: created.loginCode });
+    codeEmail(email, created.loginCode); // copie du code par email (si l'envoi est configuré)
+    return res.json({ created: true, code: created.loginCode, emailed: EMAIL_ENABLED });
   }
 
   if (organizer.blocked) return res.status(403).json({ error: "Ce compte a été suspendu. Contactez le support." });
@@ -43,6 +45,20 @@ router.post("/login", async (req, res) => {
   failures.delete(email);
   setSigned(res, "org", String(organizer.id));
   res.json({ created: false });
+});
+
+// « Code oublié » : renvoie le code organisateur par email (réponse identique que le compte existe ou non).
+const resent = new Map();
+router.post("/send-code", async (req, res) => {
+  if (!EMAIL_ENABLED) return res.status(503).json({ error: "L'envoi d'emails n'est pas encore activé." });
+  const email = String(req.body?.email || "").trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) return res.status(400).json({ error: "Adresse email invalide." });
+  const last = resent.get(email) || 0;
+  if (Date.now() - last < 60_000) return res.status(429).json({ error: "Patientez une minute avant de redemander le code." });
+  resent.set(email, Date.now());
+  const organizer = await findOrganizerByEmail(email);
+  if (organizer && !organizer.blocked) await codeEmail(email, organizer.loginCode);
+  res.json({ ok: true });
 });
 
 router.post("/logout", (req, res) => {

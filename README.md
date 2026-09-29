@@ -32,6 +32,9 @@ npm run dev        # http://localhost:3000
 | `SUPABASE_URL` | Supabase → Project Settings → API → Project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → clé `service_role` (secrète) |
 | `SESSION_SECRET` | chaîne aléatoire longue, ex. `openssl rand -hex 32` |
+| `RESEND_API_KEY` | facultatif : envoi d'emails (code organisateur, code oublié, rappel de fin de replay) via resend.com |
+| `EMAIL_FROM` | facultatif : expéditeur, ex. `EverMoments <contact@votre-domaine.fr>` (domaine vérifié chez Resend) |
+| `CRON_SECRET` | facultatif : protège la tâche quotidienne de rappel (Vercel Cron) |
 | `ADMIN_EMAILS` | emails des administrateurs, séparés par des virgules (accès à /admin) |
 | `GA_MEASUREMENT_ID` | facultatif : identifiant Google Analytics 4 (`G-XXXXXXX`), chargé seulement après accord cookies |
 
