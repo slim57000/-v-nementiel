@@ -70,7 +70,9 @@ input, select, textarea { width: 100%; font: inherit; font-size: 16px; padding: 
 input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); outline-offset: 1px; border-color: transparent; }
 textarea { min-height: 110px; resize: vertical; }
 /* Safari iOS : les champs date / heure ignorent width:100% et débordent ; on les remet dans le rang. */
-input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: none; display: block; min-width: 0; max-width: 100%; min-height: 48px; line-height: 1.4; }
+input, select, textarea { max-width: 100%; min-width: 0; }
+input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: none; display: block; width: 100% !important; min-width: 0; max-width: 100%; min-height: 48px; line-height: 1.4; }
+input[type="file"] { width: 100%; font-size: 14px; overflow: hidden; }
 input::-webkit-date-and-time-value { text-align: center; }
 .row > * { min-width: 0; }
 
@@ -438,3 +440,11 @@ input::-webkit-date-and-time-value { text-align: center; }
 .form-centered h2, .form-centered label { text-align: center; }
 .form-centered input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), .form-centered select { text-align: center; }
 .form-centered input[type="file"] { display: block; margin: 0 auto; max-width: 100%; }
+
+/* Catégories et autres choix : toutes les cases à la même taille */
+.choices { grid-auto-rows: 1fr; }
+.choice { display: block; height: 100%; margin: 0; }
+.choice span { height: 100%; }
+#types { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+#types .choice span { min-height: 92px; font-size: .8rem; line-height: 1.2; overflow-wrap: normal; word-break: normal; }
+@media (max-width: 374px) { #types { grid-template-columns: repeat(2, minmax(0, 1fr)); } #types .choice span { min-height: 80px; } }
