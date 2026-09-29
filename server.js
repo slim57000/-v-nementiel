@@ -55,7 +55,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Service momentanément indisponible, réessayez dans un instant." });
 });
 
-// En local uniquement : sur Vercel, public/ est servi par le CDN (cleanUrls dans vercel.json).
+// En local uniquement : sur Vercel, public/ est servi par le CDN et api/index.js reçoit le reste (vercel.json).
 if (!ON_VERCEL) {
   app.use("/uploads", express.static(UPLOAD_DIR, { maxAge: "30d", immutable: true }));
   app.use(express.static(PUBLIC_DIR, { extensions: ["html"] }));
