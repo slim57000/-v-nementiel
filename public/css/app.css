@@ -461,3 +461,6 @@ input::-webkit-date-and-time-value { text-align: center; }
 .text-option { text-align: left; font: inherit; background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; cursor: pointer; color: var(--text); }
 .text-option b { display: block; color: var(--primary); margin-bottom: 2px; }
 .text-option span { font-size: .88rem; }
+/* Profil : nom et email longs restent dans l'écran */
+.profile-head #name, .profile-head #email { max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
+.profile-head #name { font-size: clamp(1.3rem, 6vw, 1.8rem); line-height: 1.15; }
