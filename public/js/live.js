@@ -93,6 +93,7 @@ async function load() {
   $("#stage").style.backgroundImage = `linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.55)), url("${ev.cover || "/img/maquette/salle.jpg"}")`;
   $("#cams-section").classList.toggle("hidden", cameras.length < 2);
   play(0);
+  heartbeat();
   poll();
   loadPhotos();
   setInterval(loadPhotos, 20000);
@@ -102,6 +103,26 @@ $("#cams").addEventListener("click", (e) => {
   const btn = e.target.closest(".cam");
   if (btn) play(Number(btn.dataset.index));
 });
+
+// --- Spectateurs : signal de présence toutes les 15 s ---
+let clientId;
+try { clientId = sessionStorage.getItem("em-cid"); } catch { /* ignoré */ }
+if (!clientId) {
+  clientId = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  try { sessionStorage.setItem("em-cid", clientId); } catch { /* ignoré */ }
+}
+const formatCount = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1).replace(".", ",").replace(",0", "")}K` : String(n));
+
+async function heartbeat() {
+  if (!document.hidden) {
+    try {
+      const { viewers } = await api(`${base}/presence`, { method: "POST", body: { clientId } });
+      $("#viewers").innerHTML = `${icon("eye", 16)} ${formatCount(viewers)}`;
+      $("#viewers").classList.remove("hidden");
+    } catch { /* réseau : on réessaie */ }
+  }
+  setTimeout(heartbeat, 15000);
+}
 
 // --- Chat et réactions : interrogation du serveur toutes les 3 s ---
 let lastId = 0;

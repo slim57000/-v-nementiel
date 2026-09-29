@@ -73,3 +73,4 @@
 .live-tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: grid; grid-template-columns: repeat(5, 1fr); background: rgba(17,16,20,.96); border-top: 1px solid #222; padding: 8px 4px calc(8px + env(safe-area-inset-bottom)); backdrop-filter: blur(8px); }
 .live-tabs a { display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--live-muted); text-decoration: none; font-size: .7rem; }
 .live-tabs a:hover, .live-tabs a:focus { color: var(--primary); }
+.viewers { display: inline-flex; align-items: center; gap: 4px; font-size: .85rem; font-weight: 600; color: #fff; white-space: nowrap; }

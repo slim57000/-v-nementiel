@@ -4,7 +4,7 @@ import { Router } from "express";
 import {
   findEventBySlug, addMessage, listMessages, addPhoto, listPhotos, findPhoto, deletePhoto,
   addGuestbookEntry, listGuestbook, findGuestbookEntry, updateGuestbookEntry, likeGuestbookEntry, deleteGuestbookEntry,
-  findEventMessage, deleteMessage, addReport, saveEvent,
+  findEventMessage, deleteMessage, addReport, saveEvent, touchPresence,
 } from "../lib/store.js";
 import { guestAuthor } from "../lib/guest.js";
 import { saveDataUrl, removeUpload } from "../lib/uploads.js";
@@ -144,6 +144,13 @@ router.delete("/guestbook/:id", ownerOnly, async (req, res) => {
   await deleteGuestbookEntry(entry);
   await Promise.all([removeUpload(entry.photoUrl), removeUpload(entry.audioUrl)]);
   res.json({ ok: true });
+});
+
+// Présence d'un spectateur du live (appelé toutes les 15 s) : renvoie le nombre de spectateurs.
+router.post("/presence", async (req, res) => {
+  const clientId = String(req.body?.clientId || "").replace(/[^\w-]/g, "").slice(0, 40);
+  if (!clientId) return res.status(400).json({ error: "Identifiant manquant." });
+  res.json({ viewers: await touchPresence(req.event.id, clientId) });
 });
 
 // --- Modération ---

@@ -41,10 +41,13 @@ const EXAMPLES = [
 ];
 const today = new Date().toISOString().slice(0, 10);
 
-function liveCard({ href, image, tag, live, name, location }) {
+const formatCount = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1).replace(".", ",").replace(",0", "")}K` : String(n));
+
+function liveCard({ href, image, tag, live, name, location, viewers }) {
   return `<a class="live-card" ${href ? `href="${esc(href)}"` : ""} ${image ? `style="background-image:url('${esc(image)}')"` : ""}>
     <span class="tag ${live ? "is-live" : ""}">${esc(tag)}</span>
     <b>${esc(name)}</b><span>${esc(location)}</span>
+    ${viewers ? `<span class="viewers-mini">${icon("eye", 14)} ${formatCount(viewers)}</span>` : ""}
     <i class="heart">${icon("heart", 18)}</i>
   </a>`;
 }
@@ -55,7 +58,7 @@ api("/api/public?limit=10").catch(() => []).then((events) => {
     .sort((a, b) => b.live - a.live)
     .map((e) => liveCard({
       href: e.live ? `/live?e=${encodeURIComponent(e.slug)}` : `/e/${encodeURIComponent(e.slug)}`,
-      image: e.cover || "/img/maquette/salle.jpg", tag: e.live ? "LIVE" : dayBadge(e.date), live: e.live, name: e.name, location: e.location,
+      image: e.cover || "/img/maquette/salle.jpg", tag: e.live ? "LIVE" : dayBadge(e.date), live: e.live, name: e.name, location: e.location, viewers: e.viewers,
     }));
   EXAMPLES.slice(0, Math.max(0, 3 - cards.length)).forEach((ex) => cards.push(liveCard({ ...ex, tag: "Exemple" })));
   $("#upcoming-list").innerHTML = cards.join("");

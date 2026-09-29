@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
-import { findEventBySlug, findEventByAccessCode, listPublicUpcoming } from "../lib/store.js";
+import { findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
 import { currentOrganizer } from "./auth.js";
 
@@ -15,10 +15,13 @@ export const hasAccess = async (req, event) =>
 // Événements publics à venir : cartes de la page d'accueil et de « Découvrir ».
 router.get("/", async (req, res) => {
   const events = await listPublicUpcoming(Math.min(Number(req.query.limit) || 12, 50));
-  res.json(events.map((e) => {
+  const today = new Date().toISOString().slice(0, 10);
+  res.json(await Promise.all(events.map(async (e) => {
     const { invite, inviteStyle, description, ...card } = publicView(e);
-    return card;
-  }));
+    // Spectateurs en cours pour les directs du jour.
+    const viewers = e.date === today && card.cameras.length ? await countViewers(e.id).catch(() => 0) : 0;
+    return { ...card, viewers };
+  })));
 });
 
 // Événement privé non déverrouillé : on ne renvoie que le strict minimum pour l'écran cadenas.

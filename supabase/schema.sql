@@ -96,6 +96,14 @@ alter table organizers add column if not exists blocked boolean not null default
 alter table events add column if not exists suspended boolean not null default false;
 create table if not exists settings (key text primary key, value jsonb);
 
+-- Spectateurs du live (ajouté en V0.8).
+create table if not exists presence (
+  event_id   bigint not null references events(id) on delete cascade,
+  client_id  text not null,
+  seen_at    timestamptz not null default now(),
+  primary key (event_id, client_id)
+);
+
 -- Sécurité : RLS activé sans règle = aucune lecture/écriture avec la clé publique (anon).
 -- Seul le serveur, avec la clé service_role, accède aux données.
 alter table organizers enable row level security;
@@ -105,6 +113,7 @@ alter table photos enable row level security;
 alter table guestbook enable row level security;
 alter table reports enable row level security;
 alter table settings enable row level security;
+alter table presence enable row level security;
 
 -- Bucket public pour les photos (couvertures et faire-part).
 insert into storage.buckets (id, name, public)
