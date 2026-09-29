@@ -123,8 +123,9 @@ form.addEventListener("submit", async (e) => {
   };
   $("#save").disabled = true;
   try {
-    await api(id ? `/api/events/${id}` : "/api/events", { method: id ? "PUT" : "POST", body });
-    location.href = "/dashboard?saved=1";
+    const saved = await api(id ? `/api/events/${id}` : "/api/events", { method: id ? "PUT" : "POST", body });
+    // Nouvel événement : on montre directement ses faire-part à partager.
+    location.href = id ? "/dashboard?saved=1" : `/faire-part?id=${saved.id}`;
   } catch (err) {
     if (err.status === 401) return goLogin();
     $("#error").textContent = err.message;

@@ -1,4 +1,5 @@
 import express from "express";
+import QRCode from "qrcode";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import authRoutes from "./routes/auth.js";
@@ -30,6 +31,14 @@ if (missingConfig.length) {
 
 // Réglages publics lus par le navigateur (identifiant Google Analytics, facultatif).
 app.get("/api/config", (req, res) => res.json({ gaId: process.env.GA_MEASUREMENT_ID || "" }));
+
+// QR code (SVG) d'un lien : faire-part, invitation au live.
+app.get("/api/qr", async (req, res) => {
+  const data = String(req.query.data || "");
+  if (!/^https?:\/\//.test(data) || data.length > 400) return res.status(400).json({ error: "Lien invalide." });
+  const svg = await QRCode.toString(data, { type: "svg", margin: 1, color: { dark: "#1d1a20", light: "#ffffff" } });
+  res.type("image/svg+xml").set("Cache-Control", "public, max-age=86400").send(svg);
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);

@@ -1,4 +1,4 @@
-import { api, $, esc, share, toast, guestName, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden } from "./common.js";
+import { api, $, esc, shareSheet, toast, guestName, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden } from "./common.js";
 import { icon } from "./icons.js";
 
 const slug = new URLSearchParams(location.search).get("e") || "";
@@ -51,6 +51,12 @@ function play(index) {
 }
 
 async function load() {
+  // Lien d'invitation au live d'un événement privé : « /live?e=slug&code=XXXX ».
+  const code = new URLSearchParams(location.search).get("code");
+  if (code) {
+    await api(`/api/public/${encodeURIComponent(slug)}/unlock`, { method: "POST", body: { code } }).catch(() => {});
+    history.replaceState(null, "", `/live?e=${encodeURIComponent(slug)}`);
+  }
   let ev;
   try {
     ev = await api(`/api/public/${encodeURIComponent(slug)}`);
@@ -64,7 +70,7 @@ async function load() {
   document.title = `Live — ${ev.name}`;
   $("#title").textContent = ev.name;
   $("#close").href = `/e/${encodeURIComponent(slug)}`;
-  $("#share").onclick = () => share({ title: ev.name, text: `Suivez « ${ev.name} » en direct !`, url: location.href });
+  $("#share").onclick = () => shareSheet({ title: ev.name, text: `📺 Suivez « ${ev.name} » en direct !`, url: location.href });
 
   if (ev.cagnotteUrl) {
     for (const el of [$("#pot"), $("#pot-btn")]) {

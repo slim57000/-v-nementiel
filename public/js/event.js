@@ -1,4 +1,4 @@
-import { api, $, esc, copy, share, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, EVENT_TYPES } from "./common.js";
+import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, EVENT_TYPES } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 import { initGuestbook } from "./guestbook.js";
 
@@ -74,7 +74,7 @@ function showEvent(ev) {
   renderInvite($("#invite"), ev, ev.invite, ev.inviteStyle, invitePhotoUrl(ev.invite, ev.cover));
   startCountdown(new Date(`${ev.date}T${ev.time}`));
 
-  $("#share").onclick = () => share({ title: ev.name, text: `Vous êtes invité·e à « ${ev.name} » !`, url });
+  $("#share").onclick = () => shareSheet({ title: ev.name, text: `Vous êtes invité·e à « ${ev.name} » !`, url });
   $("#copy").onclick = () => copy(url, "Lien copié !");
   $("#page").classList.remove("hidden");
 }

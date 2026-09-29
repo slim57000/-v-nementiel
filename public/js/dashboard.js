@@ -1,4 +1,4 @@
-import { api, $, esc, copy, share, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES } from "./common.js";
+import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES } from "./common.js";
 import { icon } from "./icons.js";
 
 $("#profile-btn").innerHTML = icon("user");
@@ -68,6 +68,7 @@ function card(ev) {
     ${ev.cagnotteUrl ? `<div class="ev-pot"><span style="color:var(--primary)">${icon("gift")}</span><span><b>Cagnotte</b><span class="muted small">Plateforme externe</span></span>
       <a class="btn btn-sm" href="${esc(ev.cagnotteUrl)}" target="_blank" rel="noopener">Voir la cagnotte</a></div>` : ""}
     <div class="ev-tools">
+      <a class="btn btn-sm" href="/faire-part?id=${ev.id}">💌 Mes faire-part</a>
       <button class="btn btn-light btn-sm" data-action="share">Partager</button>
       <button class="btn btn-light btn-sm" data-action="link">Copier le lien</button>
       ${isPrivate ? `<button class="btn btn-light btn-sm" data-action="code">Copier le code</button>
@@ -114,7 +115,7 @@ $("#list").addEventListener("click", async (e) => {
     const text = ev.visibility === "private"
       ? `Vous êtes invité·e à « ${ev.name} » ! Code d'accès : ${ev.accessCode}`
       : `Vous êtes invité·e à « ${ev.name} » !`;
-    share({ title: ev.name, text, url });
+    shareSheet({ title: ev.name, text, url: ev.visibility === "private" ? `${url}?code=${ev.accessCode}` : url });
   }
   if (action === "delete" && confirm(`Supprimer définitivement « ${ev.name} » ?`)) {
     try {

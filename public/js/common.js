@@ -291,3 +291,42 @@ else if (!readConsent()) addEventListener("DOMContentLoaded", cookieBanner);
 document.addEventListener("click", (e) => {
   if (e.target.closest("[data-cookies]")) { e.preventDefault(); cookieBanner(); }
 });
+
+// --- Partage : WhatsApp, Facebook, Instagram, SMS, email, copie, partage natif ---
+export function shareSheet({ title, text, url }) {
+  const msg = `${text} ${url}`;
+  const enc = encodeURIComponent;
+  const links = [
+    ["WhatsApp", "#25D366", `https://wa.me/?text=${enc(msg)}`],
+    ["Facebook", "#1877F2", `https://www.facebook.com/sharer/sharer.php?u=${enc(url)}`],
+    ["SMS", "#34C759", `sms:?&body=${enc(msg)}`],
+    ["Email", "#6e6873", `mailto:?subject=${enc(title)}&body=${enc(msg)}`],
+  ];
+  document.body.insertAdjacentHTML("beforeend", `
+    <div class="sheet" id="share-sheet" role="dialog" aria-modal="true" aria-labelledby="share-title">
+      <div class="card">
+        <h2 id="share-title" style="font-size:1.1rem">Partager</h2>
+        <div class="share-grid">
+          ${links.map(([n, c, href]) => `<a class="share-opt" href="${esc(href)}" target="_blank" rel="noopener"><i style="background:${c}">${n[0]}</i>${n}</a>`).join("")}
+          <button class="share-opt" data-s="instagram"><i style="background:linear-gradient(45deg,#f58529,#dd2a7b,#8134af)">I</i>Instagram</button>
+          <button class="share-opt" data-s="copy"><i style="background:var(--primary)">🔗</i>Copier le lien</button>
+          ${navigator.share ? '<button class="share-opt" data-s="native"><i style="background:#1d1a20">⋯</i>Plus…</button>' : ""}
+        </div>
+        <button class="btn btn-light btn-block" data-s="close" style="margin-top:12px">Fermer</button>
+      </div>
+    </div>`);
+  const sheet = document.getElementById("share-sheet");
+  sheet.addEventListener("click", async (e) => {
+    const s = e.target.closest("[data-s]")?.dataset.s || (e.target === sheet ? "close" : null);
+    if (e.target.closest("a.share-opt")) return sheet.remove();
+    if (!s) return;
+    sheet.remove();
+    // Instagram n'accepte pas de lien pré-rempli : on copie le message à coller en story ou en message.
+    if (s === "instagram") copy(msg, "Message copié : collez-le dans Instagram");
+    if (s === "copy") copy(url, "Lien copié !");
+    if (s === "native") share({ title, text, url });
+  });
+}
+
+// URL de l'image QR code d'un lien.
+export const qrUrl = (link) => `/api/qr?data=${encodeURIComponent(link)}`;
