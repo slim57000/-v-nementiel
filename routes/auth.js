@@ -53,7 +53,10 @@ router.post("/logout", (req, res) => {
 router.get("/me", async (req, res) => {
   const organizer = await currentOrganizer(req);
   if (!organizer) return res.status(401).json({ error: "Non connecté." });
-  res.json({ email: organizer.email, code: organizer.loginCode, isAdmin: isAdmin(organizer) });
+  res.json({
+    id: organizer.id, email: organizer.email, code: organizer.loginCode, isAdmin: isAdmin(organizer),
+    displayName: organizer.displayName || "", avatar: organizer.avatar || null,
+  });
 });
 
 // Suppression du compte (RGPD / exigence App Store et Play Store) : compte, événements et fichiers.

@@ -1,5 +1,6 @@
 // Utilitaires partagés par toutes les pages.
 import { icon } from "./icons.js";
+import "./i18n.js"; // langue (FR/EN) et thème (clair/sombre), appliqués au chargement
 
 export const EVENT_TYPES = {
   mariage: { label: "Mariage", icon: "💍" },
@@ -108,7 +109,7 @@ export function publicCard(ev) {
   </a>`;
 }
 
-// Barre d'onglets du bas (pages connectées). `active` : "home" | "discover" | "profile".
+// Barre d'onglets du bas (pages connectées). `active` : "home" | "discover" | "messages" | "profile".
 export function tabbar(active) {
   const tab = (key, href, ico, label) =>
     `<a href="${href}" class="${active === key ? "active" : ""}"><span class="ico">${icon(ico)}</span>${label}</a>`;
@@ -118,7 +119,7 @@ export function tabbar(active) {
       ${tab("home", "/dashboard", "home", "Accueil")}
       ${tab("discover", "/decouvrir", "search", "Découvrir")}
       <a href="/edit" aria-label="Créer un événement"><span class="plus">+</span></a>
-      <span class="soon" title="Bientôt disponible"><span class="ico">${icon("chat")}</span>Messages</span>
+      ${tab("messages", "/messages", "chat", "Messages")}
       ${tab("profile", "/profil", "user", "Profil")}
     </nav>`);
 }

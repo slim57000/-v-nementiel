@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
-import { findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers } from "../lib/store.js";
+import { findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory, addFriends, listBlockIds } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
 import { currentOrganizer } from "./auth.js";
 
@@ -31,8 +31,17 @@ router.get("/:slug", async (req, res) => {
   if (!(await hasAccess(req, event))) {
     return res.json({ locked: true, name: event.name, type: event.type, visibility: "private" });
   }
-  const isOwner = (await currentOrganizer(req))?.id === event.organizerId;
-  res.json({ locked: false, isOwner, ...publicView(event) });
+  const me = await currentOrganizer(req);
+  const isOwner = me?.id === event.organizerId;
+  if (me && !isOwner) {
+    // Participation mémorisée ; entrer dans un événement privé (code / QR) rend ami avec l'organisateur.
+    await addHistory(me.id, event.id);
+    if (event.visibility === "private") {
+      const [mine, theirs] = await Promise.all([listBlockIds(me.id), listBlockIds(event.organizerId)]);
+      if (!mine.includes(event.organizerId) && !theirs.includes(me.id)) await addFriends(me.id, event.organizerId);
+    }
+  }
+  res.json({ locked: false, isOwner, loggedIn: Boolean(me), ...publicView(event), id: event.id });
 });
 
 // Anti-bruteforce simple par IP (+ événement) (par instance).

@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#d81f4f">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;600;800&display=swap">
-  <link rel="stylesheet" href="/css/app.css?v=8">
+  <link rel="stylesheet" href="/css/app.css?v=10">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <title>Profil — EverMoments</title>
 </head>
@@ -15,18 +15,52 @@
     <a class="logo" href="/dashboard"><img src="/img/logo.png" alt=""><span>Ever<b>Moments</b></span></a>
   </header>
   <main class="container centered">
-    <h1>Mon profil</h1>
-    <section class="card">
-      <label>Adresse email</label>
-      <p id="email" style="margin:0"></p>
+    <section class="profile-head">
+      <label class="avatar-edit" title="Changer la photo">
+        <span class="avatar avatar-lg" id="avatar"></span>
+        <span class="avatar-cam">📷</span>
+        <input type="file" id="avatar-file" accept="image/*" hidden>
+      </label>
+      <h1 id="name" style="margin:10px 0 2px"></h1>
+      <p class="muted" id="email" style="margin:0"></p>
+      <button class="btn btn-ghost btn-sm" id="edit-name" style="margin-top:8px">✏️ Modifier mon nom</button>
+    </section>
+
+    <div class="stats">
+      <div><b id="st-events">0</b><span>Événements</span></div>
+      <div><b id="st-part">0</b><span>Participations</span></div>
+      <div><b id="st-friends">0</b><span>Amis</span></div>
+    </div>
+
+    <a href="/messages" class="btn btn-block" style="margin-bottom:16px">💬 Mes messages</a>
+
+    <div class="segments" id="p-tabs">
+      <button class="active" data-tab="favorites">Favoris</button>
+      <button data-tab="history">Participations</button>
+      <button data-tab="gifts">Mes cadeaux</button>
+    </div>
+    <div id="p-list" class="p-list"></div>
+
+    <section class="card" style="margin-top:18px">
       <label>Code organisateur</label>
       <p class="muted small" style="margin:0 0 6px">À saisir pour vous reconnecter depuis un autre appareil.</p>
       <div class="notice code" id="code"></div>
-    </section>
-    <section class="card">
-      <p style="margin-top:0"><b id="count">0</b> événement(s) créé(s)</p>
       <a href="/dashboard" class="btn btn-light btn-block">Voir mes événements</a>
     </section>
+    <section class="card">
+      <label>Apparence</label>
+      <div class="segments" id="theme">
+        <button data-theme-pref="auto">Automatique</button>
+        <button data-theme-pref="light">Clair</button>
+        <button data-theme-pref="dark">Sombre</button>
+      </div>
+      <label>Langue</label>
+      <div class="segments" id="lang">
+        <button data-lang="fr">Français</button>
+        <button data-lang="en">English</button>
+      </div>
+    </section>
+
     <a id="admin-link" href="/admin" class="btn btn-light btn-block hidden" style="margin-bottom:10px">🛠️ Administration</a>
     <button id="logout" class="btn btn-ghost btn-block">Se déconnecter</button>
 

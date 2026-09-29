@@ -54,6 +54,7 @@ function showEvent(ev) {
     .replace(/^(\d+) (\p{L})/u, (m, d, l) => `${d} ${l.toUpperCase()}`);
   $("#lock").textContent = ev.visibility === "private" ? "🔒 Privé" : "🔓 Public";
   renderStories(ev);
+  initFavorite(ev);
   initGuestbook(ev);
 
   $("#when").textContent = formatDate(ev.date, ev.time);
@@ -116,6 +117,21 @@ async function renderStories(ev) {
   $("#add-story").classList.remove("hidden");
   $("#add-story").onclick = () => pickAndUploadPhoto(ev.slug).then(load, () => {});
   load();
+}
+
+// Favori (utilisateur connecté, hors organisateur).
+async function initFavorite(ev) {
+  if (!ev.loggedIn || ev.isOwner) return;
+  const btn = $("#fav");
+  let on = (await api("/api/me/favorites").catch(() => [])).some((e) => e.id === ev.id);
+  const paint = () => { btn.textContent = on ? "♥" : "♡"; btn.classList.toggle("on", on); };
+  paint();
+  btn.classList.remove("hidden");
+  btn.onclick = async () => {
+    on = !on;
+    paint();
+    await api(`/api/me/favorites/${ev.id}`, { method: on ? "POST" : "DELETE" }).catch(() => {});
+  };
 }
 
 function startCountdown(target) {

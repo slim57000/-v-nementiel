@@ -104,6 +104,40 @@ create table if not exists presence (
   primary key (event_id, client_id)
 );
 
+-- Réseau : profil, amis, blocages, messages privés, favoris, historique (ajouté en V0.9).
+alter table organizers add column if not exists display_name text not null default '';
+alter table organizers add column if not exists avatar_url text;
+create table if not exists friends (
+  user_id bigint not null references organizers(id) on delete cascade,
+  friend_id bigint not null references organizers(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (user_id, friend_id)
+);
+create table if not exists blocks (
+  blocker_id bigint not null references organizers(id) on delete cascade,
+  blocked_id bigint not null references organizers(id) on delete cascade,
+  primary key (blocker_id, blocked_id)
+);
+create table if not exists dms (
+  id bigint generated always as identity primary key,
+  sender_id bigint not null references organizers(id) on delete cascade,
+  recipient_id bigint not null references organizers(id) on delete cascade,
+  text text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists dms_pair_idx on dms (sender_id, recipient_id, id);
+create table if not exists favorites (
+  user_id bigint not null references organizers(id) on delete cascade,
+  event_id bigint not null references events(id) on delete cascade,
+  primary key (user_id, event_id)
+);
+create table if not exists history (
+  user_id bigint not null references organizers(id) on delete cascade,
+  event_id bigint not null references events(id) on delete cascade,
+  visited_at timestamptz not null default now(),
+  primary key (user_id, event_id)
+);
+
 -- Sécurité : RLS activé sans règle = aucune lecture/écriture avec la clé publique (anon).
 -- Seul le serveur, avec la clé service_role, accède aux données.
 alter table organizers enable row level security;
@@ -114,6 +148,11 @@ alter table guestbook enable row level security;
 alter table reports enable row level security;
 alter table settings enable row level security;
 alter table presence enable row level security;
+alter table friends enable row level security;
+alter table blocks enable row level security;
+alter table dms enable row level security;
+alter table favorites enable row level security;
+alter table history enable row level security;
 
 -- Bucket public pour les photos (couvertures et faire-part).
 insert into storage.buckets (id, name, public)

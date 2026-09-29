@@ -7,7 +7,7 @@ import {
   findEventMessage, deleteMessage, addReport, saveEvent, touchPresence,
 } from "../lib/store.js";
 import { guestAuthor } from "../lib/guest.js";
-import { saveDataUrl, removeUpload } from "../lib/uploads.js";
+import { saveDataUrl, removeUpload, isOwnUpload, isVideoUrl, videoUploadTarget, MAX_VIDEO_BYTES } from "../lib/uploads.js";
 import { hasAccess } from "./public.js";
 import { currentOrganizer } from "./auth.js";
 
@@ -77,8 +77,30 @@ router.post("/photos", notBlocked, async (req, res) => {
   if (!name) return res.status(400).json({ error: "Prénom obligatoire." });
   if (tooFast(`${req.ip}:photo`, 20, 3_600_000)) return res.status(429).json({ error: "Limite de photos atteinte, réessayez plus tard." });
   try {
-    const url = await saveDataUrl(req.body?.image);
+    const url = req.body?.image ? await saveDataUrl(req.body.image) : await videoFrom(req.body);
+    if (!url) return res.status(400).json({ error: "Ajoutez une photo ou une vidéo." });
     res.status(201).json(await addPhoto(req.event.id, { name, url, author: req.author }));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Vidéo courte : envoyée en base64 (`video`, sans Supabase) ou déjà déposée via URL signée (`videoUrl`).
+async function videoFrom(body) {
+  if (body?.video) return saveDataUrl(body.video, "video");
+  if (body?.videoUrl) {
+    if (!isOwnUpload(body.videoUrl) || !isVideoUrl(body.videoUrl)) throw new Error("Vidéo invalide.");
+    return body.videoUrl;
+  }
+  return null;
+}
+
+// Prépare l'envoi direct d'une vidéo vers le stockage (URL signée Supabase, sinon envoi via l'API).
+router.post("/upload-url", notBlocked, async (req, res) => {
+  if (tooFast(`${req.ip}:video`, 10, 3_600_000)) return res.status(429).json({ error: "Limite de vidéos atteinte, réessayez plus tard." });
+  if (Number(req.body?.size) > MAX_VIDEO_BYTES) return res.status(400).json({ error: "Vidéo trop lourde (50 Mo max)." });
+  try {
+    res.json(await videoUploadTarget(String(req.body?.type || "")));
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -106,12 +128,13 @@ router.post("/guestbook", notBlocked, async (req, res) => {
   const name = clean(req.body?.name, 30);
   const text = String(req.body?.text ?? "").trim().slice(0, 1000);
   if (!name) return res.status(400).json({ error: "Prénom obligatoire." });
-  if (!text && !req.body?.image && !req.body?.audio) {
-    return res.status(400).json({ error: "Écrivez un message, ajoutez une photo ou un vocal." });
+  if (!text && !req.body?.image && !req.body?.audio && !req.body?.video && !req.body?.videoUrl) {
+    return res.status(400).json({ error: "Écrivez un message, ajoutez une photo, une vidéo ou un vocal." });
   }
   if (tooFast(`${req.ip}:gb`, 5, 600_000)) return res.status(429).json({ error: "Merci ! Réessayez dans quelques minutes." });
   try {
-    const photoUrl = req.body?.image ? await saveDataUrl(req.body.image) : null;
+    // La vidéo courte éventuelle est rangée dans le champ « photo » (détectée par son extension).
+    const photoUrl = req.body?.image ? await saveDataUrl(req.body.image) : await videoFrom(req.body);
     const audioUrl = req.body?.audio ? await saveDataUrl(req.body.audio, "audio") : null;
     res.status(201).json(await addGuestbookEntry(req.event.id, { name, text, photoUrl, audioUrl, author: req.author }));
   } catch (err) {

@@ -8,6 +8,7 @@ import publicRoutes from "./routes/public.js";
 import socialRoutes from "./routes/social.js";
 import cameramanRoutes from "./routes/cameraman.js";
 import adminRoutes from "./routes/admin.js";
+import meRoutes from "./routes/me.js";
 import { getSetting } from "./lib/store.js";
 import { UPLOAD_DIR } from "./lib/uploads.js";
 import { findEventBySlug } from "./lib/store.js";
@@ -51,6 +52,7 @@ app.use("/api/public", publicRoutes);
 app.use("/api/public/:slug", socialRoutes);
 app.use("/api/cameraman", cameramanRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/me", meRoutes);
 
 // Page publique : on injecte titre + balises Open Graph pour un bel aperçu dans WhatsApp/SMS.
 const eventTemplate = readFileSync(new URL("./public/event.html", import.meta.url), "utf8");
