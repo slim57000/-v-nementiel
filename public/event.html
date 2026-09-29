@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#6b4fd8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;600;800&display=swap">
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/invitation.css">
+  <!--META-->
+</head>
+<body>
+  <p id="loading" class="container muted">Chargement…</p>
+
+  <div id="locked" class="locked-screen hidden">
+    <form id="unlock" class="card" novalidate>
+      <div class="big-lock" aria-hidden="true">🔒</div>
+      <h1 id="locked-name" style="font-size:1.5rem"></h1>
+      <p class="muted">Cet événement est privé. Saisissez le code reçu avec votre invitation.</p>
+      <label for="code" class="hidden">Code d'accès</label>
+      <input id="code" class="code-input" maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="CODE" required>
+      <p id="unlock-error" class="error" role="alert"></p>
+      <button class="btn btn-block" style="margin-top:12px">Accéder à l'événement</button>
+    </form>
+  </div>
+
+  <div id="page" class="hidden">
+    <header id="hero" class="hero">
+      <div class="hero-content">
+        <span id="lock" class="lock"></span>
+        <h1 id="name"></h1>
+        <div id="type-label"></div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="card">
+        <h2>Compte à rebours</h2>
+        <div id="countdown" class="countdown" aria-live="off"></div>
+      </section>
+
+      <section class="card">
+        <ul class="info-list">
+          <li><span class="ico">📅</span><div><b>Date</b><div id="when"></div></div></li>
+          <li><span class="ico">📍</span><div><b>Lieu</b><div id="where"></div><a id="map" class="small" target="_blank" rel="noopener">Ouvrir dans Maps</a></div></li>
+        </ul>
+        <p id="description" style="white-space:pre-line;margin-bottom:0"></p>
+      </section>
+
+      <section class="card" style="background:transparent;box-shadow:none;padding:0">
+        <h2 style="text-align:center">Le faire-part</h2>
+        <div id="invite"></div>
+      </section>
+    </main>
+
+    <div class="share-bar">
+      <div class="row">
+        <button id="share" class="btn">Partager</button>
+        <button id="copy" class="btn btn-light">Copier le lien</button>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/js/event.js"></script>
+</body>
+</html>

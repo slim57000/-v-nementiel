@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#6b4fd8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;600;800&display=swap">
+  <link rel="stylesheet" href="/css/app.css">
+  <title>Mes événements</title>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/dashboard">Mes événements</a>
+    <button id="logout" class="btn btn-ghost btn-sm">Déconnexion</button>
+  </header>
+  <main class="container">
+    <p class="muted small" id="account"></p>
+    <a href="/edit" class="btn btn-block" style="margin-bottom:20px">+ Créer un événement</a>
+    <div id="list"></div>
+    <div id="empty" class="card hidden" style="text-align:center">
+      <p style="font-size:2.5rem;margin:0">🎉</p>
+      <p>Vous n'avez pas encore d'événement.<br>Créez le premier en quelques minutes !</p>
+    </div>
+  </main>
+  <script type="module" src="/js/dashboard.js"></script>
+</body>
+</html>
