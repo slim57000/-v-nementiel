@@ -161,6 +161,7 @@ textarea { min-height: 110px; resize: vertical; }
 /* Page d'accueil publique */
 .collage { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 86px; gap: 8px; margin: 4px 0 18px; }
 .collage div { border-radius: 22px; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; }
+.collage div.has-photo { background-size: cover !important; background-position: center !important; font-size: 0; box-shadow: var(--shadow); }
 .collage div:nth-child(1) { grid-row: span 2; background: linear-gradient(160deg, #fde2e8, #f7b6c5); }
 .collage div:nth-child(2) { background: linear-gradient(160deg, #fff1d6, #f9d58f); }
 .collage div:nth-child(3) { grid-row: span 2; background: linear-gradient(160deg, #e3ecff, #b9cdfb); }

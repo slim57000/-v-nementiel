@@ -1,5 +1,16 @@
 import { api, $, toast, publicCard } from "./common.js";
 
+// Collage : photos réelles de public/img/accueil/<nom>.jpg si présentes, sinon pastille + emoji.
+document.querySelectorAll("[data-photo]").forEach((tile) => {
+  const src = `/img/accueil/${tile.dataset.photo}.jpg`;
+  const img = new Image();
+  img.onload = () => {
+    tile.style.backgroundImage = `url("${src}")`;
+    tile.classList.add("has-photo");
+  };
+  img.src = src;
+});
+
 // Déjà connecté : « Créer mon événement » mène directement au formulaire.
 api("/api/auth/me").then(() => { $("#create").href = "/edit"; }).catch(() => {});
 
