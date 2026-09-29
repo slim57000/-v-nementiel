@@ -1,7 +1,10 @@
 // Interactions des invités sur un événement : chat, réactions, photos.
 // Monté sur /api/public/:slug — accessible à toute personne ayant accès à l'événement.
 import { Router } from "express";
-import { findEventBySlug, addMessage, listMessages, addPhoto, listPhotos, findPhoto, deletePhoto } from "../lib/store.js";
+import {
+  findEventBySlug, addMessage, listMessages, addPhoto, listPhotos, findPhoto, deletePhoto,
+  addGuestbookEntry, listGuestbook, findGuestbookEntry, updateGuestbookEntry, likeGuestbookEntry, deleteGuestbookEntry,
+} from "../lib/store.js";
 import { saveDataUrl, removeUpload } from "../lib/uploads.js";
 import { hasAccess } from "./public.js";
 import { currentOrganizer } from "./auth.js";
@@ -67,15 +70,65 @@ router.post("/photos", async (req, res) => {
   }
 });
 
+const isOwner = async (req) => (await currentOrganizer(req))?.id === req.event.organizerId;
+const ownerOnly = async (req, res, next) =>
+  (await isOwner(req)) ? next() : res.status(403).json({ error: "Réservé à l'organisateur." });
+
 // Modération : seul l'organisateur peut retirer une photo.
-router.delete("/photos/:id", async (req, res) => {
-  if ((await currentOrganizer(req))?.id !== req.event.organizerId) {
-    return res.status(403).json({ error: "Réservé à l'organisateur." });
-  }
+router.delete("/photos/:id", ownerOnly, async (req, res) => {
   const photo = await findPhoto(Number(req.params.id));
   if (!photo || photo.eventId !== req.event.id) return res.status(404).json({ error: "Photo introuvable." });
   await deletePhoto(photo);
   await removeUpload(photo.url);
+  res.json({ ok: true });
+});
+
+// --- Livre d'or : texte, photo et/ou message vocal ---
+router.get("/guestbook", async (req, res) => {
+  res.json(await listGuestbook(req.event.id));
+});
+
+router.post("/guestbook", async (req, res) => {
+  const name = clean(req.body?.name, 30);
+  const text = String(req.body?.text ?? "").trim().slice(0, 1000);
+  if (!name) return res.status(400).json({ error: "Prénom obligatoire." });
+  if (!text && !req.body?.image && !req.body?.audio) {
+    return res.status(400).json({ error: "Écrivez un message, ajoutez une photo ou un vocal." });
+  }
+  if (tooFast(`${req.ip}:gb`, 5, 600_000)) return res.status(429).json({ error: "Merci ! Réessayez dans quelques minutes." });
+  try {
+    const photoUrl = req.body?.image ? await saveDataUrl(req.body.image) : null;
+    const audioUrl = req.body?.audio ? await saveDataUrl(req.body.audio, "audio") : null;
+    res.status(201).json(await addGuestbookEntry(req.event.id, { name, text, photoUrl, audioUrl }));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Charge une entrée du livre d'or appartenant à l'événement courant.
+async function entryOf(req, res) {
+  const entry = await findGuestbookEntry(Number(req.params.id));
+  if (!entry || entry.eventId !== req.event.id) res.status(404).json({ error: "Message introuvable." });
+  return entry?.eventId === req.event.id ? entry : null;
+}
+
+router.post("/guestbook/:id/like", async (req, res) => {
+  if (tooFast(`${req.ip}:like`, 30, 60_000)) return res.status(429).json({ error: "Doucement !" });
+  const entry = await entryOf(req, res);
+  if (entry) res.json(await likeGuestbookEntry(entry));
+});
+
+// Organisateur : mettre en avant / retirer.
+router.patch("/guestbook/:id", ownerOnly, async (req, res) => {
+  const entry = await entryOf(req, res);
+  if (entry) res.json(await updateGuestbookEntry(entry, { pinned: Boolean(req.body?.pinned) }));
+});
+
+router.delete("/guestbook/:id", ownerOnly, async (req, res) => {
+  const entry = await entryOf(req, res);
+  if (!entry) return;
+  await deleteGuestbookEntry(entry);
+  await Promise.all([removeUpload(entry.photoUrl), removeUpload(entry.audioUrl)]);
   res.json({ ok: true });
 });
 

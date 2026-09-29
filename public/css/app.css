@@ -226,3 +226,19 @@ textarea { min-height: 110px; resize: vertical; }
 .viewer-bar { display: flex; align-items: center; gap: 10px; margin-top: 14px; color: #fff; font-size: .9rem; }
 .viewer-bar span { margin-right: auto; }
 .stories-row .story-circle { cursor: pointer; border: 0; }
+
+/* Livre d'or */
+.guestbook { margin: 22px 0 10px; }
+.guestbook .segments button { font-size: .8rem; }
+.gb-entry { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 14px; margin-bottom: 12px; }
+.gb-entry.pinned { outline: 2px solid var(--accent); }
+.gb-entry header { display: flex; gap: 10px; align-items: center; }
+.gb-entry header i { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #d81f4f, #f4b740); color: #fff; font-style: normal; font-weight: 800; display: flex; align-items: center; justify-content: center; flex: none; }
+.gb-entry header b { display: block; }
+.gb-entry p { white-space: pre-line; margin: 10px 0 0; }
+.gb-entry img { margin-top: 10px; border-radius: 12px; max-height: 320px; object-fit: cover; width: 100%; cursor: pointer; }
+.gb-entry audio { width: 100%; margin-top: 10px; }
+.gb-entry footer { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.gb-entry footer button { font: inherit; font-size: .82rem; font-weight: 600; border: 1px solid var(--border); background: #fff; border-radius: 99px; padding: 5px 12px; cursor: pointer; color: var(--text); }
+.gb-entry footer .gb-like.on { background: var(--primary-light); border-color: #f6c9d4; color: var(--primary); }
+.gb-entry footer .danger { color: var(--danger); }

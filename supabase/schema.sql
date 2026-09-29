@@ -52,12 +52,32 @@ create table if not exists photos (
 );
 create index if not exists photos_event_idx on photos (event_id, id);
 
+-- Livre d'or multimédia (ajouté en V0.4).
+create table if not exists guestbook (
+  id          bigint generated always as identity primary key,
+  event_id    bigint not null references events(id) on delete cascade,
+  name        text not null,
+  text        text not null default '',
+  photo_url   text,
+  audio_url   text,
+  likes       integer not null default 0,
+  pinned      boolean not null default false,
+  created_at  timestamptz not null default now()
+);
+create index if not exists guestbook_event_idx on guestbook (event_id, id);
+
+create or replace function guestbook_like(entry_id bigint) returns guestbook
+language sql as $$
+  update guestbook set likes = likes + 1 where id = entry_id returning *;
+$$;
+
 -- Sécurité : RLS activé sans règle = aucune lecture/écriture avec la clé publique (anon).
 -- Seul le serveur, avec la clé service_role, accède aux données.
 alter table organizers enable row level security;
 alter table events enable row level security;
 alter table messages enable row level security;
 alter table photos enable row level security;
+alter table guestbook enable row level security;
 
 -- Bucket public pour les photos (couvertures et faire-part).
 insert into storage.buckets (id, name, public)

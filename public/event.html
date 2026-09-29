@@ -61,6 +61,19 @@
         <h2 style="text-align:center">Le faire-part</h2>
         <div id="invite"></div>
       </section>
+
+      <section class="guestbook">
+        <h2>Livre d'or <span class="muted" id="gb-count" style="font-weight:400"></span></h2>
+        <button id="gb-open" class="btn btn-block">✍️ Écrire dans le livre d'or</button>
+        <input id="gb-search" type="search" placeholder="Rechercher dans les messages…" aria-label="Rechercher" style="margin-top:12px">
+        <div class="segments" id="gb-filters">
+          <button class="active" data-filter="all">Tous</button>
+          <button data-filter="photos">Photos</button>
+          <button data-filter="voice">Vocaux</button>
+          <button data-filter="pinned">À la une</button>
+        </div>
+        <div id="gb-list"></div>
+      </section>
     </main>
 
     <div class="share-bar">
@@ -70,6 +83,22 @@
       </div>
     </div>
   </div>
+  <div id="gb-sheet" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="gb-title">
+    <form class="card" id="gb-form" novalidate>
+      <h2 id="gb-title">Un mot pour le livre d'or</h2>
+      <textarea id="gb-text" maxlength="1000" placeholder="Vos vœux, un souvenir, un message…"></textarea>
+      <img id="gb-photo-preview" class="hidden" alt="" style="margin-top:10px;border-radius:12px;max-height:180px">
+      <audio id="gb-audio-preview" class="hidden" controls style="width:100%;margin-top:10px"></audio>
+      <div class="row" style="margin-top:10px">
+        <label class="btn btn-light btn-sm" style="margin:0;font-weight:600">📷 Photo<input id="gb-photo" type="file" accept="image/*" hidden></label>
+        <button type="button" id="gb-record" class="btn btn-light btn-sm">🎙️ Message vocal</button>
+      </div>
+      <p id="gb-error" class="error" role="alert"></p>
+      <button class="btn btn-block" style="margin-top:8px">Publier</button>
+      <button type="button" id="gb-cancel" class="btn btn-ghost btn-block" style="margin-top:8px">Annuler</button>
+    </form>
+  </div>
+
   <script type="module" src="/js/event.js"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@ import { requireOrganizer } from "./auth.js";
 import { parseEventInput, ownerView } from "../lib/events.js";
 import { randomCode, slugify } from "../lib/codes.js";
 import { saveDataUrl, removeUpload, isOwnUpload } from "../lib/uploads.js";
-import { listEvents, findEvent, createEvent, saveEvent, deleteEvent, listPhotos } from "../lib/store.js";
+import { listEvents, findEvent, createEvent, saveEvent, deleteEvent, listPhotos, listGuestbook } from "../lib/store.js";
 
 const router = Router();
 router.use(requireOrganizer);
@@ -84,8 +84,12 @@ router.delete("/:id", handle(async (req, res) => {
   const event = await findOwned(req);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
   const photos = await listPhotos(event.id, 1000);
+  const entries = await listGuestbook(event.id);
   await deleteEvent(event);
-  await Promise.all(photos.map((p) => removeUpload(p.url)));
+  await Promise.all([
+    ...photos.map((p) => removeUpload(p.url)),
+    ...entries.flatMap((e) => [removeUpload(e.photoUrl), removeUpload(e.audioUrl)]),
+  ]);
   await removeUpload(event.cover);
   await removeUpload(event.invite?.photo);
   res.json({ ok: true });

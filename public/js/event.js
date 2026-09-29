@@ -1,5 +1,6 @@
 import { api, $, esc, copy, share, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, EVENT_TYPES } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
+import { initGuestbook } from "./guestbook.js";
 
 const slug = decodeURIComponent(location.pathname.split("/").pop());
 const url = eventUrl(slug);
@@ -53,6 +54,7 @@ function showEvent(ev) {
     .replace(/^(\d+) (\p{L})/u, (m, d, l) => `${d} ${l.toUpperCase()}`);
   $("#lock").textContent = ev.visibility === "private" ? "🔒 Privé" : "🔓 Public";
   renderStories(ev);
+  initGuestbook(ev);
 
   $("#when").textContent = formatDate(ev.date, ev.time);
   $("#where").textContent = ev.location;
