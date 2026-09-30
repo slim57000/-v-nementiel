@@ -113,7 +113,9 @@ const TYPE_COVER = {
 };
 export const coverOf = (ev) => ev.cover || `/img/demo/${TYPE_COVER[ev.type] || "live-mariage"}.jpg`;
 // Transforme un lien YouTube / Twitch en adresse de lecteur intégrable (null si non reconnu).
-export function embedUrl(url) {
+export function embedUrl(url, slug = new URLSearchParams(location.search).get("e")) {
+  // Caméra « téléphone » (LiveKit) : lecteur MaFeliza.
+  if (url?.startsWith("lk:")) return slug ? `/lk?e=${encodeURIComponent(slug)}&room=${encodeURIComponent(url.slice(3))}` : null;
   let u;
   try { u = new URL(url); } catch { return null; }
   const host = u.hostname.replace(/^www\.|^m\./, "");
@@ -615,7 +617,7 @@ export function liveAttrs(ev) {
   // Vidéo de démonstration : on garde la photo de l'événement (sa miniature n'a rien à voir avec l'événement).
   const demo = cam?.includes("aqz-KE-bpKQ");
   const thumb = cam && !demo && thumbnailUrl(cam, { live: true });
-  const embed = cam && embedUrl(cam);
+  const embed = cam && embedUrl(cam, ev.slug);
   return `style="background-image:${thumb ? `url('${esc(thumb)}'), ` : ""}url('${esc(cover)}')"${thumb && /ytimg/.test(thumb) ? " data-yt-thumb" : ""}${embed ? ` data-live-preview="${esc(embed)}"` : ""}`;
 }
 

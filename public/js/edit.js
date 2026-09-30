@@ -1,5 +1,6 @@
 import { api, $, esc, toast, resizeImage, goLogin, EVENT_TYPES, livePlaceholder } from "./common.js";
 import { defaultInvite, renderInvite, invitePhotoUrl, templatesFor } from "./invitation.js";
+let phoneCams = []; // caméras « téléphone » (live en un clic)
 
 const form = $("#form");
 const id = new URLSearchParams(location.search).get("id");
@@ -144,7 +145,7 @@ form.addEventListener("submit", async (e) => {
     cameras: [...document.querySelectorAll(".camera-row")].map((row) => ({
       name: row.querySelector("[name=cam-name]").value,
       url: row.querySelector("[name=cam-url]").value,
-    })),
+    })).concat(phoneCams),
     cagnotteUrl: $("#cagnotte").value,
     program: [...document.querySelectorAll(".step-row")].map((r) => ({ time: r.querySelector("[name=step-time]").value, label: r.querySelector("[name=step-label]").value })),
     practical: $("#practical").value,
@@ -199,8 +200,11 @@ async function init() {
   try {
     const ev = await api(`/api/events/${id}`);
     for (const key of ["name", "date", "time", "location", "description"]) field(key).value = ev[key];
-    ev.cameras.forEach(addCamera);
-    if (ev.cameras.length) $("#cam-advanced").open = true;
+    // Caméras « téléphone » : gérées depuis l'espace caméraman, conservées telles quelles.
+    phoneCams = ev.cameras.filter((c) => c.url.startsWith("lk:"));
+    const links = ev.cameras.filter((c) => !c.url.startsWith("lk:"));
+    links.forEach(addCamera);
+    if (links.length) $("#cam-advanced").open = true;
     $("#cagnotte").value = ev.cagnotteUrl;
     (ev.program?.steps || []).forEach(addStep);
     $("#practical").value = ev.program?.practical || "";

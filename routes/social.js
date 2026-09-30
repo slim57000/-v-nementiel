@@ -15,6 +15,7 @@ import { getSetting, setSetting } from "../lib/store.js";
 import { saveDataUrl, removeUpload, isOwnUpload, isVideoUrl, videoUploadTarget, MAX_VIDEO_BYTES } from "../lib/uploads.js";
 import { hasAccess } from "./public.js";
 import { currentOrganizer } from "./auth.js";
+import { LIVEKIT_ENABLED, LIVEKIT_URL, lkToken, isLkRoom } from "../lib/livekit.js";
 
 const router = Router({ mergeParams: true });
 
@@ -30,6 +31,13 @@ router.use(async (req, res, next) => {
   req.event = event;
   req.author = guestAuthor(req, res);
   next();
+});
+
+// Lecteur du live « téléphone » : jeton de lecture seule pour une caméra de cet événement.
+router.get("/lk", (req, res) => {
+  const room = String(req.query.room || "");
+  if (!LIVEKIT_ENABLED || !isLkRoom(req.event, room)) return res.status(404).json({ error: "Direct introuvable." });
+  res.json({ url: LIVEKIT_URL, token: lkToken({ room, identity: `v-${req.author}-${Date.now().toString(36)}`, name: "Invité" }) });
 });
 
 // Contenus des personnes bloquées par l'organisateur : masqués pour tout le monde.

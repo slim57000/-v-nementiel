@@ -1,7 +1,7 @@
 # Journal des modifications — MaFeliza
 
 ## Version 1.5 — Simplicité
-- Live : bouton « 🔴 Lancer le live » sur le tableau de bord, mode d'emploi YouTube pas à pas et bouton « 📋 Coller le lien » ; diffusion Cloudflare retirée (live via YouTube / Twitch).
+- Live : bouton « 🔴 Lancer le live » sur le tableau de bord, mode d'emploi YouTube pas à pas et bouton « 📋 Coller le lien » ; live en un clic depuis le téléphone via LiveKit (offre gratuite) à la place de Cloudflare ; YouTube / Twitch restent possibles.
 - Bouton + : « Que voulez-vous créer ? » (story ou événement).
 - Cloche 🔔 de notifications dans le site, notifications push sans configuration.
 - ❤️ Mes favoris en haut de l'accueil.

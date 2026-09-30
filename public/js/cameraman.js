@@ -30,7 +30,13 @@ function showSpace(ev) {
   $("#ev-when").textContent = `${formatDate(ev.date, ev.time)} · ${ev.location}`;
   $("#notes").textContent = ev.notes || "Aucune consigne particulière pour le moment.";
   $("#cameras").innerHTML = "";
-  (ev.cameras.length ? ev.cameras : [{}]).forEach(addCamera);
+  // Caméras « téléphone » : pas de lien à modifier, conservées à l'enregistrement.
+  const links = ev.cameras.filter((c) => !c.url.startsWith("lk:"));
+  (links.length ? links : [{}]).forEach(addCamera);
+  if (ev.phoneLive) {
+    $("#phone-live").classList.remove("hidden");
+    $("#links-card h2").textContent = "🔗 Ou un lien YouTube / Twitch";
+  }
   $("#open-live").href = `/live?e=${encodeURIComponent(ev.slug)}`;
   $("#login").classList.add("hidden");
   $("#space").classList.remove("hidden");
@@ -74,7 +80,7 @@ $("#save").addEventListener("click", async () => {
   const cameras = [...document.querySelectorAll(".camera-row")].map((row) => ({
     name: row.querySelector("[name=cam-name]").value,
     url: row.querySelector("[name=cam-url]").value,
-  }));
+  })).concat(current.cameras.filter((c) => c.url.startsWith("lk:")));
   try {
     await api(`/api/cameraman/${encodeURIComponent(slug)}/cameras`, { method: "PUT", body: { cameras } });
     toast("Liens enregistrés ✔");
@@ -85,6 +91,72 @@ $("#save").addEventListener("click", async () => {
 
 $("#share-photo").addEventListener("click", () =>
   pickAndUploadPhoto(slug).then(() => toast("Image partagée ✔"), () => {}));
+
+// --- Direct depuis le téléphone (LiveKit) ---
+let room = null, wakeLock = null, facing = "environment";
+const status = (t) => { $("#live-status").textContent = t; };
+
+async function startLive() {
+  if (!navigator.mediaDevices?.getUserMedia || !window.LivekitClient) return toast("Ce navigateur ne permet pas de filmer. Utilisez Safari ou Chrome à jour.");
+  const { Room, RoomEvent, createLocalTracks } = window.LivekitClient;
+  $("#go-live").disabled = true;
+  status("Accès à la caméra…");
+  try {
+    const tracks = await createLocalTracks({
+      audio: { echoCancellation: true, noiseSuppression: true },
+      video: { facingMode: facing, resolution: { width: 1280, height: 720 } },
+    });
+    const video = tracks.find((t) => t.kind === "video");
+    video.attach($("#preview"));
+    $("#preview-wrap").classList.remove("hidden");
+    status("Connexion au direct…");
+    const { url, token, name } = await api(`/api/cameraman/${encodeURIComponent(slug)}/go-live`, { method: "POST", body: { name: $("#cam-label").value } });
+    room = new Room({ dynacast: true });
+    room.on(RoomEvent.Reconnecting, () => status("⚠️ Réseau instable, reconnexion…"));
+    room.on(RoomEvent.Reconnected, () => status("Les invités vous voient. Gardez cet écran ouvert."));
+    room.on(RoomEvent.Disconnected, () => { if (room) status("⚠️ Connexion perdue : vérifiez le réseau puis relancez."); });
+    await room.connect(url, token);
+    for (const t of tracks) await room.localParticipant.publishTrack(t);
+    try { wakeLock = await navigator.wakeLock?.request("screen"); } catch { /* facultatif */ }
+    if (!current.cameras.some((c) => c.name === name && c.url.startsWith("lk:"))) current = await api(`/api/cameraman/${encodeURIComponent(slug)}`);
+    $("#go-live").classList.add("hidden");
+    $("#live-controls").classList.remove("hidden");
+    $("#live-dot").classList.add("on");
+    status("Les invités vous voient. Gardez cet écran ouvert.");
+  } catch (err) {
+    await stopLive(true);
+    status("");
+    toast(err.name === "NotAllowedError" ? "Autorisez la caméra et le micro dans les réglages du navigateur." : err.message);
+  }
+  $("#go-live").disabled = false;
+}
+
+async function stopLive(silent) {
+  const r = room;
+  room = null;
+  r?.localParticipant.trackPublications.forEach((p) => p.track?.stop());
+  await r?.disconnect().catch(() => {});
+  $("#preview").srcObject?.getTracks?.().forEach((t) => t.stop());
+  wakeLock?.release?.().catch(() => {});
+  wakeLock = null;
+  $("#preview-wrap").classList.add("hidden");
+  $("#live-controls").classList.add("hidden");
+  $("#go-live").classList.remove("hidden");
+  $("#live-dot").classList.remove("on");
+  if (!silent) { status("Direct arrêté."); toast("Direct arrêté"); }
+}
+
+// Retourner la caméra (avant / arrière) sans couper le direct.
+async function flipCamera() {
+  facing = facing === "environment" ? "user" : "environment";
+  const pub = [...(room?.localParticipant.videoTrackPublications.values() || [])][0];
+  try { await pub?.track?.restartTrack({ facingMode: facing }); } catch { toast("Impossible de changer de caméra."); }
+}
+
+$("#go-live").addEventListener("click", startLive);
+$("#stop-live").addEventListener("click", () => stopLive());
+$("#flip").addEventListener("click", flipCamera);
+addEventListener("beforeunload", (e) => { if (room) { e.preventDefault(); e.returnValue = ""; } });
 
 // Partager le live aux invités : lien direct (+ code si l'événement est privé).
 $("#share-live").addEventListener("click", () => {

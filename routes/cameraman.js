@@ -2,6 +2,7 @@
 import { Router } from "express";
 import { findEventBySlug, findEventByCameramanCode, saveEvent } from "../lib/store.js";
 import { parseCameras } from "../lib/events.js";
+import { LIVEKIT_ENABLED, LIVEKIT_URL, lkToken, newRoom, LK_PREFIX } from "../lib/livekit.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
 
 const router = Router();
@@ -40,9 +41,24 @@ router.use("/:slug", async (req, res, next) => {
 
 const view = (e) => ({
   slug: e.slug, name: e.name, type: e.type, date: e.date, time: e.time, location: e.location,
-  cameras: e.cameras || [], notes: e.cameramanNotes || "",
+  cameras: e.cameras || [], notes: e.cameramanNotes || "", phoneLive: LIVEKIT_ENABLED,
   // Pour partager le live aux invités : le code d'accès des événements privés.
   visibility: e.visibility, accessCode: e.visibility === "private" ? e.accessCode : "",
+});
+
+// Live en un clic depuis le téléphone : reprend (ou crée) la caméra de ce nom et renvoie un jeton de publication.
+router.post("/:slug/go-live", async (req, res) => {
+  if (!LIVEKIT_ENABLED) return res.status(503).json({ error: "Le direct depuis le téléphone n'est pas encore activé." });
+  const name = String(req.body?.name || "").trim().slice(0, 40) || "Caméra 1";
+  const cameras = req.event.cameras || [];
+  let cam = cameras.find((c) => c.name === name && c.url.startsWith(LK_PREFIX));
+  if (!cam) {
+    if (cameras.length >= 6) return res.status(400).json({ error: "6 caméras maximum pour ce live." });
+    cam = { name, url: LK_PREFIX + newRoom(req.event) };
+    await saveEvent({ ...req.event, cameras: [...cameras, cam] });
+  }
+  const room = cam.url.slice(LK_PREFIX.length);
+  res.json({ url: LIVEKIT_URL, token: lkToken({ room, identity: `cam-${room}`, name, publish: true }), name });
 });
 
 router.get("/:slug", (req, res) => res.json(view(req.event)));

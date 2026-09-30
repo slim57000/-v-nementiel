@@ -37,6 +37,7 @@ npm run dev        # http://localhost:3000
 | `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | facultatif : connexion avec Facebook (developers.facebook.com → app « Consommateur » → Facebook Login ; URI de redirection `https://<domaine>/api/auth/facebook/callback`) |
 | `DEMO_EVENTS` | `off` pour ne pas créer les 50 événements de démonstration automatiques |
 | `SENTRY_DSN` | facultatif : suivi des erreurs serveur et navigateur (sentry.io → projet → Client Keys (DSN)) |
+| `LIVEKIT_URL` / `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET` | facultatif : live en un clic depuis le téléphone (LiveKit Cloud, offre gratuite) |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | facultatif : notifications push (générer une paire avec `npx web-push generate-vapid-keys`) ; `VAPID_SUBJECT` = `mailto:votre@email` |
 | `PUBLIC_URL` | facultatif : adresse publique du site (ex. `https://mafeliza.com`) pour les liens des emails de rappel ; par défaut le domaine de production Vercel |
 | `SUPABASE_ANON_KEY` | facultatif : chat et messages instantanés (Supabase → Settings → API → clé « anon public ») ; sans elle, rafraîchissement toutes les 3-4 s |
