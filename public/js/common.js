@@ -546,9 +546,11 @@ export function openStories(items, { start = 0, title = "", onDelete } = {}) {
 export function liveAttrs(ev) {
   const cover = coverOf(ev);
   const cam = isLiveNow(ev) ? ev.cameras[0]?.url : null;
-  const thumb = cam && thumbnailUrl(cam, { live: true });
+  // Vidéo de démonstration : on garde la photo de l'événement (sa miniature n'a rien à voir avec l'événement).
+  const demo = cam?.includes("aqz-KE-bpKQ");
+  const thumb = cam && !demo && thumbnailUrl(cam, { live: true });
   const embed = cam && embedUrl(cam);
-  return `style="background-image:${thumb ? `url('${esc(thumb)}'), ` : ""}url('${esc(cover)}')"${embed ? ` data-live-preview="${esc(embed)}"` : ""}`;
+  return `style="background-image:${thumb ? `url('${esc(thumb)}'), ` : ""}url('${esc(cover)}')"${thumb && /ytimg/.test(thumb) ? " data-yt-thumb" : ""}${embed ? ` data-live-preview="${esc(embed)}"` : ""}`;
 }
 
 // Appui long (0,35 s) sur une carte de live : la diffusion se lance dans la carte (sans son) tant qu'on reste appuyé.
