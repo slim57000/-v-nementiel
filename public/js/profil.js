@@ -24,7 +24,7 @@ try {
   me = { ...profile, code: auth.code };
   $("#name").textContent = me.name;
   $("#email").textContent = me.email;
-  $("#code").textContent = me.code;
+  if (auth.hasPassword) { $("#pw-current").classList.remove("hidden"); $("#pw-hint").textContent = "Pour changer votre mot de passe, saisissez l'actuel puis le nouveau."; }
   $("#st-events").textContent = me.stats.events;
   $("#st-part").textContent = me.stats.participations;
   $("#st-friends").textContent = me.stats.friends;
@@ -115,4 +115,14 @@ const paintPush = () => { if (pushState() === "granted") { $("#push-btn").textCo
 paintPush();
 $("#push-btn").addEventListener("click", async () => {
   try { await enablePush(); paintPush(); toast("Notifications activées 🔔"); } catch (err) { toast(err.message); }
+});
+
+// Définir / changer le mot de passe.
+$("#pw-save").addEventListener("click", async () => {
+  try {
+    await api("/api/auth/password", { method: "POST", body: { current: $("#pw-current").value, password: $("#pw-new").value } });
+    $("#pw-current").value = $("#pw-new").value = "";
+    $("#pw-current").classList.remove("hidden");
+    toast("Mot de passe enregistré 🔒");
+  } catch (err) { toast(err.message); }
 });

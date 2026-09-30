@@ -8,3 +8,4 @@ Disallow: /profil
 Disallow: /cameraman
 
 Sitemap: https://mafeliza.com/sitemap.xml
+Disallow: /reinitialiser

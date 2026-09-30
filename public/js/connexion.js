@@ -14,28 +14,38 @@ $("#login").addEventListener("submit", async (e) => {
   try {
     const res = await api("/api/auth/login", {
       method: "POST",
-      body: { email: $("#email").value, code: $("#code").value },
+      body: { email: $("#email").value, password: $("#password").value, code: $("#code").value },
     });
-    if (res.created) {
-      $("#new-code").textContent = res.code;
-      $("#emailed").classList.toggle("hidden", !res.emailed);
-      $("#login").classList.add("hidden");
-      $("#created").classList.remove("hidden");
-    } else {
-      location.href = target;
-    }
+    location.href = target;
   } catch (err) {
-    if (err.data?.needCode) {
-      $("#code-block").classList.remove("hidden");
-      $("#code").focus();
+    // Ancien compte sans mot de passe : le code organisateur reste accepté.
+    if (err.data?.legacy) $("#code-block").classList.remove("hidden");
+    if (err.data?.needPassword && !err.data.error) {
+      $("#password").focus();
+      $("#error").textContent = err.data.isNew ? "Nouveau compte : choisissez un mot de passe (8 caractères minimum)." : "Saisissez votre mot de passe.";
+    } else {
+      $("#error").textContent = err.message;
     }
-    $("#error").textContent = err.data?.needCode && !err.data.error ? "" : err.message;
   } finally {
     button.disabled = false;
   }
 });
 
 $("#continue").addEventListener("click", () => { location.href = target; });
+
+// Afficher / masquer le mot de passe.
+$("#toggle-pw").addEventListener("click", () => { const i = $("#password"); i.type = i.type === "password" ? "text" : "password"; });
+
+// Mot de passe oublié : lien de réinitialisation envoyé par email.
+$("#forgot-pw").addEventListener("click", async (e) => {
+  e.preventDefault();
+  $("#error").textContent = "";
+  if (!$("#email").value.trim()) { $("#error").textContent = "Saisissez d'abord votre adresse email."; return $("#email").focus(); }
+  try {
+    await api("/api/auth/forgot", { method: "POST", body: { email: $("#email").value } });
+    $("#error").textContent = "📧 Si un compte existe pour cette adresse, un lien pour choisir un nouveau mot de passe vient d'y être envoyé.";
+  } catch (err) { $("#error").textContent = err.message; }
+});
 
 // « Code oublié » : proposé seulement si l'envoi d'emails est configuré.
 fetch("/api/config").then((r) => r.json()).then((c) => {

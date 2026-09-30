@@ -633,3 +633,7 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
 .timeline span { overflow-wrap: anywhere; }
 #practical-box { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
 #practical-box h3 { font-size: .95rem; margin: 0 0 6px; }
+/* Champ mot de passe avec bouton afficher / masquer */
+.pw-wrap { position: relative; }
+.pw-wrap input { padding-right: 48px; }
+.pw-wrap button { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: 0; font-size: 1.1rem; cursor: pointer; padding: 6px; }

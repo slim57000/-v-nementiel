@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#e8137a">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;600;800&family=Quicksand:wght@600;700&display=swap">
-  <link rel="stylesheet" href="/css/app.css?v=62">
+  <link rel="stylesheet" href="/css/app.css?v=63">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -19,15 +19,19 @@
 <body>
   <main class="container" style="max-width:440px;padding-top:6vh">
     <p style="text-align:center"><a href="/" class="logo logo-lg"><img src="/img/logo.png" alt=""><span>MaFel<b>i</b>za</span></a></p>
-    <h1 style="text-align:center;font-size:1.4rem">Votre espace organisateur</h1>
-    <p class="muted" style="text-align:center">Entrez votre email : votre espace est créé automatiquement à la première visite.</p>
+    <h1 style="text-align:center;font-size:1.4rem">Connexion / Inscription</h1>
+    <p class="muted" style="text-align:center">Pas encore de compte ? Il est créé automatiquement avec votre email et le mot de passe de votre choix.</p>
 
     <form id="login" class="card login-centered" novalidate>
       <label for="email">Votre adresse email</label>
       <input id="email" type="email" autocomplete="email" inputmode="email" required placeholder="vous@exemple.fr">
 
+      <label for="password">Mot de passe</label>
+      <div class="pw-wrap"><input id="password" type="password" autocomplete="current-password" minlength="8" placeholder="8 caractères minimum"><button type="button" id="toggle-pw" aria-label="Afficher le mot de passe">👁️</button></div>
+      <p class="small" style="margin:8px 0 0"><a href="#" id="forgot-pw">Mot de passe oublié ?</a></p>
+
       <div id="code-block" class="hidden">
-        <label for="code">Votre code organisateur (6 chiffres)</label>
+        <label for="code">Ou votre ancien code organisateur (6 chiffres)</label>
         <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" class="code-input">
         <p class="small" style="margin:8px 0 0"><a href="#" id="forgot" class="hidden">Recevoir un code de connexion par email</a></p>
       </div>

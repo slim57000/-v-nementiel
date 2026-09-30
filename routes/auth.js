@@ -2,7 +2,8 @@ import { Router } from "express";
 import { findOrganizerByEmail, findOrganizer, createOrganizer, deleteOrganizer, listEvents, saveOrganizer, getSetting, setSetting, clearLimit } from "../lib/store.js";
 import { loginCode } from "../lib/codes.js";
 import { setSigned, getSigned } from "../lib/session.js";
-import { codeEmail, EMAIL_ENABLED } from "../lib/email.js";
+import { codeEmail, resetEmail, EMAIL_ENABLED } from "../lib/email.js";
+import { setPassword, hasPassword, checkPassword, passwordError } from "../lib/password.js";
 import { GOOGLE_ENABLED, googleAuthUrl, googleIdentity } from "../lib/google.js";
 import { FACEBOOK_ENABLED, facebookAuthUrl, facebookIdentity } from "../lib/facebook.js";
 import { randomBytes, randomInt } from "node:crypto";
@@ -17,30 +18,87 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Passages suivants : email + code exigés.
 router.post("/login", async (req, res) => {
   const email = String(req.body.email || "").trim().toLowerCase();
+  const password = typeof req.body.password === "string" ? req.body.password : "";
   const code = String(req.body.code || "").trim();
   if (!EMAIL_RE.test(email)) return res.status(400).json({ error: "Adresse email invalide." });
 
   const organizer = await findOrganizerByEmail(email);
 
+  // Inscription : email + mot de passe (8 caractères minimum).
   if (!organizer) {
+    if (!password) return res.status(401).json({ needPassword: true, isNew: true });
+    const bad = passwordError(password);
+    if (bad) return res.status(400).json({ needPassword: true, isNew: true, error: bad });
     const created = await createOrganizer(email, loginCode());
+    await setPassword(created.id, password);
     setSigned(res, "org", String(created.id));
-    codeEmail(email, created.loginCode); // copie du code par email (si l'envoi est configuré)
-    return res.json({ created: true, code: created.loginCode, emailed: EMAIL_ENABLED });
+    return res.json({ created: true });
   }
 
   if (organizer.blocked) return res.status(403).json({ error: "Ce compte a été suspendu. Contactez le support." });
-  if (!code) return res.status(401).json({ needCode: true });
+  if (!password && !code) return res.status(401).json({ needPassword: true, legacy: !(await hasPassword(organizer.id)) });
   // Anti-bruteforce partagé entre toutes les instances : 10 essais par email toutes les 15 min.
   if (await tooFast(`login:${email}`, 10, 15 * 60 * 1000)) return res.status(429).json({ error: "Trop d'essais, réessayez dans 15 minutes." });
-  // Code organisateur permanent, ou code temporaire reçu par email (valable 15 min, usage unique).
-  const otp = await getSetting(`otp:${email}`).catch(() => null);
-  const otpOk = otp && otp.code === code && otp.exp > Date.now();
-  if (code !== organizer.loginCode && !otpOk) return res.status(401).json({ needCode: true, error: "Code incorrect." });
-  if (otpOk) await setSetting(`otp:${email}`, null);
+  let ok = false;
+  if (password) ok = await checkPassword(organizer.id, password);
+  if (!ok && code) {
+    // Anciens comptes : code organisateur permanent, ou code temporaire reçu par email (15 min, usage unique).
+    const otp = await getSetting(`otp:${email}`).catch(() => null);
+    const otpOk = otp && otp.code === code && otp.exp > Date.now();
+    ok = code === organizer.loginCode || otpOk;
+    if (otpOk) await setSetting(`otp:${email}`, null);
+  }
+  if (!ok) {
+    const legacy = password && !(await hasPassword(organizer.id));
+    return res.status(401).json({ needPassword: true, legacy, error: legacy
+      ? "Ce compte n'a pas encore de mot de passe : utilisez « Mot de passe oublié » pour en créer un."
+      : "Email ou mot de passe incorrect." });
+  }
   await clearLimit(`login:${email}`).catch(() => {});
   setSigned(res, "org", String(organizer.id));
   res.json({ created: false });
+});
+
+// Mot de passe oublié : lien de réinitialisation valable 1 heure (réponse identique que le compte existe ou non).
+router.post("/forgot", async (req, res) => {
+  if (!EMAIL_ENABLED) return res.status(503).json({ error: "L'envoi d'emails n'est pas encore activé." });
+  const email = String(req.body?.email || "").trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) return res.status(400).json({ error: "Saisissez d'abord votre adresse email." });
+  if (await tooFast(`forgot:${email}`, 3, 3_600_000)) return res.status(429).json({ error: "Patientez avant de redemander un lien." });
+  const organizer = await findOrganizerByEmail(email);
+  if (organizer && !organizer.blocked) {
+    const token = randomBytes(24).toString("base64url");
+    await setSetting(`reset:${token}`, { id: organizer.id, exp: Date.now() + 3_600_000 });
+    await resetEmail(email, `${origin(req)}/reinitialiser?token=${token}`);
+  }
+  res.json({ ok: true });
+});
+
+router.post("/reset", async (req, res) => {
+  const token = String(req.body?.token || "");
+  const bad = passwordError(req.body?.password);
+  if (bad) return res.status(400).json({ error: bad });
+  const entry = /^[\w-]{20,64}$/.test(token) ? await getSetting(`reset:${token}`).catch(() => null) : null;
+  if (!entry || entry.exp < Date.now()) return res.status(400).json({ error: "Lien expiré ou déjà utilisé. Redemandez-en un." });
+  const organizer = await findOrganizer(entry.id);
+  if (!organizer || organizer.blocked) return res.status(400).json({ error: "Compte indisponible." });
+  await setPassword(organizer.id, req.body.password);
+  await setSetting(`reset:${token}`, null);
+  setSigned(res, "org", String(organizer.id));
+  res.json({ ok: true });
+});
+
+// Définir ou changer son mot de passe (connecté).
+router.post("/password", async (req, res) => {
+  const organizer = await currentOrganizer(req);
+  if (!organizer) return res.status(401).json({ error: "Non connecté." });
+  const bad = passwordError(req.body?.password);
+  if (bad) return res.status(400).json({ error: bad });
+  if (await hasPassword(organizer.id) && !(await checkPassword(organizer.id, String(req.body?.current || "")))) {
+    return res.status(400).json({ error: "Mot de passe actuel incorrect." });
+  }
+  await setPassword(organizer.id, req.body.password);
+  res.json({ ok: true });
 });
 
 // Connexion Google : redirection vers Google, puis retour ici (le compte est créé à la première connexion).
@@ -135,7 +193,7 @@ router.get("/me", async (req, res) => {
   const organizer = await currentOrganizer(req);
   if (!organizer) return res.status(401).json({ error: "Non connecté." });
   res.json({
-    id: organizer.id, email: organizer.email, code: organizer.loginCode, isAdmin: await isAdmin(organizer), superAdmin: isSuperAdmin(organizer),
+    id: organizer.id, email: organizer.email, code: organizer.loginCode, isAdmin: await isAdmin(organizer), superAdmin: isSuperAdmin(organizer), hasPassword: await hasPassword(organizer.id),
     displayName: organizer.displayName || "", avatar: organizer.avatar || null, premium: await isPremium(organizer.id),
   });
 });

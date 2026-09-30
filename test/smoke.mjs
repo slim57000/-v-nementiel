@@ -32,7 +32,7 @@ assert.equal((await fetch(`${B}/page-inexistante`)).status, 404); ok("page 404")
 const pub = await api("/api/public?limit=50");
 assert.ok(pub.data.length >= 30, "événements de démonstration créés"); ok(`${pub.data.length} événements publics`);
 
-const login = await api("/api/auth/login", { method: "POST", body: { email: `ci${Date.now()}@example.com` } });
+const login = await api("/api/auth/login", { method: "POST", body: { email: `ci${Date.now()}@example.com`, password: "motdepasse123" } });
 assert.equal(login.data.created, true); ok("création de compte");
 
 const ev = await api("/api/events", { method: "POST", body: { name: "Mariage CI", type: "mariage", date: "2030-06-01", time: "15:00", location: "Lyon", visibility: "private", invite: { photo: "none" } } });

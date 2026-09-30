@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#e8137a">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;600;800&family=Quicksand:wght@600;700&display=swap">
-  <link rel="stylesheet" href="/css/app.css?v=62">
+  <link rel="stylesheet" href="/css/app.css?v=63">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -49,10 +49,12 @@
     <div id="p-list" class="p-list"></div>
 
     <section class="card" style="margin-top:18px">
-      <label>Code organisateur</label>
-      <p class="muted small" style="margin:0 0 6px">À saisir pour vous reconnecter depuis un autre appareil.</p>
-      <div class="notice code" id="code"></div>
-      <a href="/dashboard" class="btn btn-light btn-block">Voir mes événements</a>
+      <label for="pw-new">🔒 Mot de passe</label>
+      <p class="muted small" style="margin:0 0 6px" id="pw-hint">Choisissez un mot de passe pour vous connecter depuis n'importe quel appareil.</p>
+      <input id="pw-current" type="password" autocomplete="current-password" placeholder="Mot de passe actuel" class="hidden" style="margin-bottom:8px">
+      <input id="pw-new" type="password" autocomplete="new-password" placeholder="Nouveau mot de passe (8 caractères min.)">
+      <button id="pw-save" class="btn btn-light btn-block" style="margin-top:8px">Enregistrer le mot de passe</button>
+      <a href="/dashboard" class="btn btn-ghost btn-block" style="margin-top:8px">Voir mes événements</a>
     </section>
     <section class="card">
       <label>Notifications</label>

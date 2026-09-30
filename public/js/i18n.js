@@ -136,6 +136,14 @@ const EN = {
   "+ Ajouter une étape": "+ Add a step",
   "✨ Programme type": "✨ Sample schedule",
   "Infos pratiques": "Practical info",
+  "Connexion / Inscription": "Log in / Sign up",
+  "Mot de passe": "Password",
+  "Mot de passe oublié ?": "Forgot password?",
+  "Nouveau mot de passe": "New password",
+  "Enregistrer et me connecter": "Save and log in",
+  "Enregistrer le mot de passe": "Save password",
+  "🔒 Mot de passe": "🔒 Password",
+  "Pas encore de compte ? Il est créé automatiquement avec votre email et le mot de passe de votre choix.": "No account yet? It is created automatically with your email and the password of your choice.",
 };
 
 const LANG_KEY = "em-lang";
