@@ -1,7 +1,19 @@
 import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories, liveAttrs } from "./common.js";
 import { icon } from "./icons.js";
 
-$("#profile-btn").innerHTML = icon("user");
+// ❤️ en haut : accès rapide aux événements mis en favoris.
+$("#fav-btn").addEventListener("click", async () => {
+  const favs = await api("/api/me/favorites").catch(() => []);
+  const rows = favs.map((ev) => `<a class="notif fav-row" href="${esc(eventUrl(ev.slug))}">
+    <span class="fav-thumb" style="background-image:url('${esc(coverOf(ev))}')"></span>
+    <span><b>${esc(ev.name)}</b><small class="muted">${esc(formatDate(ev.date, ev.time))}</small></span></a>`).join("");
+  document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="fav-sheet" role="dialog" aria-modal="true">
+    <div class="card"><h2 style="margin-top:0">❤️ Mes favoris</h2>
+      <div class="notif-list">${rows || '<p class="muted">Touchez ♡ sur la page d\'un événement pour le retrouver ici.</p>'}</div>
+      <button class="btn btn-light btn-block" type="button" id="fav-close">Fermer</button></div></div>`);
+  const sheet = $("#fav-sheet");
+  sheet.addEventListener("click", (e) => { if (e.target === sheet || e.target.id === "fav-close") sheet.remove(); });
+});
 
 tabbar("home");
 
