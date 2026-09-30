@@ -57,7 +57,7 @@
 .chat-list { display: flex; flex-direction: column; gap: 8px; max-height: 210px; overflow-y: auto; margin-bottom: 10px; scrollbar-width: none; }
 .chat-list::-webkit-scrollbar { display: none; }
 .chat-msg { display: flex; gap: 10px; align-items: flex-start; font-size: .9rem; animation: chatIn .25s ease-out; }
-.chat-msg i { flex: none; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #d81f4f, #f4b740); display: flex; align-items: center; justify-content: center; font-style: normal; font-weight: 800; font-size: .85rem; }
+.chat-msg i { flex: none; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #fe7320, #fd1a85 55%, #8a1de9); display: flex; align-items: center; justify-content: center; font-style: normal; font-weight: 800; font-size: .85rem; }
 .chat-msg b { display: block; font-size: .85rem; }
 .chat-empty { color: var(--live-muted); font-size: .85rem; text-align: center; padding: 6px; }
 @keyframes chatIn { from { opacity: 0; transform: translateY(6px); } }
