@@ -477,3 +477,10 @@ input::-webkit-date-and-time-value { text-align: center; }
 .topbar .cam-badge { margin-left: auto; font-size: min(.85rem, 3.5vw); padding: 5px 10px; }
 .topbar .logo { margin-right: 14px; }
 @media (max-width: 400px) { .topbar .logo { font-size: 1.05rem; } .topbar .logo img { width: 28px; height: 28px; } }
+/* En-tête toujours sur une seule ligne, quelle que soit la taille d'écran ou de texte */
+.topbar { flex-wrap: nowrap; }
+.topbar .logo, .topbar .logo span, .topbar .cam-badge { white-space: nowrap; }
+.topbar .logo { flex: 0 1 auto; font-size: min(1.2rem, 5.2vw); }
+.topbar .logo img { width: min(34px, 8vw); height: min(34px, 8vw); }
+.topbar .cam-badge { flex: none; font-size: min(.85rem, 3.4vw); padding: 5px min(10px, 2.4vw); gap: 4px; }
+.topbar .cam-badge svg { width: min(16px, 4vw); height: min(16px, 4vw); }
