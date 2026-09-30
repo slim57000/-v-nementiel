@@ -14,6 +14,8 @@ export function embedUrl(url) {
     id = u.searchParams.get("v") || u.pathname.match(/^\/(?:live|embed|shorts)\/([\w-]+)/)?.[1];
   }
   if (id) return `https://www.youtube.com/embed/${encodeURIComponent(id)}?autoplay=1&mute=1&playsinline=1`;
+  // Caméra « téléphone » (Cloudflare Stream) : lecteur intégré, direct puis replay enregistré.
+  if (host.endsWith(".cloudflarestream.com")) return `${u.origin}${u.pathname}?autoplay=true&muted=true&preload=auto`;
   if (host === "twitch.tv") {
     const channel = u.pathname.split("/")[1];
     if (channel) return `https://player.twitch.tv/?channel=${encodeURIComponent(channel)}&parent=${location.hostname}&muted=true`;

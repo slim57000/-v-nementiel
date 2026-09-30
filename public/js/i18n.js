@@ -107,6 +107,12 @@ const EN = {
   "Stories": "Stories",
   "Story publiée pour 24 h ✨": "Story posted for 24 h ✨",
   "Aucune story pour l'instant. Partagez la première !": "No stories yet. Share the first one!",
+  "📱 Filmer avec ce téléphone": "📱 Film with this phone",
+  "🔴 Démarrer le live": "🔴 Start the live",
+  "⏹ Arrêter": "⏹ Stop",
+  "🔄 Retourner": "🔄 Flip",
+  "Nom de la caméra": "Camera name",
+  "Un seul appui : la vidéo part en direct chez les invités et elle est enregistrée pour le replay.": "One tap: the video goes live for guests and is recorded for the replay.",
 };
 
 const LANG_KEY = "em-lang";

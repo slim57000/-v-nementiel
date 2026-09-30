@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#e8137a">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Quicksand:wght@600;700&display=swap">
-  <link rel="stylesheet" href="/css/app.css?v=53">
+  <link rel="stylesheet" href="/css/app.css?v=54">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -35,12 +35,26 @@
       <h1 id="ev-name" style="margin-bottom:4px"></h1>
       <p class="muted" id="ev-when"></p>
 
+      <section class="card golive hidden" id="phone-live">
+        <h2>📱 Filmer avec ce téléphone</h2>
+        <p class="muted small">Un seul appui : la vidéo part en direct chez les invités et elle est enregistrée pour le replay.</p>
+        <label for="cam-label">Nom de la caméra</label>
+        <input id="cam-label" maxlength="40" value="Caméra 1">
+        <div class="preview-wrap hidden" id="preview-wrap"><video id="preview" playsinline muted autoplay></video><span class="live-dot" id="live-dot">● EN DIRECT</span></div>
+        <button id="go-live" class="btn btn-block btn-golive">🔴 Démarrer le live</button>
+        <div class="row hidden" id="live-controls" style="margin-top:10px">
+          <button id="flip" class="btn btn-light" style="flex:1">🔄 Retourner</button>
+          <button id="stop-live" class="btn btn-danger" style="flex:1">⏹ Arrêter</button>
+        </div>
+        <p id="live-status" class="small muted" style="text-align:center;margin:8px 0 0"></p>
+      </section>
+
       <section class="card">
         <h2>📋 Consignes de l'organisateur</h2>
         <p id="notes" style="white-space:pre-line;margin:0"></p>
       </section>
 
-      <section class="card">
+      <section class="card" id="links-card">
         <h2>🎥 Mes caméras</h2>
         <p class="muted small">Pour chaque caméra, collez le lien de votre direct YouTube Live ou Twitch. Les invités pourront passer d'un angle à l'autre.</p>
         <div id="cameras"></div>

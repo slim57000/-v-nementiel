@@ -3,6 +3,7 @@ import { Router } from "express";
 import { findEventBySlug, findEventByCameramanCode, saveEvent } from "../lib/store.js";
 import { parseCameras } from "../lib/events.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
+import { STREAM_ENABLED, phoneCamera } from "../lib/stream.js";
 
 const router = Router();
 const fingerprint = (event) => codeFingerprint(`cam:${event.cameramanCode}`);
@@ -40,7 +41,24 @@ router.use("/:slug", async (req, res, next) => {
 
 const view = (e) => ({
   slug: e.slug, name: e.name, type: e.type, date: e.date, time: e.time, location: e.location,
-  cameras: e.cameras || [], notes: e.cameramanNotes || "",
+  cameras: e.cameras || [], notes: e.cameramanNotes || "", phoneLive: STREAM_ENABLED,
+});
+
+// Live en un clic depuis le téléphone : crée (ou reprend) la caméra, l'ajoute au live et renvoie l'adresse d'envoi.
+router.post("/:slug/go-live", async (req, res) => {
+  if (!STREAM_ENABLED) return res.status(503).json({ error: "Le direct depuis le téléphone n'est pas encore activé." });
+  const name = String(req.body?.name || "").trim().slice(0, 40) || "Caméra 1";
+  try {
+    const cam = await phoneCamera(req.event, name);
+    const cameras = req.event.cameras || [];
+    if (!cameras.some((c) => c.url === cam.player)) {
+      if (cameras.length >= 6) return res.status(400).json({ error: "6 caméras maximum pour ce live." });
+      await saveEvent({ ...req.event, cameras: [...cameras, { name, url: cam.player }] });
+    }
+    res.json({ whip: cam.whip, name });
+  } catch (err) {
+    res.status(502).json({ error: err.message });
+  }
 });
 
 router.get("/:slug", (req, res) => res.json(view(req.event)));
