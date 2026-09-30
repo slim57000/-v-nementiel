@@ -1,4 +1,4 @@
-import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories, liveAttrs, createSheet } from "./common.js";
+import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories, liveAttrs, createSheet, syncFavs } from "./common.js";
 import { icon } from "./icons.js";
 
 // ❤️ en haut : accès rapide aux événements mis en favoris.
@@ -55,7 +55,8 @@ function renderStories() {
       const live = isLive(ev);
       return `<a class="story" href="${live ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`}">
         <div class="story-img ${live ? "live" : ""} ${withStory.has(ev.slug) ? "has-story" : ""}" data-story="${withStory.has(ev.slug) ? esc(ev.slug) : ""}" ${liveAttrs(ev)}>
-          <span class="story-badge ${live || badge === "Aujourd'hui" ? "today" : ""}">${live ? "LIVE" : badge}</span></div>
+          <span class="story-badge ${live || badge === "Aujourd'hui" ? "today" : ""}">${live ? "LIVE" : badge}</span>
+          ${ev.visibility ? `<span class="story-lock" title="${ev.visibility === "private" ? "Privé" : "Public"}">${ev.visibility === "private" ? "🔒" : "🔓"}</span>` : ""}</div>
         <span>${esc(ev.name)}</span></a>`;
     }).join("")}`;
 }
@@ -136,6 +137,7 @@ function render() {
     ? `<div class="section-title"><h2>À découvrir</h2><a href="/decouvrir" class="see-all">Voir tout</a></div>
        <div class="p-grid">${others.map(publicCard).join("")}</div>`
     : "");
+  syncFavs();
 }
 
 document.querySelector(".segments").addEventListener("click", (e) => {

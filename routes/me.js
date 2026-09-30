@@ -8,7 +8,7 @@ import { requireOrganizer } from "./auth.js";
 import { publicView } from "../lib/events.js";
 import { saveDataUrl, removeUpload, isVideoUrl } from "../lib/uploads.js";
 import {
-  saveOrganizer, listEvents, findEvent, findEventsByIds, findOrganizersByIds,
+  saveOrganizer, listEvents, findEvent, findEventBySlug, findEventsByIds, findOrganizersByIds,
   addFavorite, removeFavorite, listFavoriteIds, listHistoryIds,
   listFriendIds, removeFriends, addBlock, removeBlock, listBlockIds, addFriends,
   addDirectMessage, listDirectMessages, lastDirectMessage, deleteDirectMessage, listPhotos, listGuestbook, listPublicUpcoming, listRecentPhotos, listRecentGuestbook,
@@ -132,14 +132,17 @@ const visibleEvents = (list) => list.filter((e) => e && !e.suspended);
 router.get("/favorites", async (req, res) => {
   res.json(visibleEvents(await findEventsByIds(await listFavoriteIds(req.organizer.id))).map(card));
 });
+// Favori par identifiant ou par adresse (slug) de l'événement.
+const eventByRef = (ref) => (/^\d+$/.test(ref) ? findEvent(Number(ref)) : findEventBySlug(ref));
 router.post("/favorites/:eventId", async (req, res) => {
-  const event = await findEvent(Number(req.params.eventId));
+  const event = await eventByRef(req.params.eventId);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
   await addFavorite(req.organizer.id, event.id);
   res.json({ favorite: true });
 });
 router.delete("/favorites/:eventId", async (req, res) => {
-  await removeFavorite(req.organizer.id, Number(req.params.eventId));
+  const event = await eventByRef(req.params.eventId);
+  if (event) await removeFavorite(req.organizer.id, event.id);
   res.json({ favorite: false });
 });
 

@@ -9,7 +9,7 @@
   <link rel="modulepreload" href="/js/common.js">
   <link rel="modulepreload" href="/js/icons.js">
   <link rel="modulepreload" href="/js/i18n.js">
-  <link rel="stylesheet" href="/css/app.css?v=72">
+  <link rel="stylesheet" href="/css/app.css?v=73">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -43,7 +43,7 @@
     <a href="/mentions-legales">Mentions légales</a> · <a href="/cgu">CGU</a> · <a href="/confidentialite">Confidentialité</a><br><a href="#" data-cookies>Gérer les cookies</a>
   </footer>
   <script type="module">
-    import { api, publicCard, tabbar, EVENT_TYPES, isLiveNow } from "/js/common.js";
+    import { api, publicCard, tabbar, EVENT_TYPES, isLiveNow, syncFavs } from "/js/common.js";
     const $ = (s) => document.querySelector(s);
     // La barre d'onglets n'est utile qu'aux organisateurs connectés.
     api("/api/auth/me").then(() => tabbar("discover")).catch(() => {});
@@ -67,6 +67,7 @@
       });
       $("#list").innerHTML = list.map(publicCard).join("");
       $("#empty").classList.toggle("hidden", list.length > 0);
+      syncFavs();
     }
     $("#q").addEventListener("input", show);
     $("#chips").addEventListener("click", (e) => {

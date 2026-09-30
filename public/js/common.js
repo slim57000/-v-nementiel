@@ -107,6 +107,26 @@ export function dayBadge(date) {
 
 // Vignette d'un événement public (accueil, Découvrir).
 // Photo par défaut selon le type, pour les événements sans photo de couverture.
+// ❤️ sur les cartes d'événements : ajout / retrait des favoris en un geste (connexion demandée si besoin).
+let favSlugs = null;
+export async function syncFavs() {
+  try { favSlugs ||= new Set((await api("/api/me/favorites")).map((e) => e.slug)); } catch { favSlugs = new Set(); }
+  document.querySelectorAll("[data-fav]").forEach((b) => { const on = favSlugs.has(b.dataset.fav); b.textContent = on ? "❤️" : "♡"; b.classList.toggle("on", on); });
+}
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-fav]");
+  if (!b) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const slug = b.dataset.fav, on = !b.classList.contains("on");
+  try {
+    await api(`/api/me/favorites/${encodeURIComponent(slug)}`, { method: on ? "POST" : "DELETE" });
+    favSlugs?.[on ? "add" : "delete"](slug);
+    document.querySelectorAll(`[data-fav="${CSS.escape(slug)}"]`).forEach((x) => { x.textContent = on ? "❤️" : "♡"; x.classList.toggle("on", on); });
+    toast(on ? "Ajouté à vos favoris ❤️" : "Retiré des favoris");
+  } catch (err) { if (err.status === 401) goLogin(); else toast(err.message); }
+}, true);
+
 // Sans photo choisie : fond MaFeliza (dégradé) avec l'emoji du type d'événement, jamais une photo de banque d'images.
 const placeholders = {};
 export const placeholderCover = (type) => (placeholders[type] ||= `data:image/svg+xml,${encodeURIComponent(
@@ -157,6 +177,7 @@ export function publicCard(ev) {
   const live = isLiveNow(ev);
   return `<a class="pub-card" href="${live ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`}" ${liveAttrs(ev)}>
     <span class="tag">${live ? "● LIVE" : esc(dayBadge(ev.date))}</span>
+    <button type="button" class="card-fav" data-fav="${esc(ev.slug)}" aria-label="Ajouter aux favoris">♡</button>
     <b>${esc(ev.name)}</b>
     <span>${EVENT_TYPES[ev.type].icon} ${esc(ev.location)}</span>
   </a>`;
