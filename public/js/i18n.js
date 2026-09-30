@@ -101,6 +101,8 @@ const EN = {
   "Mots du livre d'or": "Guestbook notes",
   "Invitations": "Invitations",
   "Ont rejoint": "Joined",
+  "Le premier réseau social dédié à tous vos événements.": "The first social network dedicated to all your events.",
+  "Partagez l'émotion avant, pendant, après.": "Share the emotion before, during and after.",
 };
 
 const LANG_KEY = "em-lang";
