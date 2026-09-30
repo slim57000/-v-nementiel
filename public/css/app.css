@@ -521,3 +521,34 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
 .inv-row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: .85rem; }
 .inv-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .inv-row b { flex: none; font-weight: 600; }
+/* Statistiques */
+.stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stats-grid span { display: block; line-height: 1.2; }
+/* Album souvenir (écran et impression A4) */
+.album-bar { position: sticky; top: 0; z-index: 5; display: flex; justify-content: space-between; gap: 8px; padding: 10px 16px; background: var(--card); border-bottom: 1px solid var(--border); }
+.album { max-width: 820px; margin: 0 auto; padding: 16px; }
+.album-cover { position: relative; min-height: 320px; border-radius: 20px; overflow: hidden; background: center / cover; display: flex; align-items: flex-end; color: #fff; margin-bottom: 24px; }
+.album-cover::before { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 30%, rgba(0,0,0,.75)); }
+.album-cover > div { position: relative; padding: 24px; }
+.album-cover h1 { font-family: Fraunces, Georgia, serif; font-size: clamp(1.8rem, 7vw, 2.8rem); margin: 4px 0; }
+.album-kicker, .album-brand { margin: 0; font-weight: 700; opacity: .9; }
+.album-brand { margin-top: 8px; font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; }
+.album h2 { font-family: Fraunces, Georgia, serif; margin: 28px 0 12px; }
+.album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.album-grid figure { margin: 0; break-inside: avoid; }
+.album-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; display: block; }
+.album-grid figcaption { font-size: .75rem; color: var(--muted); margin-top: 4px; }
+.album-words { columns: 2 260px; column-gap: 16px; }
+.album-words blockquote { break-inside: avoid; margin: 0 0 14px; padding: 14px; background: var(--card); border-radius: 14px; box-shadow: var(--shadow); }
+.album-words p { margin: 0; overflow-wrap: anywhere; }
+.album-words cite { display: block; margin-top: 6px; font-size: .85rem; color: var(--primary); font-style: normal; font-weight: 700; }
+.album-reply { font-size: .85rem; margin-top: 6px !important; color: var(--muted); }
+@media print {
+  .no-print, .cookie-banner, .tabbar { display: none !important; }
+  body { background: #fff !important; }
+  .album { max-width: none; padding: 0; }
+  .album-cover { min-height: 60vh; -webkit-print-color-adjust: exact; print-color-adjust: exact; break-after: page; }
+  .album-words blockquote { box-shadow: none; border: 1px solid #eee; }
+  @page { size: A4; margin: 12mm; }
+}
+.album-bar .btn { white-space: nowrap; font-size: min(.85rem, 3.6vw); }

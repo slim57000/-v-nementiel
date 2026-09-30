@@ -29,6 +29,7 @@ try {
   $("#st-part").textContent = me.stats.participations;
   $("#st-friends").textContent = me.stats.friends;
   $("#admin-link").classList.toggle("hidden", !auth.isAdmin);
+  if (auth.premium) $("#email").insertAdjacentHTML("afterend", '<span class="badge" style="margin-top:6px">✨ Premium</span>');
   paintAvatar(me);
   showTab("favorites");
 } catch (err) {

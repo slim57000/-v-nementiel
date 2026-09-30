@@ -20,9 +20,10 @@ const views = {
   async organizers(q) {
     const list = await api(`/api/admin/organizers?q=${encodeURIComponent(q)}`);
     return list.map((o) => row(
-      `<b>${esc(o.email)}</b> ${o.admin ? '<span class="badge">Admin</span>' : ""} ${o.blocked ? '<span class="badge private">Bloqué</span>' : ""}`,
+      `<b>${esc(o.email)}</b> ${o.admin ? '<span class="badge">Admin</span>' : ""} ${o.blocked ? '<span class="badge private">Bloqué</span>' : ""} ${o.premium ? '<span class="badge">✨ Premium</span>' : ""}`,
       `${o.events} événement(s) · inscrit le ${new Date(o.createdAt).toLocaleDateString("fr-FR")}`,
-      o.admin ? "" : `<button class="btn ${o.blocked ? "btn-light" : "btn-danger"} btn-sm" data-act="block" data-id="${o.id}" data-on="${!o.blocked}">${o.blocked ? "Débloquer" : "Bloquer"}</button>`,
+      `<button class="btn btn-light btn-sm" data-act="premium" data-id="${o.id}" data-on="${!o.premium}">${o.premium ? "Retirer Premium" : "✨ Passer Premium"}</button>`
+      + (o.admin ? "" : ` <button class="btn ${o.blocked ? "btn-light" : "btn-danger"} btn-sm" data-act="block" data-id="${o.id}" data-on="${!o.blocked}">${o.blocked ? "Débloquer" : "Bloquer"}</button>`),
     )).join("") || "<p class='muted'>Aucun utilisateur.</p>";
   },
   async reports() {
@@ -90,6 +91,11 @@ $("#content").addEventListener("click", async (e) => {
     if (act === "delete-event") {
       if (!confirm("Supprimer définitivement cet événement et tous ses contenus ?")) return;
       await api(`/api/admin/events/${id}`, { method: "DELETE" });
+    }
+    if (act === "premium") {
+      await api(`/api/admin/organizers/${id}/premium`, { method: "POST", body: { premium: on === "true" } });
+      toast(on === "true" ? "Compte passé en Premium ✨" : "Premium retiré");
+      render();
     }
     if (act === "block") {
       if (on === "true" && !confirm("Bloquer cet utilisateur ? Ses événements seront suspendus.")) return;

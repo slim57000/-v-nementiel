@@ -3,6 +3,7 @@ import { guestAuthor } from "./lib/guest.js";
 import { savePushSub, listFollowerIds, deletePushSub } from "./lib/store.js";
 import { remindInvites } from "./lib/invites.js";
 import { REALTIME } from "./lib/realtime.js";
+import { isPremium } from "./lib/premium.js";
 import { reportError } from "./lib/monitor.js";
 import { tooFast } from "./lib/limits.js";
 import { GOOGLE_ENABLED } from "./lib/google.js";
@@ -81,9 +82,15 @@ app.post("/api/push/unsubscribe", async (req, res) => {
 app.get(["/api/cron/daily", "/api/cron/replay-reminders"], async (req, res) => {
   const secret = process.env.CRON_SECRET;
   if (secret && req.get("authorization") !== `Bearer ${secret}`) return res.status(401).json({ error: "Non autorisé." });
+  // Rappel 2 jours avant la fin du replay : J+13 (15 jours, gratuit) ou J+28 (30 jours, premium).
   const day = new Date(Date.now() - 13 * 86400000).toISOString().slice(0, 10);
+  const dayPremium = new Date(Date.now() - 28 * 86400000).toISOString().slice(0, 10);
   let sent = 0;
-  for (const event of await listEventsOnDate(day)) {
+  const ending = [
+    ...(await listEventsOnDate(day)).filter((e) => e), ...(await listEventsOnDate(dayPremium)),
+  ];
+  for (const event of ending) {
+    if ((await isPremium(event.organizerId)) !== (event.date === dayPremium)) continue;
     if (!event.cameras?.length) continue;
     const organizer = await findOrganizer(event.organizerId);
     if (!organizer) continue;

@@ -6,6 +6,7 @@ import { codeEmail, EMAIL_ENABLED } from "../lib/email.js";
 import { GOOGLE_ENABLED, googleAuthUrl, googleIdentity } from "../lib/google.js";
 import { randomBytes, randomInt } from "node:crypto";
 import { tooFast } from "../lib/limits.js";
+import { isPremium } from "../lib/premium.js";
 
 const router = Router();
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -98,7 +99,7 @@ router.get("/me", async (req, res) => {
   if (!organizer) return res.status(401).json({ error: "Non connecté." });
   res.json({
     id: organizer.id, email: organizer.email, code: organizer.loginCode, isAdmin: isAdmin(organizer),
-    displayName: organizer.displayName || "", avatar: organizer.avatar || null,
+    displayName: organizer.displayName || "", avatar: organizer.avatar || null, premium: await isPremium(organizer.id),
   });
 });
 

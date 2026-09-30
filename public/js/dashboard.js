@@ -77,6 +77,8 @@ function card(ev) {
       <button class="btn btn-light btn-sm" data-action="direct">Lien + code</button>` : ""}
       <button class="btn btn-light btn-sm" data-action="cameraman">Accès caméraman</button>
       <button class="btn btn-light btn-sm" data-action="invite">✉️ Inviter</button>
+      <button class="btn btn-light btn-sm" data-action="stats">📊 Statistiques</button>
+      <a class="btn btn-light btn-sm" href="/album?id=${ev.id}">📖 Album souvenir</a>
       <button class="btn btn-light btn-sm" data-action="export">📦 Télécharger les souvenirs</button>
       <a class="btn btn-ghost btn-sm" href="/edit?id=${ev.id}">Modifier</a>
       <button class="btn btn-danger btn-sm" data-action="delete">Supprimer</button>
@@ -129,6 +131,7 @@ $("#list").addEventListener("click", async (e) => {
     shareSheet({ title: ev.name, text, url: ev.visibility === "private" ? `${url}?code=${ev.accessCode}` : url });
   }
   if (action === "invite") openInvites(ev, url);
+  if (action === "stats") openStats(ev);
   if (action === "export") {
     const btn = e.target;
     btn.disabled = true;
@@ -190,4 +193,26 @@ async function openInvites(ev, url) {
       refresh();
     } catch (err) { toast(err.message); }
   };
+}
+
+// Statistiques de l'événement.
+async function openStats(ev) {
+  let st;
+  try { st = await api(`/api/events/${ev.id}/stats`); } catch (err) { return toast(err.message); }
+  const tile = (n, label) => `<div><b>${n}</b><span>${label}</span></div>`;
+  document.body.insertAdjacentHTML("beforeend", `
+    <div class="sheet" id="stats-sheet" role="dialog" aria-modal="true" aria-labelledby="st-title">
+      <div class="card">
+        <h2 id="st-title">📊 ${esc(ev.name)}</h2>
+        <div class="stats stats-grid">
+          ${tile(st.views, "Vues de la page")}${tile(st.peak, "Pic de spectateurs")}${tile(st.chat, "Messages du chat")}
+          ${tile(st.reactions, "Réactions")}${tile(st.photos, "Photos & vidéos")}${tile(st.guestbook, "Mots du livre d'or")}
+          ${tile(st.likes, "J'aime")}${tile(st.invites, "Invitations")}${tile(st.invitesJoined, "Ont rejoint")}
+        </div>
+        <button class="btn btn-ghost btn-block" id="st-close" style="margin-top:12px">Fermer</button>
+      </div>
+    </div>`);
+  const sheet = $("#stats-sheet");
+  $("#st-close").onclick = () => sheet.remove();
+  sheet.onclick = (e) => { if (e.target === sheet) sheet.remove(); };
 }

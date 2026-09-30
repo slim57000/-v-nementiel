@@ -3,6 +3,7 @@ import { Router } from "express";
 import { currentOrganizer, isAdmin } from "./auth.js";
 import { destroyEvent } from "./events.js";
 import { seedDemo, demoEvents } from "../lib/demo.js";
+import { isPremium, setPremium } from "../lib/premium.js";
 import {
   searchEvents, searchOrganizers, findEvent, findOrganizer, saveOrganizer, saveEvent, listEvents,
   listReports, deleteReport, countReports, getSetting, setSetting,
@@ -63,8 +64,16 @@ router.get("/organizers", async (req, res) => {
   const organizers = await searchOrganizers(String(req.query.q || "").toLowerCase());
   res.json(await Promise.all(organizers.map(async (o) => ({
     id: o.id, email: o.email, blocked: Boolean(o.blocked), createdAt: o.createdAt,
-    events: (await listEvents(o.id)).length, admin: isAdmin(o),
+    events: (await listEvents(o.id)).length, admin: isAdmin(o), premium: await isPremium(o.id),
   }))));
+});
+
+// Offre premium : replay 30 jours, faire-part et page sans marque EverMoments, badge.
+router.post("/organizers/:id/premium", async (req, res) => {
+  const organizer = await findOrganizer(Number(req.params.id));
+  if (!organizer) return res.status(404).json({ error: "Utilisateur introuvable." });
+  await setPremium(organizer.id, Boolean(req.body?.premium));
+  res.json({ ok: true });
 });
 
 router.post("/organizers/:id/block", async (req, res) => {

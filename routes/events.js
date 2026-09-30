@@ -4,9 +4,10 @@ import { parseEventInput, ownerView } from "../lib/events.js";
 import { randomCode, slugify } from "../lib/codes.js";
 import { saveDataUrl, removeUpload, isOwnUpload } from "../lib/uploads.js";
 import { sendInvites } from "../lib/invites.js";
+import { isPremium, getStats } from "../lib/premium.js";
 import { EMAIL_ENABLED } from "../lib/email.js";
 import { tooFast } from "../lib/limits.js";
-import { listInvites, listEvents, findEvent, createEvent, saveEvent, deleteEvent, listPhotos, listGuestbook, countReports } from "../lib/store.js";
+import { listMessages, listInvites, listEvents, findEvent, createEvent, saveEvent, deleteEvent, listPhotos, listGuestbook, countReports } from "../lib/store.js";
 
 const router = Router();
 router.use(requireOrganizer);
@@ -58,7 +59,22 @@ router.get("/", handle(async (req, res) => {
 router.get("/:id", handle(async (req, res) => {
   const event = await findOwned(req);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
-  res.json(ownerView(event));
+  res.json({ ...ownerView(event), premium: await isPremium(req.organizer.id) });
+}));
+
+// Statistiques pour l'organisateur : vues, pic de spectateurs, messages, réactions, photos, livre d'or, invitations.
+router.get("/:id/stats", handle(async (req, res) => {
+  const event = await findOwned(req);
+  if (!event) return res.status(404).json({ error: "Événement introuvable." });
+  const [stats, messages, photos, entries, invites] = await Promise.all([
+    getStats(event.id), listMessages(event.id, 0, 5000).catch(() => []), listPhotos(event.id, 1000), listGuestbook(event.id), listInvites(event.id).catch(() => []),
+  ]);
+  res.json({
+    views: stats.views || 0, peak: stats.peak || 0,
+    chat: messages.filter((m) => m.kind === "chat").length, reactions: messages.filter((m) => m.kind === "reaction").length,
+    photos: photos.length, guestbook: entries.length, likes: entries.reduce((n, e) => n + (e.likes || 0), 0),
+    invites: invites.length, invitesSeen: invites.filter((i) => i.seenAt).length, invitesJoined: invites.filter((i) => i.joinedAt).length,
+  });
 }));
 
 router.post("/", handle(async (req, res) => {

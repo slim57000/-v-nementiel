@@ -12,18 +12,14 @@
   <link rel="apple-touch-icon" href="/img/icon-180.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="EverMoments">
-  <title>Fil d'actualité — EverMoments</title>
+  <title>Album souvenir — EverMoments</title>
 </head>
-<body>
-  <header class="topbar">
-    <a class="logo" href="/dashboard"><img src="/img/logo.png" alt=""><span>Ever<b>Moments</b></span></a>
-  </header>
-  <main class="container centered" style="max-width:560px">
-    <h1>Fil d'actualité</h1>
-    <p class="muted">Les derniers moments partagés dans vos événements et ceux de vos proches.</p>
-    <div id="feed" style="text-align:left"></div>
-    <p id="feed-empty" class="card hidden" style="text-align:center">Rien pour l'instant. Rejoignez un événement ou créez le vôtre !</p>
-  </main>
-  <script type="module" src="/js/fil.js"></script>
+<body class="album-page">
+  <div class="album-bar no-print">
+    <a href="/dashboard" class="btn btn-ghost btn-sm">← Retour</a>
+    <button id="print" class="btn btn-sm">🖨️ Imprimer / PDF</button>
+  </div>
+  <main id="album" class="album"><p class="muted" style="text-align:center">Préparation de l'album…</p></main>
+  <script type="module" src="/js/album.js"></script>
 </body>
 </html>

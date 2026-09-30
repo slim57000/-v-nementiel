@@ -4,6 +4,7 @@ import { Router } from "express";
 import { tooFast } from "../lib/limits.js";
 import { notify, orgOwner } from "../lib/push.js";
 import { ping, eventTopic } from "../lib/realtime.js";
+import { recordPeak } from "../lib/premium.js";
 import {
   findEventBySlug, addMessage, listMessages, addPhoto, listPhotos, findPhoto, deletePhoto,
   addGuestbookEntry, listGuestbook, findGuestbookEntry, updateGuestbookEntry, likeGuestbookEntry, deleteGuestbookEntry,
@@ -214,7 +215,9 @@ router.delete("/guestbook/:id", ownerOnly, async (req, res) => {
 router.post("/presence", async (req, res) => {
   const clientId = String(req.body?.clientId || "").replace(/[^\w-]/g, "").slice(0, 40);
   if (!clientId) return res.status(400).json({ error: "Identifiant manquant." });
-  res.json({ viewers: await touchPresence(req.event.id, clientId) });
+  const viewers = await touchPresence(req.event.id, clientId);
+  await recordPeak(req.event.id, viewers);
+  res.json({ viewers });
 });
 
 // --- Modération ---

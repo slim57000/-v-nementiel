@@ -86,6 +86,21 @@ const EN = {
   "Fil d'actualité": "News feed",
   "Les derniers moments partagés dans vos événements et ceux de vos proches.": "The latest moments shared in your events and your friends' events.",
   "📦 Télécharger les souvenirs": "📦 Download memories",
+  "✉️ Inviter": "✉️ Invite",
+  "📊 Statistiques": "📊 Statistics",
+  "📖 Album souvenir": "📖 Memory album",
+  "🖨️ Imprimer / PDF": "🖨️ Print / PDF",
+  "📱 Inviter par SMS": "📱 Invite by SMS",
+  "Envoyer les invitations": "Send invitations",
+  "Notifications": "Notifications",
+  "🔔 Activer les notifications": "🔔 Enable notifications",
+  "Vues de la page": "Page views",
+  "Pic de spectateurs": "Peak viewers",
+  "Messages du chat": "Chat messages",
+  "Photos & vidéos": "Photos & videos",
+  "Mots du livre d'or": "Guestbook notes",
+  "Invitations": "Invitations",
+  "Ont rejoint": "Joined",
 };
 
 const LANG_KEY = "em-lang";

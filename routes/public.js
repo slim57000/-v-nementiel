@@ -1,4 +1,5 @@
 import { tooFast } from "../lib/limits.js";
+import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo } from "../lib/demo.js";
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
@@ -55,7 +56,9 @@ router.get("/:slug", async (req, res) => {
       if (!mine.includes(event.organizerId) && !theirs.includes(me.id)) await addFriends(me.id, event.organizerId);
     }
   }
-  res.json({ locked: false, isOwner, loggedIn: Boolean(me), ...publicView(event), id: event.id });
+  if (!isOwner) await bumpViews(event.id);
+  const premium = await isPremium(event.organizerId);
+  res.json({ locked: false, isOwner, loggedIn: Boolean(me), ...publicView(event), id: event.id, premium, replayDays: replayDays(premium) });
 });
 
 // Anti-bruteforce partagé (base de données) : 10 essais par IP (et événement) toutes les 15 minutes.
