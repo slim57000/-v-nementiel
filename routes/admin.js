@@ -2,7 +2,7 @@
 import { Router } from "express";
 import { currentOrganizer, isAdmin } from "./auth.js";
 import { destroyEvent } from "./events.js";
-import { seedDemo, demoEvents } from "../lib/demo.js";
+import { seedDemo, demoEvents, sendDemoMessages } from "../lib/demo.js";
 import { isPremium, setPremium } from "../lib/premium.js";
 import {
   searchEvents, searchOrganizers, findEvent, findOrganizer, saveOrganizer, saveEvent, listEvents,
@@ -37,6 +37,13 @@ router.post("/demo", async (req, res) => {
     res.json({ created: await seedDemo(Math.min(Number(req.body?.count) || 50, 100)) });
   } catch (err) {
     res.status(500).json({ error: `Création impossible : ${err.message}. Relancez supabase/schema.sql dans Supabase.` });
+  }
+});
+router.post("/demo-messages", async (req, res) => {
+  try {
+    res.json(await sendDemoMessages(await currentOrganizer(req)));
+  } catch (err) {
+    res.status(500).json({ error: `Envoi impossible : ${err.message}` });
   }
 });
 router.delete("/demo", async (req, res) => {

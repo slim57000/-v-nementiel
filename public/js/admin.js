@@ -50,6 +50,7 @@ const views = {
       <p class="muted small">50 faux événements (mariages, anniversaires…) créés sous le compte demo@evermoments.app, pour remplir Découvrir et l'accueil.</p>
       <button class="btn btn-block" data-demo="add">➕ Créer 50 événements</button>
       <button class="btn btn-ghost btn-block" data-demo="del" style="margin-top:8px">🗑️ Supprimer les événements de démo</button>
+      <button class="btn btn-light btn-block" data-demo="msg" style="margin-top:8px">💬 Recevoir des messages privés de test</button>
       </section>`;
   },
 };
@@ -79,6 +80,11 @@ $("#content").addEventListener("click", async (e) => {
     if (demo) {
       if (demo === "del" && !confirm("Supprimer tous les événements de démonstration ?")) return;
       e.target.disabled = true;
+      if (demo === "msg") {
+        const m = await api("/api/admin/demo-messages", { method: "POST" });
+        e.target.disabled = false;
+        return toast(`${m.count} messages reçus de ${m.from} — ouvrez Messages 💬`);
+      }
       const r = await api("/api/admin/demo", { method: demo === "add" ? "POST" : "DELETE" });
       e.target.disabled = false;
       return toast(demo === "add" ? `${r.created} événements créés ✔` : `${r.deleted} événements supprimés`);
