@@ -69,7 +69,9 @@ router.post("/forgot", async (req, res) => {
   if (organizer && !organizer.blocked) {
     const token = randomBytes(24).toString("base64url");
     await setSetting(`reset:${token}`, { id: organizer.id, exp: Date.now() + 3_600_000 });
-    await resetEmail(email, `${origin(req)}/reinitialiser?token=${token}`);
+    if (!(await resetEmail(email, `${origin(req)}/reinitialiser?token=${token}`))) {
+      return res.status(502).json({ error: "L'email n'a pas pu être envoyé. Réessayez dans quelques minutes ou connectez-vous avec Google." });
+    }
   }
   res.json({ ok: true });
 });

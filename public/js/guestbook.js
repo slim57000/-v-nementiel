@@ -1,5 +1,5 @@
 // Livre d'or multimédia de la page événement : texte, photo, message vocal, likes, filtres, recherche.
-import { api, $, esc, toast, guestName, resizeImage, viewPhoto, contentMenu, isHidden, isVideo, uploadVideo } from "./common.js";
+import { api, $, esc, toast, guestName, resizeImage, viewPhoto, contentMenu, isHidden, isVideo, uploadVideo, LOCALE } from "./common.js";
 
 const MAX_VOICE_SECONDS = 60;
 
@@ -33,7 +33,7 @@ export function initGuestbook(ev) {
   const card = (e) => `
     <article class="gb-entry ${e.pinned ? "pinned" : ""}" data-id="${e.id}">
       <header><i>${esc(e.name.charAt(0).toUpperCase())}</i><div><b>${esc(e.name)}</b>
-        <span class="muted small">${new Date(e.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}${e.pinned ? " · ⭐ À la une" : ""}</span></div></header>
+        <span class="muted small">${new Date(e.createdAt).toLocaleDateString(LOCALE, { day: "numeric", month: "long" })}${e.pinned ? " · ⭐ À la une" : ""}</span></div></header>
       ${e.text ? `<p>${esc(e.text)}</p>` : ""}
       ${e.photoUrl && isVideo(e.photoUrl) ? `<video src="${esc(e.photoUrl)}" controls playsinline preload="metadata"></video>` : ""}
       ${e.photoUrl && !isVideo(e.photoUrl) ? `<img src="${esc(e.photoUrl)}" alt="Photo de ${esc(e.name)}" loading="lazy" data-photo>` : ""}

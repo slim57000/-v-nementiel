@@ -1,4 +1,4 @@
-import { esc, formatDate } from "./common.js";
+import { esc, formatDate, EN } from "./common.js";
 
 // Textes préenregistrés par type d'événement : [accroche, texte]. Le premier est proposé par défaut.
 export const TEMPLATES = {
@@ -56,7 +56,29 @@ export const TEMPLATES = {
   ],
 };
 
-export const templatesFor = (type) => TEMPLATES[type] || TEMPLATES.autre;
+// Textes proposés en anglais (site affiché en anglais).
+export const TEMPLATES_EN = {
+  mariage: [
+    ["We're getting married", "We are delighted to invite you to our wedding and would be so happy to share this special day with you."],
+    ["Save the date", "Save the date! We would be honoured to have you with us to celebrate our union."],
+    ["An unforgettable day", "Two families, two hearts, one promise. Come celebrate our wedding and dance with us all night long."],
+  ],
+  fiancailles: [["We're engaged!", "We are thrilled to share the news of our engagement and would love to celebrate it with you."], ["Save the date", "Join us to celebrate our engagement surrounded by the people we love."]],
+  anniversaire: [
+    ["Happy birthday", "You're invited to celebrate this birthday with us! Come and share a joyful party."],
+    ["One more year!", "More candles, more joy! Join us to blow out the candles and party together."],
+    ["Surprise!", "Shhh, it's a surprise! Come celebrate this birthday with us and keep the secret until the big day."],
+  ],
+  bapteme: [["Baptism", "We are delighted to invite you to our child's baptism and would be happy to have you with us."], ["A day of light", "Surrounded by family and friends, our little treasure will be baptised. Share this joyful moment with us."]],
+  communion: [["First Communion", "We are happy to invite you to celebrate our child's First Communion with us."], ["A special day", "Join us for this important day of faith and family."]],
+  "baby-shower": [["Baby shower", "A little one is on the way! Join us for a sweet celebration before baby arrives."], ["Oh baby!", "Come share games, treats and lots of love to welcome our baby."]],
+  diplome: [["Graduation", "Hard work pays off! Join us to celebrate this graduation."], ["Congratulations!", "Let's celebrate this success together — your presence would mean a lot."]],
+  retraite: [["Happy retirement", "After many wonderful years, a new chapter begins. Come celebrate this retirement with us."]],
+  inauguration: [["Grand opening", "We are proud to invite you to the grand opening of our new space."]],
+  autre: [["You're invited", "We would be delighted to have you with us for this special occasion."], ["Save the date", "Mark your calendar! We look forward to celebrating with you."]],
+};
+
+export const templatesFor = (type) => (EN ? TEMPLATES_EN[type] || TEMPLATES_EN.autre : TEMPLATES[type] || TEMPLATES.autre);
 
 export function defaultInvite(event) {
   const [kicker, text] = templatesFor(event.type)[0];

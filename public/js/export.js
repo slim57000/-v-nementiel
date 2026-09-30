@@ -1,6 +1,6 @@
 // Export des souvenirs d'un événement (organisateur) : photos et vidéos des invités, livre d'or
 // (textes, réponses, photos, vidéos, vocaux) dans un seul fichier .zip.
-import { api, toast } from "./common.js";
+import { api, toast, LOCALE } from "./common.js";
 import { makeZip } from "./zip.js";
 
 const ext = (url) => (url.split("?")[0].match(/\.(\w{2,4})$/)?.[1] || "jpg").toLowerCase();
@@ -20,7 +20,7 @@ export async function exportEvent(ev, onProgress = () => {}) {
   photos.forEach((p, i) => media.push({ url: p.url, name: `photos-invites/${String(i + 1).padStart(3, "0")}-${p.name}.${ext(p.url)}` }));
   entries.slice().reverse().forEach((e, i) => {
     const n = String(i + 1).padStart(3, "0");
-    lines.push(`#${n} ${e.name} (${new Date(e.createdAt).toLocaleString("fr-FR")}) — ❤️ ${e.likes || 0}`);
+    lines.push(`#${n} ${e.name} (${new Date(e.createdAt).toLocaleString(LOCALE)}) — ❤️ ${e.likes || 0}`);
     if (e.text) lines.push(e.text);
     for (const r of e.replies || []) lines.push(`   ↳ ${r.name} : ${r.text}`);
     lines.push("");

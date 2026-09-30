@@ -1,6 +1,10 @@
 // Utilitaires partagés par toutes les pages.
 import { icon } from "./icons.js";
-import "./i18n.js"; // langue (FR/EN) et thème (clair/sombre), appliqués au chargement
+import { lang } from "./i18n.js"; // langue (FR/EN) et thème (clair/sombre), appliqués au chargement
+
+// Format des dates selon la langue choisie.
+export const LOCALE = lang === "en" ? "en-GB" : LOCALE;
+export const EN = lang === "en";
 
 export const EVENT_TYPES = {
   mariage: { label: "Mariage", icon: "💍" },
@@ -69,8 +73,8 @@ export const eventUrl = (slug) => `${location.origin}/e/${slug}`;
 
 export function formatDate(date, time) {
   const d = new Date(`${date}T${time}`);
-  const day = d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-  return `${day.charAt(0).toUpperCase()}${day.slice(1)} à ${time.replace(":", "h")}`;
+  const day = d.toLocaleDateString(LOCALE, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  return EN ? `${day} at ${time}` : `${day.charAt(0).toUpperCase()}${day.slice(1)} à ${time.replace(":", "h")}`;
 }
 
 // Redimensionne une photo côté navigateur (photos de téléphone souvent > 5 Mo) et renvoie une data URL JPEG.

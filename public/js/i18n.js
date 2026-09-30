@@ -144,6 +144,8 @@ const EN = {
   "Enregistrer le mot de passe": "Save password",
   "🔒 Mot de passe": "🔒 Password",
   "Pas encore de compte ? Il est créé automatiquement avec votre email et le mot de passe de votre choix.": "No account yet? It is created automatically with your email and the password of your choice.",
+  "Joyeux anniversaire": "Happy birthday",
+  "Départ en retraite": "Retirement",
 };
 
 const LANG_KEY = "em-lang";

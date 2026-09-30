@@ -1,4 +1,4 @@
-import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, guestName } from "./common.js";
+import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, guestName, LOCALE } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 import { initGuestbook } from "./guestbook.js";
 
@@ -56,7 +56,7 @@ function showEvent(ev) {
   $("#name").textContent = ev.name;
   $("#subtitle").textContent = SUBTITLES[ev.type] ?? type.label;
   $("#date-big").textContent = new Date(`${ev.date}T${ev.time}`)
-    .toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
+    .toLocaleDateString(LOCALE, { day: "numeric", month: "long", year: "numeric" })
     .replace(/^(\d+) (\p{L})/u, (m, d, l) => `${d} ${l.toUpperCase()}`);
   $("#lock").textContent = ev.visibility === "private" ? "🔒 Privé" : "🔓 Public";
   renderStories(ev);

@@ -22,12 +22,12 @@
     <h1 style="text-align:center;font-size:1.4rem">Connexion / Inscription</h1>
     <p class="muted" style="text-align:center">Pas encore de compte ? Il est créé automatiquement avec votre email et le mot de passe de votre choix.</p>
 
-    <form id="login" class="card login-centered" novalidate>
+    <form id="login" class="card login-centered" method="post" action="/connexion" novalidate>
       <label for="email">Votre adresse email</label>
-      <input id="email" type="email" autocomplete="email" inputmode="email" required placeholder="vous@exemple.fr">
+      <input id="email" name="email" type="email" autocomplete="username" inputmode="email" required placeholder="vous@exemple.fr">
 
       <label for="password">Mot de passe</label>
-      <div class="pw-wrap"><input id="password" type="password" autocomplete="current-password" minlength="8" placeholder="8 caractères minimum"><button type="button" id="toggle-pw" aria-label="Afficher le mot de passe">👁️</button></div>
+      <div class="pw-wrap"><input id="password" name="password" type="password" autocomplete="current-password" minlength="8" placeholder="8 caractères minimum"><button type="button" id="toggle-pw" aria-label="Afficher le mot de passe">👁️</button></div>
       <p class="small" style="margin:8px 0 0"><a href="#" id="forgot-pw">Mot de passe oublié ?</a></p>
 
       <div id="code-block" class="hidden">

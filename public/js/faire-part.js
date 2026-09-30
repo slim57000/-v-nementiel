@@ -1,6 +1,6 @@
 // « Mes faire-part » : le faire-part de l'événement et l'invitation au live (générée automatiquement),
 // chacun avec QR code, lien, code et boutons de partage.
-import { api, $, copy, shareSheet, qrUrl, tabbar, goLogin, formatDate, EVENT_TYPES } from "./common.js";
+import { api, $, copy, shareSheet, qrUrl, tabbar, goLogin, formatDate, EVENT_TYPES, EN } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 
 tabbar("home");
@@ -8,6 +8,12 @@ const id = new URLSearchParams(location.search).get("id");
 
 // Texte prêt à l'emploi de l'invitation au live, selon le type d'événement.
 function liveInvite(ev) {
+  if (EN) {
+    return {
+      kicker: "Live invitation", title: ev.name,
+      text: `Can't make it? Watch it live from your phone on ${formatDate(ev.date, ev.time)}.\n\nMessages, reactions and photos: share this moment with us!`,
+    };
+  }
   const what = { mariage: "notre mariage", bapteme: "le baptême", communion: "la communion", fiancailles: "nos fiançailles",
     anniversaire: "l'anniversaire", "baby-shower": "la baby shower", diplome: "la remise de diplôme",
     retraite: "le départ en retraite", inauguration: "l'inauguration" }[ev.type] || "l'événement";
@@ -40,8 +46,9 @@ function render() {
   $("#qr-code-line").classList.toggle("hidden", ev.visibility !== "private");
 
   const text = isLive
-    ? `📺 Suivez « ${ev.name} » en direct sur MaFeliza !`
-    : `💌 Vous êtes invité·e à « ${ev.name} » !${ev.visibility === "private" ? ` Code d'accès : ${ev.accessCode}` : ""}`;
+    ? (EN ? `📺 Watch "${ev.name}" live on MaFeliza!` : `📺 Suivez « ${ev.name} » en direct sur MaFeliza !`)
+    : (EN ? `💌 You're invited to "${ev.name}"!${ev.visibility === "private" ? ` Access code: ${ev.accessCode}` : ""}`
+      : `💌 Vous êtes invité·e à « ${ev.name} » !${ev.visibility === "private" ? ` Code d'accès : ${ev.accessCode}` : ""}`);
   $("#share").onclick = () => shareSheet({ title: ev.name, text, url: link });
   $("#copy").onclick = () => copy(link, "Lien copié !");
 }

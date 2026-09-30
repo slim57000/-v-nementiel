@@ -1,5 +1,5 @@
 // Fil d'actualité façon Instagram : nouveaux événements, photos/vidéos des invités, messages du livre d'or.
-import { api, $, esc, toast, tabbar, goLogin, coverOf, isLiveNow, dayBadge, isVideo, viewPhoto, EVENT_TYPES } from "./common.js";
+import { api, $, esc, toast, tabbar, goLogin, coverOf, isLiveNow, dayBadge, isVideo, viewPhoto, EVENT_TYPES, LOCALE } from "./common.js";
 
 tabbar("home");
 
@@ -8,7 +8,7 @@ const ago = (iso) => {
   if (!(s >= 0)) return "";
   if (s < 3600) return `il y a ${Math.max(1, Math.round(s / 60))} min`;
   if (s < 86400) return `il y a ${Math.round(s / 3600)} h`;
-  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+  return new Date(iso).toLocaleDateString(LOCALE, { day: "numeric", month: "long" });
 };
 const eventLink = (ev) => (isLiveNow(ev) ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${encodeURIComponent(ev.slug)}`);
 

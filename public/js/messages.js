@@ -1,4 +1,4 @@
-import { api, $, esc, toast, tabbar, goLogin, onRealtime } from "./common.js";
+import { api, $, esc, toast, tabbar, goLogin, onRealtime, LOCALE } from "./common.js";
 
 tabbar("messages");
 const otherId = Number(new URLSearchParams(location.search).get("u")) || null;
@@ -8,7 +8,7 @@ export const avatarHtml = (p) => (p?.avatar
   ? `<span class="avatar" style="background-image:url('${esc(p.avatar)}')"></span>`
   : `<span class="avatar">${esc((p?.name || "?").charAt(0).toUpperCase())}</span>`);
 
-const time = (d) => new Date(d).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+const time = (d) => new Date(d).toLocaleString(LOCALE, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 // --- Liste des conversations ---
 async function showList() {

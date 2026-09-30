@@ -1,4 +1,4 @@
-import { api, $, esc, toast, formatDate, goLogin, EVENT_TYPES } from "./common.js";
+import { api, $, esc, toast, formatDate, goLogin, EVENT_TYPES, LOCALE } from "./common.js";
 
 let tab = "events";
 let timer;
@@ -23,7 +23,7 @@ const views = {
     const list = await api(`/api/admin/organizers?q=${encodeURIComponent(q)}`);
     return list.map((o) => row(
       `<b>${esc(o.email)}</b> ${o.superAdmin ? '<span class="badge">👑 Admin principal</span>' : o.admin ? '<span class="badge">Admin</span>' : ""} ${o.blocked ? '<span class="badge private">Bloqué</span>' : ""} ${o.premium ? '<span class="badge">✨ Premium</span>' : ""}`,
-      `${o.events} événement(s) · inscrit le ${new Date(o.createdAt).toLocaleDateString("fr-FR")}`,
+      `${o.events} événement(s) · inscrit le ${new Date(o.createdAt).toLocaleDateString(LOCALE)}`,
       (o.superAdmin || !me.superAdmin ? "" : `<button class="btn btn-light btn-sm" data-act="admin" data-id="${o.id}" data-on="${!o.admin}">${o.admin ? "Retirer admin" : "👑 Passer admin"}</button> `)
       + `<button class="btn btn-light btn-sm" data-act="premium" data-id="${o.id}" data-on="${!o.premium}">${o.premium ? "Retirer Premium" : "✨ Passer Premium"}</button>`
       + (o.admin ? "" : ` <button class="btn ${o.blocked ? "btn-light" : "btn-danger"} btn-sm" data-act="block" data-id="${o.id}" data-on="${!o.blocked}">${o.blocked ? "Débloquer" : "Bloquer"}</button>`),
@@ -34,7 +34,7 @@ const views = {
     const kinds = { message: "Message du chat", photo: "Photo", guestbook: "Livre d'or" };
     return list.map((r) => row(
       `<b>${kinds[r.kind] || r.kind}</b> sur « ${esc(r.eventName)} »`,
-      `${esc(r.reason || "Sans motif")} · ${new Date(r.createdAt).toLocaleString("fr-FR")}`,
+      `${esc(r.reason || "Sans motif")} · ${new Date(r.createdAt).toLocaleString(LOCALE)}`,
       `${r.eventSlug ? `<a class="btn btn-light btn-sm" href="/e/${esc(r.eventSlug)}" target="_blank">Voir</a>` : ""}
        <button class="btn btn-ghost btn-sm" data-act="close-report" data-id="${r.id}">Traité</button>`,
     )).join("") || "<p class='muted'>Aucun signalement 🎉</p>";
@@ -60,7 +60,7 @@ const views = {
       <section class="card">
       <h2 style="font-size:1rem">Journal des actions</h2>
       <p class="muted small">Les 100 dernières actions d'administration (qui, quoi, quand).</p>
-      <div class="audit">${(await api("/api/admin/audit")).map((a) => `<div class="audit-row"><b>${esc(a.by)}</b> · ${esc(a.action)}${a.detail ? ` <span class="muted">(${esc(a.detail)})</span>` : ""}<br><span class="muted small">${new Date(a.at).toLocaleString("fr-FR")}</span></div>`).join("") || '<p class="muted small">Aucune action pour le moment.</p>'}</div>
+      <div class="audit">${(await api("/api/admin/audit")).map((a) => `<div class="audit-row"><b>${esc(a.by)}</b> · ${esc(a.action)}${a.detail ? ` <span class="muted">(${esc(a.detail)})</span>` : ""}<br><span class="muted small">${new Date(a.at).toLocaleString(LOCALE)}</span></div>`).join("") || '<p class="muted small">Aucune action pour le moment.</p>'}</div>
       </section>`;
   },
 };
