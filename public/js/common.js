@@ -173,6 +173,36 @@ export function tabbar(active) {
       ${tab("messages", "/messages", "chat", "Messages")}
       ${tab("profile", "/profil", "user", "Profil")}
     </nav>`);
+  bell();
+}
+
+// Cloche 🔔 dans la barre du haut : nouveautés du compte (messages, livre d'or, réponses, lives…).
+async function bell() {
+  const bar = document.querySelector(".topbar");
+  if (!bar) return;
+  let data;
+  try { data = await api("/api/me/notifications"); } catch { return; } // non connecté
+  const unread = data.items.filter((n) => n.at > data.seen).length;
+  const btn = document.createElement("button");
+  btn.className = "bell";
+  btn.type = "button";
+  btn.setAttribute("aria-label", "Notifications");
+  btn.innerHTML = `🔔${unread ? `<span class="bell-count">${unread > 9 ? "9+" : unread}</span>` : ""}`;
+  bar.insertBefore(btn, bar.children.length > 1 ? bar.lastElementChild : null);
+  btn.addEventListener("click", () => {
+    btn.querySelector(".bell-count")?.remove();
+    api("/api/me/notifications/read", { method: "POST" }).catch(() => {});
+    const when = (t) => new Date(t).toLocaleString(LOCALE, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+    const rows = data.items.map((n) => `<a class="notif ${n.at > data.seen ? "new" : ""}" href="${esc(n.url.startsWith("/") ? n.url : "/dashboard")}">
+      <b>${esc(n.title)}</b>${n.body ? `<span>${esc(n.body)}</span>` : ""}<small class="muted">${when(n.at)}</small></a>`).join("");
+    document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="notif-sheet" role="dialog" aria-modal="true">
+      <div class="card"><h2 style="margin-top:0">Notifications</h2>
+        <div class="notif-list">${rows || '<p class="muted">Aucune notification pour le moment.</p>'}</div>
+        <button class="btn btn-light btn-block" type="button" id="notif-close">Fermer</button></div></div>`);
+    data.seen = Date.now();
+    const sheet = $("#notif-sheet");
+    sheet.addEventListener("click", (e) => { if (e.target === sheet || e.target.id === "notif-close") sheet.remove(); });
+  });
 }
 
 // Redirige vers la connexion en revenant ensuite sur la page courante.

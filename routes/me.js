@@ -11,6 +11,7 @@ import {
   addFavorite, removeFavorite, listFavoriteIds, listHistoryIds,
   listFriendIds, removeFriends, addBlock, removeBlock, listBlockIds,
   addDirectMessage, listDirectMessages, lastDirectMessage, listPhotos, listGuestbook, listPublicUpcoming, listRecentPhotos, listRecentGuestbook,
+  getSetting, setSetting,
 } from "../lib/store.js";
 
 const router = Router();
@@ -94,6 +95,16 @@ router.get("/feed", async (req, res) => {
 });
 
 // --- Stories des dernières 24 h de mes événements, participations, favoris et amis (rangée du tableau de bord) ---
+// Cloche : notifications du compte et date de dernière lecture.
+router.get("/notifications", async (req, res) => {
+  const [list, seen] = await Promise.all([getSetting(`notifs:${req.organizer.id}`), getSetting(`notifs-seen:${req.organizer.id}`)]);
+  res.json({ items: list || [], seen: seen || 0 });
+});
+router.post("/notifications/read", async (req, res) => {
+  await setSetting(`notifs-seen:${req.organizer.id}`, Date.now());
+  res.json({ ok: true });
+});
+
 router.get("/stories", async (req, res) => {
   const me = req.organizer;
   const [mine, historyIds, favIds, friendIds] = await Promise.all([
