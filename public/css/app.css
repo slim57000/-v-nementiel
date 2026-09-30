@@ -469,3 +469,7 @@ input::-webkit-date-and-time-value { text-align: center; }
 #tabs.segments button { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (min-width: 560px) { #tabs.segments { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 [data-theme="dark"] .badge.cam-badge { background: #3a1422; color: #ff8fab; }
+/* Page événement : bouton retour (en haut à gauche de la carte) */
+.back-chip { position: absolute; top: 12px; left: 12px; z-index: 2; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: rgba(255,255,255,.85); color: #2b2530; font-size: 1.6rem; line-height: 1; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,.12); padding-bottom: 3px; }
+/* Barre de partage en mode sombre */
+[data-theme="dark"] .share-bar { background: rgba(17,16,20,.94); border-top-color: #2a2830; }
