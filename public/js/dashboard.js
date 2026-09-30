@@ -1,4 +1,4 @@
-import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES } from "./common.js";
+import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard } from "./common.js";
 import { icon } from "./icons.js";
 
 $("#profile-btn").innerHTML = icon("user");
@@ -11,6 +11,7 @@ if (new URLSearchParams(location.search).has("saved")) {
 }
 
 let events = [];
+let discover = []; // événements publics des autres organisateurs
 let filter = "all";
 const today = new Date().toISOString().slice(0, 10);
 // « En direct » : événement du jour avec au moins une caméra.
@@ -19,7 +20,7 @@ const bg = (url) => (url ? `style="background-image:url('${esc(url)}')"` : "");
 
 async function load() {
   try {
-    events = await api("/api/events");
+    [events, discover] = await Promise.all([api("/api/events"), api("/api/public?limit=30").catch(() => [])]);
   } catch (err) {
     if (err.status === 401) return goLogin();
     return toast(err.message);
@@ -28,13 +29,14 @@ async function load() {
 }
 
 function renderStories() {
-  const upcoming = events.filter((e) => e.date >= today);
+  const mine = new Set(events.map((e) => e.slug));
+  const upcoming = [...events.filter((e) => e.date >= today), ...discover.filter((e) => !mine.has(e.slug)).slice(0, 12)];
   $("#stories").innerHTML = `
     <a class="story new" href="/edit"><div class="story-img">+</div><span>Créer un événement</span></a>
     ${upcoming.map((ev) => {
       const badge = dayBadge(ev.date);
       const live = isLive(ev);
-      return `<a class="story" href="/e/${esc(ev.slug)}">
+      return `<a class="story" href="${live ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`}">
         <div class="story-img ${live ? "live" : ""}" ${bg(ev.cover)}>${ev.cover ? "" : EVENT_TYPES[ev.type].icon}
           <span class="story-badge ${live || badge === "Aujourd'hui" ? "today" : ""}">${live ? "LIVE" : badge}</span></div>
         <span>${esc(ev.name)}</span></a>`;
@@ -82,13 +84,18 @@ function card(ev) {
 
 function render() {
   renderStories();
-  const shown = events.filter((e) =>
-    filter === "upcoming" ? e.date >= today : filter === "live" ? isLive(e) : true);
-  $("#empty").classList.toggle("hidden", shown.length > 0);
+  const keep = (e) => (filter === "upcoming" ? e.date >= today : filter === "live" ? isLive(e) : true);
+  const shown = events.filter(keep);
+  const mine = new Set(events.map((e) => e.slug));
+  const others = discover.filter((e) => !mine.has(e.slug) && keep(e));
+  $("#empty").classList.toggle("hidden", shown.length > 0 || others.length > 0);
   $("#empty-text").innerHTML = events.length
     ? "Aucun événement dans cette catégorie."
     : "Vous n'avez pas encore d'événement.<br>Créez le premier en quelques minutes !";
-  $("#list").innerHTML = shown.map(card).join("");
+  $("#list").innerHTML = shown.map(card).join("") + (others.length
+    ? `<div class="section-title"><h2>À découvrir</h2><a href="/decouvrir" class="see-all">Voir tout</a></div>
+       <div class="p-grid">${others.map((e) => (isLive(e) ? publicCard(e).replace(`href="/e/${esc(e.slug)}"`, `href="/live?e=${encodeURIComponent(e.slug)}"`) : publicCard(e))).join("")}</div>`
+    : "");
 }
 
 document.querySelector(".segments").addEventListener("click", (e) => {

@@ -67,6 +67,6 @@ api("/api/public?limit=10").catch(() => []).then((events) => {
       href: e.live ? `/live?e=${encodeURIComponent(e.slug)}` : `/e/${encodeURIComponent(e.slug)}`,
       image: e.cover || "/img/maquette/salle.jpg", tag: e.live ? "LIVE" : dayBadge(e.date), live: e.live, name: e.name, location: e.location, viewers: e.viewers,
     }));
-  EXAMPLES.slice(0, Math.max(0, 3 - cards.length)).forEach((ex) => cards.push(liveCard({ ...ex, tag: "Exemple" })));
+  EXAMPLES.slice(0, Math.max(0, 3 - cards.length)).forEach((ex) => cards.push(liveCard({ ...ex, href: "/decouvrir", tag: "Exemple" })));
   $("#upcoming-list").innerHTML = cards.join("");
 });
