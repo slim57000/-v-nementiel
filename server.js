@@ -29,6 +29,19 @@ const PUBLIC_DIR = fileURLToPath(new URL("./public", import.meta.url));
 
 const app = express();
 app.set("trust proxy", 1);
+app.disable("x-powered-by");
+// En-têtes de sécurité (aussi appliqués aux fichiers statiques par vercel.json).
+app.use((req, res, next) => {
+  res.set({
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(self), microphone=(self), geolocation=()",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+  });
+  if (req.path.startsWith("/api/")) res.set("Cache-Control", "no-store");
+  next();
+});
 app.use(express.json({ limit: "4.5mb" })); // images envoyées en base64 (limite Vercel)
 
 // Configuration incomplète : message explicite plutôt qu'un plantage.

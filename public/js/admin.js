@@ -6,6 +6,8 @@ let timer;
 const row = (main, sub, actions) => `
   <div class="admin-row"><div class="admin-main">${main}<div class="muted small">${sub}</div></div><div class="admin-actions">${actions}</div></div>`;
 
+const me = await api("/api/auth/me").catch(() => ({}));
+
 const views = {
   async events(q) {
     const list = await api(`/api/admin/events?q=${encodeURIComponent(q)}`);
@@ -22,7 +24,7 @@ const views = {
     return list.map((o) => row(
       `<b>${esc(o.email)}</b> ${o.superAdmin ? '<span class="badge">👑 Admin principal</span>' : o.admin ? '<span class="badge">Admin</span>' : ""} ${o.blocked ? '<span class="badge private">Bloqué</span>' : ""} ${o.premium ? '<span class="badge">✨ Premium</span>' : ""}`,
       `${o.events} événement(s) · inscrit le ${new Date(o.createdAt).toLocaleDateString("fr-FR")}`,
-      (o.superAdmin ? "" : `<button class="btn btn-light btn-sm" data-act="admin" data-id="${o.id}" data-on="${!o.admin}">${o.admin ? "Retirer admin" : "👑 Passer admin"}</button> `)
+      (o.superAdmin || !me.superAdmin ? "" : `<button class="btn btn-light btn-sm" data-act="admin" data-id="${o.id}" data-on="${!o.admin}">${o.admin ? "Retirer admin" : "👑 Passer admin"}</button> `)
       + `<button class="btn btn-light btn-sm" data-act="premium" data-id="${o.id}" data-on="${!o.premium}">${o.premium ? "Retirer Premium" : "✨ Passer Premium"}</button>`
       + (o.admin ? "" : ` <button class="btn ${o.blocked ? "btn-light" : "btn-danger"} btn-sm" data-act="block" data-id="${o.id}" data-on="${!o.blocked}">${o.blocked ? "Débloquer" : "Bloquer"}</button>`),
     )).join("") || "<p class='muted'>Aucun utilisateur.</p>";
@@ -54,6 +56,11 @@ const views = {
       <button class="btn btn-light btn-block" data-demo="msg" style="margin-top:8px">💬 Recevoir des messages privés de test</button>
       <button class="btn btn-light btn-block" data-demo="invite" style="margin-top:8px">💌 Recevoir un faire-part de test</button>
       <button class="btn btn-light btn-block" data-demo="album" style="margin-top:8px">📖 Créer un album souvenir de test</button>
+      </section>
+      <section class="card">
+      <h2 style="font-size:1rem">Journal des actions</h2>
+      <p class="muted small">Les 100 dernières actions d'administration (qui, quoi, quand).</p>
+      <div class="audit">${(await api("/api/admin/audit")).map((a) => `<div class="audit-row"><b>${esc(a.by)}</b> · ${esc(a.action)}${a.detail ? ` <span class="muted">(${esc(a.detail)})</span>` : ""}<br><span class="muted small">${new Date(a.at).toLocaleString("fr-FR")}</span></div>`).join("") || '<p class="muted small">Aucune action pour le moment.</p>'}</div>
       </section>`;
   },
 };

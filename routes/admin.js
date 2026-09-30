@@ -4,6 +4,7 @@ import { currentOrganizer, isAdmin, isSuperAdmin, listExtraAdmins } from "./auth
 import { destroyEvent } from "./events.js";
 import { seedDemo, demoEvents, sendDemoMessages, sendDemoInvitation, createDemoAlbum } from "../lib/demo.js";
 import { isPremium, setPremium } from "../lib/premium.js";
+import { tooFast } from "../lib/limits.js";
 import {
   searchEvents, searchOrganizers, findEvent, findOrganizer, saveOrganizer, saveEvent, listEvents,
   listReports, deleteReport, countReports, getSetting, setSetting,
@@ -13,9 +14,31 @@ const router = Router();
 
 router.use(async (req, res, next) => {
   const organizer = await currentOrganizer(req);
-  if (!(await isAdmin(organizer))) return res.status(403).json({ error: "Accès réservé à l'administration." });
+  if (!organizer || organizer.blocked || !(await isAdmin(organizer))) return res.status(403).json({ error: "Accès réservé à l'administration." });
+  req.admin = organizer;
+  if (req.method !== "GET") {
+    // Limite d'actions (compte compromis, script) et journal de chaque action réussie.
+    if (await tooFast(`admin:${organizer.id}`, 60, 60_000)) return res.status(429).json({ error: "Trop d'actions d'un coup, patientez une minute." });
+    res.on("finish", () => { if (res.statusCode < 400) audit(organizer, req).catch(() => {}); });
+  }
   next();
 });
+
+// Journal des actions d'administration (300 dernières), consultable dans Réglages.
+async function audit(admin, req) {
+  const target = req.params?.id || req.path.split("/")[2] || "";
+  const detail = Object.entries(req.body || {}).map(([k, v]) => `${k}=${String(v).slice(0, 40)}`).join(", ");
+  const entry = { at: new Date().toISOString(), by: admin.email, action: `${req.method} ${req.baseUrl.replace("/api/admin", "")}${req.path}`, target, detail };
+  const log = (await getSetting("audit").catch(() => null)) || [];
+  await setSetting("audit", [entry, ...log].slice(0, 300));
+}
+router.get("/audit", async (req, res) => {
+  res.json(((await getSetting("audit").catch(() => null)) || []).slice(0, 100));
+});
+
+// Seuls les administrateurs principaux (ADMIN_EMAILS) gèrent les droits d'administration.
+const superOnly = (req, res, next) => (isSuperAdmin(req.admin) ? next()
+  : res.status(403).json({ error: "Réservé à l'administrateur principal." }));
 
 // Événements : recherche (nom, lien, lieu), avec email de l'organisateur et signalements.
 router.get("/events", async (req, res) => {
@@ -98,7 +121,7 @@ router.post("/organizers/:id/premium", async (req, res) => {
 });
 
 // Nommer ou retirer un administrateur (les super-administrateurs de ADMIN_EMAILS ne peuvent pas être retirés).
-router.post("/organizers/:id/admin", async (req, res) => {
+router.post("/organizers/:id/admin", superOnly, async (req, res) => {
   const organizer = await findOrganizer(Number(req.params.id));
   if (!organizer) return res.status(404).json({ error: "Utilisateur introuvable." });
   const on = Boolean(req.body?.admin);

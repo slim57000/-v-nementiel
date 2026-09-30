@@ -98,7 +98,7 @@ router.get("/me", async (req, res) => {
   const organizer = await currentOrganizer(req);
   if (!organizer) return res.status(401).json({ error: "Non connecté." });
   res.json({
-    id: organizer.id, email: organizer.email, code: organizer.loginCode, isAdmin: await isAdmin(organizer),
+    id: organizer.id, email: organizer.email, code: organizer.loginCode, isAdmin: await isAdmin(organizer), superAdmin: isSuperAdmin(organizer),
     displayName: organizer.displayName || "", avatar: organizer.avatar || null, premium: await isPremium(organizer.id),
   });
 });
