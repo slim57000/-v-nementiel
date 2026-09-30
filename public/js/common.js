@@ -178,7 +178,7 @@ export function tabbar(active) {
 }
 
 // « + » du menu : choisir entre une story (sur un de ses événements) et un nouvel événement.
-function createSheet(e) {
+export function createSheet(e) {
   e.preventDefault();
   const events = api("/api/events").catch(() => null); // chargé tout de suite : le choix de fichier doit suivre un appui
   let list = null;

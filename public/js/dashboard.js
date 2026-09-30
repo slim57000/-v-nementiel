@@ -1,4 +1,4 @@
-import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories, liveAttrs } from "./common.js";
+import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories, liveAttrs, createSheet } from "./common.js";
 import { icon } from "./icons.js";
 
 // ❤️ en haut : accès rapide aux événements mis en favoris.
@@ -49,7 +49,7 @@ function renderStories() {
   const extra = stories.filter((g) => !all.some((e) => e.slug === g.slug)).map((g) => ({ ...g }));
   const upcoming = [...extra, ...all].sort((a, b) => withStory.has(b.slug) - withStory.has(a.slug));
   $("#stories").innerHTML = `
-    <a class="story new" href="/edit"><div class="story-img">+</div><span>Créer un événement</span></a>
+    <a class="story new" href="/edit" data-create><div class="story-img">+</div><span>Créer</span></a>
     ${upcoming.map((ev) => {
       const badge = dayBadge(ev.date);
       const live = isLive(ev);
@@ -252,3 +252,6 @@ async function openStats(ev) {
   $("#st-close").onclick = () => sheet.remove();
   sheet.onclick = (e) => { if (e.target === sheet) sheet.remove(); };
 }
+
+// « + Créer » des stories : même choix que le + du menu (story ou événement).
+document.addEventListener("click", (e) => { if (e.target.closest("[data-create]")) createSheet(e); });
