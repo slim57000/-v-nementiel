@@ -34,6 +34,7 @@ npm run dev        # http://localhost:3000
 | `SESSION_SECRET` | chaîne aléatoire longue, ex. `openssl rand -hex 32` |
 | `RESEND_API_KEY` | facultatif : envoi d'emails (code organisateur, code oublié, rappel de fin de replay) via resend.com |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | facultatif : connexion avec Google (console.cloud.google.com → Identifiants → ID client OAuth « Application Web », URI de redirection `https://<domaine>/api/auth/google/callback`) |
+| `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | facultatif : connexion avec Facebook (developers.facebook.com → app « Consommateur » → Facebook Login ; URI de redirection `https://<domaine>/api/auth/facebook/callback`) |
 | `DEMO_EVENTS` | `off` pour ne pas créer les 50 événements de démonstration automatiques |
 | `SENTRY_DSN` | facultatif : suivi des erreurs serveur et navigateur (sentry.io → projet → Client Keys (DSN)) |
 | `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_STREAM_TOKEN` | facultatif mais recommandé : live en un clic depuis le téléphone du caméraman (Cloudflare Stream, WebRTC), enregistré automatiquement pour le replay. Jeton API avec la permission « Stream : Edit ». Sans eux, le caméraman colle un lien YouTube / Twitch |

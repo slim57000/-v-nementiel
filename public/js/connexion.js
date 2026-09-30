@@ -41,9 +41,11 @@ $("#continue").addEventListener("click", () => { location.href = target; });
 fetch("/api/config").then((r) => r.json()).then((c) => {
   if (c.emailEnabled) $("#forgot").classList.remove("hidden");
   // Connexion Google (si configurée), masquée dans l'application iOS / Android.
-  if (c.social?.includes("google") && !window.Capacitor?.isNativePlatform?.()) {
-    $("#google").href = `/api/auth/google?next=${encodeURIComponent(target)}`;
-    $("#google").classList.remove("hidden");
+  for (const provider of ["google", "facebook"]) {
+    if (c.social?.includes(provider) && !window.Capacitor?.isNativePlatform?.()) {
+      $(`#${provider}`).href = `/api/auth/${provider}?next=${encodeURIComponent(target)}`;
+      $(`#${provider}`).classList.remove("hidden");
+    }
   }
 }).catch(() => {});
 $("#forgot").addEventListener("click", async (e) => {

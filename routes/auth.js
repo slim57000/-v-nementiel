@@ -4,6 +4,7 @@ import { loginCode } from "../lib/codes.js";
 import { setSigned, getSigned } from "../lib/session.js";
 import { codeEmail, EMAIL_ENABLED } from "../lib/email.js";
 import { GOOGLE_ENABLED, googleAuthUrl, googleIdentity } from "../lib/google.js";
+import { FACEBOOK_ENABLED, facebookAuthUrl, facebookIdentity } from "../lib/facebook.js";
 import { randomBytes, randomInt } from "node:crypto";
 import { tooFast } from "../lib/limits.js";
 import { isPremium } from "../lib/premium.js";
@@ -67,6 +68,34 @@ router.get("/google/callback", async (req, res) => {
     res.redirect(safeNext(decodeURIComponent(next || "")));
   } catch (err) {
     console.error("Google :", err.message);
+    res.redirect("/connexion");
+  }
+});
+
+// Connexion Facebook : même principe que Google.
+const fbCallbackUrl = (req) => `${req.protocol}://${req.get("host")}/api/auth/facebook/callback`;
+router.get("/facebook", (req, res) => {
+  if (!FACEBOOK_ENABLED) return res.redirect("/connexion");
+  const nonce = randomBytes(12).toString("hex");
+  setSigned(res, "gstate", `${nonce}~${encodeURIComponent(safeNext(req.query.next))}`);
+  res.redirect(facebookAuthUrl(fbCallbackUrl(req), nonce));
+});
+router.get("/facebook/callback", async (req, res) => {
+  const [nonce, next] = (getSigned(req, "gstate") || "").split("~");
+  res.clearCookie("gstate");
+  if (!nonce || req.query.state !== nonce || !req.query.code) return res.redirect("/connexion");
+  try {
+    const who = await facebookIdentity(String(req.query.code), fbCallbackUrl(req));
+    let organizer = await findOrganizerByEmail(who.email);
+    if (!organizer) {
+      organizer = await createOrganizer(who.email, loginCode());
+      organizer = await saveOrganizer({ ...organizer, displayName: who.name.slice(0, 40), avatar: who.avatar });
+    }
+    if (organizer.blocked) return res.redirect("/connexion");
+    setSigned(res, "org", String(organizer.id));
+    res.redirect(safeNext(decodeURIComponent(next || "")));
+  } catch (err) {
+    console.error("Facebook :", err.message);
     res.redirect("/connexion");
   }
 });

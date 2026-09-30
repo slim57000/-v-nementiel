@@ -7,6 +7,7 @@ import { isPremium } from "./lib/premium.js";
 import { reportError } from "./lib/monitor.js";
 import { tooFast } from "./lib/limits.js";
 import { GOOGLE_ENABLED } from "./lib/google.js";
+import { FACEBOOK_ENABLED } from "./lib/facebook.js";
 import express from "express";
 import QRCode from "qrcode";
 import { readFileSync } from "node:fs";
@@ -61,7 +62,7 @@ app.get("/api/config", async (req, res) => res.json({
   emailEnabled: EMAIL_ENABLED,
   vapidPublicKey: VAPID_PUBLIC_KEY,
   realtime: REALTIME,
-  social: GOOGLE_ENABLED ? ["google"] : [],
+  social: [GOOGLE_ENABLED && "google", FACEBOOK_ENABLED && "facebook"].filter(Boolean),
   defaultLivePlatform: (await getSetting("defaultLivePlatform").catch(() => null)) || "youtube",
 }));
 
