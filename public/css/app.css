@@ -553,3 +553,4 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
 }
 .album-bar .btn { white-space: nowrap; font-size: min(.85rem, 3.6vw); }
 .site-footer { font-size: min(.95rem, 4vw); } .site-footer a { white-space: nowrap; }
+.login-centered label, .login-centered input, .login-centered .small { text-align: center; }
