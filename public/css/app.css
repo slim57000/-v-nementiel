@@ -486,3 +486,10 @@ input::-webkit-date-and-time-value { text-align: center; }
 .topbar .cam-badge svg { width: min(16px, 4vw); height: min(16px, 4vw); }
 .legal-toc { flex-wrap: wrap; justify-content: center; overflow-x: visible; }
 .stories-row .story-circle { width: min(76px, calc((100vw - 68px) / 4)); height: auto; aspect-ratio: 1; }
+/* Livre d'or : filtres sur 2 lignes, réponses */
+#gb-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.gb-reply { margin: 8px 0 0 46px; padding: 8px 10px; background: var(--primary-light); border-radius: 12px; font-size: .88rem; overflow-wrap: anywhere; }
+[data-theme="dark"] .gb-reply { background: #2a1f26; }
+.gb-reply-form { display: flex; gap: 6px; margin: 8px 0 0 46px; }
+.gb-reply-form input { flex: 1; min-width: 0; padding: 8px 12px; }
+.gb-reply-form.hidden { display: none; }

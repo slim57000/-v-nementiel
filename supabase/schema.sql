@@ -138,6 +138,9 @@ create table if not exists history (
   primary key (user_id, event_id)
 );
 
+-- Réponses aux messages du livre d'or (ajouté en V1.1).
+alter table guestbook add column if not exists replies jsonb not null default '[]';
+
 -- Sécurité : RLS activé sans règle = aucune lecture/écriture avec la clé publique (anon).
 -- Seul le serveur, avec la clé service_role, accède aux données.
 alter table organizers enable row level security;

@@ -78,6 +78,10 @@ const EN = {
   "Retour à l'accueil": "Back to home",
   "Découvrir les événements": "Discover events",
   "Ce lien n'existe pas ou l'événement a été supprimé. Vérifiez le lien reçu ou saisissez votre code d'invitation.": "This link doesn't exist or the event was deleted. Check the link you received or enter your invitation code.",
+  "Vidéos": "Videos",
+  "💬 Répondre": "💬 Reply",
+  "Votre réponse…": "Your reply…",
+  "Envoyer": "Send",
 };
 
 const LANG_KEY = "em-lang";

@@ -20,8 +20,10 @@ export function initGuestbook(ev) {
   function render() {
     const q = $("#gb-search").value.trim().toLowerCase();
     const shown = entries
-      .filter((e) => filter === "all" || (filter === "photos" && e.photoUrl) || (filter === "voice" && e.audioUrl) || (filter === "pinned" && e.pinned))
-      .filter((e) => !q || `${e.name} ${e.text}`.toLowerCase().includes(q))
+      .filter((e) => filter === "all"
+        || (filter === "photos" && e.photoUrl && !isVideo(e.photoUrl)) || (filter === "videos" && e.photoUrl && isVideo(e.photoUrl))
+        || (filter === "voice" && e.audioUrl) || (filter === "favorites" && liked.has(e.id)) || (filter === "pinned" && e.pinned))
+      .filter((e) => !q || `${e.name} ${e.text} ${(e.replies || []).map((r) => `${r.name} ${r.text}`).join(" ")}`.toLowerCase().includes(q))
       .sort((a, b) => b.pinned - a.pinned || b.id - a.id);
     $("#gb-count").textContent = entries.length ? `(${entries.length})` : "";
     $("#gb-list").innerHTML = shown.length ? shown.map(card).join("") :
@@ -36,8 +38,11 @@ export function initGuestbook(ev) {
       ${e.photoUrl && isVideo(e.photoUrl) ? `<video src="${esc(e.photoUrl)}" controls playsinline preload="metadata"></video>` : ""}
       ${e.photoUrl && !isVideo(e.photoUrl) ? `<img src="${esc(e.photoUrl)}" alt="Photo de ${esc(e.name)}" loading="lazy" data-photo>` : ""}
       ${e.audioUrl ? `<audio controls preload="none" src="${esc(e.audioUrl)}"></audio>` : ""}
+      ${(e.replies || []).filter((r) => !isHidden(r.author)).map((r) => `<div class="gb-reply"><b>${esc(r.name)}</b> ${esc(r.text)}</div>`).join("")}
+      <form class="gb-reply-form hidden" data-reply-form><input maxlength="500" placeholder="Votre réponse…" aria-label="Votre réponse"><button class="btn btn-sm">Envoyer</button></form>
       <footer>
         <button class="gb-like ${liked.has(e.id) ? "on" : ""}" data-like>❤️ ${e.likes || 0}</button>
+        <button data-reply>💬 Répondre${e.replies?.length ? ` (${e.replies.length})` : ""}</button>
         <button data-more aria-label="Plus d'actions">⋯</button>
         ${ev.isOwner ? `<button data-pin>${e.pinned ? "Retirer de la une" : "⭐ Mettre en avant"}</button><button data-del class="danger">Supprimer</button>` : ""}
       </footer>
@@ -59,6 +64,11 @@ export function initGuestbook(ev) {
     const entry = entries.find((x) => x.id === Number(el.dataset.id));
     const url = `${base}/${entry.id}`;
     try {
+      if (e.target.matches("[data-reply]")) {
+        const form = el.querySelector("[data-reply-form]");
+        form.classList.toggle("hidden");
+        form.querySelector("input").focus();
+      }
       if (e.target.matches("[data-photo]")) viewPhoto({ url: entry.photoUrl, name: entry.name });
       if (e.target.matches("[data-more]")) {
         contentMenu({
@@ -81,6 +91,23 @@ export function initGuestbook(ev) {
         entries = entries.filter((x) => x !== entry);
         render();
       }
+    } catch (err) {
+      toast(err.message);
+    }
+  });
+
+  // Envoi d'une réponse (formulaire sous le message).
+  $("#gb-list").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const el = e.target.closest("[data-id]");
+    const input = e.target.querySelector("input");
+    const text = input.value.trim();
+    if (!text) return;
+    const entry = entries.find((x) => x.id === Number(el.dataset.id));
+    try {
+      const name = await guestName();
+      Object.assign(entry, await api(`${base}/${entry.id}/replies`, { method: "POST", body: { name, text } }));
+      render();
     } catch (err) {
       toast(err.message);
     }

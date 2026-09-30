@@ -179,6 +179,18 @@ router.post("/guestbook/:id/like", async (req, res) => {
   if (entry) res.json(await likeGuestbookEntry(entry));
 });
 
+// Réponse à un message du livre d'or (50 max par message).
+router.post("/guestbook/:id/replies", notBlocked, async (req, res) => {
+  const name = clean(req.body?.name, 30);
+  const text = String(req.body?.text ?? "").trim().slice(0, 500);
+  if (!name || !text) return res.status(400).json({ error: "Écrivez votre réponse." });
+  if (tooFast(`${req.ip}:reply`, 5, 60_000)) return res.status(429).json({ error: "Doucement ! Attendez quelques secondes." });
+  const entry = await entryOf(req, res);
+  if (!entry) return;
+  const replies = [...(entry.replies || []), { name, text, author: req.author, at: new Date().toISOString() }].slice(-50);
+  res.status(201).json(await updateGuestbookEntry(entry, { replies }));
+});
+
 // Organisateur : mettre en avant / retirer.
 router.patch("/guestbook/:id", ownerOnly, async (req, res) => {
   const entry = await entryOf(req, res);
