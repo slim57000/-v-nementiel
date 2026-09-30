@@ -56,8 +56,9 @@ function renderStories() {
       return `<a class="story" href="${live ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`}">
         <div class="story-img ${live ? "live" : ""} ${withStory.has(ev.slug) ? "has-story" : ""}" data-story="${withStory.has(ev.slug) ? esc(ev.slug) : ""}" ${liveAttrs(ev)}>
           <span class="story-badge ${live || badge === "Aujourd'hui" ? "today" : ""}">${live ? "LIVE" : badge}</span>
-          ${ev.visibility ? `<span class="story-lock" title="${ev.visibility === "private" ? "Privé" : "Public"}">${ev.visibility === "private" ? "🔒" : "🔓"}</span>` : ""}</div>
-        <span>${esc(ev.name)}</span></a>`;
+          </div>
+        <span>${esc(ev.name)}</span>
+        ${ev.visibility ? `<small class="story-vis ${ev.visibility === "private" ? "private" : ""}">${ev.visibility === "private" ? "🔒 Privé" : "🔓 Public"}</small>` : ""}</a>`;
     }).join("")}`;
 }
 
