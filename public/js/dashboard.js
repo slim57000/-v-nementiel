@@ -102,6 +102,7 @@ function render() {
 
 document.querySelector(".segments").addEventListener("click", (e) => {
   if (!e.target.dataset.filter) return;
+  if (e.target.dataset.filter === "feed") { location.href = "/fil"; return; }
   filter = e.target.dataset.filter;
   document.querySelectorAll(".segments button").forEach((b) => b.classList.toggle("active", b === e.target));
   render();

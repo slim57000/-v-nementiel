@@ -82,6 +82,10 @@ const EN = {
   "💬 Répondre": "💬 Reply",
   "Votre réponse…": "Your reply…",
   "Envoyer": "Send",
+  "Fil": "Feed",
+  "Fil d'actualité": "News feed",
+  "Les derniers moments partagés dans vos événements et ceux de vos proches.": "The latest moments shared in your events and your friends' events.",
+  "📦 Télécharger les souvenirs": "📦 Download memories",
 };
 
 const LANG_KEY = "em-lang";

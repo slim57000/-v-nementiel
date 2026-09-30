@@ -7,7 +7,7 @@ import {
   saveOrganizer, listEvents, findEvent, findEventsByIds, findOrganizersByIds,
   addFavorite, removeFavorite, listFavoriteIds, listHistoryIds,
   listFriendIds, removeFriends, addBlock, removeBlock, listBlockIds,
-  addDirectMessage, listDirectMessages, lastDirectMessage, listPhotos, listGuestbook,
+  addDirectMessage, listDirectMessages, lastDirectMessage, listPhotos, listGuestbook, listPublicUpcoming,
 } from "../lib/store.js";
 
 const router = Router();
@@ -70,6 +70,32 @@ router.get("/videos", async (req, res) => {
     for (const g of entries) if (g.photoUrl && isVideoUrl(g.photoUrl)) videos.push({ url: g.photoUrl, name: g.name, event: e.name, slug: e.slug, at: g.createdAt });
   }));
   res.json(videos.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 100));
+});
+
+// --- Fil d'actualité : publications récentes (photos, vidéos, livre d'or) et nouveaux événements
+// de mes événements, participations, favoris, amis, complétés par les événements publics à venir.
+router.get("/feed", async (req, res) => {
+  const me = req.organizer;
+  const [mine, historyIds, favIds, friendIds] = await Promise.all([
+    listEvents(me.id), listHistoryIds(me.id), listFavoriteIds(me.id).catch(() => []), listFriendIds(me.id).catch(() => []),
+  ]);
+  const joined = await findEventsByIds([...historyIds, ...favIds]).catch(() => []);
+  const friends = (await Promise.all(friendIds.slice(0, 20).map((id) => listEvents(id).catch(() => [])))).flat()
+    .filter((e) => e.visibility === "public");
+  const pub = await listPublicUpcoming(20).catch(() => []);
+  const events = visibleEvents([...mine, ...joined, ...friends, ...pub])
+    .filter((e, i, arr) => arr.findIndex((x) => x.id === e.id) === i).slice(0, 40);
+  const items = [];
+  const head = (e) => ({ slug: e.slug, name: e.name, type: e.type, cover: e.cover, date: e.date, cameras: e.cameras || [], cagnotteUrl: e.cagnotteUrl || "" });
+  await Promise.all(events.map(async (e) => {
+    items.push({ kind: "event", at: e.createdAt || e.date, event: head(e), text: e.description || "" });
+    const [photos, entries] = await Promise.all([listPhotos(e.id, 12).catch(() => []), listGuestbook(e.id).catch(() => [])]);
+    for (const p of photos) items.push({ kind: "photo", at: p.createdAt, event: head(e), name: p.name, url: p.url, author: p.author });
+    for (const g of entries.slice(0, 12)) {
+      items.push({ kind: "message", at: g.createdAt, event: head(e), id: g.id, name: g.name, text: g.text, url: g.photoUrl || null, audio: g.audioUrl || null, likes: g.likes || 0, replies: (g.replies || []).length, author: g.author });
+    }
+  }));
+  res.json(items.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 80));
 });
 
 // --- Favoris et historique des participations ---
