@@ -1,3 +1,7 @@
+import { VAPID_PUBLIC_KEY, PUSH_ENABLED, notify, orgOwner } from "./lib/push.js";
+import { guestAuthor } from "./lib/guest.js";
+import { savePushSub, listFollowerIds, deletePushSub } from "./lib/store.js";
+import { remindInvites } from "./lib/invites.js";
 import { reportError } from "./lib/monitor.js";
 import { tooFast } from "./lib/limits.js";
 import { GOOGLE_ENABLED } from "./lib/google.js";
@@ -6,7 +10,7 @@ import express from "express";
 import QRCode from "qrcode";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import authRoutes from "./routes/auth.js";
+import authRoutes, { currentOrganizer } from "./routes/auth.js";
 import eventRoutes from "./routes/events.js";
 import publicRoutes from "./routes/public.js";
 import socialRoutes from "./routes/social.js";
@@ -41,6 +45,7 @@ if (missingConfig.length) {
 app.get("/api/config", async (req, res) => res.json({
   gaId: process.env.GA_MEASUREMENT_ID || "",
   emailEnabled: EMAIL_ENABLED,
+  vapidPublicKey: VAPID_PUBLIC_KEY,
   social: GOOGLE_ENABLED ? ["google"] : [],
   paidReactions: PAYMENTS_ENABLED ? Object.fromEntries(Object.entries(PAID_REACTIONS).map(([e, r]) => [e, r.amount])) : {},
   defaultLivePlatform: (await getSetting("defaultLivePlatform").catch(() => null)) || "youtube",
@@ -54,8 +59,24 @@ app.get("/api/qr", async (req, res) => {
   res.type("image/svg+xml").set("Cache-Control", "public, max-age=86400").send(svg);
 });
 
-// Tâche quotidienne (Vercel Cron) : rappel à l'organisateur 2 jours avant la fin du replay (J+13).
-app.get("/api/cron/replay-reminders", async (req, res) => {
+// Abonnement aux notifications push : lié au compte connecté, sinon à l'invité anonyme (réponses à ses messages).
+app.post("/api/push/subscribe", async (req, res) => {
+  const sub = req.body?.subscription;
+  if (!PUSH_ENABLED) return res.status(503).json({ error: "Notifications non activées." });
+  if (!sub?.endpoint?.startsWith("https://") || !sub.keys?.p256dh || !sub.keys?.auth) return res.status(400).json({ error: "Abonnement invalide." });
+  const organizer = await currentOrganizer(req);
+  const owners = [organizer ? orgOwner(organizer.id) : null, `gid:${guestAuthor(req, res)}`].filter(Boolean);
+  await savePushSub(owners[0], { endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } });
+  res.json({ ok: true });
+});
+app.post("/api/push/unsubscribe", async (req, res) => {
+  if (req.body?.endpoint) await deletePushSub(String(req.body.endpoint)).catch(() => {});
+  res.json({ ok: true });
+});
+
+// Tâche quotidienne (Vercel Cron) : rappel de fin de replay (J+13) à l'organisateur, notifications « aujourd'hui / demain »,
+// rappel par email aux invités la veille.
+app.get(["/api/cron/daily", "/api/cron/replay-reminders"], async (req, res) => {
   const secret = process.env.CRON_SECRET;
   if (secret && req.get("authorization") !== `Bearer ${secret}`) return res.status(401).json({ error: "Non autorisé." });
   const day = new Date(Date.now() - 13 * 86400000).toISOString().slice(0, 10);
@@ -76,7 +97,23 @@ app.get("/api/cron/replay-reminders", async (req, res) => {
     });
     if (ok) sent++;
   }
-  res.json({ day, sent });
+  // Notifications du jour : « c'est aujourd'hui » (live) et « c'est demain » aux organisateurs et à ceux qui suivent l'événement.
+  const date = (offset) => new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10);
+  let pushed = 0;
+  for (const [offset, label] of [[0, "aujourd'hui"], [1, "demain"]]) {
+    for (const event of await listEventsOnDate(date(offset))) {
+      if (event.suspended) continue;
+      const followers = await listFollowerIds(event.id).catch(() => []);
+      const live = offset === 0 && event.cameras?.length;
+      pushed += await notify([event.organizerId, ...followers].map(orgOwner), {
+        title: live ? `● Live ${label} : ${event.name}` : `📅 ${event.name}, c'est ${label} !`,
+        body: `${label === "demain" ? "Demain" : "Aujourd'hui"} à ${event.time} — ${event.location}`,
+        url: live ? `/live?e=${event.slug}` : `/e/${event.slug}`,
+      });
+      if (offset === 1) sent += await remindInvites(event).catch(() => 0);
+    }
+  }
+  res.json({ day, sent, pushed });
 });
 
 app.use("/api/auth", authRoutes);

@@ -1,4 +1,4 @@
-import { api, $, esc, toast, tabbar, goLogin, resizeImage, publicCard, viewPhoto } from "./common.js";
+import { api, $, esc, toast, tabbar, goLogin, resizeImage, publicCard, viewPhoto, enablePush, pushState } from "./common.js";
 import { lang, setLang, themePref, setTheme } from "./i18n.js";
 
 tabbar("profile");
@@ -107,4 +107,11 @@ $("#delete-account").addEventListener("click", async () => {
   } catch (err) {
     alert(err.message);
   }
+});
+
+// Notifications push de cet appareil.
+const paintPush = () => { if (pushState() === "granted") { $("#push-btn").textContent = "🔔 Notifications activées ✔"; } };
+paintPush();
+$("#push-btn").addEventListener("click", async () => {
+  try { await enablePush(); paintPush(); toast("Notifications activées 🔔"); } catch (err) { toast(err.message); }
 });

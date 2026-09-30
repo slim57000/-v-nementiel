@@ -1,6 +1,7 @@
 // Espace personnel d'un utilisateur connecté : profil, favoris, historique, amis, messages privés, blocages.
 import { Router } from "express";
 import { tooFast } from "../lib/limits.js";
+import { notify, orgOwner } from "../lib/push.js";
 import { requireOrganizer } from "./auth.js";
 import { publicView } from "../lib/events.js";
 import { saveDataUrl, removeUpload, isVideoUrl } from "../lib/uploads.js";
@@ -162,7 +163,9 @@ router.post("/dm/:userId", async (req, res) => {
   if (!text) return res.status(400).json({ error: "Message vide." });
   if (!(await canTalk(req.organizer.id, other))) return res.status(403).json({ error: "Conversation indisponible." });
   if (await tooFast(`dm:${req.organizer.id}`, 20, 60_000)) return res.status(429).json({ error: "Doucement !" });
-  res.status(201).json(await addDirectMessage(req.organizer.id, other, text));
+  const msg = await addDirectMessage(req.organizer.id, other, text);
+  notify([orgOwner(other)], { title: `💬 ${displayName(req.organizer)}`, body: text.slice(0, 140), url: `/messages?u=${req.organizer.id}` }).catch(() => {});
+  res.status(201).json(msg);
 });
 
 export default router;

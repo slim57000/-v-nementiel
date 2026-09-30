@@ -153,6 +153,28 @@ language sql as $$
 $$;
 alter table rate_limits enable row level security;
 
+-- Notifications push (ajouté en V1.2) : owner = « org:<id> » (compte) ou « gid:<id> » (invité anonyme).
+create table if not exists push_subscriptions (
+  endpoint text primary key,
+  owner text not null,
+  sub jsonb not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists push_owner_idx on push_subscriptions (owner);
+alter table push_subscriptions enable row level security;
+
+-- Invitations par email avec suivi (ajouté en V1.2).
+create table if not exists invites (
+  token text primary key,
+  event_id bigint not null references events(id) on delete cascade,
+  email text not null,
+  sent_at timestamptz not null default now(),
+  seen_at timestamptz,
+  joined_at timestamptz
+);
+create index if not exists invites_event_idx on invites (event_id);
+alter table invites enable row level security;
+
 -- Sécurité : RLS activé sans règle = aucune lecture/écriture avec la clé publique (anon).
 -- Seul le serveur, avec la clé service_role, accède aux données.
 alter table organizers enable row level security;

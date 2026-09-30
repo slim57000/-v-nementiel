@@ -3,7 +3,10 @@ import { requireOrganizer } from "./auth.js";
 import { parseEventInput, ownerView } from "../lib/events.js";
 import { randomCode, slugify } from "../lib/codes.js";
 import { saveDataUrl, removeUpload, isOwnUpload } from "../lib/uploads.js";
-import { listEvents, findEvent, createEvent, saveEvent, deleteEvent, listPhotos, listGuestbook, countReports } from "../lib/store.js";
+import { sendInvites } from "../lib/invites.js";
+import { EMAIL_ENABLED } from "../lib/email.js";
+import { tooFast } from "../lib/limits.js";
+import { listInvites, listEvents, findEvent, createEvent, saveEvent, deleteEvent, listPhotos, listGuestbook, countReports } from "../lib/store.js";
 
 const router = Router();
 router.use(requireOrganizer);
@@ -85,6 +88,24 @@ router.put("/:id", handle(async (req, res) => {
     cameramanCode: req.body.regenerateCameramanCode || !existing.cameramanCode ? randomCode() : existing.cameramanCode,
   });
   res.json(ownerView(event));
+}));
+
+// Invitations par email avec suivi (envoyée / vue / a rejoint).
+router.get("/:id/invites", handle(async (req, res) => {
+  const event = await findOwned(req);
+  if (!event) return res.status(404).json({ error: "Événement introuvable." });
+  res.json((await listInvites(event.id)).map(({ email, sentAt, seenAt, joinedAt }) => ({ email, sentAt, seenAt, joinedAt })));
+}));
+router.post("/:id/invites", handle(async (req, res) => {
+  const event = await findOwned(req);
+  if (!event) return res.status(404).json({ error: "Événement introuvable." });
+  if (!EMAIL_ENABLED) return res.status(503).json({ error: "L'envoi d'emails n'est pas encore activé." });
+  const emails = [...new Set(String(req.body?.emails || "").toLowerCase().split(/[\s,;]+/).filter((e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)))];
+  if (!emails.length) return res.status(400).json({ error: "Aucune adresse email valide." });
+  if (emails.length > 100) return res.status(400).json({ error: "100 invitations maximum à la fois." });
+  if (await tooFast(`invites:${req.organizer.id}`, 300, 86_400_000)) return res.status(429).json({ error: "Limite d'invitations du jour atteinte." });
+  const sent = await sendInvites(event, emails, `${req.protocol}://${req.get("host")}`);
+  res.status(201).json({ sent: sent.length });
 }));
 
 router.delete("/:id", handle(async (req, res) => {

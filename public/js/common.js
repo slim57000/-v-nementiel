@@ -409,3 +409,19 @@ const reportClientError = (message, stack) => {
 };
 addEventListener("error", (e) => reportClientError(e.message, e.error?.stack));
 addEventListener("unhandledrejection", (e) => reportClientError(e.reason?.message || String(e.reason), e.reason?.stack));
+
+// Notifications push : abonnement de cet appareil (service worker + clé VAPID du serveur).
+export async function enablePush() {
+  const { vapidPublicKey } = await fetch("/api/config").then((r) => r.json());
+  if (!vapidPublicKey) throw new Error("Les notifications ne sont pas encore activées sur la plateforme.");
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    throw new Error("Notifications indisponibles ici. Sur iPhone : Partager → « Sur l'écran d'accueil », puis ouvrez EverMoments depuis l'icône.");
+  }
+  if ((await Notification.requestPermission()) !== "granted") throw new Error("Notifications refusées dans les réglages du téléphone.");
+  const reg = await navigator.serviceWorker.register("/sw.js");
+  await navigator.serviceWorker.ready;
+  const key = Uint8Array.from(atob(vapidPublicKey.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(vapidPublicKey.length / 4) * 4, "=")), (c) => c.charCodeAt(0));
+  const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key }));
+  await api("/api/push/subscribe", { method: "POST", body: { subscription: sub.toJSON() } });
+}
+export const pushState = () => (typeof Notification === "undefined" ? "unsupported" : Notification.permission);

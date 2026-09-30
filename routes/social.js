@@ -2,6 +2,7 @@
 // Monté sur /api/public/:slug — accessible à toute personne ayant accès à l'événement.
 import { Router } from "express";
 import { tooFast } from "../lib/limits.js";
+import { notify, orgOwner } from "../lib/push.js";
 import {
   findEventBySlug, addMessage, listMessages, addPhoto, listPhotos, findPhoto, deletePhoto,
   addGuestbookEntry, listGuestbook, findGuestbookEntry, updateGuestbookEntry, likeGuestbookEntry, deleteGuestbookEntry,
@@ -152,7 +153,11 @@ router.post("/guestbook", notBlocked, async (req, res) => {
     // La vidéo courte éventuelle est rangée dans le champ « photo » (détectée par son extension).
     const photoUrl = req.body?.image ? await saveDataUrl(req.body.image) : await videoFrom(req.body);
     const audioUrl = req.body?.audio ? await saveDataUrl(req.body.audio, "audio") : null;
-    res.status(201).json(await addGuestbookEntry(req.event.id, { name, text, photoUrl, audioUrl, author: req.author }));
+    const entry = await addGuestbookEntry(req.event.id, { name, text, photoUrl, audioUrl, author: req.author });
+    notify([orgOwner(req.event.organizerId)], {
+      title: `✍️ Livre d'or — ${req.event.name}`, body: `${name} : ${text || "a partagé un souvenir"}`.slice(0, 140), url: `/e/${req.event.slug}#gb-list`,
+    }).catch(() => {});
+    res.status(201).json(entry);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -180,6 +185,8 @@ router.post("/guestbook/:id/replies", notBlocked, async (req, res) => {
   const entry = await entryOf(req, res);
   if (!entry) return;
   const replies = [...(entry.replies || []), { name, text, author: req.author, at: new Date().toISOString() }].slice(-50);
+  const owners = [orgOwner(req.event.organizerId), entry.author && `gid:${entry.author}`].filter((o) => o && o !== `gid:${req.author}`);
+  notify(owners, { title: `💬 ${name} a répondu`, body: text.slice(0, 140), url: `/e/${req.event.slug}#gb-list` }).catch(() => {});
   res.status(201).json(await updateGuestbookEntry(entry, { replies }));
 });
 

@@ -37,6 +37,8 @@ npm run dev        # http://localhost:3000
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | facultatif : connexion avec Google (console.cloud.google.com → Identifiants → ID client OAuth « Application Web », URI de redirection `https://<domaine>/api/auth/google/callback`) |
 | `DEMO_EVENTS` | `off` pour ne pas créer les 50 événements de démonstration automatiques |
 | `SENTRY_DSN` | facultatif : suivi des erreurs serveur et navigateur (sentry.io → projet → Client Keys (DSN)) |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | facultatif : notifications push (générer une paire avec `npx web-push generate-vapid-keys`) ; `VAPID_SUBJECT` = `mailto:votre@email` |
+| `PUBLIC_URL` | facultatif : adresse publique du site (ex. `https://evermoments.fr`) pour les liens des emails de rappel ; par défaut le domaine de production Vercel |
 | `EMAIL_FROM` | facultatif : expéditeur, ex. `EverMoments <contact@votre-domaine.fr>` (domaine vérifié chez Resend) |
 | `CRON_SECRET` | facultatif : protège la tâche quotidienne de rappel (Vercel Cron) |
 | `ADMIN_EMAILS` | emails des administrateurs, séparés par des virgules (accès à /admin) |

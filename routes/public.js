@@ -1,7 +1,8 @@
+import { tooFast } from "../lib/limits.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo } from "../lib/demo.js";
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
-import { findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory, addFriends, listBlockIds } from "../lib/store.js";
+import { findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory, addFriends, listBlockIds, clearLimit, findInvite, saveInvite } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
 import { currentOrganizer } from "./auth.js";
 
@@ -57,29 +58,19 @@ router.get("/:slug", async (req, res) => {
   res.json({ locked: false, isOwner, loggedIn: Boolean(me), ...publicView(event), id: event.id });
 });
 
-// Anti-bruteforce simple par IP (+ événement) (par instance).
-const attempts = new Map();
-const blocked = (key) => {
-  const a = attempts.get(key);
-  return a && a.count >= 10 && Date.now() - a.since < 15 * 60 * 1000;
-};
-const fail = (key) => {
-  const a = attempts.get(key);
-  if (!a || Date.now() - a.since > 15 * 60 * 1000) attempts.set(key, { count: 1, since: Date.now() });
-  else a.count++;
-};
+// Anti-bruteforce partagé (base de données) : 10 essais par IP (et événement) toutes les 15 minutes.
+const tooManyTries = (key) => tooFast(`try:${key}`, 10, 15 * 60 * 1000);
 
 // « J'ai reçu une invitation » : le code seul suffit à retrouver l'événement.
 router.post("/join", async (req, res) => {
   const key = `${req.ip}:join`;
-  if (blocked(key)) return res.status(429).json({ error: "Trop d'essais, réessayez dans 15 minutes." });
+  if (await tooManyTries(key)) return res.status(429).json({ error: "Trop d'essais, réessayez dans 15 minutes." });
   const code = String(req.body?.code || "").trim().toUpperCase();
   const event = /^[A-Z0-9]{6}$/.test(code) ? await findEventByAccessCode(code) : null;
   if (!event) {
-    fail(key);
     return res.status(404).json({ error: "Aucun événement ne correspond à ce code." });
   }
-  attempts.delete(key);
+  await clearLimit(`try:${key}`).catch(() => {});
   setSigned(res, `ev${event.id}`, codeFingerprint(event.accessCode));
   res.json({ slug: event.slug });
 });
@@ -89,15 +80,25 @@ router.post("/:slug/unlock", async (req, res) => {
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
 
   const key = `${req.ip}:${event.id}`;
-  if (blocked(key)) return res.status(429).json({ error: "Trop d'essais, réessayez dans 15 minutes." });
+  if (await tooManyTries(key)) return res.status(429).json({ error: "Trop d'essais, réessayez dans 15 minutes." });
 
   const code = String(req.body?.code || "").trim().toUpperCase();
   if (code !== event.accessCode) {
-    fail(key);
     return res.status(401).json({ error: "Code incorrect." });
   }
-  attempts.delete(key);
+  await clearLimit(`try:${key}`).catch(() => {});
   setSigned(res, `ev${event.id}`, codeFingerprint(event.accessCode));
+  res.json({ ok: true });
+});
+
+// Suivi des invitations envoyées par email : « vue » à l'ouverture, « a rejoint » une fois l'accès obtenu.
+router.post("/:slug/seen", async (req, res) => {
+  const invite = await findInvite(String(req.body?.inv || "")).catch(() => null);
+  const event = invite && await findEventBySlug(req.params.slug);
+  if (!event || invite.eventId !== event.id) return res.json({ ok: false });
+  const now = new Date().toISOString();
+  const joined = (await hasAccess(req, event)) && (event.visibility === "private" || Boolean(await currentOrganizer(req)));
+  await saveInvite({ ...invite, seenAt: invite.seenAt || now, joinedAt: invite.joinedAt || (joined ? now : null) });
   res.json({ ok: true });
 });
 

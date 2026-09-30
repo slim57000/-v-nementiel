@@ -76,6 +76,7 @@ function card(ev) {
       ${isPrivate ? `<button class="btn btn-light btn-sm" data-action="code">Copier le code</button>
       <button class="btn btn-light btn-sm" data-action="direct">Lien + code</button>` : ""}
       <button class="btn btn-light btn-sm" data-action="cameraman">Accès caméraman</button>
+      <button class="btn btn-light btn-sm" data-action="invite">✉️ Inviter</button>
       <button class="btn btn-light btn-sm" data-action="export">📦 Télécharger les souvenirs</button>
       <a class="btn btn-ghost btn-sm" href="/edit?id=${ev.id}">Modifier</a>
       <button class="btn btn-danger btn-sm" data-action="delete">Supprimer</button>
@@ -127,6 +128,7 @@ $("#list").addEventListener("click", async (e) => {
       : `Vous êtes invité·e à « ${ev.name} » !`;
     shareSheet({ title: ev.name, text, url: ev.visibility === "private" ? `${url}?code=${ev.accessCode}` : url });
   }
+  if (action === "invite") openInvites(ev, url);
   if (action === "export") {
     const btn = e.target;
     btn.disabled = true;
@@ -152,3 +154,40 @@ $("#list").addEventListener("click", async (e) => {
 });
 
 load();
+
+// Invitations : par email (avec suivi envoyée / vue / a rejoint) ou par SMS (message prérempli).
+async function openInvites(ev, url) {
+  const link = ev.visibility === "private" ? `${url}?code=${ev.accessCode}` : url;
+  const sms = `sms:?&body=${encodeURIComponent(`Vous êtes invité·e à « ${ev.name} » 🎉 ${link}`)}`;
+  document.body.insertAdjacentHTML("beforeend", `
+    <div class="sheet" id="invite-sheet" role="dialog" aria-modal="true" aria-labelledby="inv-title">
+      <div class="card">
+        <h2 id="inv-title">Inviter à « ${esc(ev.name)} »</h2>
+        <a class="btn btn-light btn-block" href="${esc(sms)}">📱 Inviter par SMS</a>
+        <label for="inv-emails" style="margin-top:14px">Par email (une adresse par ligne)</label>
+        <textarea id="inv-emails" rows="4" placeholder="awa@exemple.fr&#10;moussa@exemple.fr"></textarea>
+        <button class="btn btn-block" id="inv-send" style="margin-top:10px">Envoyer les invitations</button>
+        <div id="inv-list" style="margin-top:14px"></div>
+        <button class="btn btn-ghost btn-block" id="inv-close" style="margin-top:10px">Fermer</button>
+      </div>
+    </div>`);
+  const sheet = $("#invite-sheet");
+  const close = () => sheet.remove();
+  $("#inv-close").onclick = close;
+  sheet.onclick = (e) => { if (e.target === sheet) close(); };
+  const status = (i) => (i.joinedAt ? "✅ A rejoint" : i.seenAt ? "👀 Vue" : "📨 Envoyée");
+  const refresh = async () => {
+    const list = await api(`/api/events/${ev.id}/invites`).catch(() => []);
+    $("#inv-list").innerHTML = list.length ? `<p class="muted small" style="margin:0 0 6px">${list.length} invitation(s) · ${list.filter((i) => i.joinedAt).length} ont rejoint</p>`
+      + list.map((i) => `<div class="inv-row"><span>${esc(i.email)}</span><b>${status(i)}</b></div>`).join("") : "";
+  };
+  refresh();
+  $("#inv-send").onclick = async () => {
+    try {
+      const r = await api(`/api/events/${ev.id}/invites`, { method: "POST", body: { emails: $("#inv-emails").value } });
+      $("#inv-emails").value = "";
+      toast(`${r.sent} invitation(s) envoyée(s) ✉️`);
+      refresh();
+    } catch (err) { toast(err.message); }
+  };
+}

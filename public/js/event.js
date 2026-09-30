@@ -5,6 +5,11 @@ import { initGuestbook } from "./guestbook.js";
 const slug = decodeURIComponent(location.pathname.split("/").pop());
 const url = eventUrl(slug);
 
+// Invitation reçue par email (?inv=…) : l'organisateur voit qu'elle a été ouverte, puis acceptée.
+const inviteToken = new URLSearchParams(location.search).get("inv");
+const trackInvite = () => inviteToken && api(`/api/public/${encodeURIComponent(slug)}/seen`, { method: "POST", body: { inv: inviteToken } }).catch(() => {});
+trackInvite();
+
 async function load() {
   // Lien direct « /e/slug?code=XXXX » : on tente de déverrouiller puis on retire le code de l'URL.
   const code = new URLSearchParams(location.search).get("code");
@@ -35,6 +40,7 @@ $("#unlock").addEventListener("submit", async (e) => {
   $("#unlock-error").textContent = "";
   try {
     await api(`/api/public/${slug}/unlock`, { method: "POST", body: { code: $("#code").value } });
+    trackInvite();
     // Le cookie est posé : les visites suivantes arriveront directement sur la page.
     const ev = await api(`/api/public/${slug}`);
     $("#locked").classList.add("hidden");
