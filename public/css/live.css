@@ -79,3 +79,9 @@
 .photo-strip .vid video { pointer-events: none; }
 .live-badge.is-replay { background: #6e6873; }
 .reactions button small.price { font-size: .62rem; color: rgba(255,255,255,.65); font-weight: 600; }
+/* Réactions : 5 colonnes qui tiennent toujours dans l'écran (+ bouton cagnotte) */
+/* (la cagnotte reste accessible en haut du direct et dans la barre du bas) */
+.reactions { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+.reactions button { min-width: 0; font-size: min(.7rem, 2.9vw); line-height: 1.15; text-align: center; overflow-wrap: normal; word-break: keep-all; }
+.reactions .pot-btn { display: none !important; }
+.live-tabs a.active { color: var(--primary); }

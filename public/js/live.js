@@ -78,7 +78,7 @@ async function load() {
       el.classList.remove("hidden");
     }
   } else {
-    $("#reactions").style.gridTemplateColumns = "repeat(5, 1fr)";
+    $("#reactions").style.gridTemplateColumns = "repeat(5, minmax(0, 1fr))";
     $("#nav-pot").remove();
     document.querySelector(".live-tabs").style.gridTemplateColumns = "repeat(4, 1fr)";
   }
@@ -280,3 +280,21 @@ $("#photo-strip").addEventListener("click", async (e) => {
 document.querySelectorAll("[data-nav-icon]").forEach((el) => { el.insertAdjacentHTML("afterbegin", icon(el.dataset.navIcon)); });
 
 load();
+
+// Barre du bas : chaque onglet agit (et pas seulement un saut d'ancre).
+document.querySelector(".live-tabs").addEventListener("click", (e) => {
+  const tab = e.target.closest("a");
+  if (!tab) return;
+  e.preventDefault();
+  document.querySelectorAll(".live-tabs a").forEach((a) => a.classList.toggle("active", a === tab));
+  const go = (el) => el.scrollIntoView({ behavior: "smooth", block: "center" });
+  const target = tab.getAttribute("href");
+  if (target === "#chat-list") { go($("#chat")); $("#chat-text").focus({ preventScroll: true }); }
+  else if (target === "#reactions") { go($("#reactions")); $("#reactions").animate([{ transform: "scale(1)" }, { transform: "scale(1.04)" }, { transform: "scale(1)" }], 400); }
+  else if (target === "#pot-btn") window.open($("#pot-btn").href, "_blank", "noopener");
+  else if (target === "#photo-strip") { go($("#photo-strip")); if (!photos.length) $("#add-photo").click(); }
+  else if (target === "#cams-section") {
+    if ($("#cams-section").classList.contains("hidden")) toast(cameras.length ? "Une seule caméra pour ce direct 🎥" : "Aucune caméra pour le moment");
+    else go($("#cams-section"));
+  }
+});
