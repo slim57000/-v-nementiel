@@ -112,7 +112,7 @@ router.get("/organizers", async (req, res) => {
   }))));
 });
 
-// Offre premium : replay 30 jours, faire-part et page sans marque EverMoments, badge.
+// Offre premium : replay 30 jours, faire-part et page sans marque MaFeliza, badge.
 router.post("/organizers/:id/premium", async (req, res) => {
   const organizer = await findOrganizer(Number(req.params.id));
   if (!organizer) return res.status(404).json({ error: "Utilisateur introuvable." });

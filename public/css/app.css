@@ -142,7 +142,7 @@ input::-webkit-date-and-time-value { text-align: center; }
   .event-actions { grid-column: auto; flex-direction: column; }
 }
 
-/* ---------- Charte EverMoments ---------- */
+/* ---------- Charte MaFeliza ---------- */
 .logo { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: var(--text); font-weight: 800; font-size: 1.2rem; letter-spacing: -.02em; }
 .logo img { width: 34px; height: 34px; object-fit: contain; }
 .logo b { color: var(--primary); font-weight: 800; }
@@ -559,3 +559,7 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
 #content .card h2, #content .card > p { text-align: center; }
 .audit-row { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: .85rem; text-align: left; overflow-wrap: anywhere; }
 .slogan { text-align: center; margin: 6px auto 18px; max-width: 34ch; color: var(--muted); line-height: 1.45; text-wrap: balance; } .slogan b { display: block; color: var(--primary); font-weight: 700; margin-top: 2px; }
+/* Marque MaFeliza : nom en couleur du texte, « i » en dégradé comme sur le logo */
+.logo span { color: var(--text); letter-spacing: .01em; }
+.logo b { background: linear-gradient(180deg, #ff6a2b 0%, #ff2e7e 45%, #8a2cf0 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.logo span { font-family: "Quicksand", "Inter", system-ui, sans-serif; font-weight: 700; }

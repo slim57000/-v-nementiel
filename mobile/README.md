@@ -1,4 +1,4 @@
-# Applications iOS et Android — EverMoments
+# Applications iOS et Android — MaFeliza
 
 Les applications sont construites avec **Capacitor 7**. Elles affichent la plateforme en ligne
 (`server.url` dans `capacitor.config.json`) : toute mise à jour du site est immédiatement visible
@@ -30,7 +30,7 @@ Sans Mac, un service de compilation en ligne comme **Codemagic** permet de compi
 
 ## Fiche des stores — éléments à préparer
 
-- Nom : EverMoments — identifiant : `com.evermoments.app`
+- Nom : MaFeliza — identifiant : `com.mafeliza.app`
 - Politique de confidentialité : `https://<domaine>/confidentialite`
 - Suppression de compte : disponible dans l'application (Profil → Supprimer mon compte)
 - **Compte de démonstration** pour les équipes de validation (email + code organisateur)

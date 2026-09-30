@@ -1,8 +1,8 @@
 {
-  "name": "evermoments-mobile",
+  "name": "mafeliza-mobile",
   "private": true,
   "version": "1.0.0",
-  "description": "Applications iOS et Android d'EverMoments (Capacitor) : elles affichent la plateforme en ligne.",
+  "description": "Applications iOS et Android d'MaFeliza (Capacitor) : elles affichent la plateforme en ligne.",
   "scripts": {
     "sync": "cap sync",
     "android": "cap open android",

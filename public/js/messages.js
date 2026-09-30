@@ -70,7 +70,7 @@ async function showConversation() {
   if (!data) return;
   $("#dm-name").textContent = data.with?.name || "";
   $("#dm-avatar").outerHTML = avatarHtml(data.with);
-  document.title = `${data.with?.name || "Messages"} — EverMoments`;
+  document.title = `${data.with?.name || "Messages"} — MaFeliza`;
   // Instantané via le temps réel si disponible (secours toutes les 20 s), sinon toutes les 4 s.
   const live = await onRealtime(`dm-${Math.min(meId, otherId)}-${Math.max(meId, otherId)}`, () => refresh());
   setInterval(() => { if (!document.hidden) refresh(); }, live ? 20000 : 4000);

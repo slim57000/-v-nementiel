@@ -37,9 +37,9 @@ npm run dev        # http://localhost:3000
 | `DEMO_EVENTS` | `off` pour ne pas créer les 50 événements de démonstration automatiques |
 | `SENTRY_DSN` | facultatif : suivi des erreurs serveur et navigateur (sentry.io → projet → Client Keys (DSN)) |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | facultatif : notifications push (générer une paire avec `npx web-push generate-vapid-keys`) ; `VAPID_SUBJECT` = `mailto:votre@email` |
-| `PUBLIC_URL` | facultatif : adresse publique du site (ex. `https://evermoments.fr`) pour les liens des emails de rappel ; par défaut le domaine de production Vercel |
+| `PUBLIC_URL` | facultatif : adresse publique du site (ex. `https://mafeliza.com`) pour les liens des emails de rappel ; par défaut le domaine de production Vercel |
 | `SUPABASE_ANON_KEY` | facultatif : chat et messages instantanés (Supabase → Settings → API → clé « anon public ») ; sans elle, rafraîchissement toutes les 3-4 s |
-| `EMAIL_FROM` | facultatif : expéditeur, ex. `EverMoments <contact@votre-domaine.fr>` (domaine vérifié chez Resend) |
+| `EMAIL_FROM` | facultatif : expéditeur, ex. `MaFeliza <contact@votre-domaine.fr>` (domaine vérifié chez Resend) |
 | `CRON_SECRET` | facultatif : protège la tâche quotidienne de rappel (Vercel Cron) |
 | `ADMIN_EMAILS` | emails des administrateurs, séparés par des virgules (accès à /admin) |
 | `GA_MEASUREMENT_ID` | facultatif : identifiant Google Analytics 4 (`G-XXXXXXX`), chargé seulement après accord cookies |

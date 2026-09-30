@@ -1,6 +1,6 @@
 {
-  "appId": "com.evermoments.app",
-  "appName": "EverMoments",
+  "appId": "com.mafeliza.app",
+  "appName": "MaFeliza",
   "webDir": "www",
   "server": {
     "url": "https://evenementieldev.vercel.app",

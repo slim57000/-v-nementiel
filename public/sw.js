@@ -1,8 +1,8 @@
 // Service worker : réception des notifications push et ouverture de la bonne page au clic.
 self.addEventListener("push", (event) => {
   let data = {};
-  try { data = event.data.json(); } catch { data = { title: "EverMoments", body: event.data?.text() }; }
-  event.waitUntil(self.registration.showNotification(data.title || "EverMoments", {
+  try { data = event.data.json(); } catch { data = { title: "MaFeliza", body: event.data?.text() }; }
+  event.waitUntil(self.registration.showNotification(data.title || "MaFeliza", {
     body: data.body || "", icon: data.icon || "/img/icon-192.png", badge: "/img/icon-192.png", data: { url: data.url || "/" },
   }));
 });

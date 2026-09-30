@@ -40,7 +40,7 @@ function render() {
   $("#qr-code-line").classList.toggle("hidden", ev.visibility !== "private");
 
   const text = isLive
-    ? `📺 Suivez « ${ev.name} » en direct sur EverMoments !`
+    ? `📺 Suivez « ${ev.name} » en direct sur MaFeliza !`
     : `💌 Vous êtes invité·e à « ${ev.name} » !${ev.visibility === "private" ? ` Code d'accès : ${ev.accessCode}` : ""}`;
   $("#share").onclick = () => shareSheet({ title: ev.name, text, url: link });
   $("#copy").onclick = () => copy(link, "Lien copié !");

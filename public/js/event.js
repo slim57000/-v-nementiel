@@ -80,7 +80,7 @@ function showEvent(ev) {
     $("#cagnotte-link").classList.remove("hidden");
   }
 
-  // Premium : page sans marque EverMoments.
+  // Premium : page sans marque MaFeliza.
   if (ev.premium) document.querySelector(".invite-hero-heart")?.remove();
   renderInvite($("#invite"), ev, ev.invite, ev.inviteStyle, invitePhotoUrl(ev.invite, ev.cover));
   startCountdown(new Date(`${ev.date}T${ev.time}`));

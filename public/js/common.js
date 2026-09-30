@@ -415,7 +415,7 @@ export async function enablePush() {
   const { vapidPublicKey } = await fetch("/api/config").then((r) => r.json());
   if (!vapidPublicKey) throw new Error("Les notifications ne sont pas encore activées sur la plateforme.");
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-    throw new Error("Notifications indisponibles ici. Sur iPhone : Partager → « Sur l'écran d'accueil », puis ouvrez EverMoments depuis l'icône.");
+    throw new Error("Notifications indisponibles ici. Sur iPhone : Partager → « Sur l'écran d'accueil », puis ouvrez MaFeliza depuis l'icône.");
   }
   if ((await Notification.requestPermission()) !== "granted") throw new Error("Notifications refusées dans les réglages du téléphone.");
   const reg = await navigator.serviceWorker.register("/sw.js");

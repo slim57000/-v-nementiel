@@ -18,7 +18,7 @@ try {
     <section class="album-cover" style="background-image:url('${esc(coverOf(ev))}')">
       <div><p class="album-kicker">${EVENT_TYPES[ev.type]?.icon || "🎉"} Album souvenir</p>
         <h1>${esc(ev.name)}</h1><p>${esc(formatDate(ev.date, ev.time))} · ${esc(ev.location)}</p>
-        ${ev.premium ? "" : '<p class="album-brand">EverMoments</p>'}</div>
+        ${ev.premium ? "" : '<p class="album-brand">MaFeliza</p>'}</div>
     </section>
     ${pictures.length ? `<h2>Vos photos (${pictures.length})</h2>
       <div class="album-grid">${pictures.map((p) => `<figure><img src="${esc(p.url)}" alt=""><figcaption>${esc(p.name)}</figcaption></figure>`).join("")}</div>` : ""}

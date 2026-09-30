@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>NSCameraUsageDescription</key>
-	<string>EverMoments utilise l'appareil photo pour partager des photos et vidéos de l'événement.</string>
+	<string>MaFeliza utilise l'appareil photo pour partager des photos et vidéos de l'événement.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>EverMoments utilise le micro pour enregistrer des messages vocaux et des vidéos pour le livre d'or.</string>
+	<string>MaFeliza utilise le micro pour enregistrer des messages vocaux et des vidéos pour le livre d'or.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>EverMoments accède à vos photos pour que vous puissiez les partager avec les invités.</string>
+	<string>MaFeliza accède à vos photos pour que vous puissiez les partager avec les invités.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
     <key>CAPACITOR_DEBUG</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>EverMoments</string>
+        <string>MaFeliza</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

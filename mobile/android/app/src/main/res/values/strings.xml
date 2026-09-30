@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">EverMoments</string>
-    <string name="title_activity_main">EverMoments</string>
-    <string name="package_name">com.evermoments.app</string>
-    <string name="custom_url_scheme">com.evermoments.app</string>
+    <string name="app_name">MaFeliza</string>
+    <string name="title_activity_main">MaFeliza</string>
+    <string name="package_name">com.mafeliza.app</string>
+    <string name="custom_url_scheme">com.mafeliza.app</string>
 </resources>
