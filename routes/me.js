@@ -8,7 +8,7 @@ import {
   saveOrganizer, listEvents, findEvent, findEventsByIds, findOrganizersByIds,
   addFavorite, removeFavorite, listFavoriteIds, listHistoryIds,
   listFriendIds, removeFriends, addBlock, removeBlock, listBlockIds,
-  addDirectMessage, listDirectMessages, lastDirectMessage, listPhotos, listGuestbook, listPublicUpcoming,
+  addDirectMessage, listDirectMessages, lastDirectMessage, listPhotos, listGuestbook, listPublicUpcoming, listRecentPhotos, listRecentGuestbook,
 } from "../lib/store.js";
 
 const router = Router();
@@ -79,14 +79,15 @@ router.get("/feed", async (req, res) => {
     .filter((e, i, arr) => arr.findIndex((x) => x.id === e.id) === i).slice(0, 40);
   const items = [];
   const head = (e) => ({ slug: e.slug, name: e.name, type: e.type, cover: e.cover, date: e.date, cameras: e.cameras || [], cagnotteUrl: e.cagnotteUrl || "" });
-  await Promise.all(events.map(async (e) => {
-    items.push({ kind: "event", at: e.createdAt || e.date, event: head(e), text: e.description || "" });
-    const [photos, entries] = await Promise.all([listPhotos(e.id, 12).catch(() => []), listGuestbook(e.id).catch(() => [])]);
-    for (const p of photos) items.push({ kind: "photo", at: p.createdAt, event: head(e), name: p.name, url: p.url, author: p.author });
-    for (const g of entries.slice(0, 12)) {
-      items.push({ kind: "message", at: g.createdAt, event: head(e), id: g.id, name: g.name, text: g.text, url: g.photoUrl || null, audio: g.audioUrl || null, likes: g.likes || 0, replies: (g.replies || []).length, author: g.author });
-    }
-  }));
+  const byId = new Map(events.map((e) => [e.id, e]));
+  for (const e of events) items.push({ kind: "event", at: e.createdAt || e.date, event: head(e), text: e.description || "" });
+  // 2 requêtes groupées pour tous les événements (au lieu de 2 par événement).
+  const ids = [...byId.keys()];
+  const [photos, entries] = await Promise.all([listRecentPhotos(ids).catch(() => []), listRecentGuestbook(ids).catch(() => [])]);
+  for (const p of photos) items.push({ kind: "photo", at: p.createdAt, event: head(byId.get(p.eventId)), name: p.name, url: p.url, author: p.author });
+  for (const g of entries) {
+    items.push({ kind: "message", at: g.createdAt, event: head(byId.get(g.eventId)), id: g.id, name: g.name, text: g.text, url: g.photoUrl || null, audio: g.audioUrl || null, likes: g.likes || 0, replies: (g.replies || []).length, author: g.author });
+  }
   res.json(items.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 80));
 });
 

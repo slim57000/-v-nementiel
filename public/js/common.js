@@ -397,3 +397,13 @@ export function liveState(ev) {
   end.setDate(end.getDate() + REPLAY_DAYS + 1);
   return Date.now() < end ? "replay" : "expired";
 }
+
+// Erreurs JavaScript : remontées au serveur (suivi des erreurs), 5 par page au maximum.
+let reported = 0;
+const reportClientError = (message, stack) => {
+  if (reported++ >= 5 || !message) return;
+  const body = JSON.stringify({ message: String(message).slice(0, 300), stack: String(stack || "").slice(0, 3000), url: location.href });
+  try { navigator.sendBeacon?.("/api/client-error", new Blob([body], { type: "application/json" })) || fetch("/api/client-error", { method: "POST", headers: { "Content-Type": "application/json" }, body }); } catch { /* ignoré */ }
+};
+addEventListener("error", (e) => reportClientError(e.message, e.error?.stack));
+addEventListener("unhandledrejection", (e) => reportClientError(e.reason?.message || String(e.reason), e.reason?.stack));

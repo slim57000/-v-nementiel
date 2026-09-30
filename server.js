@@ -1,3 +1,5 @@
+import { reportError } from "./lib/monitor.js";
+import { tooFast } from "./lib/limits.js";
 import { GOOGLE_ENABLED } from "./lib/google.js";
 import { PAYMENTS_ENABLED, PAID_REACTIONS } from "./lib/payments.js";
 import express from "express";
@@ -103,12 +105,22 @@ app.get("/e/:slug", async (req, res) => {
   res.status(event ? 200 : 404).type("html").send(eventTemplate.replace("<!--META-->", meta));
 });
 
+// Erreurs JavaScript des navigateurs (limitées) : transmises au suivi des erreurs.
+app.post("/api/client-error", async (req, res) => {
+  if (!(await tooFast(`cerr:${req.ip}`, 20, 3_600_000))) {
+    const b = req.body || {};
+    reportError({ name: "ErreurNavigateur", message: String(b.message || "").slice(0, 300), stack: String(b.stack || "").slice(0, 3000) },
+      { source: "navigateur", url: String(b.url || "").slice(0, 300), extra: { ua: String(req.get("user-agent") || "").slice(0, 200) } });
+  }
+  res.status(204).end();
+});
+
 // Route d'API inconnue : réponse JSON (et non une page HTML).
 app.use("/api", (req, res) => res.status(404).json({ error: "Ressource introuvable." }));
 
 // Erreur inattendue (base injoignable…) : réponse propre au lieu d'un plantage.
 app.use((err, req, res, next) => {
-  console.error(err);
+  reportError(err, { url: req.originalUrl });
   if (res.headersSent) return next(err);
   res.status(500).json({ error: "Service momentanément indisponible, réessayez dans un instant." });
 });

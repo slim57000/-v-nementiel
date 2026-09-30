@@ -36,6 +36,7 @@ npm run dev        # http://localhost:3000
 | `STRIPE_SECRET_KEY` | facultatif : réactions payantes du live (Applaudir 1 €, Cœur 2 €, Feu d'artifice 5 €, Champagne 10 €) via Stripe Checkout ; sans elle, toutes les réactions sont gratuites |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | facultatif : connexion avec Google (console.cloud.google.com → Identifiants → ID client OAuth « Application Web », URI de redirection `https://<domaine>/api/auth/google/callback`) |
 | `DEMO_EVENTS` | `off` pour ne pas créer les 50 événements de démonstration automatiques |
+| `SENTRY_DSN` | facultatif : suivi des erreurs serveur et navigateur (sentry.io → projet → Client Keys (DSN)) |
 | `EMAIL_FROM` | facultatif : expéditeur, ex. `EverMoments <contact@votre-domaine.fr>` (domaine vérifié chez Resend) |
 | `CRON_SECRET` | facultatif : protège la tâche quotidienne de rappel (Vercel Cron) |
 | `ADMIN_EMAILS` | emails des administrateurs, séparés par des virgules (accès à /admin) |
@@ -70,3 +71,11 @@ public/             index (connexion), dashboard, edit (création/édition + fai
 - **Organisateur** : à la première connexion, l'email crée le compte et un code à 6 chiffres est affiché ; il est redemandé pour se reconnecter sur un autre appareil. Session par cookie signé (1 an).
 - **Événement public** : visible par toute personne ayant le lien (`/e/<slug>`).
 - **Événement privé** : l'API ne renvoie que le nom tant que le code n'est pas saisi. Le bon code pose un cookie signé propre à l'événement : l'invité est reconnu aux visites suivantes. Le lien `/e/<slug>?code=XXXXXX` déverrouille directement. Régénérer le code invalide les anciens accès.
+
+## Sauvegardes
+
+Supabase sauvegarde la base chaque jour (7 jours conservés sur le plan gratuit, 30 jours en Pro).
+Avant la mise en production : Supabase → Database → Backups, vérifier que les sauvegardes quotidiennes sont actives ;
+pour plus de sécurité, activer le « Point in Time Recovery » (plan Pro) ou exporter la base chaque semaine
+(`pg_dump` avec la chaîne de connexion de Settings → Database). Les fichiers (photos, vidéos) sont dans le bucket
+Storage « evenements », à télécharger depuis Storage si besoin.
