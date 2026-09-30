@@ -97,6 +97,9 @@ app.get("/e/:slug", async (req, res) => {
   res.status(event ? 200 : 404).type("html").send(eventTemplate.replace("<!--META-->", meta));
 });
 
+// Route d'API inconnue : réponse JSON (et non une page HTML).
+app.use("/api", (req, res) => res.status(404).json({ error: "Ressource introuvable." }));
+
 // Erreur inattendue (base injoignable…) : réponse propre au lieu d'un plantage.
 app.use((err, req, res, next) => {
   console.error(err);
