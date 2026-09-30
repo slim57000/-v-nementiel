@@ -68,7 +68,15 @@ router.post("/reactions", notBlocked, async (req, res) => {
 });
 
 router.get("/photos", async (req, res) => {
-  res.json(visible(req, await listPhotos(req.event.id, Math.min(Number(req.query.limit) || 60, 200))));
+  const limit = Math.min(Number(req.query.limit) || 60, 200);
+  res.json(visible(req, (await listPhotos(req.event.id, limit + 50)).filter((p) => !p.story).slice(0, limit)));
+});
+
+// Stories des dernières 24 h (les plus anciennes d'abord, comme sur Instagram).
+const DAY = 24 * 3600 * 1000;
+export const activeStories = (photos) => photos.filter((p) => p.story && Date.now() - new Date(p.createdAt) < DAY).reverse();
+router.get("/stories", async (req, res) => {
+  res.json(visible(req, activeStories(await listPhotos(req.event.id, 200))));
 });
 
 router.post("/photos", notBlocked, async (req, res) => {
@@ -78,7 +86,9 @@ router.post("/photos", notBlocked, async (req, res) => {
   try {
     const url = req.body?.image ? await saveDataUrl(req.body.image) : await videoFrom(req.body);
     if (!url) return res.status(400).json({ error: "Ajoutez une photo ou une vidéo." });
-    res.status(201).json(await addPhoto(req.event.id, { name, url, author: req.author }));
+    // Story : visible 24 h dans les stories, jamais dans l'album.
+    const story = Boolean(req.body?.story);
+    res.status(201).json(await addPhoto(req.event.id, { name, url, author: req.author, ...(story && { story, caption: clean(req.body?.caption, 120) }) }));
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

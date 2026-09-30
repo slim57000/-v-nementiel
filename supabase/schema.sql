@@ -175,6 +175,10 @@ create table if not exists invites (
 create index if not exists invites_event_idx on invites (event_id);
 alter table invites enable row level security;
 
+-- Stories temporaires (24 h) façon Instagram (ajouté en V1.3).
+alter table photos add column if not exists story boolean not null default false;
+alter table photos add column if not exists caption text;
+
 -- Sécurité : RLS activé sans règle = aucune lecture/écriture avec la clé publique (anon).
 -- Seul le serveur, avec la clé service_role, accède aux données.
 alter table organizers enable row level security;

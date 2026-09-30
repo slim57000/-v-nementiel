@@ -568,3 +568,24 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
 .btn:not(.btn-light):not(.btn-ghost):not(.btn-danger):hover { background: linear-gradient(135deg, #e8137a, #a90ab8); }
 .slogan b { background: linear-gradient(90deg, #fe7320, #fd1a85 50%, #8a1de9); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .slogan { max-width: none; } .slogan b { white-space: nowrap; font-size: min(1rem, 4.2vw); }
+/* Lecteur de stories */
+.story-viewer { position: fixed; inset: 0; z-index: 100; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; }
+.sv-media { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.sv-media img, .sv-media video { max-width: 100%; max-height: 100%; object-fit: contain; }
+.sv-bars { position: absolute; top: calc(10px + env(safe-area-inset-top)); left: 10px; right: 10px; display: flex; gap: 4px; z-index: 3; }
+.sv-bars i { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,.35); overflow: hidden; }
+.sv-bars b { display: block; height: 100%; width: 0; background: #fff; }
+.sv-head { position: absolute; top: calc(22px + env(safe-area-inset-top)); left: 14px; right: 8px; display: flex; align-items: center; justify-content: space-between; z-index: 3; text-shadow: 0 1px 3px rgba(0,0,0,.6); font-size: .9rem; }
+.sv-who span { opacity: .8; font-size: .8rem; }
+.sv-close, .sv-del { background: none; border: 0; color: #fff; font-size: 1.5rem; cursor: pointer; padding: 8px; }
+.sv-del { position: absolute; right: 12px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 3; font-size: 1.3rem; }
+.sv-caption { position: absolute; left: 16px; right: 16px; bottom: calc(70px + env(safe-area-inset-bottom)); z-index: 3; margin: 0; text-align: center; font-size: 1.05rem; font-weight: 600; text-shadow: 0 1px 4px rgba(0,0,0,.8); overflow-wrap: anywhere; }
+.sv-caption:empty { display: none; }
+.sv-prev, .sv-next { position: absolute; top: 80px; bottom: 80px; background: none; border: 0; z-index: 2; cursor: pointer; }
+.sv-prev { left: 0; width: 33%; } .sv-next { right: 0; width: 67%; }
+/* Rond de story non vue : dégradé du logo */
+.story-circle.has-story { background: linear-gradient(135deg, #fe7320, #fd1a85 55%, #8a1de9); }
+.story-circle .story-name { position: absolute; }
+.story-img.has-story { box-shadow: 0 0 0 3px #fd1a85; }
+.stories-row .story-circle { position: relative; margin-bottom: 20px; overflow: visible; }
+.story-label { position: absolute; left: 50%; top: calc(100% + 3px); transform: translateX(-50%); max-width: 84px; font-size: .72rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -1,4 +1,4 @@
-import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf } from "./common.js";
+import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories } from "./common.js";
 import { icon } from "./icons.js";
 
 $("#profile-btn").innerHTML = icon("user");
@@ -12,6 +12,7 @@ if (new URLSearchParams(location.search).has("saved")) {
 
 let events = [];
 let discover = []; // événements publics des autres organisateurs
+let stories = []; // stories des dernières 24 h, par événement
 let filter = "all";
 const today = new Date().toISOString().slice(0, 10);
 // « En direct » : événement du jour avec au moins une caméra.
@@ -20,7 +21,7 @@ const bg = (url) => (url ? `style="background-image:url('${esc(url)}')"` : "");
 
 async function load() {
   try {
-    [events, discover] = await Promise.all([api("/api/events"), api("/api/public?limit=30").catch(() => [])]);
+    [events, discover, stories] = await Promise.all([api("/api/events"), api("/api/public?limit=30").catch(() => []), api("/api/me/stories").catch(() => [])]);
   } catch (err) {
     if (err.status === 401) return goLogin();
     return toast(err.message);
@@ -30,14 +31,18 @@ async function load() {
 
 function renderStories() {
   const mine = new Set(events.map((e) => e.slug));
-  const upcoming = [...events.filter((e) => e.date >= today), ...discover.filter((e) => !mine.has(e.slug)).slice(0, 12)];
+  // Événements avec des stories récentes en premier (rond coloré), puis les autres.
+  const withStory = new Set(stories.map((g) => g.slug));
+  const all = [...events.filter((e) => e.date >= today), ...discover.filter((e) => !mine.has(e.slug)).slice(0, 12)];
+  const extra = stories.filter((g) => !all.some((e) => e.slug === g.slug)).map((g) => ({ ...g }));
+  const upcoming = [...extra, ...all].sort((a, b) => withStory.has(b.slug) - withStory.has(a.slug));
   $("#stories").innerHTML = `
     <a class="story new" href="/edit"><div class="story-img">+</div><span>Créer un événement</span></a>
     ${upcoming.map((ev) => {
       const badge = dayBadge(ev.date);
       const live = isLive(ev);
       return `<a class="story" href="${live ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`}">
-        <div class="story-img ${live ? "live" : ""}" ${bg(coverOf(ev))}>
+        <div class="story-img ${live ? "live" : ""} ${withStory.has(ev.slug) ? "has-story" : ""}" data-story="${withStory.has(ev.slug) ? esc(ev.slug) : ""}" ${bg(coverOf(ev))}>
           <span class="story-badge ${live || badge === "Aujourd'hui" ? "today" : ""}">${live ? "LIVE" : badge}</span></div>
         <span>${esc(ev.name)}</span></a>`;
     }).join("")}`;
@@ -85,6 +90,15 @@ function card(ev) {
     </div>
   </article>`;
 }
+
+// Appui sur un rond avec stories : lecteur plein écran (sinon, lien vers l'événement).
+$("#stories").addEventListener("click", (e) => {
+  const slug = e.target.closest("[data-story]")?.dataset.story;
+  if (!slug) return;
+  e.preventDefault();
+  const g = stories.find((x) => x.slug === slug);
+  openStories(g.items, { title: g.name });
+});
 
 function render() {
   renderStories();

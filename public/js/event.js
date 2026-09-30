@@ -1,4 +1,4 @@
-import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES } from "./common.js";
+import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 import { initGuestbook } from "./guestbook.js";
 
@@ -97,7 +97,7 @@ const SUBTITLES = {
   retraite: "Départ en retraite", inauguration: "Inauguration", autre: "",
 };
 
-// Stories : photos des invités des dernières 24 h, visibles une fois connecté.
+// Stories : publiées pour 24 h par l'organisateur et les invités, visibles une fois connecté.
 async function renderStories(ev) {
   const loggedIn = ev.isOwner || (await api("/api/auth/me").then(() => true, () => false));
   if (!loggedIn) {
@@ -110,24 +110,26 @@ async function renderStories(ev) {
     return;
   }
   const base = `/api/public/${encodeURIComponent(ev.slug)}`;
+  // Stories temporaires (24 h) : un rond par personne, lecteur plein écran façon Instagram.
   const load = async () => {
-    const dayAgo = Date.now() - 24 * 3600 * 1000;
-    const stories = (await api(`${base}/photos`).catch(() => [])).filter((p) => new Date(p.createdAt) > dayAgo && !isHidden(p.author));
-    $("#stories-row").innerHTML = stories.length
-      ? stories.map((p, i) => (isVideo(p.url)
-        ? `<button class="story-circle is-video" data-i="${i}" aria-label="Vidéo de ${esc(p.name)}"><div style="background:#2b2530"></div></button>`
-        : `<button class="story-circle" data-i="${i}" aria-label="Photo de ${esc(p.name)}"><div style="background-image:url('${esc(p.url)}')"></div></button>`)).join("")
-      : '<p class="muted small" style="margin:0">Aucune story pour l\'instant. Partagez la première photo !</p>';
+    const stories = (await api(`${base}/stories`).catch(() => [])).filter((p) => !isHidden(p.author));
+    const people = [...new Set(stories.map((p) => p.name))];
+    $("#stories-row").innerHTML = people.length
+      ? people.map((name) => {
+        const first = stories.find((p) => p.name === name);
+        const thumb = isVideo(first.url) ? "background:#2b2530" : `background-image:url('${esc(first.url)}')`;
+        return `<button class="story-circle has-story" data-who="${esc(name)}" aria-label="Stories de ${esc(name)}"><div style="${thumb}"></div><span class="story-label">${esc(name)}</span></button>`;
+      }).join("")
+      : '<p class="muted small" style="margin:0">Aucune story pour l\'instant. Partagez la première !</p>';
     $("#stories-row").onclick = (e) => {
-      const photo = stories[e.target.closest("[data-i]")?.dataset.i];
-      if (!photo) return;
-      const remove = async () => { await api(`${base}/photos/${photo.id}`, { method: "DELETE" }); load(); };
-      viewPhoto(photo, ev.isOwner ? remove : null,
-        () => contentMenu({ slug: ev.slug, kind: "photo", item: photo, isOwner: ev.isOwner, onDelete: remove, onChange: load }));
+      const who = e.target.closest("[data-who]")?.dataset.who;
+      if (!who) return;
+      const ordered = [...stories.filter((p) => p.name === who), ...stories.filter((p) => p.name !== who)];
+      openStories(ordered, { onDelete: ev.isOwner ? async (p) => { await api(`${base}/photos/${p.id}`, { method: "DELETE" }); load(); } : null });
     };
   };
   $("#add-story").classList.remove("hidden");
-  $("#add-story").onclick = () => pickAndUploadPhoto(ev.slug).then(load, () => {});
+  $("#add-story").onclick = () => pickAndUploadPhoto(ev.slug, { story: true }).then(() => { toast("Story publiée pour 24 h ✨"); load(); }, () => {});
   load();
 }
 

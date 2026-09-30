@@ -282,7 +282,7 @@ export async function uploadVideo(slug, file) {
 }
 
 // Choisit une photo ou une vidéo courte et l'envoie comme média d'invité. Renvoie le média créé.
-export function pickAndUploadPhoto(slug) {
+export function pickAndUploadPhoto(slug, { story = false } = {}) {
   return new Promise((resolve, reject) => {
     const input = Object.assign(document.createElement("input"), { type: "file", accept: "image/*,video/*" });
     input.addEventListener("change", async () => {
@@ -293,7 +293,9 @@ export function pickAndUploadPhoto(slug) {
         const media = file.type.startsWith("video/")
           ? (toast("Envoi de la vidéo…"), await uploadVideo(slug, file))
           : (toast("Envoi de la photo…"), { image: await resizeImage(file, 1600) });
-        resolve(await api(`/api/public/${encodeURIComponent(slug)}/photos`, { method: "POST", body: { name, ...media } }));
+        // Story : légende facultative (affichée sur la story).
+        const caption = story ? (prompt("Ajouter une légende ? (facultatif)") || "").trim().slice(0, 120) : "";
+        resolve(await api(`/api/public/${encodeURIComponent(slug)}/photos`, { method: "POST", body: { name, ...media, ...(story && { story: true, caption }) } }));
       } catch (err) {
         toast(err.message);
         reject(err);
@@ -439,4 +441,66 @@ export async function onRealtime(topic, onPing) {
   } catch {
     return false;
   }
+}
+
+// --- Lecteur de stories plein écran (façon Instagram) ---
+// items : [{ url, name, caption, createdAt }] ; appui à droite = suivante, à gauche = précédente ; 5 s par photo.
+const agoShort = (iso) => {
+  const m = Math.max(1, Math.round((Date.now() - new Date(iso)) / 60000));
+  return m < 60 ? `${m} min` : `${Math.round(m / 60)} h`;
+};
+export function openStories(items, { start = 0, title = "", onDelete } = {}) {
+  if (!items.length) return;
+  document.getElementById("story-viewer")?.remove();
+  document.body.insertAdjacentHTML("beforeend", `
+    <div class="story-viewer" id="story-viewer" role="dialog" aria-modal="true" aria-label="Stories">
+      <div class="sv-bars">${items.map(() => "<i><b></b></i>").join("")}</div>
+      <div class="sv-head"><span class="sv-who"></span><button class="sv-close" aria-label="Fermer">✕</button></div>
+      <div class="sv-media"></div>
+      <p class="sv-caption"></p>
+      ${onDelete ? '<button class="sv-del" aria-label="Supprimer la story">🗑️</button>' : ""}
+      <button class="sv-prev" aria-label="Story précédente"></button><button class="sv-next" aria-label="Story suivante"></button>
+    </div>`);
+  const root = document.getElementById("story-viewer");
+  const bars = [...root.querySelectorAll(".sv-bars b")];
+  let i = start, timer, video;
+  document.body.style.overflow = "hidden";
+  const close = () => { clearTimeout(timer); root.remove(); document.body.style.overflow = ""; };
+  const show = (n) => {
+    clearTimeout(timer);
+    if (n < 0) n = 0;
+    if (n >= items.length) return close();
+    i = n;
+    const it = items[i];
+    bars.forEach((b, k) => { b.style.transition = "none"; b.style.width = k < i ? "100%" : "0%"; });
+    root.querySelector(".sv-who").innerHTML = `<b>${esc(it.name)}</b> <span>${title ? `${esc(title)} · ` : ""}il y a ${agoShort(it.createdAt)}</span>`;
+    root.querySelector(".sv-caption").textContent = it.caption || "";
+    const media = root.querySelector(".sv-media");
+    const run = (ms) => {
+      requestAnimationFrame(() => { bars[i].style.transition = `width ${ms}ms linear`; bars[i].style.width = "100%"; });
+      timer = setTimeout(() => show(i + 1), ms);
+    };
+    if (isVideo(it.url)) {
+      media.innerHTML = `<video src="${esc(it.url)}" autoplay playsinline></video>`;
+      video = media.querySelector("video");
+      video.onloadedmetadata = () => run(Math.min(30, video.duration || 10) * 1000);
+      video.onerror = () => run(3000);
+    } else {
+      media.innerHTML = `<img src="${esc(it.url)}" alt="">`;
+      run(5000);
+    }
+  };
+  root.querySelector(".sv-close").onclick = close;
+  root.querySelector(".sv-prev").onclick = () => show(i - 1);
+  root.querySelector(".sv-next").onclick = () => show(i + 1);
+  root.querySelector(".sv-del")?.addEventListener("click", async () => {
+    if (!confirm("Supprimer cette story ?")) return;
+    try { await onDelete(items[i]); items.splice(i, 1); root.querySelector(".sv-bars").lastChild?.remove(); bars.pop(); items.length ? show(Math.min(i, items.length - 1)) : close(); }
+    catch (err) { toast(err.message); }
+  });
+  addEventListener("keydown", function onKey(e) {
+    if (!document.getElementById("story-viewer")) return removeEventListener("keydown", onKey);
+    if (e.key === "Escape") close(); if (e.key === "ArrowRight") show(i + 1); if (e.key === "ArrowLeft") show(i - 1);
+  });
+  show(start);
 }

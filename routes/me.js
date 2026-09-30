@@ -60,7 +60,7 @@ router.get("/videos", async (req, res) => {
   const videos = [];
   await Promise.all(events.map(async (e) => {
     const [photos, entries] = await Promise.all([listPhotos(e.id, 200), listGuestbook(e.id)]);
-    for (const p of photos) if (isVideoUrl(p.url)) videos.push({ url: p.url, name: p.name, event: e.name, slug: e.slug, at: p.createdAt });
+    for (const p of photos) if (!p.story && isVideoUrl(p.url)) videos.push({ url: p.url, name: p.name, event: e.name, slug: e.slug, at: p.createdAt });
     for (const g of entries) if (g.photoUrl && isVideoUrl(g.photoUrl)) videos.push({ url: g.photoUrl, name: g.name, event: e.name, slug: e.slug, at: g.createdAt });
   }));
   res.json(videos.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 100));
@@ -86,11 +86,32 @@ router.get("/feed", async (req, res) => {
   // 2 requêtes groupées pour tous les événements (au lieu de 2 par événement).
   const ids = [...byId.keys()];
   const [photos, entries] = await Promise.all([listRecentPhotos(ids).catch(() => []), listRecentGuestbook(ids).catch(() => [])]);
-  for (const p of photos) items.push({ kind: "photo", at: p.createdAt, event: head(byId.get(p.eventId)), name: p.name, url: p.url, author: p.author });
+  for (const p of photos.filter((x) => !x.story)) items.push({ kind: "photo", at: p.createdAt, event: head(byId.get(p.eventId)), name: p.name, url: p.url, author: p.author });
   for (const g of entries) {
     items.push({ kind: "message", at: g.createdAt, event: head(byId.get(g.eventId)), id: g.id, name: g.name, text: g.text, url: g.photoUrl || null, audio: g.audioUrl || null, likes: g.likes || 0, replies: (g.replies || []).length, author: g.author });
   }
   res.json(items.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 80));
+});
+
+// --- Stories des dernières 24 h de mes événements, participations, favoris et amis (rangée du tableau de bord) ---
+router.get("/stories", async (req, res) => {
+  const me = req.organizer;
+  const [mine, historyIds, favIds, friendIds] = await Promise.all([
+    listEvents(me.id), listHistoryIds(me.id), listFavoriteIds(me.id).catch(() => []), listFriendIds(me.id).catch(() => []),
+  ]);
+  const joined = await findEventsByIds([...historyIds, ...favIds]).catch(() => []);
+  const friends = (await Promise.all(friendIds.slice(0, 20).map((id) => listEvents(id).catch(() => [])))).flat().filter((e) => e.visibility === "public");
+  const events = visibleEvents([...mine, ...joined, ...friends]).filter((e, i, arr) => arr.findIndex((x) => x.id === e.id) === i).slice(0, 40);
+  const byId = new Map(events.map((e) => [e.id, e]));
+  const day = Date.now() - 24 * 3600 * 1000;
+  const photos = (await listRecentPhotos([...byId.keys()], 300).catch(() => [])).filter((p) => p.story && new Date(p.createdAt) > day);
+  const groups = new Map();
+  for (const p of photos.reverse()) {
+    const e = byId.get(p.eventId);
+    if (!groups.has(e.id)) groups.set(e.id, { slug: e.slug, name: e.name, cover: e.cover, type: e.type, date: e.date, cameras: e.cameras || [], isOwner: e.organizerId === me.id, items: [] });
+    groups.get(e.id).items.push({ id: p.id, name: p.name, url: p.url, caption: p.caption, createdAt: p.createdAt, author: p.author });
+  }
+  res.json([...groups.values()]);
 });
 
 // --- Favoris et historique des participations ---

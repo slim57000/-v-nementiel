@@ -103,6 +103,10 @@ const EN = {
   "Ont rejoint": "Joined",
   "Le premier réseau social": "The first social network", "dédié à tous vos événements.": "dedicated to all your events.",
   "Partagez l'émotion avant, pendant, après.": "Share the emotion before, during and after.",
+  "＋ Ajouter une story": "＋ Add a story",
+  "Stories": "Stories",
+  "Story publiée pour 24 h ✨": "Story posted for 24 h ✨",
+  "Aucune story pour l'instant. Partagez la première !": "No stories yet. Share the first one!",
 };
 
 const LANG_KEY = "em-lang";
