@@ -2,12 +2,12 @@
 import { Router } from "express";
 import { requireOrganizer } from "./auth.js";
 import { publicView } from "../lib/events.js";
-import { saveDataUrl, removeUpload } from "../lib/uploads.js";
+import { saveDataUrl, removeUpload, isVideoUrl } from "../lib/uploads.js";
 import {
   saveOrganizer, listEvents, findEvent, findEventsByIds, findOrganizersByIds,
   addFavorite, removeFavorite, listFavoriteIds, listHistoryIds,
   listFriendIds, removeFriends, addBlock, removeBlock, listBlockIds,
-  addDirectMessage, listDirectMessages, lastDirectMessage,
+  addDirectMessage, listDirectMessages, lastDirectMessage, listPhotos, listGuestbook,
 } from "../lib/store.js";
 
 const router = Router();
@@ -55,6 +55,21 @@ router.put("/profile", async (req, res) => {
     return res.status(400).json({ error: err.message });
   }
   res.json(person(await saveOrganizer({ ...me, displayName, avatar })));
+});
+
+// --- Mes vidéos : vidéos partagées dans mes événements et ceux auxquels j'ai participé ---
+router.get("/videos", async (req, res) => {
+  const me = req.organizer;
+  const history = await findEventsByIds(await listHistoryIds(me.id)).catch(() => []);
+  const events = visibleEvents([...await listEvents(me.id), ...history])
+    .filter((e, i, arr) => arr.findIndex((x) => x.id === e.id) === i).slice(0, 30);
+  const videos = [];
+  await Promise.all(events.map(async (e) => {
+    const [photos, entries] = await Promise.all([listPhotos(e.id, 200), listGuestbook(e.id)]);
+    for (const p of photos) if (isVideoUrl(p.url)) videos.push({ url: p.url, name: p.name, event: e.name, slug: e.slug, at: p.createdAt });
+    for (const g of entries) if (g.photoUrl && isVideoUrl(g.photoUrl)) videos.push({ url: g.photoUrl, name: g.name, event: e.name, slug: e.slug, at: g.createdAt });
+  }));
+  res.json(videos.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 100));
 });
 
 // --- Favoris et historique des participations ---

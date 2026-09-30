@@ -1,4 +1,4 @@
-import { api, $, esc, toast, tabbar, goLogin, resizeImage, publicCard } from "./common.js";
+import { api, $, esc, toast, tabbar, goLogin, resizeImage, publicCard, viewPhoto } from "./common.js";
 import { lang, setLang, themePref, setTheme } from "./i18n.js";
 
 tabbar("profile");
@@ -73,11 +73,25 @@ async function showTab(tab) {
       : '<p class="muted small" style="text-align:center">Les cagnottes des événements que vous suivez apparaîtront ici.</p>';
     return;
   }
+  if (tab === "videos") {
+    videos = await api("/api/me/videos");
+    list.innerHTML = videos.length ? `<div class="p-grid">${videos.map((v, i) => `
+      <button class="video-tile" data-video="${i}" aria-label="Vidéo de ${esc(v.name)}">
+        <video src="${esc(v.url)}#t=0.1" muted playsinline preload="metadata"></video>
+        <span class="play">▶</span><span class="cap"><b>${esc(v.name)}</b>${esc(v.event)}</span></button>`).join("")}</div>`
+      : '<p class="muted small" style="text-align:center">Les vidéos partagées dans vos événements apparaîtront ici.</p>';
+    return;
+  }
   const events = await api(`/api/me/${tab}`);
   list.innerHTML = events.length ? `<div class="p-grid">${events.map(publicCard).join("")}</div>`
     : `<p class="muted small" style="text-align:center">${tab === "favorites" ? "Ajoutez des événements en favoris avec le ♡ sur leur page." : "Les événements auxquels vous participez apparaîtront ici."}</p>`;
 }
 $("#p-tabs").addEventListener("click", (e) => { if (e.target.dataset.tab) showTab(e.target.dataset.tab); });
+let videos = [];
+$("#p-list").addEventListener("click", (e) => {
+  const tile = e.target.closest("[data-video]");
+  if (tile) viewPhoto(videos[tile.dataset.video]);
+});
 
 $("#logout").addEventListener("click", async () => {
   await api("/api/auth/logout", { method: "POST" });
