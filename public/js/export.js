@@ -1,0 +1,43 @@
+// Export des souvenirs d'un événement (organisateur) : photos et vidéos des invités, livre d'or
+// (textes, réponses, photos, vidéos, vocaux) dans un seul fichier .zip.
+import { api, toast } from "./common.js";
+import { makeZip } from "./zip.js";
+
+const ext = (url) => (url.split("?")[0].match(/\.(\w{2,4})$/)?.[1] || "jpg").toLowerCase();
+const fetchBytes = async (url) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error();
+  return new Uint8Array(await res.arrayBuffer());
+};
+
+export async function exportEvent(ev, onProgress = () => {}) {
+  const base = `/api/public/${encodeURIComponent(ev.slug)}`;
+  const [photos, entries] = await Promise.all([api(`${base}/photos?limit=200`), api(`${base}/guestbook`)]);
+  const files = [];
+  const enc = new TextEncoder();
+  const lines = [`Livre d'or — ${ev.name}`, ""];
+  const media = [];
+  photos.forEach((p, i) => media.push({ url: p.url, name: `photos-invites/${String(i + 1).padStart(3, "0")}-${p.name}.${ext(p.url)}` }));
+  entries.slice().reverse().forEach((e, i) => {
+    const n = String(i + 1).padStart(3, "0");
+    lines.push(`#${n} ${e.name} (${new Date(e.createdAt).toLocaleString("fr-FR")}) — ❤️ ${e.likes || 0}`);
+    if (e.text) lines.push(e.text);
+    for (const r of e.replies || []) lines.push(`   ↳ ${r.name} : ${r.text}`);
+    lines.push("");
+    if (e.photoUrl) media.push({ url: e.photoUrl, name: `livre-d-or/${n}-${e.name}.${ext(e.photoUrl)}` });
+    if (e.audioUrl) media.push({ url: e.audioUrl, name: `livre-d-or/${n}-${e.name}-vocal.${ext(e.audioUrl)}` });
+  });
+  files.push({ name: "livre-d-or.txt", data: enc.encode(lines.join("\n")) });
+  let done = 0, failed = 0;
+  for (const m of media) {
+    try { files.push({ name: m.name.replace(/[\\:*?"<>|]/g, "_"), data: await fetchBytes(m.url) }); } catch { failed++; }
+    onProgress(++done, media.length);
+  }
+  const blob = makeZip(files);
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `${ev.slug}-souvenirs.zip` });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
+  toast(failed ? `Archive créée (${failed} fichier(s) indisponible(s))` : `Archive créée : ${media.length} fichier(s) ✔`);
+}

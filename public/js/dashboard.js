@@ -76,6 +76,7 @@ function card(ev) {
       ${isPrivate ? `<button class="btn btn-light btn-sm" data-action="code">Copier le code</button>
       <button class="btn btn-light btn-sm" data-action="direct">Lien + code</button>` : ""}
       <button class="btn btn-light btn-sm" data-action="cameraman">Accès caméraman</button>
+      <button class="btn btn-light btn-sm" data-action="export">📦 Télécharger les souvenirs</button>
       <a class="btn btn-ghost btn-sm" href="/edit?id=${ev.id}">Modifier</a>
       <button class="btn btn-danger btn-sm" data-action="delete">Supprimer</button>
     </div>
@@ -124,6 +125,18 @@ $("#list").addEventListener("click", async (e) => {
       ? `Vous êtes invité·e à « ${ev.name} » ! Code d'accès : ${ev.accessCode}`
       : `Vous êtes invité·e à « ${ev.name} » !`;
     shareSheet({ title: ev.name, text, url: ev.visibility === "private" ? `${url}?code=${ev.accessCode}` : url });
+  }
+  if (action === "export") {
+    const btn = e.target;
+    btn.disabled = true;
+    try {
+      const { exportEvent } = await import("./export.js");
+      await exportEvent(ev, (n, total) => { btn.textContent = `📦 ${n} / ${total}…`; });
+    } catch (err) {
+      toast(err.message || "Export impossible.");
+    }
+    btn.disabled = false;
+    btn.textContent = "📦 Télécharger les souvenirs";
   }
   if (action === "delete" && confirm(`Supprimer définitivement « ${ev.name} » ?`)) {
     try {

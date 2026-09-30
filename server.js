@@ -68,7 +68,9 @@ app.get("/api/cron/replay-reminders", async (req, res) => {
       title: "Pensez à récupérer votre replay",
       body: `<p>Le replay de <b>${event.name.replace(/</g, "&lt;")}</b> ne sera plus proposé aux invités dans 2 jours.</p>
         <p>Vos vidéos restent disponibles sur vos comptes YouTube / Twitch, d'où vous pouvez les télécharger :
-        YouTube Studio → Contenu → ⋮ → Télécharger.</p>`,
+        YouTube Studio → Contenu → ⋮ → Télécharger.</p>
+        <p>Les photos, vidéos, vocaux et messages de vos invités se téléchargent en un fichier .zip depuis
+        « Mes événements » → 📦 Télécharger les souvenirs.</p>`,
     });
     if (ok) sent++;
   }
