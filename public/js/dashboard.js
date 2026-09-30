@@ -143,8 +143,10 @@ $("#list").addEventListener("click", async (e) => {
   if (action === "code") copy(ev.accessCode, "Code copié !");
   // Lien qui déverrouille directement l'événement privé (à n'envoyer qu'aux invités).
   if (action === "direct") copy(`${url}?code=${ev.accessCode}`, "Lien avec code copié !");
+  // Accès caméraman : un lien qui contient déjà le code (ouverture directe de son espace) + le code en secours.
   if (action === "cameraman") {
-    copy(`Espace caméraman « ${ev.name} » : ${location.origin}/cameraman — code : ${ev.cameramanCode}`, "Accès caméraman copié !");
+    const link = `${location.origin}/cameraman?code=${ev.cameramanCode}`;
+    shareSheet({ title: `Caméraman — ${ev.name}`, text: `🎥 Vous filmez « ${ev.name} » ! Ouvrez ce lien puis appuyez sur « Démarrer le live » (code : ${ev.cameramanCode}).`, url: link });
   }
   if (action === "share") {
     const text = ev.visibility === "private"

@@ -1,4 +1,4 @@
-import { api, $, toast, formatDate, pickAndUploadPhoto, livePlaceholder } from "./common.js";
+import { api, $, toast, formatDate, pickAndUploadPhoto, livePlaceholder, shareSheet } from "./common.js";
 
 const params = new URLSearchParams(location.search);
 let slug = params.get("e") || "";
@@ -22,7 +22,9 @@ function addCamera(cam = {}) {
   row.querySelector("[name=cam-url]").value = cam.url || "";
 }
 
+let current = null;
 function showSpace(ev) {
+  current = ev;
   document.title = `Caméraman — ${ev.name}`;
   $("#ev-name").textContent = ev.name;
   $("#ev-when").textContent = `${formatDate(ev.date, ev.time)} · ${ev.location}`;
@@ -40,6 +42,14 @@ function showSpace(ev) {
 }
 
 async function load() {
+  // Lien reçu de l'organisateur (/cameraman?code=XXXXXX) : connexion automatique.
+  const code = params.get("code");
+  if (code && !slug) {
+    try {
+      ({ slug } = await api("/api/cameraman/login", { method: "POST", body: { code } }));
+      history.replaceState(null, "", `/cameraman?e=${encodeURIComponent(slug)}`);
+    } catch (err) { $("#login-error").textContent = err.message; }
+  }
   if (slug) {
     try { return showSpace(await api(`/api/cameraman/${encodeURIComponent(slug)}`)); } catch { /* code requis */ }
   }
@@ -158,6 +168,14 @@ async function flipCamera() {
 }
 
 $("#go-live").addEventListener("click", startLive);
+// Partager le live aux invités : lien direct (+ code si l'événement est privé).
+$("#share-live").addEventListener("click", () => {
+  const url = `${location.origin}/live?e=${encodeURIComponent(current.slug)}`;
+  const text = current.accessCode
+    ? `🔴 Suivez « ${current.name} » en direct ! Code d'accès : ${current.accessCode}`
+    : `🔴 Suivez « ${current.name} » en direct !`;
+  shareSheet({ title: current.name, text, url: current.accessCode ? `${location.origin}/e/${encodeURIComponent(current.slug)}?code=${current.accessCode}` : url });
+});
 $("#stop-live").addEventListener("click", () => stopLive());
 $("#flip").addEventListener("click", flipCamera);
 addEventListener("beforeunload", (e) => { if (pc) { e.preventDefault(); e.returnValue = ""; } });

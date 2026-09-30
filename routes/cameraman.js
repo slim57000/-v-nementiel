@@ -42,6 +42,8 @@ router.use("/:slug", async (req, res, next) => {
 const view = (e) => ({
   slug: e.slug, name: e.name, type: e.type, date: e.date, time: e.time, location: e.location,
   cameras: e.cameras || [], notes: e.cameramanNotes || "", phoneLive: STREAM_ENABLED,
+  // Pour partager le live aux invités : le code d'accès des événements privés.
+  visibility: e.visibility, accessCode: e.visibility === "private" ? e.accessCode : "",
 });
 
 // Live en un clic depuis le téléphone : crée (ou reprend) la caméra, l'ajoute au live et renvoie l'adresse d'envoi.
