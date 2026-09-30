@@ -512,3 +512,9 @@ input::-webkit-date-and-time-value { text-align: center; }
 .feed-post footer [data-like] { background: none; border: 1px solid var(--border); border-radius: 99px; padding: 6px 12px; font: inherit; color: var(--text); cursor: pointer; }
 .feed-post footer [data-like].on { border-color: var(--primary); color: var(--primary); }
 .topbar > .logo:only-child { margin: 0 auto; }
+/* Accessibilité : focus clavier visible, contraste du texte secondaire, animations réduites sur demande */
+:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; border-radius: 6px; }
+button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
+.muted { color: color-mix(in srgb, var(--muted) 85%, var(--text)); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

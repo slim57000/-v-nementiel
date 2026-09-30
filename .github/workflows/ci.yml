@@ -1,0 +1,19 @@
+name: Tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Syntaxe JavaScript
+        run: for f in server.js api/*.js lib/*.js routes/*.js public/js/*.js; do node --check "$f" || exit 1; done
+      - name: Test de fumée
+        run: npm test

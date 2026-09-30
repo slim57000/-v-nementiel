@@ -85,7 +85,9 @@ export function resizeImage(file, maxSize = 1600) {
       canvas.height = Math.round(img.height * scale);
       canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(img.src);
-      resolve(canvas.toDataURL("image/jpeg", 0.85));
+      // WebP (≈ 30 % plus léger) quand le navigateur sait l'encoder, sinon JPEG.
+      const webp = canvas.toDataURL("image/webp", 0.8);
+      resolve(webp.startsWith("data:image/webp") ? webp : canvas.toDataURL("image/jpeg", 0.85));
     };
     img.onerror = () => reject(new Error("Image illisible."));
     img.src = URL.createObjectURL(file);
