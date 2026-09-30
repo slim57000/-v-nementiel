@@ -108,7 +108,6 @@ const EN = {
   "Story publiée pour 24 h ✨": "Story posted for 24 h ✨",
   "Aucune story pour l'instant. Partagez la première !": "No stories yet. Share the first one!",
   "📱 Filmer avec ce téléphone": "📱 Film with this phone", "📤 Partager le live aux invités": "📤 Share the live with guests",
-  "🔴 Démarrer le live": "🔴 Start the live",
   "⏹ Arrêter": "⏹ Stop",
   "🔄 Retourner": "🔄 Flip",
   "Nom de la caméra": "Camera name",

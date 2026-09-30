@@ -123,8 +123,6 @@ export function embedUrl(url) {
     id = u.searchParams.get("v") || u.pathname.match(/^\/(?:live|embed|shorts)\/([\w-]+)/)?.[1];
   }
   if (id) return `https://www.youtube.com/embed/${encodeURIComponent(id)}?autoplay=1&mute=1&playsinline=1`;
-  // Caméra « téléphone » (Cloudflare Stream) : lecteur intégré, direct puis replay enregistré.
-  if (host.endsWith(".cloudflarestream.com")) return `${u.origin}${u.pathname}?autoplay=true&muted=true&preload=auto`;
   if (host === "twitch.tv") {
     const channel = u.pathname.split("/")[1];
     if (channel) return `https://player.twitch.tv/?channel=${encodeURIComponent(channel)}&parent=${location.hostname}&muted=true`;
@@ -141,7 +139,6 @@ export function thumbnailUrl(url, { live = false } = {}) {
     : host === "youtube.com" ? u.searchParams.get("v") || u.pathname.match(/^\/(?:live|embed|shorts)\/([\w-]+)/)?.[1] : null;
   const fresh = `t=${Math.floor(Date.now() / 60000)}`; // image renouvelée chaque minute pendant le direct
   if (id) return live ? `https://i.ytimg.com/vi/${encodeURIComponent(id)}/hqdefault_live.jpg?${fresh}` : `https://i.ytimg.com/vi/${encodeURIComponent(id)}/mqdefault.jpg`;
-  if (host.endsWith(".cloudflarestream.com")) return `${u.origin}/${u.pathname.split("/")[1]}/thumbnails/thumbnail.jpg?time=0s&height=360&${fresh}`;
   if (host === "twitch.tv" && u.pathname.split("/")[1]) {
     return `https://static-cdn.jtvnw.net/previews-ttv/live_user_${encodeURIComponent(u.pathname.split("/")[1].toLowerCase())}-320x180.jpg?${fresh}`;
   }

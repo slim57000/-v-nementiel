@@ -1,8 +1,15 @@
 # Journal des modifications — MaFeliza
 
+## Version 1.5 — Simplicité
+- Live : bouton « 🔴 Lancer le live » sur le tableau de bord, mode d'emploi YouTube pas à pas et bouton « 📋 Coller le lien » ; diffusion Cloudflare retirée (live via YouTube / Twitch).
+- Bouton + : « Que voulez-vous créer ? » (story ou événement).
+- Cloche 🔔 de notifications dans le site, notifications push sans configuration.
+- ❤️ Mes favoris en haut de l'accueil.
+- Faire-part : texte modifiable, texte « En petit comité », textes et dates en anglais.
+- Connexion par email et mot de passe (mémorisable par le téléphone), mot de passe oublié.
+
 ## Version 1.4 — Live et marque
 - **Nouvelle identité MaFeliza** : logo, couleurs (rose, orange, violet), nom avec « i » en dégradé, slogan en page d'accueil, icônes et écrans de démarrage des applications (`com.mafeliza.app`).
-- **Live en un clic** : le caméraman ouvre son lien (code inclus), appuie sur « Démarrer le live » et filme depuis son téléphone (Cloudflare Stream) ; caméra ajoutée automatiquement, retournement avant / arrière, replay enregistré.
 - **Partage du live** par le caméraman aux invités (lien, et code si l'événement est privé).
 - **Cartes des lives** : image tirée du direct en cours, aperçu vidéo en restant appuyé.
 - **Stories temporaires** façon Instagram (photo ou vidéo + légende, 24 h, lecteur plein écran).
