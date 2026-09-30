@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#e8137a">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Quicksand:wght@600;700&display=swap">
-  <link rel="stylesheet" href="/css/app.css?v=68">
+  <link rel="stylesheet" href="/css/app.css?v=69">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -59,6 +59,16 @@
       <section class="card" id="links-card">
         <h2>🎥 Mes caméras</h2>
         <p class="muted small">Pour chaque caméra, collez le lien de votre direct YouTube Live ou Twitch. Les invités pourront passer d'un angle à l'autre.</p>
+        <details class="advanced" id="yt-howto">
+          <summary>Comment faire un live YouTube ?</summary>
+          <ol class="small" style="margin:8px 0 0;padding-left:20px;display:grid;gap:4px">
+            <li>Ouvrez l'app <b>YouTube</b>, touchez <b>+</b> puis <b>Passer au direct</b>.</li>
+            <li>Choisissez la visibilité <b>Non répertoriée</b>, puis <b>Passer au direct</b>.</li>
+            <li>Touchez <b>Partager</b> → <b>Copier le lien</b>.</li>
+            <li>Revenez ici, touchez <b>📋 Coller</b> puis <b>Enregistrer les liens</b>.</li>
+          </ol>
+        </details>
+        <button type="button" id="paste-link" class="btn btn-light btn-block" style="margin:10px 0">📋 Coller le lien copié</button>
         <div id="cameras"></div>
         <button type="button" id="add-camera" class="btn btn-ghost btn-sm btn-center">+ Ajouter une caméra</button>
         <p id="cam-error" class="error" role="alert"></p>

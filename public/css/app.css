@@ -659,3 +659,7 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
 .fav-thumb { width: 52px; height: 52px; border-radius: 10px; background: #ddd center / cover; }
 .create-big { min-height: 64px; font-size: 1.15rem; }
 #create-body { max-height: 60vh; overflow-y: auto; }
+details.advanced { margin: 12px 0; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
+details.advanced summary { cursor: pointer; font-weight: 600; font-size: .92rem; }
+.live-simple { margin-bottom: 8px; }
+.ev-tools .btn.tool-main.btn-golive { background: linear-gradient(135deg, #ff2d55, #e8137a); }

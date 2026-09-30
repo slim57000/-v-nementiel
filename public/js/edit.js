@@ -200,6 +200,7 @@ async function init() {
     const ev = await api(`/api/events/${id}`);
     for (const key of ["name", "date", "time", "location", "description"]) field(key).value = ev[key];
     ev.cameras.forEach(addCamera);
+    if (ev.cameras.length) $("#cam-advanced").open = true;
     $("#cagnotte").value = ev.cagnotteUrl;
     (ev.program?.steps || []).forEach(addStep);
     $("#practical").value = ev.program?.practical || "";

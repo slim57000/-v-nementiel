@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#e8137a">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Great+Vibes&family=Inter:wght@400;600;800&family=Quicksand:wght@600;700&display=swap">
-  <link rel="stylesheet" href="/css/app.css?v=68">
+  <link rel="stylesheet" href="/css/app.css?v=69">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -103,14 +103,21 @@
 
       <section class="card">
         <h2>4. Live &amp; cagnotte <small class="muted" style="font-weight:400">(facultatif)</small></h2>
-        <p class="muted small">Collez le lien YouTube Live ou Twitch de chaque caméra. Les invités pourront changer d'angle pendant le direct.</p>
-        <div id="cameras"></div>
-        <button type="button" id="add-camera" class="btn btn-ghost btn-sm btn-center">+ Ajouter une caméra</button>
+        <div class="notice live-simple">
+          <b>🔴 Rien à préparer pour le live</b>
+          <p class="small" style="margin:4px 0 0">Le jour J, appuyez sur <b>« Lancer le live »</b> depuis votre tableau de bord et filmez avec votre téléphone. Vous pouvez aussi envoyer le <b>lien caméraman</b> à un proche qui filmera pour vous.</p>
+        </div>
+        <details id="cam-advanced" class="advanced">
+          <summary>Options avancées : diffuser via YouTube ou Twitch</summary>
+          <p class="muted small">Collez le lien YouTube Live ou Twitch de chaque caméra. Les invités pourront changer d'angle pendant le direct.</p>
+          <div id="cameras"></div>
+          <button type="button" id="add-camera" class="btn btn-ghost btn-sm btn-center">+ Ajouter une caméra</button>
+        </details>
         <label for="cameraman-notes">Consignes pour le(s) caméraman(s)</label>
         <textarea id="cameraman-notes" maxlength="1000" placeholder="Horaires, moments à filmer, emplacements des caméras…" style="min-height:80px"></textarea>
         <div id="cameraman-info" class="notice hidden">
           Code caméraman : <span class="code" id="cameraman-code"></span>
-          <p class="small muted" style="margin:4px 0 0">À transmettre au caméraman : il se connecte sur <b>/cameraman</b> pour gérer les liens du live.</p>
+          <p class="small muted" style="margin:4px 0 0">Le plus simple : bouton <b>🎥 Caméraman</b> du tableau de bord, qui envoie un lien déjà connecté.</p>
           <label style="font-weight:400;display:flex;gap:8px;align-items:center;margin:8px 0 0">
             <input type="checkbox" id="regenerate-cam" style="width:auto"> Générer un nouveau code caméraman
           </label>

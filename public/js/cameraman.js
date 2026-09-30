@@ -181,3 +181,14 @@ $("#flip").addEventListener("click", flipCamera);
 addEventListener("beforeunload", (e) => { if (pc) { e.preventDefault(); e.returnValue = ""; } });
 
 load();
+
+// Coller en un geste le lien copié depuis YouTube / Twitch dans le premier champ vide.
+$("#paste-link").addEventListener("click", async () => {
+  let text = "";
+  try { text = (await navigator.clipboard.readText()).trim(); } catch { /* accès refusé */ }
+  if (!/^https?:\/\//.test(text)) { toast("Copiez d'abord le lien du direct (YouTube : Partager → Copier le lien)."); return; }
+  const urls = () => [...document.querySelectorAll('#cameras [name="cam-url"]')];
+  let input = urls().find((i) => !i.value);
+  if (!input) { $("#add-camera").click(); input = urls().pop(); }
+  if (input) { input.value = text; toast("Lien collé ✓ Pensez à enregistrer."); }
+});
