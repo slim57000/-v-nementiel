@@ -169,11 +169,46 @@ export function tabbar(active) {
     <nav class="tabbar" aria-label="Navigation">
       ${tab("home", "/dashboard", "home", "Accueil")}
       ${tab("discover", "/decouvrir", "search", "Découvrir")}
-      <a href="/edit" aria-label="Créer un événement"><span class="plus">+</span></a>
+      <a href="/edit" aria-label="Créer" id="tab-create"><span class="plus">+</span></a>
       ${tab("messages", "/messages", "chat", "Messages")}
       ${tab("profile", "/profil", "user", "Profil")}
     </nav>`);
+  $("#tab-create").addEventListener("click", createSheet);
   bell();
+}
+
+// « + » du menu : choisir entre une story (sur un de ses événements) et un nouvel événement.
+function createSheet(e) {
+  e.preventDefault();
+  const events = api("/api/events").catch(() => null); // chargé tout de suite : le choix de fichier doit suivre un appui
+  let list = null;
+  events.then((l) => { list = l; });
+  document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="create-sheet" role="dialog" aria-modal="true">
+    <div class="card"><h2 style="margin-top:0">Que voulez-vous créer ?</h2>
+      <div id="create-body" style="display:grid;gap:10px">
+        <button class="btn btn-block create-big" type="button" id="create-story">Une story</button>
+        <a class="btn btn-light btn-block create-big" href="/edit">Un événement</a>
+      </div></div></div>`);
+  const sheet = $("#create-sheet");
+  const close = () => sheet.remove();
+  sheet.addEventListener("click", (ev) => { if (ev.target === sheet) close(); });
+  const publish = (slug) => {
+    close();
+    pickAndUploadPhoto(slug, { story: true }).then(() => { toast("Story publiée pour 24 h ✨"); setTimeout(() => location.reload(), 900); }, () => {});
+  };
+  $("#create-story").addEventListener("click", async () => {
+    if (list === null) list = await events;
+    if (list === null) return goLogin();
+    const today = new Date().toISOString().slice(0, 10);
+    const mine = [...list].sort((a, b) => (a.date < today) - (b.date < today) || a.date.localeCompare(b.date));
+    if (!mine.length) { toast("Créez d'abord un événement pour y publier une story."); return; }
+    if (mine.length === 1) return publish(mine[0].slug);
+    $("#create-body").innerHTML = `<p class="muted" style="margin:0">Sur quel événement ?</p>` + mine.map((ev) =>
+      `<button type="button" class="notif fav-row" data-slug="${esc(ev.slug)}" style="border:0;text-align:left;font:inherit;cursor:pointer">
+        <span class="fav-thumb" style="background-image:url('${esc(coverOf(ev))}')"></span>
+        <span><b>${esc(ev.name)}</b><small class="muted">${esc(formatDate(ev.date, ev.time))}</small></span></button>`).join("");
+    $("#create-body").addEventListener("click", (ev) => { const b = ev.target.closest("[data-slug]"); if (b) publish(b.dataset.slug); });
+  });
 }
 
 // Cloche 🔔 dans la barre du haut : nouveautés du compte (messages, livre d'or, réponses, lives…).

@@ -657,3 +657,5 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
 .fav-row { grid-template-columns: 52px 1fr; align-items: center; gap: 12px; }
 .fav-row span:last-child { display: grid; gap: 2px; min-width: 0; }
 .fav-thumb { width: 52px; height: 52px; border-radius: 10px; background: #ddd center / cover; }
+.create-big { min-height: 64px; font-size: 1.15rem; }
+#create-body { max-height: 60vh; overflow-y: auto; }
