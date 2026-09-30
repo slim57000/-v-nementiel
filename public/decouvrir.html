@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#e8137a">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;600;800&family=Quicksand:wght@600;700&display=swap">
-  <link rel="stylesheet" href="/css/app.css?v=69">
+  <link rel="stylesheet" href="/css/app.css?v=70">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -22,23 +22,67 @@
   </header>
   <main class="container centered">
     <h1>Découvrir</h1>
-    <p class="muted">Les événements publics à venir.</p>
+    <p class="muted">Trouvez un événement public, ou entrez le code reçu pour un événement privé.</p>
+    <div class="search-box">
+      <input id="q" type="search" placeholder="🔍 Rechercher : nom, ville, type…" aria-label="Rechercher un événement" autocomplete="off">
+    </div>
+    <div class="chips" id="chips" role="tablist"></div>
+    <form id="code-form" class="code-find">
+      <input id="code" maxlength="6" autocapitalize="characters" autocomplete="off" placeholder="Code d'invitation" aria-label="Code d'invitation">
+      <button class="btn btn-sm" type="submit">Accéder</button>
+    </form>
+    <p id="code-error" class="error" role="alert"></p>
     <style>#list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; } #list .pub-card { width: auto; }</style>
     <div id="list"></div>
-    <p id="empty" class="card hidden" style="text-align:center">Aucun événement public à venir pour le moment.</p>
+    <p id="empty" class="card hidden" style="text-align:center">Aucun événement ne correspond à votre recherche.</p>
   </main>
   <footer class="site-footer">
     <a href="/mentions-legales">Mentions légales</a> · <a href="/cgu">CGU</a> · <a href="/confidentialite">Confidentialité</a><br><a href="#" data-cookies>Gérer les cookies</a>
   </footer>
   <script type="module">
-    import { api, publicCard, tabbar } from "/js/common.js";
+    import { api, publicCard, tabbar, EVENT_TYPES, isLiveNow } from "/js/common.js";
+    const $ = (s) => document.querySelector(s);
     // La barre d'onglets n'est utile qu'aux organisateurs connectés.
     api("/api/auth/me").then(() => tabbar("discover")).catch(() => {});
-    let events = [];
+    let events = [], filter = "all";
     try { events = await api("/api/public?limit=50"); }
-    catch (err) { document.getElementById("empty").textContent = "Chargement impossible : " + err.message; }
-    document.getElementById("list").innerHTML = events.map(publicCard).join("");
-    document.getElementById("empty").classList.toggle("hidden", events.length > 0);
+    catch (err) { $("#empty").textContent = "Chargement impossible : " + err.message; }
+
+    // Recherche sans tenir compte des accents ni des majuscules.
+    const norm = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const types = [...new Set(events.map((e) => e.type))].filter((t) => EVENT_TYPES[t]);
+    $("#chips").innerHTML = [["all", "Tous"], ["live", "● En direct"], ...types.map((t) => [t, `${EVENT_TYPES[t].icon} ${EVENT_TYPES[t].label}`])]
+      .map(([k, l]) => `<button type="button" data-f="${k}" class="${k === "all" ? "active" : ""}">${l}</button>`).join("");
+
+    function show() {
+      const words = norm($("#q").value).split(/\s+/).filter(Boolean);
+      const list = events.filter((e) => {
+        if (filter === "live" && !isLiveNow(e)) return false;
+        if (filter !== "all" && filter !== "live" && e.type !== filter) return false;
+        const hay = norm(`${e.name} ${e.location} ${EVENT_TYPES[e.type]?.label}`);
+        return words.every((w) => hay.includes(w));
+      });
+      $("#list").innerHTML = list.map(publicCard).join("");
+      $("#empty").classList.toggle("hidden", list.length > 0);
+    }
+    $("#q").addEventListener("input", show);
+    $("#chips").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-f]");
+      if (!b) return;
+      filter = b.dataset.f;
+      document.querySelectorAll("#chips button").forEach((x) => x.classList.toggle("active", x === b));
+      show();
+    });
+    // Événement privé : le code d'invitation ouvre directement sa page.
+    $("#code-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      $("#code-error").textContent = "";
+      try {
+        const { slug } = await api("/api/public/join", { method: "POST", body: { code: $("#code").value } });
+        location.href = `/e/${encodeURIComponent(slug)}`;
+      } catch (err) { $("#code-error").textContent = err.message; }
+    });
+    show();
   </script>
 </body>
 </html>
