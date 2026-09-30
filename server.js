@@ -2,6 +2,7 @@ import { VAPID_PUBLIC_KEY, PUSH_ENABLED, notify, orgOwner } from "./lib/push.js"
 import { guestAuthor } from "./lib/guest.js";
 import { savePushSub, listFollowerIds, deletePushSub } from "./lib/store.js";
 import { remindInvites } from "./lib/invites.js";
+import { REALTIME } from "./lib/realtime.js";
 import { reportError } from "./lib/monitor.js";
 import { tooFast } from "./lib/limits.js";
 import { GOOGLE_ENABLED } from "./lib/google.js";
@@ -46,6 +47,7 @@ app.get("/api/config", async (req, res) => res.json({
   gaId: process.env.GA_MEASUREMENT_ID || "",
   emailEnabled: EMAIL_ENABLED,
   vapidPublicKey: VAPID_PUBLIC_KEY,
+  realtime: REALTIME,
   social: GOOGLE_ENABLED ? ["google"] : [],
   paidReactions: PAYMENTS_ENABLED ? Object.fromEntries(Object.entries(PAID_REACTIONS).map(([e, r]) => [e, r.amount])) : {},
   defaultLivePlatform: (await getSetting("defaultLivePlatform").catch(() => null)) || "youtube",

@@ -1,4 +1,4 @@
-import { api, $, esc, toast, tabbar, goLogin } from "./common.js";
+import { api, $, esc, toast, tabbar, goLogin, onRealtime } from "./common.js";
 
 tabbar("messages");
 const otherId = Number(new URLSearchParams(location.search).get("u")) || null;
@@ -71,7 +71,9 @@ async function showConversation() {
   $("#dm-name").textContent = data.with?.name || "";
   $("#dm-avatar").outerHTML = avatarHtml(data.with);
   document.title = `${data.with?.name || "Messages"} — EverMoments`;
-  setInterval(() => { if (!document.hidden) refresh(); }, 4000);
+  // Instantané via le temps réel si disponible (secours toutes les 20 s), sinon toutes les 4 s.
+  const live = await onRealtime(`dm-${Math.min(meId, otherId)}-${Math.max(meId, otherId)}`, () => refresh());
+  setInterval(() => { if (!document.hidden) refresh(); }, live ? 20000 : 4000);
 }
 
 $("#dm-form").addEventListener("submit", async (e) => {

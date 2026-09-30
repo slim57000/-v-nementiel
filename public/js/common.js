@@ -425,3 +425,18 @@ export async function enablePush() {
   await api("/api/push/subscribe", { method: "POST", body: { subscription: sub.toJSON() } });
 }
 export const pushState = () => (typeof Notification === "undefined" ? "unsupported" : Notification.permission);
+
+// Temps réel : appelle `onPing` dès qu'un signal arrive sur `topic` (Supabase Realtime, si activé).
+// Renvoie vrai si l'abonnement est actif (la page peut alors espacer ses rafraîchissements).
+let realtimeClient;
+export async function onRealtime(topic, onPing) {
+  try {
+    const { realtime } = await fetch("/api/config").then((r) => r.json());
+    if (!realtime) return false;
+    realtimeClient ||= (await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm")).createClient(realtime.url, realtime.key);
+    realtimeClient.channel(topic).on("broadcast", { event: "ping" }, onPing).subscribe();
+    return true;
+  } catch {
+    return false;
+  }
+}

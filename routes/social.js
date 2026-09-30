@@ -3,6 +3,7 @@
 import { Router } from "express";
 import { tooFast } from "../lib/limits.js";
 import { notify, orgOwner } from "../lib/push.js";
+import { ping, eventTopic } from "../lib/realtime.js";
 import {
   findEventBySlug, addMessage, listMessages, addPhoto, listPhotos, findPhoto, deletePhoto,
   addGuestbookEntry, listGuestbook, findGuestbookEntry, updateGuestbookEntry, likeGuestbookEntry, deleteGuestbookEntry,
@@ -52,7 +53,9 @@ router.post("/messages", notBlocked, async (req, res) => {
   const text = clean(req.body?.text, 200);
   if (!name || !text) return res.status(400).json({ error: "Prénom et message obligatoires." });
   if (await tooFast(`${req.ip}:msg`, 5, 10_000)) return res.status(429).json({ error: "Doucement ! Attendez quelques secondes." });
-  res.status(201).json(await addMessage(req.event.id, { kind: "chat", name, text, author: req.author }));
+  const msg = await addMessage(req.event.id, { kind: "chat", name, text, author: req.author });
+  await ping(eventTopic(req.event.slug));
+  res.status(201).json(msg);
 });
 
 router.post("/reactions", notBlocked, async (req, res) => {
@@ -60,7 +63,9 @@ router.post("/reactions", notBlocked, async (req, res) => {
   if (!REACTIONS.includes(emoji)) return res.status(400).json({ error: "Réaction inconnue." });
   if (PAYMENTS_ENABLED && PAID_REACTIONS[emoji]) return res.status(402).json({ error: "Réaction payante." });
   if (await tooFast(`${req.ip}:reaction`, 10, 10_000)) return res.status(429).json({ error: "Trop de réactions d'un coup." });
-  res.status(201).json(await addMessage(req.event.id, { kind: "reaction", name: clean(req.body?.name, 30) || "Invité", text: emoji, author: req.author }));
+  const msg = await addMessage(req.event.id, { kind: "reaction", name: clean(req.body?.name, 30) || "Invité", text: emoji, author: req.author });
+  await ping(eventTopic(req.event.slug));
+  res.status(201).json(msg);
 });
 
 // Réaction payante : page de paiement Stripe, puis affichage au retour (une fois par paiement).
@@ -82,6 +87,7 @@ router.post("/paid", async (req, res) => {
   const r = PAID_REACTIONS[paid.emoji];
   await addMessage(req.event.id, { kind: "reaction", name: paid.name, text: paid.emoji, author: req.author });
   const msg = await addMessage(req.event.id, { kind: "chat", name: paid.name, text: `a offert ${r ? r.label : "une réaction"} ${paid.emoji} 💝`, author: req.author });
+  await ping(eventTopic(req.event.slug));
   res.json({ ok: true, message: msg });
 });
 

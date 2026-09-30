@@ -2,6 +2,7 @@
 import { Router } from "express";
 import { tooFast } from "../lib/limits.js";
 import { notify, orgOwner } from "../lib/push.js";
+import { ping, dmTopic } from "../lib/realtime.js";
 import { requireOrganizer } from "./auth.js";
 import { publicView } from "../lib/events.js";
 import { saveDataUrl, removeUpload, isVideoUrl } from "../lib/uploads.js";
@@ -164,6 +165,7 @@ router.post("/dm/:userId", async (req, res) => {
   if (!(await canTalk(req.organizer.id, other))) return res.status(403).json({ error: "Conversation indisponible." });
   if (await tooFast(`dm:${req.organizer.id}`, 20, 60_000)) return res.status(429).json({ error: "Doucement !" });
   const msg = await addDirectMessage(req.organizer.id, other, text);
+  await ping(dmTopic(req.organizer.id, other));
   notify([orgOwner(other)], { title: `💬 ${displayName(req.organizer)}`, body: text.slice(0, 140), url: `/messages?u=${req.organizer.id}` }).catch(() => {});
   res.status(201).json(msg);
 });

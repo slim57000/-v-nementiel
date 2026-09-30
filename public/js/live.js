@@ -1,4 +1,4 @@
-import { api, $, esc, shareSheet, toast, guestName, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, coverOf } from "./common.js";
+import { api, $, esc, shareSheet, toast, guestName, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, coverOf, onRealtime } from "./common.js";
 import { icon } from "./icons.js";
 
 const slug = new URLSearchParams(location.search).get("e") || "";
@@ -177,11 +177,13 @@ function handle(items) {
   firstLoad = false;
 }
 
+// Chat : instantané via le temps réel si disponible (rafraîchissement de secours toutes les 15 s), sinon toutes les 3 s.
+let pollDelay = 3000;
+const fetchFeed = async () => { try { handle(await api(`${base}/feed?after=${lastId}`)); } catch { /* réseau : on réessaie */ } };
+onRealtime(`ev-${slug}`, fetchFeed).then((on) => { if (on) pollDelay = 15000; });
 async function poll() {
-  if (!document.hidden) {
-    try { handle(await api(`${base}/feed?after=${lastId}`)); } catch { /* réseau : on réessaie */ }
-  }
-  setTimeout(poll, 3000);
+  if (!document.hidden) await fetchFeed();
+  setTimeout(poll, pollDelay);
 }
 
 // Réactions payantes (si le paiement est activé) : prix sous chaque bouton, paiement Stripe au clic.
