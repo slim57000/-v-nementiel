@@ -2,7 +2,7 @@ import { Router } from "express";
 import { findOrganizerByEmail, findOrganizer, createOrganizer, deleteOrganizer, listEvents, saveOrganizer, getSetting, setSetting, clearLimit } from "../lib/store.js";
 import { loginCode } from "../lib/codes.js";
 import { setSigned, getSigned } from "../lib/session.js";
-import { codeEmail, resetEmail, EMAIL_ENABLED } from "../lib/email.js";
+import { codeEmail, resetEmail, EMAIL_ENABLED, lastEmailError } from "../lib/email.js";
 import { setPassword, hasPassword, checkPassword, passwordError } from "../lib/password.js";
 import { GOOGLE_ENABLED, googleAuthUrl, googleIdentity } from "../lib/google.js";
 import { FACEBOOK_ENABLED, facebookAuthUrl, facebookIdentity } from "../lib/facebook.js";
@@ -70,7 +70,10 @@ router.post("/forgot", async (req, res) => {
     const token = randomBytes(24).toString("base64url");
     await setSetting(`reset:${token}`, { id: organizer.id, exp: Date.now() + 3_600_000 });
     if (!(await resetEmail(email, `${origin(req)}/reinitialiser?token=${token}`))) {
-      return res.status(502).json({ error: "L'email n'a pas pu être envoyé. Réessayez dans quelques minutes ou connectez-vous avec Google." });
+      const unverified = /own email address|verify a domain|not verified/i.test(lastEmailError);
+      return res.status(502).json({ error: unverified
+        ? "L'envoi d'emails est en cours d'activation (domaine mafeliza.com à vérifier dans Resend). Réessayez plus tard ou connectez-vous avec Google."
+        : `L'email n'a pas pu être envoyé (${lastEmailError || "erreur inconnue"}). Réessayez dans quelques minutes ou connectez-vous avec Google.` });
     }
   }
   res.json({ ok: true });
