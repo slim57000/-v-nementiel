@@ -1,4 +1,4 @@
-import { api, $, esc, toast, tabbar, goLogin, onRealtime, LOCALE } from "./common.js";
+import { api, $, esc, toast, tabbar, goLogin, onRealtime, LOCALE, shareSheet, copy } from "./common.js";
 
 tabbar("messages");
 const otherId = Number(new URLSearchParams(location.search).get("u")) || null;
@@ -7,6 +7,45 @@ let meId = null;
 export const avatarHtml = (p) => (p?.avatar
   ? `<span class="avatar" style="background-image:url('${esc(p.avatar)}')"></span>`
   : `<span class="avatar">${esc((p?.name || "?").charAt(0).toUpperCase())}</span>`);
+
+// --- Devenir amis : un code / lien personnel à partager, ou le code d'un proche à saisir ---
+const addFriend = async (code) => {
+  const { id } = await api("/api/me/friends/add", { method: "POST", body: { code } });
+  toast("Vous êtes maintenant amis 🎉");
+  location.href = `/messages?u=${id}`;
+};
+const invited = new URLSearchParams(location.search).get("ami");
+if (invited) {
+  // Non connecté : connexion puis retour ici avec le même lien.
+  addFriend(invited).catch((err) => { if (err.status === 401) return goLogin(); history.replaceState(null, "", "/messages"); toast(err.message); });
+}
+$("#add-friend")?.addEventListener("click", async () => {
+  let code = "";
+  try { ({ code } = await api("/api/me/friend-code")); } catch (err) { return err.status === 401 ? goLogin() : toast(err.message); }
+  const link = `${location.origin}/messages?ami=${code}`;
+  document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="friend-sheet" role="dialog" aria-modal="true">
+    <div class="card"><h2 style="margin-top:0">➕ Ajouter un ami</h2>
+      <p class="muted" style="margin-top:0">Envoyez votre lien : la personne l'ouvre et vous êtes amis.</p>
+      <div class="code-remind"><span><b>Mon code ami</b><small class="muted">À donner de vive voix</small></span>
+        <button type="button" class="code" id="fr-copy">${code} 📋</button></div>
+      <button class="btn btn-block" type="button" id="fr-share" style="margin-top:12px">📤 Envoyer mon lien</button>
+      <form id="fr-form" class="code-find" style="margin-top:14px">
+        <input id="fr-code" maxlength="6" autocapitalize="characters" autocomplete="off" placeholder="Code d'un ami" aria-label="Code d'un ami">
+        <button class="btn btn-sm" type="submit">Ajouter</button>
+      </form>
+      <p class="error" id="fr-error" role="alert"></p>
+      <button class="btn btn-light btn-block" type="button" id="fr-close">Fermer</button></div></div>`);
+  const sheet = $("#friend-sheet");
+  sheet.addEventListener("click", (e) => {
+    if (e.target === sheet || e.target.id === "fr-close") sheet.remove();
+    if (e.target.id === "fr-copy") copy(code, "Code copié !");
+    if (e.target.id === "fr-share") shareSheet({ title: "Ajoute-moi sur MaFeliza", text: "👋 Ajoute-moi en ami sur MaFeliza pour partager nos événements :", url: link });
+  });
+  $("#fr-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try { await addFriend($("#fr-code").value); } catch (err) { $("#fr-error").textContent = err.message; }
+  });
+});
 
 const time = (d) => new Date(d).toLocaleString(LOCALE, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 

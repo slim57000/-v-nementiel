@@ -1,5 +1,6 @@
 // Espace personnel d'un utilisateur connecté : profil, favoris, historique, amis, messages privés, blocages.
 import { Router } from "express";
+import { randomCode } from "../lib/codes.js";
 import { tooFast } from "../lib/limits.js";
 import { notify, orgOwner } from "../lib/push.js";
 import { ping, dmTopic } from "../lib/realtime.js";
@@ -9,7 +10,7 @@ import { saveDataUrl, removeUpload, isVideoUrl } from "../lib/uploads.js";
 import {
   saveOrganizer, listEvents, findEvent, findEventsByIds, findOrganizersByIds,
   addFavorite, removeFavorite, listFavoriteIds, listHistoryIds,
-  listFriendIds, removeFriends, addBlock, removeBlock, listBlockIds,
+  listFriendIds, removeFriends, addBlock, removeBlock, listBlockIds, addFriends,
   addDirectMessage, listDirectMessages, lastDirectMessage, listPhotos, listGuestbook, listPublicUpcoming, listRecentPhotos, listRecentGuestbook,
   getSetting, setSetting,
 } from "../lib/store.js";
@@ -147,6 +148,29 @@ router.get("/history", async (req, res) => {
 });
 
 // --- Amis et blocages ---
+// Code ami personnel (6 caractères) : le partager suffit pour devenir amis.
+async function friendCode(id) {
+  let code = await getSetting(`friendcode:${id}`);
+  if (!code) {
+    code = randomCode();
+    await Promise.all([setSetting(`friendcode:${id}`, code), setSetting(`friendby:${code}`, id)]);
+  }
+  return code;
+}
+router.get("/friend-code", async (req, res) => res.json({ code: await friendCode(req.organizer.id) }));
+router.post("/friends/add", async (req, res) => {
+  if (await tooFast(`friendadd:${req.organizer.id}`, 30, 3_600_000)) return res.status(429).json({ error: "Trop d'essais, réessayez plus tard." });
+  const code = String(req.body?.code || "").trim().toUpperCase();
+  const other = /^[A-Z0-9]{6}$/.test(code) ? await getSetting(`friendby:${code}`) : null;
+  if (!other) return res.status(404).json({ error: "Code ami inconnu." });
+  if (other === req.organizer.id) return res.status(400).json({ error: "C'est votre propre code 🙂" });
+  const [mine, theirs] = await Promise.all([listBlockIds(req.organizer.id), listBlockIds(other)]);
+  if (mine.includes(other) || theirs.includes(req.organizer.id)) return res.status(403).json({ error: "Ajout impossible." });
+  await addFriends(req.organizer.id, other);
+  notify([orgOwner(other)], { title: `👋 ${displayName(req.organizer)} vous a ajouté en ami`, body: "Vous pouvez maintenant vous écrire.", url: `/messages?u=${req.organizer.id}` }).catch(() => {});
+  res.json({ ok: true, id: other });
+});
+
 router.get("/friends", async (req, res) => {
   const me = req.organizer.id;
   const blocked = new Set(await listBlockIds(me));

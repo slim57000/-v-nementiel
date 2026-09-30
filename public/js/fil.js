@@ -1,5 +1,5 @@
 // Fil d'actualité façon Instagram : nouveaux événements, photos/vidéos des invités, messages du livre d'or.
-import { api, $, esc, toast, tabbar, goLogin, coverOf, isLiveNow, dayBadge, isVideo, viewPhoto, EVENT_TYPES, LOCALE } from "./common.js";
+import { api, $, esc, toast, tabbar, goLogin, coverOf, isLiveNow, dayBadge, isVideo, viewPhoto, EVENT_TYPES, LOCALE, shareSheet, liveState } from "./common.js";
 
 tabbar("home");
 
@@ -34,6 +34,8 @@ function post(it, i) {
       ${it.kind === "message" ? `<button data-like="${i}" class="${liked.has(it.id) ? "on" : ""}">❤️ ${it.likes}</button>
         <a class="btn btn-ghost btn-sm" href="/e/${encodeURIComponent(ev.slug)}#gb-list">💬 ${it.replies || "Répondre"}</a>` : ""}
       ${it.kind === "event" ? `<a class="btn btn-sm" href="${eventLink(ev)}">${isLiveNow(ev) ? "● Rejoindre le live" : "Voir l'événement"}</a>` : ""}
+      ${ev.cameras?.length && liveState(ev) === "replay" ? `<a class="btn btn-sm" href="/live?e=${encodeURIComponent(ev.slug)}">▶ Revoir le live</a>` : ""}
+      <button type="button" class="btn btn-ghost btn-sm" data-share="${i}">↗ Partager</button>
       ${ev.cagnotteUrl ? `<a class="btn btn-light btn-sm" href="${esc(ev.cagnotteUrl)}" target="_blank" rel="noopener">🎁 Cagnotte</a>` : ""}
     </footer>
   </article>`;
@@ -50,6 +52,15 @@ try {
 $("#feed").addEventListener("click", async (e) => {
   const v = e.target.dataset.view;
   if (v !== undefined) viewPhoto({ url: items[v].url, name: items[v].name });
+  // Republier : partage du moment (photo, message ou événement) vers WhatsApp, SMS, Instagram…
+  const sh = e.target.dataset.share;
+  if (sh !== undefined) {
+    const it = items[sh], ev = it.event;
+    const text = it.kind === "photo" ? `📸 Un beau moment de « ${ev.name} » sur MaFeliza`
+      : it.kind === "message" ? `💬 « ${String(it.text || "").slice(0, 100)} » — ${ev.name}`
+      : `🎉 « ${ev.name} » sur MaFeliza`;
+    return shareSheet({ title: ev.name, text, url: `${location.origin}${eventLink(ev)}` });
+  }
   const l = e.target.dataset.like;
   if (l === undefined) return;
   const it = items[l];

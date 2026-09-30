@@ -15,7 +15,7 @@ import { getSetting, setSetting } from "../lib/store.js";
 import { saveDataUrl, removeUpload, isOwnUpload, isVideoUrl, videoUploadTarget, MAX_VIDEO_BYTES } from "../lib/uploads.js";
 import { hasAccess } from "./public.js";
 import { currentOrganizer } from "./auth.js";
-import { LIVEKIT_ENABLED, LIVEKIT_URL, lkToken, isLkRoom } from "../lib/livekit.js";
+import { LIVEKIT_ENABLED, LIVEKIT_URL, lkToken, isLkRoom, isLive } from "../lib/livekit.js";
 
 const router = Router({ mergeParams: true });
 
@@ -34,10 +34,16 @@ router.use(async (req, res, next) => {
 });
 
 // Lecteur du live « téléphone » : jeton de lecture seule pour une caméra de cet événement.
-router.get("/lk", (req, res) => {
+// Lecteur : jeton si le direct est en cours, et les segments du replay déjà enregistrés.
+router.get("/lk", async (req, res) => {
   const room = String(req.query.room || "");
-  if (!LIVEKIT_ENABLED || !isLkRoom(req.event, room)) return res.status(404).json({ error: "Direct introuvable." });
-  res.json({ url: LIVEKIT_URL, token: lkToken({ room, identity: `v-${req.author}-${Date.now().toString(36)}`, name: "Invité" }) });
+  if (!isLkRoom(req.event, room)) return res.status(404).json({ error: "Direct introuvable." });
+  const [live, all] = await Promise.all([isLive(room), getSetting(`replay:${req.event.id}`)]);
+  const replay = (all || []).filter((s) => s.room === room).map((s) => s.url);
+  res.json({
+    live: live && LIVEKIT_ENABLED, replay,
+    ...(live && LIVEKIT_ENABLED && { url: LIVEKIT_URL, token: lkToken({ room, identity: `v-${req.author}-${Date.now().toString(36)}`, name: "Invité" }) }),
+  });
 });
 
 // Contenus des personnes bloquées par l'organisateur : masqués pour tout le monde.

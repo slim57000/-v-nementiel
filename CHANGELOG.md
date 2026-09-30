@@ -1,5 +1,10 @@
 # Journal des modifications — MaFeliza
 
+## Version 1.7 — Partager et revivre
+- **Replay du live téléphone** : le direct est enregistré automatiquement (morceaux de 4 min envoyés au fur et à mesure) ; dès l'arrêt, les invités le revoient sur la page du live pendant 15 jours.
+- **Devenir amis simplement** : « ➕ Ajouter un ami » dans Messages, un lien personnel à envoyer (un clic et c'est fait) ou un code ami à 6 caractères.
+- **Republier** : bouton « ↗ Partager » sur chaque publication du fil, « ▶ Revoir le live » sur les événements passés.
+
 ## Version 1.6 — Rapidité
 - Chargement plus rapide : préchargement des scripts communs, cache navigateur des photos, CSS et bibliothèques, photos allégées (-30 %).
 - Recherche d'événements (nom, ville, type), filtres et accès par code dans Découvrir.

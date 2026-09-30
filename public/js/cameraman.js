@@ -93,7 +93,48 @@ $("#share-photo").addEventListener("click", () =>
   pickAndUploadPhoto(slug).then(() => toast("Image partagée ✔"), () => {}));
 
 // --- Direct depuis le téléphone (LiveKit) ---
-let room = null, wakeLock = null, facing = "environment";
+let room = null, wakeLock = null, facing = "environment", roomName = "";
+
+// --- Replay : le téléphone enregistre le direct par segments de 4 min, envoyés au fur et à mesure ---
+const SEGMENT_MS = 4 * 60 * 1000;
+let recorder = null, segTimer = null, uploads = Promise.resolve(), recording = false;
+const MIME = ["video/mp4;codecs=avc1,mp4a", "video/mp4", "video/webm;codecs=vp8,opus", "video/webm"]
+  .find((m) => window.MediaRecorder?.isTypeSupported?.(m));
+
+function localStream() {
+  const tracks = [...(room?.localParticipant.trackPublications.values() || [])].map((p) => p.track?.mediaStreamTrack).filter(Boolean);
+  return new MediaStream(tracks);
+}
+function startSegment() {
+  if (!recording || !MIME) return;
+  const chunks = [];
+  const rec = new MediaRecorder(localStream(), { mimeType: MIME, videoBitsPerSecond: 1_000_000, audioBitsPerSecond: 64_000 });
+  rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+  rec.onstop = () => { const blob = new Blob(chunks, { type: MIME.split(";")[0] }); if (blob.size > 50_000) uploads = uploads.then(() => sendSegment(blob)); };
+  rec.start(10_000);
+  recorder = rec;
+  segTimer = setTimeout(() => { rec.stop(); startSegment(); }, SEGMENT_MS);
+}
+// Arrête l'enregistrement et attend que le dernier segment soit prêt à l'envoi.
+function stopRecording() {
+  recording = false;
+  clearTimeout(segTimer);
+  const rec = recorder;
+  recorder = null;
+  if (rec?.state !== "recording") return Promise.resolve();
+  return new Promise((done) => { rec.addEventListener("stop", () => setTimeout(done, 0), { once: true }); rec.stop(); });
+}
+async function sendSegment(blob) {
+  const s = encodeURIComponent(slug);
+  try {
+    const type = blob.type;
+    const target = await api(`/api/cameraman/${s}/replay-url`, { method: "POST", body: { type, size: blob.size } });
+    let url = target.publicUrl;
+    if (target.mode === "local") url = (await (await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": type }, body: blob })).json()).publicUrl;
+    else if (!(await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": type }, body: blob })).ok) throw new Error();
+    await api(`/api/cameraman/${s}/replay`, { method: "POST", body: { room: roomName, url } });
+  } catch { toast("Un morceau du replay n'a pas pu être enregistré."); }
+}
 const status = (t) => { $("#live-status").textContent = t; };
 
 async function startLive() {
@@ -110,13 +151,16 @@ async function startLive() {
     video.attach($("#preview"));
     $("#preview-wrap").classList.remove("hidden");
     status("Connexion au direct…");
-    const { url, token, name } = await api(`/api/cameraman/${encodeURIComponent(slug)}/go-live`, { method: "POST", body: { name: $("#cam-label").value } });
+    const { url, token, name, room: rn, record } = await api(`/api/cameraman/${encodeURIComponent(slug)}/go-live`, { method: "POST", body: { name: $("#cam-label").value } });
     room = new Room({ dynacast: true });
     room.on(RoomEvent.Reconnecting, () => status("⚠️ Réseau instable, reconnexion…"));
     room.on(RoomEvent.Reconnected, () => status("Les invités vous voient. Gardez cet écran ouvert."));
     room.on(RoomEvent.Disconnected, () => { if (room) status("⚠️ Connexion perdue : vérifiez le réseau puis relancez."); });
     await room.connect(url, token);
     for (const t of tracks) await room.localParticipant.publishTrack(t);
+    roomName = rn;
+    recording = Boolean(record);
+    startSegment();
     try { wakeLock = await navigator.wakeLock?.request("screen"); } catch { /* facultatif */ }
     if (!current.cameras.some((c) => c.name === name && c.url.startsWith("lk:"))) current = await api(`/api/cameraman/${encodeURIComponent(slug)}`);
     $("#go-live").classList.add("hidden");
@@ -132,6 +176,11 @@ async function startLive() {
 }
 
 async function stopLive(silent) {
+  const wasLive = Boolean(room);
+  await stopRecording();
+  if (wasLive && !silent) status("Enregistrement du replay… gardez cette page ouverte.");
+  await uploads;
+  if (wasLive && roomName) api(`/api/cameraman/${encodeURIComponent(slug)}/stop-live`, { method: "POST", body: { room: roomName } }).catch(() => {});
   const r = room;
   room = null;
   r?.localParticipant.trackPublications.forEach((p) => p.track?.stop());
@@ -143,14 +192,18 @@ async function stopLive(silent) {
   $("#live-controls").classList.add("hidden");
   $("#go-live").classList.remove("hidden");
   $("#live-dot").classList.remove("on");
-  if (!silent) { status("Direct arrêté."); toast("Direct arrêté"); }
+  if (!silent) { status("Direct arrêté. Le replay est disponible pour les invités."); toast("Direct arrêté"); }
 }
 
 // Retourner la caméra (avant / arrière) sans couper le direct.
 async function flipCamera() {
   facing = facing === "environment" ? "user" : "environment";
   const pub = [...(room?.localParticipant.videoTrackPublications.values() || [])][0];
-  try { await pub?.track?.restartTrack({ facingMode: facing }); } catch { toast("Impossible de changer de caméra."); }
+  try {
+    await pub?.track?.restartTrack({ facingMode: facing });
+    // Nouvelle caméra : nouveau segment de replay (l'ancien flux vidéo est arrêté).
+    if (recording) { clearTimeout(segTimer); recorder?.stop(); startSegment(); }
+  } catch { toast("Impossible de changer de caméra."); }
 }
 
 $("#go-live").addEventListener("click", startLive);
