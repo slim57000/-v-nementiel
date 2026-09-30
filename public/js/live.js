@@ -69,7 +69,11 @@ async function load() {
 
   document.title = `Live — ${ev.name}`;
   $("#title").textContent = ev.name;
-  $("#close").href = `/e/${encodeURIComponent(slug)}`;
+  // Croix : retour à la page précédente du site (accueil, découvrir, tableau de bord…), sinon à l'accueil.
+  $("#close").href = "/";
+  $("#close").onclick = (e) => {
+    if (document.referrer.startsWith(location.origin) && history.length > 1) { e.preventDefault(); history.back(); }
+  };
   $("#share").onclick = () => shareSheet({ title: ev.name, text: `📺 Suivez « ${ev.name} » en direct !`, url: location.href });
 
   if (ev.cagnotteUrl) {
