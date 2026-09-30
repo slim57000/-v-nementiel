@@ -49,6 +49,11 @@ const safeNext = (n) => (typeof n === "string" && n.startsWith("/") && !n.starts
 // par une autre adresse (aperçu Vercel, ancien domaine…). Sinon, l'adresse de la requête.
 const origin = (req) => (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
 const callbackUrl = (req) => `${origin(req)}/api/auth/google/callback`;
+// Diagnostic : adresses de retour à enregistrer dans Google Cloud / Facebook (rien de secret).
+router.get("/redirect-uris", (req, res) => res.json({
+  google: callbackUrl(req), facebook: fbCallbackUrl(req), publicUrl: process.env.PUBLIC_URL || "(non défini)",
+}));
+
 router.get("/google", (req, res) => {
   if (!GOOGLE_ENABLED) return res.redirect("/connexion");
   const nonce = randomBytes(12).toString("hex");
