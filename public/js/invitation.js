@@ -7,6 +7,7 @@ export const TEMPLATES = {
     ["Ils se disent oui", "Après de belles années main dans la main, nous avons décidé de nous dire oui. Votre présence rendra ce jour encore plus beau."],
     ["Save the date", "Réservez la date ! Nous serions honorés de vous compter parmi nous pour célébrer notre union, dans la joie et l'émotion."],
     ["Un jour inoubliable", "Deux familles, deux cœurs, une seule promesse. Venez célébrer notre mariage et danser avec nous jusqu'au bout de la nuit."],
+    ["En petit comité", "Nous avons la joie de vous annoncer notre mariage qui se déroulera en petit comité. Parce que vous comptez pour nous et que nous souhaitons partager ce moment malgré la distance, nous vous invitons à suivre notre cérémonie en direct !"],
   ],
   anniversaire: [
     ["Joyeux anniversaire", "Vous êtes invités à fêter cet anniversaire avec nous ! Venez partager un moment de fête et de bonne humeur."],
@@ -62,6 +63,7 @@ export const TEMPLATES_EN = {
     ["We're getting married", "We are delighted to invite you to our wedding and would be so happy to share this special day with you."],
     ["Save the date", "Save the date! We would be honoured to have you with us to celebrate our union."],
     ["An unforgettable day", "Two families, two hearts, one promise. Come celebrate our wedding and dance with us all night long."],
+    ["An intimate wedding", "We are delighted to announce our wedding, which will take place in an intimate setting. Because you matter to us and we want to share this moment despite the distance, we invite you to watch our ceremony live!"],
   ],
   fiancailles: [["We're engaged!", "We are thrilled to share the news of our engagement and would love to celebrate it with you."], ["Save the date", "Join us to celebrate our engagement surrounded by the people we love."]],
   anniversaire: [
