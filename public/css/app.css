@@ -571,6 +571,7 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
 .logo span { font-family: "Quicksand", "Inter", system-ui, sans-serif; font-weight: 700; }
 /* Couleurs MaFeliza : boutons principaux au dégradé du logo (rose → magenta) */
 .btn:not(.btn-light):not(.btn-ghost):not(.btn-danger) { background: linear-gradient(135deg, #fd1a85, #c60bd2); }
+.ev-cover .btn:not(.btn-light):not(.btn-ghost) { background: #fff; color: var(--primary); }
 .btn:not(.btn-light):not(.btn-ghost):not(.btn-danger):hover { background: linear-gradient(135deg, #e8137a, #a90ab8); }
 .slogan b { background: linear-gradient(90deg, #fe7320, #fd1a85 50%, #8a1de9); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .slogan { max-width: none; } .slogan b { white-space: nowrap; font-size: min(1rem, 4.2vw); }
