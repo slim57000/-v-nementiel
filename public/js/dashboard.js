@@ -1,4 +1,4 @@
-import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard } from "./common.js";
+import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf } from "./common.js";
 import { icon } from "./icons.js";
 
 $("#profile-btn").innerHTML = icon("user");
@@ -37,7 +37,7 @@ function renderStories() {
       const badge = dayBadge(ev.date);
       const live = isLive(ev);
       return `<a class="story" href="${live ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`}">
-        <div class="story-img ${live ? "live" : ""}" ${bg(ev.cover)}>${ev.cover ? "" : EVENT_TYPES[ev.type].icon}
+        <div class="story-img ${live ? "live" : ""}" ${bg(coverOf(ev))}>
           <span class="story-badge ${live || badge === "Aujourd'hui" ? "today" : ""}">${live ? "LIVE" : badge}</span></div>
         <span>${esc(ev.name)}</span></a>`;
     }).join("")}`;
@@ -49,12 +49,12 @@ function card(ev) {
   return `
   <article class="ev-card event-item" data-slug="${esc(ev.slug)}">
     <div class="ev-head">
-      <div class="ev-avatar" ${bg(ev.cover)}>${ev.cover ? "" : type.icon}</div>
+      <div class="ev-avatar" ${bg(coverOf(ev))}></div>
       <div><h3>${esc(ev.name)}</h3><div class="muted">${type.label} · ${esc(ev.location)}</div>
         ${ev.reports ? `<a class="report-badge" href="/e/${esc(ev.slug)}">⚠️ ${ev.reports} signalement${ev.reports > 1 ? "s" : ""}</a>` : ""}</div>
       ${isLive(ev) ? '<span class="live-tag" style="margin-left:auto">LIVE</span>' : `<span class="badge ${isPrivate ? "private" : ""}">${isPrivate ? "🔒 Privé" : "🔓 Public"}</span>`}
     </div>
-    <div class="ev-cover" ${bg(ev.cover)}>
+    <div class="ev-cover" ${bg(coverOf(ev))}>
       ${isLive(ev)
         ? `<div class="live-now">LIVE EN COURS</div>
            <a class="btn btn-block" href="/live?e=${encodeURIComponent(ev.slug)}">${icon("play", 16)} Rejoindre le Live</a>`
@@ -82,14 +82,6 @@ function card(ev) {
   </article>`;
 }
 
-// Carte d'un événement public ; en direct, elle ouvre le live et porte le badge LIVE.
-function discoverCard(e) {
-  const html = publicCard(e);
-  return isLive(e)
-    ? html.replace(`href="/e/${esc(e.slug)}"`, `href="/live?e=${encodeURIComponent(e.slug)}"`).replace(/<span class="tag">[^<]*/, '<span class="tag">● LIVE')
-    : html;
-}
-
 function render() {
   renderStories();
   // « À venir » : pas encore commencé (les directs du jour sont dans « En direct »).
@@ -103,7 +95,7 @@ function render() {
     : "Vous n'avez pas encore d'événement.<br>Créez le premier en quelques minutes !";
   $("#list").innerHTML = shown.map(card).join("") + (others.length
     ? `<div class="section-title"><h2>À découvrir</h2><a href="/decouvrir" class="see-all">Voir tout</a></div>
-       <div class="p-grid">${others.map(discoverCard).join("")}</div>`
+       <div class="p-grid">${others.map(publicCard).join("")}</div>`
     : "");
 }
 

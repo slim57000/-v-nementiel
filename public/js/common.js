@@ -100,10 +100,19 @@ export function dayBadge(date) {
 }
 
 // Vignette d'un événement public (accueil, Découvrir).
+// Photo par défaut selon le type, pour les événements sans photo de couverture.
+const TYPE_COVER = {
+  mariage: "live-mariage", fiancailles: "mariage", bapteme: "bebe", "baby-shower": "bebe", communion: "costume",
+  anniversaire: "anniversaire", diplome: "diplome", retraite: "anniversaire", inauguration: "enfants", autre: "live-mariage",
+};
+export const coverOf = (ev) => ev.cover || `/img/demo/${TYPE_COVER[ev.type] || "live-mariage"}.jpg`;
+// « En direct » : événement du jour avec au moins une caméra.
+export const isLiveNow = (ev) => ev.date === new Date().toISOString().slice(0, 10) && ev.cameras?.length > 0;
+
 export function publicCard(ev) {
-  const cover = ev.cover ? `style="background-image:url('${esc(ev.cover)}')"` : "";
-  return `<a class="pub-card" href="/e/${esc(ev.slug)}" ${cover}>
-    <span class="tag">${esc(dayBadge(ev.date))}</span>
+  const live = isLiveNow(ev);
+  return `<a class="pub-card" href="${live ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`}" style="background-image:url('${esc(coverOf(ev))}')">
+    <span class="tag">${live ? "● LIVE" : esc(dayBadge(ev.date))}</span>
     <b>${esc(ev.name)}</b>
     <span>${EVENT_TYPES[ev.type].icon} ${esc(ev.location)}</span>
   </a>`;

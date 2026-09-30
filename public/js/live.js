@@ -1,4 +1,4 @@
-import { api, $, esc, shareSheet, toast, guestName, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState } from "./common.js";
+import { api, $, esc, shareSheet, toast, guestName, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, coverOf } from "./common.js";
 import { icon } from "./icons.js";
 
 const slug = new URLSearchParams(location.search).get("e") || "";
@@ -104,7 +104,7 @@ async function load() {
     return `<button class="cam ${thumb ? "has-thumb" : ""}" data-index="${i}" ${thumb ? `style="background-image:url('${esc(thumb)}')"` : ""}>${esc(c.name)}</button>`;
   }).join("");
   // Fond du lecteur avant le direct : couverture de l'événement, sinon visuel de salle.
-  $("#stage").style.backgroundImage = `linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.55)), url("${ev.cover || "/img/demo/live-mariage.jpg"}")`;
+  $("#stage").style.backgroundImage = `linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.55)), url("${coverOf(ev)}")`;
   $("#cams-section").classList.toggle("hidden", cameras.length < 2);
   play(0);
   heartbeat();

@@ -1,4 +1,4 @@
-import { api, $, esc, toast, dayBadge } from "./common.js";
+import { api, $, esc, toast, dayBadge, coverOf } from "./common.js";
 import { icon, BRAND } from "./icons.js";
 
 // Pictogrammes et logos des boutons de connexion.
@@ -70,7 +70,7 @@ api("/api/public?limit=10").catch(() => []).then((events) => {
     .sort((a, b) => b.live - a.live)
     .map((e) => liveCard({
       href: e.live ? `/live?e=${encodeURIComponent(e.slug)}` : `/e/${encodeURIComponent(e.slug)}`,
-      image: e.cover || "/img/demo/live-mariage.jpg", tag: e.live ? "LIVE" : dayBadge(e.date), live: e.live, name: e.name, location: e.location, viewers: e.viewers,
+      image: coverOf(e), tag: e.live ? "LIVE" : dayBadge(e.date), live: e.live, name: e.name, location: e.location, viewers: e.viewers,
     }));
   EXAMPLES.slice(0, Math.max(0, 3 - cards.length)).forEach((ex) => cards.push(liveCard({ ...ex, href: "/decouvrir", tag: "Exemple" })));
   $("#upcoming-list").innerHTML = cards.join("");
