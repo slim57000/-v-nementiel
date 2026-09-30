@@ -33,6 +33,23 @@ const liveCard = (ev) => {
 let ev;
 let tab = "invite";
 
+// Juste après la création : rappel des codes à garder (invités et caméraman).
+function codesReminder(ev) {
+  const row = (label, code, hint) => `<div class="code-remind"><span><b>${label}</b><small class="muted">${hint}</small></span>
+    <button type="button" class="code" data-copy="${code}" aria-label="Copier ${label}">${code} 📋</button></div>`;
+  document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="codes-sheet" role="dialog" aria-modal="true">
+    <div class="card"><h2 style="margin-top:0">🎉 Votre événement est créé !</h2>
+      <p class="muted" style="margin-top:0">Notez bien ces codes, vous les retrouverez aussi sur votre tableau de bord.</p>
+      ${row("🔑 Code d'invitation", ev.accessCode, ev.visibility === "private" ? "À donner à vos invités pour entrer" : "Permet de retrouver l'événement (Découvrir → code)")}
+      ${row("🎥 Code caméraman", ev.cameramanCode, "Pour la personne qui filme le live")}
+      <button class="btn btn-block" type="button" id="codes-ok" style="margin-top:14px">J'ai noté mes codes</button></div></div>`);
+  const sheet = $("#codes-sheet");
+  sheet.addEventListener("click", (e) => {
+    if (e.target.dataset.copy) copy(e.target.dataset.copy, "Code copié !");
+    if (e.target.id === "codes-ok") sheet.remove();
+  });
+}
+
 function render() {
   const base = `${location.origin}/e/${encodeURIComponent(ev.slug)}`;
   const withCode = ev.visibility === "private" ? `?code=${ev.accessCode}` : "";
@@ -105,6 +122,10 @@ try {
   $("#edit").href = `/edit?id=${ev.id}`;
   if (!EVENT_TYPES[ev.type]) throw new Error();
   render();
+  if (new URLSearchParams(location.search).has("new")) {
+    history.replaceState(null, "", `/faire-part?id=${ev.id}`);
+    codesReminder(ev);
+  }
 } catch (err) {
   if (err.status === 401) goLogin();
   else $("#card").textContent = "Événement introuvable.";

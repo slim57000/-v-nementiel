@@ -161,7 +161,7 @@ form.addEventListener("submit", async (e) => {
   try {
     const saved = await api(id ? `/api/events/${id}` : "/api/events", { method: id ? "PUT" : "POST", body });
     // Nouvel événement : on montre directement ses faire-part à partager.
-    location.href = id ? "/dashboard?saved=1" : `/faire-part?id=${saved.id}`;
+    location.href = id ? "/dashboard?saved=1" : `/faire-part?id=${saved.id}&new=1`;
   } catch (err) {
     if (err.status === 401) return goLogin();
     $("#error").textContent = err.message;
