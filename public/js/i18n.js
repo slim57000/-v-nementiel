@@ -123,6 +123,14 @@ const EN = {
   "📖 Album": "📖 Album",
   "📦 Télécharger (zip)": "📦 Download (zip)",
   "✏️ Modifier": "✏️ Edit",
+  "Serez-vous présent·e ?": "Will you attend?",
+  "✅ Je viens": "✅ I'm coming",
+  "🤔 Peut-être": "🤔 Maybe",
+  "❌ Je ne viens pas": "❌ I can't come",
+  "📅 Ajouter à mon calendrier": "📅 Add to my calendar",
+  "Google Agenda": "Google Calendar",
+  "Soyez le premier à répondre !": "Be the first to reply!",
+  "Réponses (visibles par vous seul)": "Replies (only visible to you)",
 };
 
 const LANG_KEY = "em-lang";

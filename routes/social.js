@@ -11,6 +11,7 @@ import {
   findEventMessage, deleteMessage, addReport, saveEvent, touchPresence,
 } from "../lib/store.js";
 import { guestAuthor } from "../lib/guest.js";
+import { getSetting, setSetting } from "../lib/store.js";
 import { saveDataUrl, removeUpload, isOwnUpload, isVideoUrl, videoUploadTarget, MAX_VIDEO_BYTES } from "../lib/uploads.js";
 import { hasAccess } from "./public.js";
 import { currentOrganizer } from "./auth.js";
@@ -65,6 +66,52 @@ router.post("/reactions", notBlocked, async (req, res) => {
   const msg = await addMessage(req.event.id, { kind: "reaction", name: clean(req.body?.name, 30) || "Invité", text: emoji, author: req.author });
   await ping(eventTopic(req.event.slug));
   res.status(201).json(msg);
+});
+
+// --- Réponse à l'invitation (RSVP) : une réponse par invité (identité anonyme), modifiable ---
+const RSVP = ["yes", "maybe", "no"];
+router.get("/rsvp", async (req, res) => {
+  const all = (await getSetting(`rsvp:${req.event.id}`).catch(() => null)) || {};
+  const list = Object.values(all);
+  const people = (st) => list.filter((r) => r.status === st).reduce((n, r) => n + (r.count || 1), 0);
+  res.json({
+    yes: people("yes"), maybe: people("maybe"), no: list.filter((r) => r.status === "no").length,
+    mine: all[req.author] || null,
+    list: (await isOwner(req)) ? list.sort((a, b) => RSVP.indexOf(a.status) - RSVP.indexOf(b.status)) : undefined,
+  });
+});
+router.post("/rsvp", notBlocked, async (req, res) => {
+  const status = String(req.body?.status || "");
+  const name = clean(req.body?.name, 30);
+  if (!RSVP.includes(status) || !name) return res.status(400).json({ error: "Réponse invalide." });
+  if (await tooFast(`${req.ip}:rsvp`, 10, 60_000)) return res.status(429).json({ error: "Doucement !" });
+  const count = status === "no" ? 0 : Math.min(Math.max(Number(req.body?.count) || 1, 1), 10);
+  const key = `rsvp:${req.event.id}`;
+  const all = (await getSetting(key).catch(() => null)) || {};
+  const isNew = !all[req.author];
+  all[req.author] = { name, status, count, at: new Date().toISOString() };
+  await setSetting(key, all);
+  if (isNew && status !== "no") {
+    notify([orgOwner(req.event.organizerId)], { title: `✅ ${name} ${status === "yes" ? "vient" : "viendra peut-être"}`, body: `${req.event.name}${count > 1 ? ` · ${count} personnes` : ""}`, url: `/e/${req.event.slug}` }).catch(() => {});
+  }
+  res.json({ ok: true });
+});
+
+// --- Ajouter au calendrier (.ics : iPhone, Android, Outlook) ---
+router.get("/calendar.ics", (req, res) => {
+  const e = req.event;
+  const start = `${e.date.replace(/-/g, "")}T${(e.time || "12:00").replace(":", "")}00`;
+  const end = new Date(`${e.date}T${e.time || "12:00"}:00Z`); end.setUTCHours(end.getUTCHours() + 5);
+  const stamp = new Date().toISOString().replace(/[-:]|\.\d+/g, "");
+  const txt = (v) => String(v || "").replace(/\\/g, "\\\\").replace(/[,;]/g, (c) => `\\${c}`).replace(/\n/g, "\\n");
+  const url = `${req.protocol}://${req.get("host")}/e/${e.slug}`;
+  res.type("text/calendar").set("Content-Disposition", `attachment; filename="${e.slug}.ics"`).send([
+    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//MaFeliza//FR", "CALSCALE:GREGORIAN", "BEGIN:VEVENT",
+    `UID:${e.slug}@mafeliza.com`, `DTSTAMP:${stamp}`, `DTSTART:${start}`, `DTEND:${end.toISOString().slice(0, 19).replace(/[-:]/g, "")}`,
+    `SUMMARY:${txt(e.name)}`, `LOCATION:${txt(e.location)}`, `DESCRIPTION:${txt(`${e.description || ""}\n${url}`)}`, `URL:${url}`,
+    "BEGIN:VALARM", "TRIGGER:-P1D", "ACTION:DISPLAY", `DESCRIPTION:${txt(e.name)} demain`, "END:VALARM",
+    "END:VEVENT", "END:VCALENDAR",
+  ].join("\r\n"));
 });
 
 router.get("/photos", async (req, res) => {

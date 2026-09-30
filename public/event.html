@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#e8137a">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Great+Vibes&family=Inter:wght@400;600;800&family=Quicksand:wght@600;700&display=swap">
-  <link rel="stylesheet" href="/css/app.css?v=58">
+  <link rel="stylesheet" href="/css/app.css?v=59">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -62,6 +62,23 @@
           <li><span class="ico">📍</span><div><b>Lieu</b><div id="where"></div><a id="map" class="small" target="_blank" rel="noopener">Ouvrir dans Maps</a></div></li>
         </ul>
         <p id="description" style="white-space:pre-line;margin-bottom:0"></p>
+        <div class="row cal-row">
+          <a id="cal-ics" class="btn btn-light btn-sm">📅 Ajouter à mon calendrier</a>
+          <a id="cal-google" class="btn btn-ghost btn-sm" target="_blank" rel="noopener">Google Agenda</a>
+        </div>
+      </section>
+
+      <section class="card rsvp" id="rsvp">
+        <h2>Serez-vous présent·e ?</h2>
+        <div class="rsvp-choices">
+          <button data-rsvp="yes">✅ Je viens</button>
+          <button data-rsvp="maybe">🤔 Peut-être</button>
+          <button data-rsvp="no">❌ Je ne viens pas</button>
+        </div>
+        <label class="rsvp-count hidden" id="rsvp-count-wrap">Nombre de personnes (vous compris)
+          <select id="rsvp-count"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select></label>
+        <p class="muted small" id="rsvp-summary" style="text-align:center;margin:10px 0 0"></p>
+        <div id="rsvp-list"></div>
       </section>
 
       <section class="card" style="background:transparent;box-shadow:none;padding:0">

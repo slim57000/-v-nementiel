@@ -1,4 +1,4 @@
-import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast } from "./common.js";
+import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, guestName } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 import { initGuestbook } from "./guestbook.js";
 
@@ -66,6 +66,14 @@ function showEvent(ev) {
   $("#when").textContent = formatDate(ev.date, ev.time);
   $("#where").textContent = ev.location;
   $("#map").href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.location)}`;
+  // Ajouter au calendrier : fichier .ics (iPhone, Android, Outlook) ou Google Agenda.
+  $("#cal-ics").href = `/api/public/${encodeURIComponent(ev.slug)}/calendar.ics`;
+  const d = ev.date.replace(/-/g, ""), t = (ev.time || "12:00").replace(":", "");
+  const endH = String(Math.min(23, Number(t.slice(0, 2)) + 5)).padStart(2, "0");
+  $("#cal-google").href = `https://calendar.google.com/calendar/render?${new URLSearchParams({
+    action: "TEMPLATE", text: ev.name, dates: `${d}T${t}00/${d}T${endH}${t.slice(2)}00`, location: ev.location, details: location.href.split("?")[0],
+  })}`;
+  initRsvp(ev);
   $("#description").textContent = ev.description;
   $("#description").classList.toggle("hidden", !ev.description);
 
@@ -172,3 +180,33 @@ load();
 document.getElementById("back")?.addEventListener("click", (e) => {
   if (document.referrer.startsWith(location.origin) && history.length > 1) { e.preventDefault(); history.back(); }
 });
+
+// Réponse à l'invitation : je viens / peut-être / je ne viens pas (+ nombre de personnes).
+async function initRsvp(ev) {
+  const base = `/api/public/${encodeURIComponent(ev.slug)}/rsvp`;
+  const LABEL = { yes: "✅ Vient", maybe: "🤔 Peut-être", no: "❌ Ne vient pas" };
+  const paint = (r) => {
+    const mine = r.mine?.status;
+    document.querySelectorAll("[data-rsvp]").forEach((b) => b.classList.toggle("active", b.dataset.rsvp === mine));
+    $("#rsvp-count-wrap").classList.toggle("hidden", !mine || mine === "no");
+    if (r.mine?.count) $("#rsvp-count").value = r.mine.count;
+    $("#rsvp-summary").textContent = r.yes || r.maybe
+      ? `${r.yes} personne${r.yes > 1 ? "s" : ""} ${r.yes > 1 ? "viennent" : "vient"}${r.maybe ? ` · ${r.maybe} peut-être` : ""}`
+      : "Soyez le premier à répondre !";
+    $("#rsvp-list").innerHTML = r.list?.length
+      ? `<p class="tools-title">Réponses (visibles par vous seul)</p>` + r.list.map((x) => `<div class="inv-row"><span>${esc(x.name)}${x.count > 1 ? ` (+${x.count - 1})` : ""}</span><b>${LABEL[x.status]}</b></div>`).join("")
+      : "";
+  };
+  const load = () => api(base).then(paint).catch(() => {});
+  const send = async (status) => {
+    try {
+      const name = await guestName();
+      await api(base, { method: "POST", body: { status, name, count: Number($("#rsvp-count").value) || 1 } });
+      toast(status === "yes" ? "Super, à bientôt ! 🎉" : status === "maybe" ? "Réponse enregistrée" : "Dommage ! Réponse enregistrée");
+      load();
+    } catch (err) { toast(err.message); }
+  };
+  $("#rsvp").addEventListener("click", (e) => { if (e.target.dataset.rsvp) send(e.target.dataset.rsvp); });
+  $("#rsvp-count").addEventListener("change", () => { const a = document.querySelector("[data-rsvp].active"); if (a) send(a.dataset.rsvp); });
+  load();
+}

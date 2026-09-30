@@ -19,7 +19,7 @@ import socialRoutes from "./routes/social.js";
 import cameramanRoutes from "./routes/cameraman.js";
 import adminRoutes from "./routes/admin.js";
 import meRoutes from "./routes/me.js";
-import { getSetting, listEventsOnDate, findOrganizer } from "./lib/store.js";
+import { getSetting, listEventsOnDate, findOrganizer, listPublicUpcoming } from "./lib/store.js";
 import { EMAIL_ENABLED, sendEmail } from "./lib/email.js";
 import { UPLOAD_DIR } from "./lib/uploads.js";
 import { findEventBySlug } from "./lib/store.js";
@@ -157,10 +157,37 @@ app.get("/e/:slug", async (req, res) => {
     const url = event.cover.startsWith("/") ? `${req.protocol}://${req.get("host")}${event.cover}` : event.cover;
     image = `<meta property="og:image" content="${escapeHtml(url)}">`;
   }
-  const meta = `<title>${escapeHtml(title)}</title>
+  const isPublic = event?.visibility === "public" && !event.suspended;
+  const base = (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+  const desc = isPublic
+    ? `${event.name} — ${event.date.split("-").reverse().join("/")} à ${event.time}, ${event.location}. Suivez l'événement en direct sur MaFeliza.`
+    : "Vous êtes invité·e ! Découvrez tous les détails de l'événement.";
+  // Fiche « Événement » pour Google (événements publics) ; les événements privés ne sont pas indexés.
+  const jsonLd = isPublic ? `<script type="application/ld+json">${JSON.stringify({
+    "@context": "https://schema.org", "@type": "Event", name: event.name, startDate: `${event.date}T${event.time || "12:00"}`,
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: event.cameras?.length ? "https://schema.org/MixedEventAttendanceMode" : "https://schema.org/OfflineEventAttendanceMode",
+    location: { "@type": "Place", name: event.location, address: event.location },
+    image: event.cover ? [event.cover.startsWith("/") ? base + event.cover : event.cover] : undefined,
+    description: event.description || desc, url: `${base}/e/${event.slug}`,
+    organizer: { "@type": "Organization", name: "MaFeliza", url: base },
+  }).replace(/</g, "\\u003c")}</script>` : "";
+  const meta = `<title>${escapeHtml(title)} — MaFeliza</title>
+    <meta name="description" content="${escapeHtml(desc)}">
+    ${isPublic ? `<link rel="canonical" href="${escapeHtml(`${base}/e/${event.slug}`)}">` : '<meta name="robots" content="noindex">'}
     <meta property="og:title" content="${escapeHtml(title)}">
-    <meta property="og:description" content="Vous êtes invité·e ! Découvrez tous les détails de l'événement.">${image}`;
+    <meta property="og:description" content="${escapeHtml(desc)}">${image}${jsonLd}`;
   res.status(event ? 200 : 404).type("html").send(eventTemplate.replace("<!--META-->", meta));
+});
+
+// Plan du site pour Google : pages publiques et événements publics à venir.
+app.get("/sitemap.xml", async (req, res) => {
+  const base = (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+  const events = await listPublicUpcoming(50).catch(() => []);
+  const urls = ["/", "/decouvrir", "/connexion", "/mentions-legales", "/cgu", "/confidentialite"].map((p) => `<url><loc>${base}${p}</loc></url>`)
+    .concat(events.map((e) => `<url><loc>${base}/e/${encodeURIComponent(e.slug)}</loc><lastmod>${String(e.updatedAt || e.createdAt || "").slice(0, 10) || e.date}</lastmod></url>`));
+  res.type("application/xml").set("Cache-Control", "public, max-age=3600")
+    .send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.join("")}</urlset>`);
 });
 
 // Erreurs JavaScript des navigateurs (limitées) : transmises au suivi des erreurs.

@@ -6,3 +6,5 @@ Disallow: /edit
 Disallow: /messages
 Disallow: /profil
 Disallow: /cameraman
+
+Sitemap: https://mafeliza.com/sitemap.xml
