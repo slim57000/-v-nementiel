@@ -82,9 +82,18 @@ function card(ev) {
   </article>`;
 }
 
+// Carte d'un événement public ; en direct, elle ouvre le live et porte le badge LIVE.
+function discoverCard(e) {
+  const html = publicCard(e);
+  return isLive(e)
+    ? html.replace(`href="/e/${esc(e.slug)}"`, `href="/live?e=${encodeURIComponent(e.slug)}"`).replace(/<span class="tag">[^<]*/, '<span class="tag">● LIVE')
+    : html;
+}
+
 function render() {
   renderStories();
-  const keep = (e) => (filter === "upcoming" ? e.date >= today : filter === "live" ? isLive(e) : true);
+  // « À venir » : pas encore commencé (les directs du jour sont dans « En direct »).
+  const keep = (e) => (filter === "upcoming" ? e.date >= today && !isLive(e) : filter === "live" ? isLive(e) : true);
   const shown = events.filter(keep);
   const mine = new Set(events.map((e) => e.slug));
   const others = discover.filter((e) => !mine.has(e.slug) && keep(e));
@@ -94,7 +103,7 @@ function render() {
     : "Vous n'avez pas encore d'événement.<br>Créez le premier en quelques minutes !";
   $("#list").innerHTML = shown.map(card).join("") + (others.length
     ? `<div class="section-title"><h2>À découvrir</h2><a href="/decouvrir" class="see-all">Voir tout</a></div>
-       <div class="p-grid">${others.map((e) => (isLive(e) ? publicCard(e).replace(`href="/e/${esc(e.slug)}"`, `href="/live?e=${encodeURIComponent(e.slug)}"`) : publicCard(e))).join("")}</div>`
+       <div class="p-grid">${others.map(discoverCard).join("")}</div>`
     : "");
 }
 
