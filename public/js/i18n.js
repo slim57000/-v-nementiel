@@ -113,6 +113,16 @@ const EN = {
   "🔄 Retourner": "🔄 Flip",
   "Nom de la caméra": "Camera name",
   "Un seul appui : la vidéo part en direct chez les invités et elle est enregistrée pour le replay.": "One tap: the video goes live for guests and is recorded for the replay.",
+  "Partager & inviter": "Share & invite",
+  "Souvenirs": "Memories",
+  "📤 Partager": "📤 Share",
+  "🔗 Copier le lien": "🔗 Copy link",
+  "🎥 Caméraman": "🎥 Camera operator",
+  "🔑 Copier le code": "🔑 Copy code",
+  "🔓 Lien + code": "🔓 Link + code",
+  "📖 Album": "📖 Album",
+  "📦 Télécharger (zip)": "📦 Download (zip)",
+  "✏️ Modifier": "✏️ Edit",
 };
 
 const LANG_KEY = "em-lang";

@@ -75,18 +75,26 @@ function card(ev) {
     ${ev.cagnotteUrl ? `<div class="ev-pot"><span style="color:var(--primary)">${icon("gift")}</span><span><b>Cagnotte</b><span class="muted small">Plateforme externe</span></span>
       <a class="btn btn-sm" href="${esc(ev.cagnotteUrl)}" target="_blank" rel="noopener">Voir la cagnotte</a></div>` : ""}
     <div class="ev-tools">
-      <a class="btn btn-sm" href="/faire-part?id=${ev.id}">💌 Mes faire-part</a>
-      <button class="btn btn-light btn-sm" data-action="share">Partager</button>
-      <button class="btn btn-light btn-sm" data-action="link">Copier le lien</button>
-      ${isPrivate ? `<button class="btn btn-light btn-sm" data-action="code">Copier le code</button>
-      <button class="btn btn-light btn-sm" data-action="direct">Lien + code</button>` : ""}
-      <button class="btn btn-light btn-sm" data-action="cameraman">Accès caméraman</button>
-      <button class="btn btn-light btn-sm" data-action="invite">✉️ Inviter</button>
-      <button class="btn btn-light btn-sm" data-action="stats">📊 Statistiques</button>
-      <a class="btn btn-light btn-sm" href="/album?id=${ev.id}">📖 Album souvenir</a>
-      <button class="btn btn-light btn-sm" data-action="export">📦 Télécharger les souvenirs</button>
-      <a class="btn btn-ghost btn-sm" href="/edit?id=${ev.id}">Modifier</a>
-      <button class="btn btn-danger btn-sm" data-action="delete">Supprimer</button>
+      <a class="btn btn-sm tool-main" href="/faire-part?id=${ev.id}">💌 Mes faire-part</a>
+      <p class="tools-title">Partager & inviter</p>
+      <div class="tools-grid">
+        <button class="btn btn-light btn-sm" data-action="share">📤 Partager</button>
+        <button class="btn btn-light btn-sm" data-action="link">🔗 Copier le lien</button>
+        <button class="btn btn-light btn-sm" data-action="invite">✉️ Inviter</button>
+        <button class="btn btn-light btn-sm" data-action="cameraman">🎥 Caméraman</button>
+        ${isPrivate ? `<button class="btn btn-light btn-sm" data-action="code">🔑 Copier le code</button>
+        <button class="btn btn-light btn-sm" data-action="direct">🔓 Lien + code</button>` : ""}
+      </div>
+      <p class="tools-title">Souvenirs</p>
+      <div class="tools-grid">
+        <button class="btn btn-light btn-sm" data-action="stats">📊 Statistiques</button>
+        <a class="btn btn-light btn-sm" href="/album?id=${ev.id}">📖 Album</a>
+        <button class="btn btn-light btn-sm" data-action="export">📦 Télécharger (zip)</button>
+      </div>
+      <div class="tools-grid tools-end">
+        <a class="btn btn-ghost btn-sm" href="/edit?id=${ev.id}">✏️ Modifier</a>
+        <button class="btn btn-danger btn-sm" data-action="delete">🗑️ Supprimer</button>
+      </div>
     </div>
   </article>`;
 }
@@ -156,7 +164,7 @@ $("#list").addEventListener("click", async (e) => {
       toast(err.message || "Export impossible.");
     }
     btn.disabled = false;
-    btn.textContent = "📦 Télécharger les souvenirs";
+    btn.textContent = "📦 Télécharger (zip)";
   }
   if (action === "delete" && confirm(`Supprimer définitivement « ${ev.name} » ?`)) {
     try {
