@@ -76,14 +76,23 @@ async function showConversation() {
   setInterval(() => { if (!document.hidden) refresh(); }, live ? 20000 : 4000);
 }
 
+// Envoi : un seul message à la fois, puis 1 s de pause (évite les doublons par double appui).
+let sending = false;
 $("#dm-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const text = $("#dm-text").value.trim();
-  if (!text) return;
+  if (!text || sending) return;
+  sending = true;
+  const btn = $("#dm-form button");
+  btn.disabled = true;
+  $("#dm-text").value = "";
   try {
     addMessages([await api(`/api/me/dm/${otherId}`, { method: "POST", body: { text } })]);
-    $("#dm-text").value = "";
-  } catch (err) { toast(err.message); }
+  } catch (err) {
+    $("#dm-text").value = text;
+    toast(err.message);
+  }
+  setTimeout(() => { sending = false; btn.disabled = false; }, 1000);
 });
 
 // Bloquer / retirer un ami (exigence App Store et Play Store).

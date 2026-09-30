@@ -163,7 +163,13 @@ router.post("/dm/:userId", async (req, res) => {
   const text = String(req.body?.text || "").trim().slice(0, 1000);
   if (!text) return res.status(400).json({ error: "Message vide." });
   if (!(await canTalk(req.organizer.id, other))) return res.status(403).json({ error: "Conversation indisponible." });
-  if (await tooFast(`dm:${req.organizer.id}`, 20, 60_000)) return res.status(429).json({ error: "Doucement !" });
+  if (await tooFast(`dm:${req.organizer.id}`, 20, 60_000) || await tooFast(`dm1:${req.organizer.id}`, 1, 1000)) {
+    return res.status(429).json({ error: "Doucement ! Attendez une seconde entre deux messages." });
+  }
+  const last = await lastDirectMessage(req.organizer.id, other).catch(() => null);
+  if (last && last.from === req.organizer.id && last.text === text && Date.now() - new Date(last.createdAt) < 10_000) {
+    return res.status(409).json({ error: "Message déjà envoyé." });
+  }
   const msg = await addDirectMessage(req.organizer.id, other, text);
   await ping(dmTopic(req.organizer.id, other));
   notify([orgOwner(other)], { title: `💬 ${displayName(req.organizer)}`, body: text.slice(0, 140), url: `/messages?u=${req.organizer.id}` }).catch(() => {});

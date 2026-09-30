@@ -244,17 +244,22 @@ $("#chat-list").addEventListener("click", (e) => {
   });
 });
 
+// Envoi : un seul message à la fois, puis 1 s de pause (évite les doublons par double appui).
+let sendingChat = false;
 $("#chat").addEventListener("submit", async (e) => {
   e.preventDefault();
   const text = $("#chat-text").value.trim();
-  if (!text) return;
+  if (!text || sendingChat) return;
+  sendingChat = true;
   const name = await guestName();
+  $("#chat-text").value = "";
   try {
     addChat(await api(`${base}/messages`, { method: "POST", body: { name, text } }));
-    $("#chat-text").value = "";
   } catch (err) {
+    $("#chat-text").value = text;
     toast(err.message);
   }
+  setTimeout(() => { sendingChat = false; }, 1000);
 });
 
 // --- Photos des invités ---
