@@ -45,7 +45,10 @@ router.post("/login", async (req, res) => {
 
 // Connexion Google : redirection vers Google, puis retour ici (le compte est créé à la première connexion).
 const safeNext = (n) => (typeof n === "string" && n.startsWith("/") && !n.startsWith("//") ? n : "/dashboard");
-const callbackUrl = (req) => `${req.protocol}://${req.get("host")}/api/auth/google/callback`;
+// Adresse publique fixe (PUBLIC_URL) si définie : évite les « redirect_uri_mismatch » quand le site est ouvert
+// par une autre adresse (aperçu Vercel, ancien domaine…). Sinon, l'adresse de la requête.
+const origin = (req) => (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+const callbackUrl = (req) => `${origin(req)}/api/auth/google/callback`;
 router.get("/google", (req, res) => {
   if (!GOOGLE_ENABLED) return res.redirect("/connexion");
   const nonce = randomBytes(12).toString("hex");
@@ -73,7 +76,7 @@ router.get("/google/callback", async (req, res) => {
 });
 
 // Connexion Facebook : même principe que Google.
-const fbCallbackUrl = (req) => `${req.protocol}://${req.get("host")}/api/auth/facebook/callback`;
+const fbCallbackUrl = (req) => `${origin(req)}/api/auth/facebook/callback`;
 router.get("/facebook", (req, res) => {
   if (!FACEBOOK_ENABLED) return res.redirect("/connexion");
   const nonce = randomBytes(12).toString("hex");
