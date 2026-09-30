@@ -464,3 +464,8 @@ input::-webkit-date-and-time-value { text-align: center; }
 /* Profil : nom et email longs restent dans l'écran */
 .profile-head #name, .profile-head #email { max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
 .profile-head #name { font-size: clamp(1.3rem, 6vw, 1.8rem); line-height: 1.15; }
+/* Administration : 4 onglets sur 2 lignes, tous visibles sur téléphone */
+#tabs.segments { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+#tabs.segments button { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (min-width: 560px) { #tabs.segments { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+[data-theme="dark"] .badge.cam-badge { background: #3a1422; color: #ff8fab; }
