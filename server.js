@@ -1,4 +1,4 @@
-import { VAPID_PUBLIC_KEY, PUSH_ENABLED, notify, orgOwner } from "./lib/push.js";
+import { vapidKey, notify, orgOwner } from "./lib/push.js";
 import { guestAuthor } from "./lib/guest.js";
 import { savePushSub, listFollowerIds, deletePushSub } from "./lib/store.js";
 import { remindInvites } from "./lib/invites.js";
@@ -60,7 +60,7 @@ if (missingConfig.length) {
 app.get("/api/config", async (req, res) => res.json({
   gaId: process.env.GA_MEASUREMENT_ID || "",
   emailEnabled: EMAIL_ENABLED,
-  vapidPublicKey: VAPID_PUBLIC_KEY,
+  vapidPublicKey: await vapidKey(),
   realtime: REALTIME,
   social: [GOOGLE_ENABLED && "google", FACEBOOK_ENABLED && "facebook"].filter(Boolean),
   defaultLivePlatform: (await getSetting("defaultLivePlatform").catch(() => null)) || "youtube",
@@ -77,7 +77,7 @@ app.get("/api/qr", async (req, res) => {
 // Abonnement aux notifications push : lié au compte connecté, sinon à l'invité anonyme (réponses à ses messages).
 app.post("/api/push/subscribe", async (req, res) => {
   const sub = req.body?.subscription;
-  if (!PUSH_ENABLED) return res.status(503).json({ error: "Notifications non activées." });
+  if (!(await vapidKey())) return res.status(503).json({ error: "Notifications non activées." });
   if (!sub?.endpoint?.startsWith("https://") || !sub.keys?.p256dh || !sub.keys?.auth) return res.status(400).json({ error: "Abonnement invalide." });
   const organizer = await currentOrganizer(req);
   const owners = [organizer ? orgOwner(organizer.id) : null, `gid:${guestAuthor(req, res)}`].filter(Boolean);
