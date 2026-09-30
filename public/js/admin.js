@@ -51,6 +51,8 @@ const views = {
       <button class="btn btn-block" data-demo="add">➕ Créer 50 événements</button>
       <button class="btn btn-ghost btn-block" data-demo="del" style="margin-top:8px">🗑️ Supprimer les événements de démo</button>
       <button class="btn btn-light btn-block" data-demo="msg" style="margin-top:8px">💬 Recevoir des messages privés de test</button>
+      <button class="btn btn-light btn-block" data-demo="invite" style="margin-top:8px">💌 Recevoir un faire-part de test</button>
+      <button class="btn btn-light btn-block" data-demo="album" style="margin-top:8px">📖 Créer un album souvenir de test</button>
       </section>`;
   },
 };
@@ -80,6 +82,16 @@ $("#content").addEventListener("click", async (e) => {
     if (demo) {
       if (demo === "del" && !confirm("Supprimer tous les événements de démonstration ?")) return;
       e.target.disabled = true;
+      if (demo === "invite") {
+        await api("/api/admin/demo-invitation", { method: "POST" });
+        e.target.disabled = false;
+        return toast("Faire-part reçu de Awa (démo) — ouvrez Messages 💌");
+      }
+      if (demo === "album") {
+        const a = await api("/api/admin/demo-album", { method: "POST" });
+        location.href = `/album?id=${a.id}`;
+        return;
+      }
       if (demo === "msg") {
         const m = await api("/api/admin/demo-messages", { method: "POST" });
         e.target.disabled = false;

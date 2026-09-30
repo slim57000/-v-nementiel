@@ -2,7 +2,7 @@
 import { Router } from "express";
 import { currentOrganizer, isAdmin } from "./auth.js";
 import { destroyEvent } from "./events.js";
-import { seedDemo, demoEvents, sendDemoMessages } from "../lib/demo.js";
+import { seedDemo, demoEvents, sendDemoMessages, sendDemoInvitation, createDemoAlbum } from "../lib/demo.js";
 import { isPremium, setPremium } from "../lib/premium.js";
 import {
   searchEvents, searchOrganizers, findEvent, findOrganizer, saveOrganizer, saveEvent, listEvents,
@@ -44,6 +44,20 @@ router.post("/demo-messages", async (req, res) => {
     res.json(await sendDemoMessages(await currentOrganizer(req)));
   } catch (err) {
     res.status(500).json({ error: `Envoi impossible : ${err.message}` });
+  }
+});
+router.post("/demo-invitation", async (req, res) => {
+  try {
+    res.json(await sendDemoInvitation(await currentOrganizer(req), `${req.protocol}://${req.get("host")}`));
+  } catch (err) {
+    res.status(500).json({ error: `Envoi impossible : ${err.message}` });
+  }
+});
+router.post("/demo-album", async (req, res) => {
+  try {
+    res.json(await createDemoAlbum(await currentOrganizer(req)));
+  } catch (err) {
+    res.status(500).json({ error: `Création impossible : ${err.message}` });
   }
 });
 router.delete("/demo", async (req, res) => {

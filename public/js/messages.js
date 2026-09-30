@@ -46,7 +46,7 @@ function addMessages(list) {
     if (m.id <= lastId) continue;
     lastId = m.id;
     thread.insertAdjacentHTML("beforeend",
-      `<div class="bubble ${m.from === meId ? "mine" : ""}">${esc(m.text)}<span>${time(m.createdAt)}</span></div>`);
+      `<div class="bubble ${m.from === meId ? "mine" : ""}">${linkify(m.text)}<span>${time(m.createdAt)}</span></div>`);
   }
   if (atBottom || list.length) thread.scrollTop = thread.scrollHeight;
 }
@@ -124,4 +124,9 @@ try {
   otherId ? await showConversation() : await showList();
 } catch (err) {
   if (err.status === 401) goLogin();
+}
+
+// Liens du site cliquables dans les messages (faire-part, événements).
+function linkify(text) {
+  return esc(text).replace(/https?:\/\/[^\s<]+/g, (url) => `<a href="${url}" style="color:inherit;text-decoration:underline;overflow-wrap:anywhere">${url.replace(/^https?:\/\//, "")}</a>`);
 }
