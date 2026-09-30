@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /api/
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /edit
+Disallow: /messages
+Disallow: /profil
+Disallow: /cameraman
