@@ -1,6 +1,7 @@
 // Interactions des invités sur un événement : chat, réactions, photos.
 // Monté sur /api/public/:slug — accessible à toute personne ayant accès à l'événement.
 import { Router } from "express";
+import { tooFast } from "../lib/limits.js";
 import {
   findEventBySlug, addMessage, listMessages, addPhoto, listPhotos, findPhoto, deletePhoto,
   addGuestbookEntry, listGuestbook, findGuestbookEntry, updateGuestbookEntry, likeGuestbookEntry, deleteGuestbookEntry,
@@ -17,15 +18,6 @@ const router = Router({ mergeParams: true });
 export const REACTIONS = ["❤️", "👏", "😍", "🎆", "🍾"];
 const clean = (v, max) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, max);
 
-// Limite de débit simple en mémoire (par instance) : `max` actions par `windowMs`.
-const hits = new Map();
-function tooFast(key, max, windowMs) {
-  const now = Date.now();
-  const recent = (hits.get(key) || []).filter((t) => now - t < windowMs);
-  recent.push(now);
-  hits.set(key, recent);
-  return recent.length > max;
-}
 
 // Charge l'événement et vérifie l'accès (public, code saisi ou organisateur).
 router.use(async (req, res, next) => {
@@ -58,7 +50,7 @@ router.post("/messages", notBlocked, async (req, res) => {
   const name = clean(req.body?.name, 30);
   const text = clean(req.body?.text, 200);
   if (!name || !text) return res.status(400).json({ error: "Prénom et message obligatoires." });
-  if (tooFast(`${req.ip}:msg`, 5, 10_000)) return res.status(429).json({ error: "Doucement ! Attendez quelques secondes." });
+  if (await tooFast(`${req.ip}:msg`, 5, 10_000)) return res.status(429).json({ error: "Doucement ! Attendez quelques secondes." });
   res.status(201).json(await addMessage(req.event.id, { kind: "chat", name, text, author: req.author }));
 });
 
@@ -66,7 +58,7 @@ router.post("/reactions", notBlocked, async (req, res) => {
   const emoji = String(req.body?.emoji || "");
   if (!REACTIONS.includes(emoji)) return res.status(400).json({ error: "Réaction inconnue." });
   if (PAYMENTS_ENABLED && PAID_REACTIONS[emoji]) return res.status(402).json({ error: "Réaction payante." });
-  if (tooFast(`${req.ip}:reaction`, 10, 10_000)) return res.status(429).json({ error: "Trop de réactions d'un coup." });
+  if (await tooFast(`${req.ip}:reaction`, 10, 10_000)) return res.status(429).json({ error: "Trop de réactions d'un coup." });
   res.status(201).json(await addMessage(req.event.id, { kind: "reaction", name: clean(req.body?.name, 30) || "Invité", text: emoji, author: req.author }));
 });
 
@@ -99,7 +91,7 @@ router.get("/photos", async (req, res) => {
 router.post("/photos", notBlocked, async (req, res) => {
   const name = clean(req.body?.name, 30);
   if (!name) return res.status(400).json({ error: "Prénom obligatoire." });
-  if (tooFast(`${req.ip}:photo`, 20, 3_600_000)) return res.status(429).json({ error: "Limite de photos atteinte, réessayez plus tard." });
+  if (await tooFast(`${req.ip}:photo`, 20, 3_600_000)) return res.status(429).json({ error: "Limite de photos atteinte, réessayez plus tard." });
   try {
     const url = req.body?.image ? await saveDataUrl(req.body.image) : await videoFrom(req.body);
     if (!url) return res.status(400).json({ error: "Ajoutez une photo ou une vidéo." });
@@ -121,7 +113,7 @@ async function videoFrom(body) {
 
 // Prépare l'envoi direct d'une vidéo vers le stockage (URL signée Supabase, sinon envoi via l'API).
 router.post("/upload-url", notBlocked, async (req, res) => {
-  if (tooFast(`${req.ip}:video`, 10, 3_600_000)) return res.status(429).json({ error: "Limite de vidéos atteinte, réessayez plus tard." });
+  if (await tooFast(`${req.ip}:video`, 10, 3_600_000)) return res.status(429).json({ error: "Limite de vidéos atteinte, réessayez plus tard." });
   if (Number(req.body?.size) > MAX_VIDEO_BYTES) return res.status(400).json({ error: "Vidéo trop lourde (50 Mo max)." });
   try {
     res.json(await videoUploadTarget(String(req.body?.type || "")));
@@ -155,7 +147,7 @@ router.post("/guestbook", notBlocked, async (req, res) => {
   if (!text && !req.body?.image && !req.body?.audio && !req.body?.video && !req.body?.videoUrl) {
     return res.status(400).json({ error: "Écrivez un message, ajoutez une photo, une vidéo ou un vocal." });
   }
-  if (tooFast(`${req.ip}:gb`, 5, 600_000)) return res.status(429).json({ error: "Merci ! Réessayez dans quelques minutes." });
+  if (await tooFast(`${req.ip}:gb`, 5, 600_000)) return res.status(429).json({ error: "Merci ! Réessayez dans quelques minutes." });
   try {
     // La vidéo courte éventuelle est rangée dans le champ « photo » (détectée par son extension).
     const photoUrl = req.body?.image ? await saveDataUrl(req.body.image) : await videoFrom(req.body);
@@ -174,7 +166,7 @@ async function entryOf(req, res) {
 }
 
 router.post("/guestbook/:id/like", async (req, res) => {
-  if (tooFast(`${req.ip}:like`, 30, 60_000)) return res.status(429).json({ error: "Doucement !" });
+  if (await tooFast(`${req.ip}:like`, 30, 60_000)) return res.status(429).json({ error: "Doucement !" });
   const entry = await entryOf(req, res);
   if (entry) res.json(await likeGuestbookEntry(entry));
 });
@@ -184,7 +176,7 @@ router.post("/guestbook/:id/replies", notBlocked, async (req, res) => {
   const name = clean(req.body?.name, 30);
   const text = String(req.body?.text ?? "").trim().slice(0, 500);
   if (!name || !text) return res.status(400).json({ error: "Écrivez votre réponse." });
-  if (tooFast(`${req.ip}:reply`, 5, 60_000)) return res.status(429).json({ error: "Doucement ! Attendez quelques secondes." });
+  if (await tooFast(`${req.ip}:reply`, 5, 60_000)) return res.status(429).json({ error: "Doucement ! Attendez quelques secondes." });
   const entry = await entryOf(req, res);
   if (!entry) return;
   const replies = [...(entry.replies || []), { name, text, author: req.author, at: new Date().toISOString() }].slice(-50);
@@ -218,7 +210,7 @@ router.post("/reports", async (req, res) => {
   const kind = String(req.body?.kind || "");
   const itemId = Number(req.body?.itemId);
   if (!["message", "photo", "guestbook"].includes(kind) || !itemId) return res.status(400).json({ error: "Signalement invalide." });
-  if (tooFast(`${req.ip}:report`, 10, 3_600_000)) return res.status(429).json({ error: "Trop de signalements, réessayez plus tard." });
+  if (await tooFast(`${req.ip}:report`, 10, 3_600_000)) return res.status(429).json({ error: "Trop de signalements, réessayez plus tard." });
   await addReport(req.event.id, { kind, itemId, reason: clean(req.body?.reason, 300), author: req.author });
   res.status(201).json({ ok: true });
 });

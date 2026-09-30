@@ -141,6 +141,18 @@ create table if not exists history (
 -- Réponses aux messages du livre d'or (ajouté en V1.1).
 alter table guestbook add column if not exists replies jsonb not null default '[]';
 
+-- Limites de débit partagées (anti-spam, anti-bruteforce), ajouté en V1.2.
+create table if not exists rate_limits (key text primary key, n integer not null, reset_at timestamptz not null);
+create or replace function bump_limit(k text, window_ms bigint) returns integer
+language sql as $$
+  insert into rate_limits as r (key, n, reset_at) values (k, 1, now() + make_interval(secs => window_ms / 1000.0))
+  on conflict (key) do update set
+    n = case when r.reset_at < now() then 1 else r.n + 1 end,
+    reset_at = case when r.reset_at < now() then now() + make_interval(secs => window_ms / 1000.0) else r.reset_at end
+  returning n;
+$$;
+alter table rate_limits enable row level security;
+
 -- Sécurité : RLS activé sans règle = aucune lecture/écriture avec la clé publique (anon).
 -- Seul le serveur, avec la clé service_role, accède aux données.
 alter table organizers enable row level security;

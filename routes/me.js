@@ -1,5 +1,6 @@
 // Espace personnel d'un utilisateur connecté : profil, favoris, historique, amis, messages privés, blocages.
 import { Router } from "express";
+import { tooFast } from "../lib/limits.js";
 import { requireOrganizer } from "./auth.js";
 import { publicView } from "../lib/events.js";
 import { saveDataUrl, removeUpload, isVideoUrl } from "../lib/uploads.js";
@@ -20,15 +21,6 @@ const card = (e) => {
   return { ...rest, id: e.id };
 };
 
-// Limite de débit simple en mémoire (par instance).
-const hits = new Map();
-function tooFast(key, max, windowMs) {
-  const now = Date.now();
-  const recent = (hits.get(key) || []).filter((t) => now - t < windowMs);
-  recent.push(now);
-  hits.set(key, recent);
-  return recent.length > max;
-}
 
 // --- Profil ---
 router.get("/", async (req, res) => {
@@ -168,7 +160,7 @@ router.post("/dm/:userId", async (req, res) => {
   const text = String(req.body?.text || "").trim().slice(0, 1000);
   if (!text) return res.status(400).json({ error: "Message vide." });
   if (!(await canTalk(req.organizer.id, other))) return res.status(403).json({ error: "Conversation indisponible." });
-  if (tooFast(`dm:${req.organizer.id}`, 20, 60_000)) return res.status(429).json({ error: "Doucement !" });
+  if (await tooFast(`dm:${req.organizer.id}`, 20, 60_000)) return res.status(429).json({ error: "Doucement !" });
   res.status(201).json(await addDirectMessage(req.organizer.id, other, text));
 });
 

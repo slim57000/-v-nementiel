@@ -1,25 +1,15 @@
 import { Router } from "express";
-import { findOrganizerByEmail, findOrganizer, createOrganizer, deleteOrganizer, listEvents, saveOrganizer } from "../lib/store.js";
+import { findOrganizerByEmail, findOrganizer, createOrganizer, deleteOrganizer, listEvents, saveOrganizer, getSetting, setSetting, clearLimit } from "../lib/store.js";
 import { loginCode } from "../lib/codes.js";
 import { setSigned, getSigned } from "../lib/session.js";
 import { codeEmail, EMAIL_ENABLED } from "../lib/email.js";
 import { GOOGLE_ENABLED, googleAuthUrl, googleIdentity } from "../lib/google.js";
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomInt } from "node:crypto";
+import { tooFast } from "../lib/limits.js";
 
 const router = Router();
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Anti-bruteforce minimal en mémoire (par instance) : 8 essais ratés par email toutes les 15 min.
-const failures = new Map();
-const tooManyFailures = (email) => {
-  const f = failures.get(email);
-  return f && f.count >= 8 && Date.now() - f.since < 15 * 60 * 1000;
-};
-const recordFailure = (email) => {
-  const f = failures.get(email);
-  if (!f || Date.now() - f.since > 15 * 60 * 1000) failures.set(email, { count: 1, since: Date.now() });
-  else f.count++;
-};
 
 // Premier passage : crée le compte et renvoie le code (affiché une seule fois).
 // Passages suivants : email + code exigés.
@@ -39,12 +29,14 @@ router.post("/login", async (req, res) => {
 
   if (organizer.blocked) return res.status(403).json({ error: "Ce compte a été suspendu. Contactez le support." });
   if (!code) return res.status(401).json({ needCode: true });
-  if (tooManyFailures(email)) return res.status(429).json({ error: "Trop d'essais, réessayez dans 15 minutes." });
-  if (code !== organizer.loginCode) {
-    recordFailure(email);
-    return res.status(401).json({ needCode: true, error: "Code incorrect." });
-  }
-  failures.delete(email);
+  // Anti-bruteforce partagé entre toutes les instances : 10 essais par email toutes les 15 min.
+  if (await tooFast(`login:${email}`, 10, 15 * 60 * 1000)) return res.status(429).json({ error: "Trop d'essais, réessayez dans 15 minutes." });
+  // Code organisateur permanent, ou code temporaire reçu par email (valable 15 min, usage unique).
+  const otp = await getSetting(`otp:${email}`).catch(() => null);
+  const otpOk = otp && otp.code === code && otp.exp > Date.now();
+  if (code !== organizer.loginCode && !otpOk) return res.status(401).json({ needCode: true, error: "Code incorrect." });
+  if (otpOk) await setSetting(`otp:${email}`, null);
+  await clearLimit(`login:${email}`).catch(() => {});
   setSigned(res, "org", String(organizer.id));
   res.json({ created: false });
 });
@@ -88,7 +80,11 @@ router.post("/send-code", async (req, res) => {
   if (Date.now() - last < 60_000) return res.status(429).json({ error: "Patientez une minute avant de redemander le code." });
   resent.set(email, Date.now());
   const organizer = await findOrganizerByEmail(email);
-  if (organizer && !organizer.blocked) await codeEmail(email, organizer.loginCode);
+  if (organizer && !organizer.blocked) {
+    const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
+    await setSetting(`otp:${email}`, { code, exp: Date.now() + 15 * 60 * 1000 });
+    await codeEmail(email, code, true);
+  }
   res.json({ ok: true });
 });
 

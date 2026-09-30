@@ -51,7 +51,7 @@ $("#forgot").addEventListener("click", async (e) => {
   $("#error").textContent = "";
   try {
     await api("/api/auth/send-code", { method: "POST", body: { email: $("#email").value } });
-    $("#error").textContent = "📧 Si un compte existe pour cette adresse, le code vient d'y être envoyé.";
+    $("#error").textContent = "📧 Si un compte existe pour cette adresse, un code valable 15 minutes vient d'y être envoyé.";
   } catch (err) {
     $("#error").textContent = err.message;
   }
