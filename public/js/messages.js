@@ -85,7 +85,7 @@ function addMessages(list) {
     if (m.id <= lastId) continue;
     lastId = m.id;
     thread.insertAdjacentHTML("beforeend",
-      `<div class="bubble ${m.from === meId ? "mine" : ""}">${linkify(m.text)}<span>${time(m.createdAt)}</span></div>`);
+      `<div class="bubble ${m.from === meId ? "mine" : ""}" data-id="${m.id}">${linkify(m.text)}<span>${time(m.createdAt)}</span></div>`);
   }
   if (atBottom || list.length) thread.scrollTop = thread.scrollHeight;
 }
@@ -134,10 +134,23 @@ $("#dm-form").addEventListener("submit", async (e) => {
   setTimeout(() => { sending = false; btn.disabled = false; }, 1000);
 });
 
+// Toucher un de ses messages : proposition de le supprimer.
+$("#thread").addEventListener("click", async (e) => {
+  const b = e.target.closest(".bubble.mine");
+  if (!b || e.target.closest("a")) return;
+  if (!confirm("Supprimer ce message ? Il disparaîtra aussi chez votre ami.")) return;
+  try {
+    await api(`/api/me/dm/${otherId}/${b.dataset.id}`, { method: "DELETE" });
+    b.remove();
+    toast("Message supprimé");
+  } catch (err) { toast(err.message); }
+});
+
 // Bloquer / retirer un ami (exigence App Store et Play Store).
 $("#dm-more").addEventListener("click", () => {
   document.body.insertAdjacentHTML("beforeend", `
     <div class="sheet" id="dm-menu" role="dialog" aria-modal="true"><div class="card menu-card">
+      <button class="btn btn-ghost btn-block" data-a="clear">🗑️ Supprimer la conversation</button>
       <button class="btn btn-ghost btn-block" data-a="remove">👋 Retirer de mes amis</button>
       <button class="btn btn-ghost btn-block" data-a="block">⛔ Bloquer cette personne</button>
       <button class="btn btn-light btn-block" data-a="close">Annuler</button>
@@ -147,6 +160,11 @@ $("#dm-more").addEventListener("click", () => {
     const a = e.target.dataset.a || (e.target === sheet ? "close" : null);
     if (!a) return;
     sheet.remove();
+    if (a === "clear" && confirm("Supprimer toute la conversation de votre côté ?")) {
+      await api(`/api/me/dm/${otherId}`, { method: "DELETE" });
+      $("#thread").innerHTML = "";
+      toast("Conversation supprimée");
+    }
     if (a === "remove" && confirm("Retirer cette personne de vos amis ?")) {
       await api(`/api/me/friends/${otherId}`, { method: "DELETE" });
       location.replace("/messages");

@@ -11,7 +11,7 @@ import {
   saveOrganizer, listEvents, findEvent, findEventsByIds, findOrganizersByIds,
   addFavorite, removeFavorite, listFavoriteIds, listHistoryIds,
   listFriendIds, removeFriends, addBlock, removeBlock, listBlockIds, addFriends,
-  addDirectMessage, listDirectMessages, lastDirectMessage, listPhotos, listGuestbook, listPublicUpcoming, listRecentPhotos, listRecentGuestbook,
+  addDirectMessage, listDirectMessages, lastDirectMessage, deleteDirectMessage, listPhotos, listGuestbook, listPublicUpcoming, listRecentPhotos, listRecentGuestbook,
   getSetting, setSetting,
 } from "../lib/store.js";
 
@@ -175,7 +175,10 @@ router.get("/friends", async (req, res) => {
   const me = req.organizer.id;
   const blocked = new Set(await listBlockIds(me));
   const friends = (await findOrganizersByIds(await listFriendIds(me))).filter((u) => !u.blocked && !blocked.has(u.id));
-  const rows = await Promise.all(friends.map(async (u) => ({ ...person(u), last: await lastDirectMessage(me, u.id) })));
+  const rows = await Promise.all(friends.map(async (u) => {
+    const [last, cleared] = await Promise.all([lastDirectMessage(me, u.id), getSetting(`dmclear:${me}:${u.id}`)]);
+    return { ...person(u), last: last && last.id > (cleared || 0) ? last : null };
+  }));
   rows.sort((a, b) => (b.last?.id || 0) - (a.last?.id || 0) || a.name.localeCompare(b.name));
   res.json(rows);
 });
@@ -210,8 +213,23 @@ router.get("/dm/:userId", async (req, res) => {
   const other = Number(req.params.userId);
   if (!(await canTalk(req.organizer.id, other))) return res.status(403).json({ error: "Conversation indisponible." });
   const [u] = await findOrganizersByIds([other]);
-  const messages = await listDirectMessages(req.organizer.id, other, Math.max(0, Number(req.query.after) || 0));
+  const cleared = (await getSetting(`dmclear:${req.organizer.id}:${other}`)) || 0;
+  const messages = await listDirectMessages(req.organizer.id, other, Math.max(cleared, Number(req.query.after) || 0));
   res.json({ with: u ? person(u) : null, messages });
+});
+
+// Supprimer un de ses messages (pour tout le monde).
+router.delete("/dm/:userId/:msgId", async (req, res) => {
+  const ok = await deleteDirectMessage(req.organizer.id, Number(req.params.userId), req.params.msgId);
+  if (!ok) return res.status(404).json({ error: "Message introuvable." });
+  res.json({ ok: true });
+});
+// Supprimer la conversation (de son côté seulement : l'autre personne garde ses messages).
+router.delete("/dm/:userId", async (req, res) => {
+  const other = Number(req.params.userId);
+  const last = await lastDirectMessage(req.organizer.id, other);
+  await setSetting(`dmclear:${req.organizer.id}:${other}`, last?.id || 0);
+  res.json({ ok: true });
 });
 
 router.post("/dm/:userId", async (req, res) => {

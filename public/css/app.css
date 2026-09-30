@@ -675,3 +675,4 @@ details.advanced summary { cursor: pointer; font-weight: 600; font-size: .92rem;
 .code-remind { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px; border-radius: 14px; background: var(--primary-light); margin-top: 10px; }
 .code-remind span { display: grid; gap: 2px; min-width: 0; }
 .code-remind button.code { flex: none; border: 0; background: var(--card); border-radius: 10px; padding: 8px 10px; font-size: 1.05rem; letter-spacing: .12em; cursor: pointer; color: var(--text); }
+.bubble.mine { cursor: pointer; }
