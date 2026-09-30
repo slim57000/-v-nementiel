@@ -68,8 +68,13 @@ router.post("/forgot", async (req, res) => {
   const organizer = await findOrganizerByEmail(email);
   if (organizer && !organizer.blocked) {
     const token = randomBytes(24).toString("base64url");
-    await setSetting(`reset:${token}`, { id: organizer.id, exp: Date.now() + 3_600_000 });
-    if (!(await resetEmail(email, `${origin(req)}/reinitialiser?token=${token}`))) {
+    const code = String(randomInt(100000, 1000000));
+    const exp = Date.now() + 3_600_000;
+    await Promise.all([
+      setSetting(`reset:${token}`, { id: organizer.id, exp }),
+      setSetting(`resetcode:${email}`, { id: organizer.id, code, exp, tries: 0 }),
+    ]);
+    if (!(await resetEmail(email, `${origin(req)}/reinitialiser?token=${token}`, code))) {
       const unverified = /own email address|verify a domain|not verified/i.test(lastEmailError);
       return res.status(502).json({ error: unverified
         ? "L'envoi d'emails est en cours d'activation (domaine mafeliza.com à vérifier dans Resend). Réessayez plus tard ou connectez-vous avec Google."
@@ -89,6 +94,25 @@ router.post("/reset", async (req, res) => {
   if (!organizer || organizer.blocked) return res.status(400).json({ error: "Compte indisponible." });
   await setPassword(organizer.id, req.body.password);
   await setSetting(`reset:${token}`, null);
+  setSigned(res, "org", String(organizer.id));
+  res.json({ ok: true });
+});
+
+// Mot de passe oublié, sans quitter la page : code à 6 chiffres reçu par email + nouveau mot de passe.
+router.post("/reset-code", async (req, res) => {
+  const email = String(req.body?.email || "").trim().toLowerCase();
+  const bad = passwordError(req.body?.password);
+  if (bad) return res.status(400).json({ error: bad });
+  const entry = EMAIL_RE.test(email) ? await getSetting(`resetcode:${email}`).catch(() => null) : null;
+  if (!entry || entry.exp < Date.now() || entry.tries >= 5) return res.status(400).json({ error: "Code expiré. Redemandez-en un." });
+  if (String(req.body?.code || "").trim() !== entry.code) {
+    await setSetting(`resetcode:${email}`, { ...entry, tries: entry.tries + 1 });
+    return res.status(400).json({ error: "Code incorrect." });
+  }
+  const organizer = await findOrganizer(entry.id);
+  if (!organizer || organizer.blocked) return res.status(400).json({ error: "Compte indisponible." });
+  await setPassword(organizer.id, req.body.password);
+  await setSetting(`resetcode:${email}`, null);
   setSigned(res, "org", String(organizer.id));
   res.json({ ok: true });
 });
