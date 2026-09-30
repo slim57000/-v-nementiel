@@ -663,3 +663,5 @@ details.advanced summary { cursor: pointer; font-weight: 600; font-size: .92rem;
 .preview-wrap video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .live-dot { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,.55); color: #fff; font-size: .75rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; }
 .live-dot.on { background: #e11d48; }
+.topbar .top-back { flex: none; width: 40px; height: 40px; display: grid; place-items: center; margin-right: 4px; border-radius: 12px; border: 1px solid var(--border); color: var(--text); font-size: 1.8rem; line-height: 1; padding-bottom: 4px; text-decoration: none; }
+.topbar .top-back + .logo { margin-left: 0; }

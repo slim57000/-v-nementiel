@@ -1,5 +1,6 @@
-import { api, $, esc, toast, resizeImage, goLogin, EVENT_TYPES, livePlaceholder } from "./common.js";
+import { api, $, esc, toast, resizeImage, goLogin, EVENT_TYPES, livePlaceholder, tabbar } from "./common.js";
 import { defaultInvite, renderInvite, invitePhotoUrl, templatesFor } from "./invitation.js";
+tabbar("");
 let phoneCams = []; // caméras « téléphone » (live en un clic)
 
 const form = $("#form");

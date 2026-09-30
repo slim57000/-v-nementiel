@@ -1,4 +1,5 @@
-import { api, $, esc, toast, formatDate, goLogin, EVENT_TYPES, LOCALE } from "./common.js";
+import { api, $, esc, toast, formatDate, goLogin, EVENT_TYPES, LOCALE, backButton } from "./common.js";
+backButton();
 
 let tab = "events";
 let timer;

@@ -3,9 +3,9 @@
   "appName": "MaFeliza",
   "webDir": "www",
   "server": {
-    "url": "https://evenementieldev.vercel.app",
+    "url": "https://mafeliza.com",
     "cleartext": false,
-    "allowNavigation": ["evenementieldev.vercel.app", "*.supabase.co"]
+    "allowNavigation": ["mafeliza.com", "www.mafeliza.com", "*.livekit.cloud", "*.supabase.co"]
   },
   "ios": { "contentInset": "never", "backgroundColor": "#faf7f8" },
   "android": { "backgroundColor": "#faf7f8" },

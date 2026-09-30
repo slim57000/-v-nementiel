@@ -173,7 +173,18 @@ export function tabbar(active) {
       ${tab("profile", "/profil", "user", "Profil")}
     </nav>`);
   $("#tab-create").addEventListener("click", createSheet);
+  if (!["/dashboard", "/decouvrir", "/messages", "/profil"].includes(location.pathname)) backButton();
   bell();
+}
+
+// Bouton « ‹ » en haut à gauche des pages secondaires : page précédente du site, sinon l'accueil.
+export function backButton(fallback = "/dashboard") {
+  const bar = document.querySelector(".topbar");
+  if (!bar || bar.querySelector(".top-back")) return;
+  bar.insertAdjacentHTML("afterbegin", `<a class="top-back" href="${fallback}" aria-label="Retour">‹</a>`);
+  bar.querySelector(".top-back").addEventListener("click", (e) => {
+    if (document.referrer.startsWith(location.origin) && history.length > 1) { e.preventDefault(); history.back(); }
+  });
 }
 
 // « + » du menu : choisir entre une story (sur un de ses événements) et un nouvel événement.
@@ -222,7 +233,8 @@ async function bell() {
   btn.type = "button";
   btn.setAttribute("aria-label", "Notifications");
   btn.innerHTML = `🔔${unread ? `<span class="bell-count">${unread > 9 ? "9+" : unread}</span>` : ""}`;
-  bar.insertBefore(btn, bar.children.length > 1 ? bar.lastElementChild : null);
+  const logo = bar.querySelector(".logo");
+  if (logo) logo.after(btn); else bar.append(btn);
   btn.addEventListener("click", () => {
     btn.querySelector(".bell-count")?.remove();
     api("/api/me/notifications/read", { method: "POST" }).catch(() => {});
