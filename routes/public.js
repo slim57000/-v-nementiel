@@ -1,4 +1,4 @@
-import { autoSeedDemo } from "../lib/demo.js";
+import { autoSeedDemo, upgradeDemoCovers } from "../lib/demo.js";
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
 import { findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory, addFriends, listBlockIds } from "../lib/store.js";
@@ -20,6 +20,10 @@ router.get("/", async (req, res) => {
     const limit = Math.min(Number(req.query.limit) || 12, 50);
     events = await listPublicUpcoming(limit);
     if (!events.length && await autoSeedDemo()) events = await listPublicUpcoming(limit);
+    else if (events.some((e) => e.cover?.startsWith("/img/maquette/"))) {
+      await upgradeDemoCovers().catch((err) => console.error("Photos démo :", err.message));
+      events = await listPublicUpcoming(limit);
+    }
   } catch (err) {
     console.error("Événements publics :", err.message);
     return res.status(500).json({ error: `base de données (${err.message}). Relancez supabase/schema.sql.` });

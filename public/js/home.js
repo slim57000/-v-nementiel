@@ -42,9 +42,9 @@ $("#join-form").addEventListener("submit", async (e) => {
 // « En direct actuellement » : vrais événements publics (en direct aujourd'hui d'abord),
 // complétés par des exemples tant qu'il y en a moins de 3.
 const EXAMPLES = [
-  { name: "Aminata & Kevin", location: "Abidjan, Côte d'Ivoire", image: "/img/maquette/exemple-mariage.jpg" },
-  { name: "Sarah & William", location: "Paris, France", image: "/img/maquette/couple.jpg" },
-  { name: "Remise de diplôme de Junior", location: "Montréal, Canada", image: "/img/maquette/exemple-diplome.jpg" },
+  { name: "Aminata & Kevin", location: "Abidjan, Côte d'Ivoire", image: "/img/demo/mariage.jpg" },
+  { name: "Sarah & William", location: "Paris, France", image: "/img/demo/live-mariage.jpg" },
+  { name: "Remise de diplôme de Junior", location: "Montréal, Canada", image: "/img/demo/diplome.jpg" },
 ];
 const today = new Date().toISOString().slice(0, 10);
 
@@ -65,7 +65,7 @@ api("/api/public?limit=10").catch(() => []).then((events) => {
     .sort((a, b) => b.live - a.live)
     .map((e) => liveCard({
       href: e.live ? `/live?e=${encodeURIComponent(e.slug)}` : `/e/${encodeURIComponent(e.slug)}`,
-      image: e.cover || "/img/maquette/salle.jpg", tag: e.live ? "LIVE" : dayBadge(e.date), live: e.live, name: e.name, location: e.location, viewers: e.viewers,
+      image: e.cover || "/img/demo/live-mariage.jpg", tag: e.live ? "LIVE" : dayBadge(e.date), live: e.live, name: e.name, location: e.location, viewers: e.viewers,
     }));
   EXAMPLES.slice(0, Math.max(0, 3 - cards.length)).forEach((ex) => cards.push(liveCard({ ...ex, href: "/decouvrir", tag: "Exemple" })));
   $("#upcoming-list").innerHTML = cards.join("");

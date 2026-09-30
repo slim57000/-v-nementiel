@@ -212,7 +212,7 @@ input::-webkit-date-and-time-value { text-align: center; }
 .h-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
 .h-scroll::-webkit-scrollbar { display: none; }
 .pub-card { flex: none; width: 150px; height: 190px; border-radius: 16px; overflow: hidden; position: relative; color: #fff; text-decoration: none; background: linear-gradient(135deg, #d81f4f, #4a0e22) center / cover; display: flex; flex-direction: column; justify-content: flex-end; padding: 10px; font-size: .78rem; }
-.pub-card::before { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.75), transparent 55%); }
+.pub-card::before { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.85), rgba(0,0,0,.35) 50%, transparent 75%); }
 .pub-card > * { position: relative; }
 .pub-card b { font-size: .9rem; }
 .pub-card .tag { position: absolute; top: 8px; left: 8px; background: var(--primary); padding: 1px 8px; border-radius: 6px; font-weight: 700; font-size: .7rem; }
