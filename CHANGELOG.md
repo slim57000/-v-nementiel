@@ -1,5 +1,12 @@
 # Journal des modifications — MaFeliza
 
+## Version 1.6 — Rapidité
+- Chargement plus rapide : préchargement des scripts communs, cache navigateur des photos, CSS et bibliothèques, photos allégées (-30 %).
+- Recherche d'événements (nom, ville, type), filtres et accès par code dans Découvrir.
+- Rappel des codes d'invitation et caméraman juste après la création d'un événement.
+- Images des événements variées (26 couvertures différentes).
+- Bouton ‹ Retour sur toutes les pages secondaires.
+
 ## Version 1.5 — Simplicité
 - Live : bouton « 🔴 Lancer le live » sur le tableau de bord, mode d'emploi YouTube pas à pas et bouton « 📋 Coller le lien » ; live en un clic depuis le téléphone via LiveKit (offre gratuite) à la place de Cloudflare ; YouTube / Twitch restent possibles.
 - Bouton + : « Que voulez-vous créer ? » (story ou événement).

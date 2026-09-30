@@ -213,7 +213,11 @@ app.use((err, req, res, next) => {
 // En local uniquement : sur Vercel, public/ est servi par le CDN et api/index.js reçoit le reste (vercel.json).
 if (!ON_VERCEL) {
   app.use("/uploads", express.static(UPLOAD_DIR, { maxAge: "30d", immutable: true }));
-  app.use(express.static(PUBLIC_DIR, { extensions: ["html"] }));
+  app.use(express.static(PUBLIC_DIR, {
+    extensions: ["html"],
+    // Photos et bibliothèques : gardées en cache ; CSS versionnée (?v=) : cache long.
+    setHeaders: (res, file) => { if (/[\\/](img|vendor)[\\/]/.test(file)) res.set("Cache-Control", "public, max-age=604800"); },
+  }));
   app.use((req, res) => res.status(404).sendFile(`${PUBLIC_DIR}/404.html`));
   const port = process.env.PORT || 3000;
   app.listen(port, () => console.log(`Plateforme événementielle : http://localhost:${port}`));
