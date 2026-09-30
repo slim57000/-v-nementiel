@@ -20,9 +20,10 @@ const views = {
   async organizers(q) {
     const list = await api(`/api/admin/organizers?q=${encodeURIComponent(q)}`);
     return list.map((o) => row(
-      `<b>${esc(o.email)}</b> ${o.admin ? '<span class="badge">Admin</span>' : ""} ${o.blocked ? '<span class="badge private">Bloqué</span>' : ""} ${o.premium ? '<span class="badge">✨ Premium</span>' : ""}`,
+      `<b>${esc(o.email)}</b> ${o.superAdmin ? '<span class="badge">👑 Admin principal</span>' : o.admin ? '<span class="badge">Admin</span>' : ""} ${o.blocked ? '<span class="badge private">Bloqué</span>' : ""} ${o.premium ? '<span class="badge">✨ Premium</span>' : ""}`,
       `${o.events} événement(s) · inscrit le ${new Date(o.createdAt).toLocaleDateString("fr-FR")}`,
-      `<button class="btn btn-light btn-sm" data-act="premium" data-id="${o.id}" data-on="${!o.premium}">${o.premium ? "Retirer Premium" : "✨ Passer Premium"}</button>`
+      (o.superAdmin ? "" : `<button class="btn btn-light btn-sm" data-act="admin" data-id="${o.id}" data-on="${!o.admin}">${o.admin ? "Retirer admin" : "👑 Passer admin"}</button> `)
+      + `<button class="btn btn-light btn-sm" data-act="premium" data-id="${o.id}" data-on="${!o.premium}">${o.premium ? "Retirer Premium" : "✨ Passer Premium"}</button>`
       + (o.admin ? "" : ` <button class="btn ${o.blocked ? "btn-light" : "btn-danger"} btn-sm" data-act="block" data-id="${o.id}" data-on="${!o.blocked}">${o.blocked ? "Débloquer" : "Bloquer"}</button>`),
     )).join("") || "<p class='muted'>Aucun utilisateur.</p>";
   },
@@ -109,6 +110,13 @@ $("#content").addEventListener("click", async (e) => {
     if (act === "delete-event") {
       if (!confirm("Supprimer définitivement cet événement et tous ses contenus ?")) return;
       await api(`/api/admin/events/${id}`, { method: "DELETE" });
+    }
+    if (act === "admin") {
+      if (on === "true" || confirm("Retirer les droits d'administration à cet utilisateur ?")) {
+        await api(`/api/admin/organizers/${id}/admin`, { method: "POST", body: { admin: on === "true" } });
+        toast(on === "true" ? "Utilisateur nommé administrateur 👑" : "Droits d'administration retirés");
+        render();
+      }
     }
     if (act === "premium") {
       await api(`/api/admin/organizers/${id}/premium`, { method: "POST", body: { premium: on === "true" } });

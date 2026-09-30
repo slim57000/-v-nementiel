@@ -1,6 +1,6 @@
 // Administration de la plateforme : réservée aux emails listés dans ADMIN_EMAILS.
 import { Router } from "express";
-import { currentOrganizer, isAdmin } from "./auth.js";
+import { currentOrganizer, isAdmin, isSuperAdmin, listExtraAdmins } from "./auth.js";
 import { destroyEvent } from "./events.js";
 import { seedDemo, demoEvents, sendDemoMessages, sendDemoInvitation, createDemoAlbum } from "../lib/demo.js";
 import { isPremium, setPremium } from "../lib/premium.js";
@@ -13,7 +13,7 @@ const router = Router();
 
 router.use(async (req, res, next) => {
   const organizer = await currentOrganizer(req);
-  if (!isAdmin(organizer)) return res.status(403).json({ error: "Accès réservé à l'administration." });
+  if (!(await isAdmin(organizer))) return res.status(403).json({ error: "Accès réservé à l'administration." });
   next();
 });
 
@@ -85,7 +85,7 @@ router.get("/organizers", async (req, res) => {
   const organizers = await searchOrganizers(String(req.query.q || "").toLowerCase());
   res.json(await Promise.all(organizers.map(async (o) => ({
     id: o.id, email: o.email, blocked: Boolean(o.blocked), createdAt: o.createdAt,
-    events: (await listEvents(o.id)).length, admin: isAdmin(o), premium: await isPremium(o.id),
+    events: (await listEvents(o.id)).length, admin: await isAdmin(o), superAdmin: isSuperAdmin(o), premium: await isPremium(o.id),
   }))));
 });
 
@@ -97,10 +97,24 @@ router.post("/organizers/:id/premium", async (req, res) => {
   res.json({ ok: true });
 });
 
+// Nommer ou retirer un administrateur (les super-administrateurs de ADMIN_EMAILS ne peuvent pas être retirés).
+router.post("/organizers/:id/admin", async (req, res) => {
+  const organizer = await findOrganizer(Number(req.params.id));
+  if (!organizer) return res.status(404).json({ error: "Utilisateur introuvable." });
+  const on = Boolean(req.body?.admin);
+  if (!on && isSuperAdmin(organizer)) return res.status(400).json({ error: "Administrateur principal : il ne peut pas être retiré." });
+  if (!on && organizer.id === (await currentOrganizer(req)).id) return res.status(400).json({ error: "Vous ne pouvez pas retirer vos propres droits." });
+  if (on && organizer.blocked) return res.status(400).json({ error: "Débloquez d'abord cet utilisateur." });
+  const admins = new Set(await listExtraAdmins());
+  on ? admins.add(organizer.email) : admins.delete(organizer.email);
+  await setSetting("admins", [...admins]);
+  res.json({ ok: true });
+});
+
 router.post("/organizers/:id/block", async (req, res) => {
   const organizer = await findOrganizer(Number(req.params.id));
   if (!organizer) return res.status(404).json({ error: "Utilisateur introuvable." });
-  if (isAdmin(organizer)) return res.status(400).json({ error: "Impossible de bloquer un administrateur." });
+  if (await isAdmin(organizer)) return res.status(400).json({ error: "Impossible de bloquer un administrateur." });
   const blocked = Boolean(req.body?.blocked);
   await saveOrganizer({ ...organizer, blocked });
   for (const event of await listEvents(organizer.id)) await saveEvent({ ...event, suspended: blocked });

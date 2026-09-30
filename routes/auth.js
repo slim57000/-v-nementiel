@@ -98,7 +98,7 @@ router.get("/me", async (req, res) => {
   const organizer = await currentOrganizer(req);
   if (!organizer) return res.status(401).json({ error: "Non connecté." });
   res.json({
-    id: organizer.id, email: organizer.email, code: organizer.loginCode, isAdmin: isAdmin(organizer),
+    id: organizer.id, email: organizer.email, code: organizer.loginCode, isAdmin: await isAdmin(organizer),
     displayName: organizer.displayName || "", avatar: organizer.avatar || null, premium: await isPremium(organizer.id),
   });
 });
@@ -122,7 +122,11 @@ export async function currentOrganizer(req) {
 
 // Administrateurs : emails listés dans ADMIN_EMAILS (séparés par des virgules).
 const ADMINS = (process.env.ADMIN_EMAILS || "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
-export const isAdmin = (organizer) => Boolean(organizer && ADMINS.includes(organizer.email));
+// Administrateurs : ceux de ADMIN_EMAILS (super-administrateurs, non retirables) + ceux nommés depuis l'interface.
+export const isSuperAdmin = (organizer) => Boolean(organizer && ADMINS.includes(organizer.email));
+export const listExtraAdmins = async () => (await getSetting("admins").catch(() => null)) || [];
+export const isAdmin = async (organizer) =>
+  Boolean(organizer && (isSuperAdmin(organizer) || (await listExtraAdmins()).includes(organizer.email)));
 
 export async function requireOrganizer(req, res, next) {
   req.organizer = await currentOrganizer(req);
