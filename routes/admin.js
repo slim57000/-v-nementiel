@@ -32,7 +32,11 @@ router.get("/events", async (req, res) => {
 
 // Événements de démonstration (compte dédié) : création et suppression en un clic.
 router.post("/demo", async (req, res) => {
-  res.json({ created: await seedDemo(Math.min(Number(req.body?.count) || 50, 100)) });
+  try {
+    res.json({ created: await seedDemo(Math.min(Number(req.body?.count) || 50, 100)) });
+  } catch (err) {
+    res.status(500).json({ error: `Création impossible : ${err.message}. Relancez supabase/schema.sql dans Supabase.` });
+  }
 });
 router.delete("/demo", async (req, res) => {
   const list = await demoEvents();

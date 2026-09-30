@@ -14,7 +14,13 @@ export const hasAccess = async (req, event) =>
 
 // Événements publics à venir : cartes de la page d'accueil et de « Découvrir ».
 router.get("/", async (req, res) => {
-  const events = await listPublicUpcoming(Math.min(Number(req.query.limit) || 12, 50));
+  let events;
+  try {
+    events = await listPublicUpcoming(Math.min(Number(req.query.limit) || 12, 50));
+  } catch (err) {
+    console.error("Événements publics :", err.message);
+    return res.status(500).json({ error: `base de données (${err.message}). Relancez supabase/schema.sql.` });
+  }
   const today = new Date().toISOString().slice(0, 10);
   res.json(await Promise.all(events.map(async (e) => {
     const { invite, inviteStyle, description, ...card } = publicView(e);
