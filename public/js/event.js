@@ -1,4 +1,4 @@
-import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, guestName, LOCALE } from "./common.js";
+import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, guestName, LOCALE, placeholderCover } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 import { initGuestbook } from "./guestbook.js";
 
@@ -118,7 +118,7 @@ async function renderStories(ev) {
   if (!loggedIn) {
     const first = ev.cover ? `<div class="story-circle"><div style="background-image:url('${esc(ev.cover)}')"></div></div>` : "";
     const teasers = [1, 2, 3, 4].slice(ev.cover ? 1 : 0)
-      .map((n) => `<div class="story-circle teaser"><div style="background-image:url('/img/maquette/story${n}.jpg')">🔒</div></div>`).join("");
+      .map(() => `<div class="story-circle teaser"><div style="background-image:url('${placeholderCover(ev.type)}')">🔒</div></div>`).join("");
     $("#stories-row").innerHTML = first + teasers;
     $("#signup").href = `/connexion?next=${encodeURIComponent(location.pathname)}`;
     $("#signup").classList.remove("hidden");

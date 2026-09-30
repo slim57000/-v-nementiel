@@ -107,18 +107,14 @@ export function dayBadge(date) {
 
 // Vignette d'un événement public (accueil, Découvrir).
 // Photo par défaut selon le type, pour les événements sans photo de couverture.
-const TYPE_COVER = {
-  mariage: "live-mariage", fiancailles: "mariage", bapteme: "bebe", "baby-shower": "bebe", communion: "costume",
-  anniversaire: "anniversaire", diplome: "diplome", retraite: "anniversaire", inauguration: "enfants", autre: "live-mariage",
-};
-// Sans photo choisie : une variante de la photo du type, stable pour un même événement (selon son adresse).
-const VARIANTS = { "live-mariage": 5, mariage: 4, bebe: 4, costume: 4, anniversaire: 4, diplome: 4, enfants: 4 };
-export const coverOf = (ev) => {
-  if (ev.cover) return ev.cover;
-  const base = TYPE_COVER[ev.type] || "live-mariage";
-  const n = [...String(ev.slug || ev.name || "")].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % (VARIANTS[base] || 1);
-  return `/img/demo/${base}${n ? `-${n + 1}` : ""}.jpg`;
-};
+// Sans photo choisie : fond MaFeliza (dégradé) avec l'emoji du type d'événement, jamais une photo de banque d'images.
+const placeholders = {};
+export const placeholderCover = (type) => (placeholders[type] ||= `data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">`
+  + `<stop offset="0" stop-color="#fe7320"/><stop offset=".5" stop-color="#fd1a85"/><stop offset="1" stop-color="#8a1de9"/></linearGradient></defs>`
+  + `<rect width="800" height="500" fill="url(#g)"/><text x="400" y="250" font-size="150" text-anchor="middle" dominant-baseline="central">${EVENT_TYPES[type]?.icon || "🎉"}</text></svg>`,
+)}`);
+export const coverOf = (ev) => ev.cover || placeholderCover(ev.type);
 // Transforme un lien YouTube / Twitch en adresse de lecteur intégrable (null si non reconnu).
 export function embedUrl(url, slug = new URLSearchParams(location.search).get("e")) {
   // Caméra « téléphone » (LiveKit) : lecteur MaFeliza.

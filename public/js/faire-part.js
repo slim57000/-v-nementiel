@@ -59,7 +59,7 @@ function render() {
     : `${base}${withCode}`;
   const invite = isLive ? liveCard(ev) : ev.invite;
   const style = isLive ? "moderne" : ev.inviteStyle;
-  const photo = invitePhotoUrl(ev.invite, ev.cover) || "/img/demo/live-mariage.jpg";
+  const photo = invitePhotoUrl(ev.invite, ev.cover);
   renderInvite($("#card"), ev, invite, style, isLive ? photo : invitePhotoUrl(ev.invite, ev.cover));
 
   $("#qr").src = qrUrl(link);
