@@ -108,12 +108,48 @@ const TYPE_COVER = {
   anniversaire: "anniversaire", diplome: "diplome", retraite: "anniversaire", inauguration: "enfants", autre: "live-mariage",
 };
 export const coverOf = (ev) => ev.cover || `/img/demo/${TYPE_COVER[ev.type] || "live-mariage"}.jpg`;
+// Transforme un lien YouTube / Twitch en adresse de lecteur intégrable (null si non reconnu).
+export function embedUrl(url) {
+  let u;
+  try { u = new URL(url); } catch { return null; }
+  const host = u.hostname.replace(/^www\.|^m\./, "");
+  let id = null;
+  if (host === "youtu.be") id = u.pathname.slice(1);
+  else if (host === "youtube.com") {
+    id = u.searchParams.get("v") || u.pathname.match(/^\/(?:live|embed|shorts)\/([\w-]+)/)?.[1];
+  }
+  if (id) return `https://www.youtube.com/embed/${encodeURIComponent(id)}?autoplay=1&mute=1&playsinline=1`;
+  // Caméra « téléphone » (Cloudflare Stream) : lecteur intégré, direct puis replay enregistré.
+  if (host.endsWith(".cloudflarestream.com")) return `${u.origin}${u.pathname}?autoplay=true&muted=true&preload=auto`;
+  if (host === "twitch.tv") {
+    const channel = u.pathname.split("/")[1];
+    if (channel) return `https://player.twitch.tv/?channel=${encodeURIComponent(channel)}&parent=${location.hostname}&muted=true`;
+  }
+  return null;
+}
+
+// Aperçu d'une caméra : miniature YouTube ou image du direct Twitch.
+export function thumbnailUrl(url, { live = false } = {}) {
+  let u;
+  try { u = new URL(url); } catch { return null; }
+  const host = u.hostname.replace(/^www\.|^m\./, "");
+  const id = host === "youtu.be" ? u.pathname.slice(1)
+    : host === "youtube.com" ? u.searchParams.get("v") || u.pathname.match(/^\/(?:live|embed|shorts)\/([\w-]+)/)?.[1] : null;
+  const fresh = `t=${Math.floor(Date.now() / 60000)}`; // image renouvelée chaque minute pendant le direct
+  if (id) return live ? `https://i.ytimg.com/vi/${encodeURIComponent(id)}/hqdefault_live.jpg?${fresh}` : `https://i.ytimg.com/vi/${encodeURIComponent(id)}/mqdefault.jpg`;
+  if (host.endsWith(".cloudflarestream.com")) return `${u.origin}/${u.pathname.split("/")[1]}/thumbnails/thumbnail.jpg?time=0s&height=360&${fresh}`;
+  if (host === "twitch.tv" && u.pathname.split("/")[1]) {
+    return `https://static-cdn.jtvnw.net/previews-ttv/live_user_${encodeURIComponent(u.pathname.split("/")[1].toLowerCase())}-320x180.jpg?${fresh}`;
+  }
+  return null;
+}
+
 // « En direct » : événement du jour avec au moins une caméra.
 export const isLiveNow = (ev) => ev.date === new Date().toISOString().slice(0, 10) && ev.cameras?.length > 0;
 
 export function publicCard(ev) {
   const live = isLiveNow(ev);
-  return `<a class="pub-card" href="${live ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`}" style="background-image:url('${esc(coverOf(ev))}')">
+  return `<a class="pub-card" href="${live ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`}" ${liveAttrs(ev)}>
     <span class="tag">${live ? "● LIVE" : esc(dayBadge(ev.date))}</span>
     <b>${esc(ev.name)}</b>
     <span>${EVENT_TYPES[ev.type].icon} ${esc(ev.location)}</span>
@@ -504,3 +540,44 @@ export function openStories(items, { start = 0, title = "", onDelete } = {}) {
   });
   show(start);
 }
+
+// --- Cartes des lives : image tirée du direct en cours + aperçu en restant appuyé ---
+// Fond : dernière image du direct (renouvelée chaque minute) par-dessus la couverture, qui reste visible si l'image manque.
+export function liveAttrs(ev) {
+  const cover = coverOf(ev);
+  const cam = isLiveNow(ev) ? ev.cameras[0]?.url : null;
+  const thumb = cam && thumbnailUrl(cam, { live: true });
+  const embed = cam && embedUrl(cam);
+  return `style="background-image:${thumb ? `url('${esc(thumb)}'), ` : ""}url('${esc(cover)}')"${embed ? ` data-live-preview="${esc(embed)}"` : ""}`;
+}
+
+// Appui long (0,35 s) sur une carte de live : la diffusion se lance dans la carte (sans son) tant qu'on reste appuyé.
+let holdTimer = null, previewing = null, suppressClick = false;
+const stopPreview = () => {
+  clearTimeout(holdTimer);
+  previewing?.querySelector(".live-preview")?.remove();
+  previewing?.classList.remove("previewing");
+  if (previewing) suppressClick = true;
+  previewing = null;
+};
+document.addEventListener("pointerdown", (e) => {
+  const card = e.target.closest?.("[data-live-preview]");
+  if (!card) return;
+  suppressClick = false;
+  holdTimer = setTimeout(() => {
+    previewing = card;
+    card.classList.add("previewing");
+    card.insertAdjacentHTML("afterbegin", `<iframe class="live-preview" src="${esc(card.dataset.livePreview)}" allow="autoplay; encrypted-media" tabindex="-1" aria-hidden="true"></iframe>`);
+    navigator.vibrate?.(15);
+  }, 350);
+});
+// Relâchement du doigt (ou sortie de la carte) : l'aperçu s'arrête.
+for (const type of ["pointerup", "pointercancel"]) document.addEventListener(type, () => { if (holdTimer || previewing) stopPreview(); }, true);
+document.addEventListener("pointerout", (e) => {
+  const card = e.target.closest?.("[data-live-preview]");
+  if (card && (holdTimer || previewing) && !card.contains(e.relatedTarget)) stopPreview();
+}, true);
+document.addEventListener("click", (e) => {
+  if (suppressClick && e.target.closest?.("[data-live-preview]")) { e.preventDefault(); suppressClick = false; }
+}, true);
+document.addEventListener("contextmenu", (e) => { if (e.target.closest?.("[data-live-preview]")) e.preventDefault(); });

@@ -1,4 +1,4 @@
-import { api, $, esc, toast, dayBadge, coverOf } from "./common.js";
+import { api, $, esc, toast, dayBadge, coverOf, liveAttrs } from "./common.js";
 import { icon, BRAND } from "./icons.js";
 
 // Pictogrammes et logos des boutons de connexion.
@@ -55,8 +55,9 @@ const today = new Date().toISOString().slice(0, 10);
 
 const formatCount = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1).replace(".", ",").replace(",0", "")}K` : String(n));
 
-function liveCard({ href, image, tag, live, name, location, viewers }) {
-  return `<a class="live-card" ${href ? `href="${esc(href)}"` : ""} ${image ? `style="background-image:url('${esc(image)}')"` : ""}>
+function liveCard({ href, image, tag, live, name, location, viewers, ev }) {
+  const bg = ev ? liveAttrs(ev) : image ? `style="background-image:url('${esc(image)}')"` : "";
+  return `<a class="live-card" ${href ? `href="${esc(href)}"` : ""} ${bg}>
     <span class="tag ${live ? "is-live" : ""}">${esc(tag)}</span>
     <b>${esc(name)}</b><span>${esc(location)}</span>
     ${viewers ? `<span class="viewers-mini">${icon("eye", 14)} ${formatCount(viewers)}</span>` : ""}
@@ -70,7 +71,7 @@ api("/api/public?limit=10").catch(() => []).then((events) => {
     .sort((a, b) => b.live - a.live)
     .map((e) => liveCard({
       href: e.live ? `/live?e=${encodeURIComponent(e.slug)}` : `/e/${encodeURIComponent(e.slug)}`,
-      image: coverOf(e), tag: e.live ? "LIVE" : dayBadge(e.date), live: e.live, name: e.name, location: e.location, viewers: e.viewers,
+      ev: e, image: coverOf(e), tag: e.live ? "LIVE" : dayBadge(e.date), live: e.live, name: e.name, location: e.location, viewers: e.viewers,
     }));
   EXAMPLES.slice(0, Math.max(0, 3 - cards.length)).forEach((ex) => cards.push(liveCard({ ...ex, href: "/decouvrir", tag: "Exemple" })));
   $("#upcoming-list").innerHTML = cards.join("");

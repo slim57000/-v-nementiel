@@ -1,4 +1,4 @@
-import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories } from "./common.js";
+import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories, liveAttrs } from "./common.js";
 import { icon } from "./icons.js";
 
 $("#profile-btn").innerHTML = icon("user");
@@ -42,7 +42,7 @@ function renderStories() {
       const badge = dayBadge(ev.date);
       const live = isLive(ev);
       return `<a class="story" href="${live ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`}">
-        <div class="story-img ${live ? "live" : ""} ${withStory.has(ev.slug) ? "has-story" : ""}" data-story="${withStory.has(ev.slug) ? esc(ev.slug) : ""}" ${bg(coverOf(ev))}>
+        <div class="story-img ${live ? "live" : ""} ${withStory.has(ev.slug) ? "has-story" : ""}" data-story="${withStory.has(ev.slug) ? esc(ev.slug) : ""}" ${liveAttrs(ev)}>
           <span class="story-badge ${live || badge === "Aujourd'hui" ? "today" : ""}">${live ? "LIVE" : badge}</span></div>
         <span>${esc(ev.name)}</span></a>`;
     }).join("")}`;
@@ -59,7 +59,7 @@ function card(ev) {
         ${ev.reports ? `<a class="report-badge" href="/e/${esc(ev.slug)}">⚠️ ${ev.reports} signalement${ev.reports > 1 ? "s" : ""}</a>` : ""}</div>
       ${isLive(ev) ? '<span class="live-tag" style="margin-left:auto">LIVE</span>' : `<span class="badge ${isPrivate ? "private" : ""}">${isPrivate ? "🔒 Privé" : "🔓 Public"}</span>`}
     </div>
-    <div class="ev-cover" ${bg(coverOf(ev))}>
+    <div class="ev-cover" ${liveAttrs(ev)}>
       ${isLive(ev)
         ? `<div class="live-now">LIVE EN COURS</div>
            <a class="btn btn-block" href="/live?e=${encodeURIComponent(ev.slug)}">${icon("play", 16)} Rejoindre le Live</a>`

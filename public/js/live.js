@@ -1,41 +1,7 @@
-import { api, $, esc, shareSheet, toast, guestName, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, coverOf, onRealtime } from "./common.js";
+import { api, $, esc, shareSheet, toast, guestName, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, coverOf, onRealtime, embedUrl, thumbnailUrl } from "./common.js";
 import { icon } from "./icons.js";
 
 const slug = new URLSearchParams(location.search).get("e") || "";
-
-// Transforme un lien YouTube / Twitch en adresse de lecteur intégrable (null si non reconnu).
-export function embedUrl(url) {
-  let u;
-  try { u = new URL(url); } catch { return null; }
-  const host = u.hostname.replace(/^www\.|^m\./, "");
-  let id = null;
-  if (host === "youtu.be") id = u.pathname.slice(1);
-  else if (host === "youtube.com") {
-    id = u.searchParams.get("v") || u.pathname.match(/^\/(?:live|embed|shorts)\/([\w-]+)/)?.[1];
-  }
-  if (id) return `https://www.youtube.com/embed/${encodeURIComponent(id)}?autoplay=1&mute=1&playsinline=1`;
-  // Caméra « téléphone » (Cloudflare Stream) : lecteur intégré, direct puis replay enregistré.
-  if (host.endsWith(".cloudflarestream.com")) return `${u.origin}${u.pathname}?autoplay=true&muted=true&preload=auto`;
-  if (host === "twitch.tv") {
-    const channel = u.pathname.split("/")[1];
-    if (channel) return `https://player.twitch.tv/?channel=${encodeURIComponent(channel)}&parent=${location.hostname}&muted=true`;
-  }
-  return null;
-}
-
-// Aperçu d'une caméra : miniature YouTube ou image du direct Twitch.
-export function thumbnailUrl(url) {
-  let u;
-  try { u = new URL(url); } catch { return null; }
-  const host = u.hostname.replace(/^www\.|^m\./, "");
-  const id = host === "youtu.be" ? u.pathname.slice(1)
-    : host === "youtube.com" ? u.searchParams.get("v") || u.pathname.match(/^\/(?:live|embed|shorts)\/([\w-]+)/)?.[1] : null;
-  if (id) return `https://i.ytimg.com/vi/${encodeURIComponent(id)}/mqdefault.jpg`;
-  if (host === "twitch.tv" && u.pathname.split("/")[1]) {
-    return `https://static-cdn.jtvnw.net/previews-ttv/live_user_${encodeURIComponent(u.pathname.split("/")[1].toLowerCase())}-320x180.jpg`;
-  }
-  return null;
-}
 
 let cameras = [];
 let isOwner = false;
