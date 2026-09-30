@@ -3,7 +3,7 @@ import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo } from "../lib/demo.js";
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
-import { findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory, addFriends, listBlockIds, clearLimit, findInvite, saveInvite } from "../lib/store.js";
+import { findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory, addFriends, listBlockIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
 import { currentOrganizer } from "./auth.js";
 
@@ -58,7 +58,8 @@ router.get("/:slug", async (req, res) => {
   }
   if (!isOwner) await bumpViews(event.id);
   const premium = await isPremium(event.organizerId);
-  res.json({ locked: false, isOwner, loggedIn: Boolean(me), ...publicView(event), id: event.id, premium, replayDays: replayDays(premium) });
+  const program = (await getSetting(`program:${event.id}`).catch(() => null)) || null;
+  res.json({ locked: false, isOwner, loggedIn: Boolean(me), ...publicView(event), id: event.id, premium, replayDays: replayDays(premium), program });
 });
 
 // Anti-bruteforce partagé (base de données) : 10 essais par IP (et événement) toutes les 15 minutes.

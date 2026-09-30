@@ -146,6 +146,8 @@ form.addEventListener("submit", async (e) => {
       url: row.querySelector("[name=cam-url]").value,
     })),
     cagnotteUrl: $("#cagnotte").value,
+    program: [...document.querySelectorAll(".step-row")].map((r) => ({ time: r.querySelector("[name=step-time]").value, label: r.querySelector("[name=step-label]").value })),
+    practical: $("#practical").value,
     cameramanNotes: $("#cameraman-notes").value,
     regenerateCameramanCode: $("#regenerate-cam").checked,
     invite: { ...invite(), photo: choice === "custom" ? state.invitePhoto : choice },
@@ -199,6 +201,8 @@ async function init() {
     for (const key of ["name", "date", "time", "location", "description"]) field(key).value = ev[key];
     ev.cameras.forEach(addCamera);
     $("#cagnotte").value = ev.cagnotteUrl;
+    (ev.program?.steps || []).forEach(addStep);
+    $("#practical").value = ev.program?.practical || "";
     $("#cameraman-notes").value = ev.cameramanNotes;
     if (ev.blockedCount) {
       $("#blocked-count").textContent = ev.blockedCount;
@@ -231,3 +235,38 @@ async function init() {
 }
 
 init();
+
+// --- Programme de la journée : étapes (heure + intitulé), 12 max ---
+function addStep(step = {}) {
+  const list = $("#program");
+  if (list.children.length >= 12) return toast("12 étapes maximum");
+  list.insertAdjacentHTML("beforeend", `
+    <div class="step-row">
+      <input name="step-time" type="time" aria-label="Heure">
+      <input name="step-label" maxlength="80" placeholder="Cérémonie, cocktail, dîner…" aria-label="Étape">
+      <button type="button" class="btn btn-ghost btn-sm" data-remove-step aria-label="Retirer">✕</button>
+    </div>`);
+  const row = list.lastElementChild;
+  row.querySelector("[name=step-time]").value = step.time || "";
+  row.querySelector("[name=step-label]").value = step.label || "";
+}
+const PROGRAMS = {
+  mariage: [["14:00", "Cérémonie à la mairie"], ["15:30", "Cérémonie religieuse"], ["17:00", "Vin d'honneur"], ["20:00", "Dîner"], ["22:30", "Soirée dansante"]],
+  fiancailles: [["19:00", "Accueil des invités"], ["20:00", "Demande officielle"], ["20:30", "Dîner"], ["22:30", "Soirée"]],
+  anniversaire: [["19:00", "Accueil et apéritif"], ["20:30", "Dîner"], ["22:00", "Gâteau et bougies"], ["22:30", "Soirée dansante"]],
+  bapteme: [["11:00", "Cérémonie"], ["12:30", "Vin d'honneur"], ["13:30", "Déjeuner"], ["16:00", "Goûter"]],
+  communion: [["10:30", "Messe"], ["12:30", "Apéritif"], ["13:30", "Déjeuner"]],
+  "baby-shower": [["15:00", "Accueil"], ["15:30", "Jeux"], ["16:30", "Ouverture des cadeaux"], ["17:00", "Goûter"]],
+  diplome: [["14:00", "Remise des diplômes"], ["16:00", "Photos"], ["19:00", "Dîner de célébration"]],
+  retraite: [["18:00", "Accueil"], ["18:30", "Discours"], ["19:00", "Cocktail"]],
+  inauguration: [["18:00", "Accueil"], ["18:30", "Coupure du ruban"], ["19:00", "Cocktail"]],
+  autre: [["19:00", "Accueil"], ["20:00", "Dîner"], ["22:00", "Soirée"]],
+};
+$("#add-step").addEventListener("click", () => addStep());
+$("#program").addEventListener("click", (e) => { if (e.target.matches("[data-remove-step]")) e.target.closest(".step-row").remove(); });
+$("#program-template").addEventListener("click", () => {
+  const type = document.querySelector("[name=type]:checked")?.value || "autre";
+  if (document.querySelector(".step-row") && !confirm("Remplacer le programme actuel par un programme type ?")) return;
+  $("#program").innerHTML = "";
+  (PROGRAMS[type] || PROGRAMS.autre).forEach(([time, label]) => addStep({ time, label }));
+});

@@ -622,3 +622,14 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
 .rsvp-choices button.active { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
 .rsvp-count { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 12px; font-size: .88rem; }
 .rsvp-count select { width: auto; min-width: 70px; }
+/* Programme de la journée */
+.step-row { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 6px; margin-bottom: 8px; align-items: center; }
+.step-row input[type=time] { padding-inline: 8px; }
+.timeline { list-style: none; margin: 0 0 4px; padding: 0 0 0 4px; position: relative; }
+.timeline::before { content: ""; position: absolute; left: 72px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(#fe7320, #fd1a85, #8a1de9); border-radius: 2px; }
+.timeline li { display: grid; grid-template-columns: 56px 1fr; gap: 36px; align-items: center; padding: 8px 0; position: relative; }
+.timeline li::before { content: ""; position: absolute; left: 62px; width: 12px; height: 12px; border-radius: 50%; background: var(--card); border: 3px solid var(--primary); }
+.timeline time { font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums; text-align: right; }
+.timeline span { overflow-wrap: anywhere; }
+#practical-box { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+#practical-box h3 { font-size: .95rem; margin: 0 0 6px; }

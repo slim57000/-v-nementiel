@@ -131,6 +131,11 @@ const EN = {
   "Google Agenda": "Google Calendar",
   "Soyez le premier à répondre !": "Be the first to reply!",
   "Réponses (visibles par vous seul)": "Replies (only visible to you)",
+  "🗓️ Programme": "🗓️ Schedule",
+  "ℹ️ Infos pratiques": "ℹ️ Practical info",
+  "+ Ajouter une étape": "+ Add a step",
+  "✨ Programme type": "✨ Sample schedule",
+  "Infos pratiques": "Practical info",
 };
 
 const LANG_KEY = "em-lang";

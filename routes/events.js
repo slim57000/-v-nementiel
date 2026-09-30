@@ -5,6 +5,16 @@ import { randomCode, slugify } from "../lib/codes.js";
 import { saveDataUrl, removeUpload, isOwnUpload } from "../lib/uploads.js";
 import { sendInvites } from "../lib/invites.js";
 import { isPremium, getStats } from "../lib/premium.js";
+import { getSetting, setSetting } from "../lib/store.js";
+
+// Programme de la journée (12 étapes max) et infos pratiques, stockés à part de l'événement.
+const cleanProgram = (body) => ({
+  steps: (Array.isArray(body?.program) ? body.program : [])
+    .map((st) => ({ time: /^\d{2}:\d{2}$/.test(st?.time) ? st.time : "", label: String(st?.label || "").trim().slice(0, 80) }))
+    .filter((st) => st.label).slice(0, 12).sort((a, b) => a.time.localeCompare(b.time)),
+  practical: String(body?.practical || "").trim().slice(0, 1500),
+});
+const saveProgram = (id, body) => (body && ("program" in body || "practical" in body) ? setSetting(`program:${id}`, cleanProgram(body)) : null);
 import { EMAIL_ENABLED } from "../lib/email.js";
 import { tooFast } from "../lib/limits.js";
 import { listMessages, listInvites, listEvents, findEvent, createEvent, saveEvent, deleteEvent, listPhotos, listGuestbook, countReports } from "../lib/store.js";
@@ -59,7 +69,7 @@ router.get("/", handle(async (req, res) => {
 router.get("/:id", handle(async (req, res) => {
   const event = await findOwned(req);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
-  res.json({ ...ownerView(event), premium: await isPremium(req.organizer.id) });
+  res.json({ ...ownerView(event), premium: await isPremium(req.organizer.id), program: (await getSetting(`program:${event.id}`).catch(() => null)) || { steps: [], practical: "" } });
 }));
 
 // Statistiques pour l'organisateur : vues, pic de spectateurs, messages, réactions, photos, livre d'or, invitations.
@@ -88,6 +98,7 @@ router.post("/", handle(async (req, res) => {
     accessCode: randomCode(),
     cameramanCode: randomCode(),
   });
+  await saveProgram(event.id, req.body);
   res.status(201).json(ownerView(event));
 }));
 
@@ -103,6 +114,7 @@ router.put("/:id", handle(async (req, res) => {
     accessCode: req.body.regenerateCode ? randomCode() : existing.accessCode,
     cameramanCode: req.body.regenerateCameramanCode || !existing.cameramanCode ? randomCode() : existing.cameramanCode,
   });
+  await saveProgram(event.id, req.body);
   res.json(ownerView(event));
 }));
 

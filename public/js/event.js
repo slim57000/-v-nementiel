@@ -74,6 +74,13 @@ function showEvent(ev) {
     action: "TEMPLATE", text: ev.name, dates: `${d}T${t}00/${d}T${endH}${t.slice(2)}00`, location: ev.location, details: location.href.split("?")[0],
   })}`;
   initRsvp(ev);
+  // Programme de la journée et infos pratiques.
+  const steps = ev.program?.steps || [];
+  if (steps.length || ev.program?.practical) {
+    $("#program-card").classList.remove("hidden");
+    $("#timeline").innerHTML = steps.map((st) => `<li><time>${esc(st.time ? st.time.replace(":", "h") : "")}</time><span>${esc(st.label)}</span></li>`).join("");
+    if (ev.program.practical) { $("#practical").textContent = ev.program.practical; $("#practical-box").classList.remove("hidden"); }
+  }
   $("#description").textContent = ev.description;
   $("#description").classList.toggle("hidden", !ev.description);
 
