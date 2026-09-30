@@ -1,6 +1,6 @@
 // « Mes faire-part » : le faire-part de l'événement et l'invitation au live (générée automatiquement),
 // chacun avec QR code, lien, code et boutons de partage.
-import { api, $, copy, shareSheet, qrUrl, tabbar, goLogin, formatDate, EVENT_TYPES, EN } from "./common.js";
+import { api, $, copy, shareSheet, qrUrl, tabbar, goLogin, formatDate, EVENT_TYPES, EN, toast } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 
 tabbar("home");
@@ -20,9 +20,15 @@ function liveInvite(ev) {
   return {
     kicker: "Invitation au live",
     title: ev.name,
-    text: `Vous ne pourrez pas être présent ? Suivez ${what} en direct depuis votre téléphone, le ${formatDate(ev.date, ev.time).toLowerCase()}.\n\nMessages, réactions et photos : vivez ce moment avec nous !`,
+    text: `Nous avons la joie de vous annoncer ${what}, le ${formatDate(ev.date, ev.time).toLowerCase()}.\n\nParce que vous comptez pour nous et que nous souhaitons partager ce moment malgré la distance, nous vous invitons à le suivre en direct !\n\nScannez le QR code ou ouvrez le lien : messages, réactions et photos, vivez ce moment avec nous.`,
   };
 }
+
+// Invitation au live : texte personnalisé par l'organisateur, sinon le texte proposé.
+const liveCard = (ev) => {
+  const auto = liveInvite(ev);
+  return ev.invite?.liveText ? { ...auto, text: ev.invite.liveText } : auto;
+};
 
 let ev;
 let tab = "invite";
@@ -34,7 +40,7 @@ function render() {
   const link = isLive
     ? `${location.origin}/live?e=${encodeURIComponent(ev.slug)}${ev.visibility === "private" ? `&code=${ev.accessCode}` : ""}`
     : `${base}${withCode}`;
-  const invite = isLive ? liveInvite(ev) : ev.invite;
+  const invite = isLive ? liveCard(ev) : ev.invite;
   const style = isLive ? "moderne" : ev.inviteStyle;
   const photo = invitePhotoUrl(ev.invite, ev.cover) || "/img/demo/live-mariage.jpg";
   renderInvite($("#card"), ev, invite, style, isLive ? photo : invitePhotoUrl(ev.invite, ev.cover));
@@ -57,7 +63,39 @@ document.querySelector(".fp-tabs").addEventListener("click", (e) => {
   if (!e.target.dataset.tab) return;
   tab = e.target.dataset.tab;
   document.querySelectorAll(".fp-tabs button").forEach((b) => b.classList.toggle("active", b === e.target));
+  closeEditor();
   render();
+});
+
+// Modification du texte directement depuis « Mes faire-part ».
+const form = $("#fp-editor");
+function fill(inv) {
+  form.kicker.value = inv.kicker || ""; form.title.value = inv.title || ""; form.text.value = inv.text || "";
+}
+function closeEditor() { form.classList.add("hidden"); $("#edit-text").classList.remove("hidden"); }
+$("#edit-text").addEventListener("click", () => {
+  const live = tab === "live";
+  fill(live ? liveCard(ev) : ev.invite || {});
+  form.kicker.parentElement.classList.toggle("hidden", live);
+  form.title.parentElement.classList.toggle("hidden", live);
+  $("#fp-reset").classList.toggle("hidden", !live);
+  form.classList.remove("hidden");
+  $("#edit-text").classList.add("hidden");
+  form.text.focus();
+});
+$("#fp-reset").addEventListener("click", () => { form.text.value = liveInvite(ev).text; });
+$("#fp-cancel").addEventListener("click", closeEditor);
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const body = tab === "live"
+    ? { liveText: form.text.value.trim() === liveInvite(ev).text ? "" : form.text.value }
+    : { kicker: form.kicker.value, title: form.title.value, text: form.text.value };
+  try {
+    ev = await api(`/api/events/${encodeURIComponent(ev.id)}/invite-text`, { method: "PATCH", body });
+    closeEditor();
+    render();
+    toast(EN ? "Text saved" : "Texte enregistré ✓");
+  } catch (err) { toast(err.message); }
 });
 $("#print").addEventListener("click", () => print());
 

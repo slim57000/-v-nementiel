@@ -3,7 +3,7 @@ import { icon } from "./icons.js";
 import { lang } from "./i18n.js"; // langue (FR/EN) et thème (clair/sombre), appliqués au chargement
 
 // Format des dates selon la langue choisie.
-export const LOCALE = lang === "en" ? "en-GB" : LOCALE;
+export const LOCALE = lang === "en" ? "en-GB" : "fr-FR";
 export const EN = lang === "en";
 
 export const EVENT_TYPES = {

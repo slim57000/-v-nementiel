@@ -106,6 +106,7 @@ router.put("/:id", handle(async (req, res) => {
   const existing = await findOwned(req);
   if (!existing) return res.status(404).json({ error: "Événement introuvable." });
   const input = parseEventInput(req.body);
+  input.invite.liveText ||= existing.invite?.liveText || "";
   const images = await applyImages(input, req.body, existing);
   const event = await saveEvent({
     ...existing,
@@ -115,6 +116,20 @@ router.put("/:id", handle(async (req, res) => {
     cameramanCode: req.body.regenerateCameramanCode || !existing.cameramanCode ? randomCode() : existing.cameramanCode,
   });
   await saveProgram(event.id, req.body);
+  res.json(ownerView(event));
+}));
+
+// Textes des faire-part modifiés depuis « Mes faire-part » (faire-part et invitation au live).
+router.patch("/:id/invite-text", handle(async (req, res) => {
+  const existing = await findOwned(req);
+  if (!existing) return res.status(404).json({ error: "Événement introuvable." });
+  const cut = (v, max) => String(v ?? "").trim().slice(0, max);
+  const invite = { ...existing.invite };
+  if ("kicker" in req.body) invite.kicker = cut(req.body.kicker, 60);
+  if ("title" in req.body) invite.title = cut(req.body.title, 150);
+  if ("text" in req.body) invite.text = cut(req.body.text, 1500);
+  if ("liveText" in req.body) invite.liveText = cut(req.body.liveText, 1500);
+  const event = await saveEvent({ ...existing, invite });
   res.json(ownerView(event));
 }));
 

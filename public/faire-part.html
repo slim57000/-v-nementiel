@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#e8137a">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=Great+Vibes&family=Inter:wght@400;600;800&family=Quicksand:wght@600;700&display=swap">
-  <link rel="stylesheet" href="/css/app.css?v=63">
+  <link rel="stylesheet" href="/css/app.css?v=64">
   <link rel="stylesheet" href="/css/invitation.css?v=6">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
@@ -30,6 +30,17 @@
 
     <div id="card"></div>
 
+    <form id="fp-editor" class="fp-editor hidden">
+      <label>Petit titre <input name="kicker" maxlength="60"></label>
+      <label>Titre <input name="title" maxlength="150"></label>
+      <label>Texte <textarea name="text" rows="8" maxlength="1500"></textarea></label>
+      <div class="fp-editor-actions">
+        <button class="btn" type="submit">Enregistrer</button>
+        <button class="btn btn-light" type="button" id="fp-reset">Texte proposé</button>
+        <button class="btn btn-ghost" type="button" id="fp-cancel">Annuler</button>
+      </div>
+    </form>
+
     <div class="fp-qr">
       <img id="qr" alt="QR code">
       <div style="text-align:left;min-width:0">
@@ -40,6 +51,7 @@
     </div>
 
     <div class="fp-actions">
+      <button class="btn btn-light fp-wide" id="edit-text">✏️ Modifier le texte</button>
       <button class="btn" id="share">Partager</button>
       <button class="btn btn-light" id="copy">Copier le lien</button>
       <button class="btn btn-light" id="print">Imprimer / PDF</button>
