@@ -1,3 +1,4 @@
+import { autoSeedDemo } from "../lib/demo.js";
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
 import { findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory, addFriends, listBlockIds } from "../lib/store.js";
@@ -16,7 +17,9 @@ export const hasAccess = async (req, event) =>
 router.get("/", async (req, res) => {
   let events;
   try {
-    events = await listPublicUpcoming(Math.min(Number(req.query.limit) || 12, 50));
+    const limit = Math.min(Number(req.query.limit) || 12, 50);
+    events = await listPublicUpcoming(limit);
+    if (!events.length && await autoSeedDemo()) events = await listPublicUpcoming(limit);
   } catch (err) {
     console.error("Événements publics :", err.message);
     return res.status(500).json({ error: `base de données (${err.message}). Relancez supabase/schema.sql.` });
