@@ -34,6 +34,7 @@ npm run dev        # http://localhost:3000
 | `SESSION_SECRET` | chaîne aléatoire longue, ex. `openssl rand -hex 32` |
 | `RESEND_API_KEY` | facultatif : envoi d'emails (code organisateur, code oublié, rappel de fin de replay) via resend.com |
 | `STRIPE_SECRET_KEY` | facultatif : réactions payantes du live (Applaudir 1 €, Cœur 2 €, Feu d'artifice 5 €, Champagne 10 €) via Stripe Checkout ; sans elle, toutes les réactions sont gratuites |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | facultatif : connexion avec Google (console.cloud.google.com → Identifiants → ID client OAuth « Application Web », URI de redirection `https://<domaine>/api/auth/google/callback`) |
 | `DEMO_EVENTS` | `off` pour ne pas créer les 50 événements de démonstration automatiques |
 | `EMAIL_FROM` | facultatif : expéditeur, ex. `EverMoments <contact@votre-domaine.fr>` (domaine vérifié chez Resend) |
 | `CRON_SECRET` | facultatif : protège la tâche quotidienne de rappel (Vercel Cron) |

@@ -38,7 +38,14 @@ $("#login").addEventListener("submit", async (e) => {
 $("#continue").addEventListener("click", () => { location.href = target; });
 
 // « Code oublié » : proposé seulement si l'envoi d'emails est configuré.
-fetch("/api/config").then((r) => r.json()).then((c) => { if (c.emailEnabled) $("#forgot").classList.remove("hidden"); }).catch(() => {});
+fetch("/api/config").then((r) => r.json()).then((c) => {
+  if (c.emailEnabled) $("#forgot").classList.remove("hidden");
+  // Connexion Google (si configurée), masquée dans l'application iOS / Android.
+  if (c.social?.includes("google") && !window.Capacitor?.isNativePlatform?.()) {
+    $("#google").href = `/api/auth/google?next=${encodeURIComponent(target)}`;
+    $("#google").classList.remove("hidden");
+  }
+}).catch(() => {});
 $("#forgot").addEventListener("click", async (e) => {
   e.preventDefault();
   $("#error").textContent = "";

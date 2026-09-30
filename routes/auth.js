@@ -1,8 +1,10 @@
 import { Router } from "express";
-import { findOrganizerByEmail, findOrganizer, createOrganizer, deleteOrganizer, listEvents } from "../lib/store.js";
+import { findOrganizerByEmail, findOrganizer, createOrganizer, deleteOrganizer, listEvents, saveOrganizer } from "../lib/store.js";
 import { loginCode } from "../lib/codes.js";
 import { setSigned, getSigned } from "../lib/session.js";
 import { codeEmail, EMAIL_ENABLED } from "../lib/email.js";
+import { GOOGLE_ENABLED, googleAuthUrl, googleIdentity } from "../lib/google.js";
+import { randomBytes } from "node:crypto";
 
 const router = Router();
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -45,6 +47,35 @@ router.post("/login", async (req, res) => {
   failures.delete(email);
   setSigned(res, "org", String(organizer.id));
   res.json({ created: false });
+});
+
+// Connexion Google : redirection vers Google, puis retour ici (le compte est créé à la première connexion).
+const safeNext = (n) => (typeof n === "string" && n.startsWith("/") && !n.startsWith("//") ? n : "/dashboard");
+const callbackUrl = (req) => `${req.protocol}://${req.get("host")}/api/auth/google/callback`;
+router.get("/google", (req, res) => {
+  if (!GOOGLE_ENABLED) return res.redirect("/connexion");
+  const nonce = randomBytes(12).toString("hex");
+  setSigned(res, "gstate", `${nonce}~${encodeURIComponent(safeNext(req.query.next))}`);
+  res.redirect(googleAuthUrl(callbackUrl(req), nonce));
+});
+router.get("/google/callback", async (req, res) => {
+  const [nonce, next] = (getSigned(req, "gstate") || "").split("~");
+  res.clearCookie("gstate");
+  if (!nonce || req.query.state !== nonce || !req.query.code) return res.redirect("/connexion");
+  try {
+    const who = await googleIdentity(String(req.query.code), callbackUrl(req));
+    let organizer = await findOrganizerByEmail(who.email);
+    if (!organizer) {
+      organizer = await createOrganizer(who.email, loginCode());
+      organizer = await saveOrganizer({ ...organizer, displayName: who.name.slice(0, 40), avatar: who.avatar });
+    }
+    if (organizer.blocked) return res.redirect("/connexion");
+    setSigned(res, "org", String(organizer.id));
+    res.redirect(safeNext(decodeURIComponent(next || "")));
+  } catch (err) {
+    console.error("Google :", err.message);
+    res.redirect("/connexion");
+  }
 });
 
 // « Code oublié » : renvoie le code organisateur par email (réponse identique que le compte existe ou non).

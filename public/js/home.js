@@ -8,16 +8,21 @@ document.querySelectorAll("[data-social]").forEach((b) => { b.innerHTML = BRAND[
 // Déjà connecté : « Créer mon événement » mène directement au formulaire.
 api("/api/auth/me").then(() => { $("#create").href = "/edit"; }).catch(() => {});
 
-// Dans l'application iOS / Android, les connexions sociales (pas encore actives) sont masquées :
-// Apple refuse les boutons non fonctionnels.
+// Dans l'application iOS / Android, les connexions sociales sont masquées :
+// Apple refuse les boutons non fonctionnels et Google la connexion dans une vue intégrée.
 if (window.Capacitor?.isNativePlatform?.()) {
   document.querySelector(".socials")?.remove();
   document.querySelector(".divider")?.remove();
 }
 
-// Connexions sociales : prévues dans une prochaine version.
-document.querySelectorAll("[data-social]").forEach((b) =>
-  b.addEventListener("click", () => toast(`Connexion ${b.dataset.social} : bientôt disponible`)));
+// Connexions sociales : actives si configurées sur le serveur (Google pour l'instant), sinon « bientôt ».
+let social = [];
+fetch("/api/config").then((r) => r.json()).then((c) => { social = c.social || []; }).catch(() => {});
+document.querySelectorAll("[data-social]").forEach((b) => b.addEventListener("click", () => {
+  const provider = b.dataset.social.toLowerCase();
+  if (social.includes(provider)) location.href = `/api/auth/${provider}?next=/dashboard`;
+  else toast(`Connexion ${b.dataset.social} : bientôt disponible`);
+}));
 
 // « J'ai reçu une invitation » : le code suffit à ouvrir l'événement.
 const sheet = $("#join");
