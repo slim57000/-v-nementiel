@@ -1,6 +1,6 @@
 import { tooFast } from "../lib/limits.js";
 import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
-import { autoSeedDemo, upgradeDemoCovers, outdatedDemo } from "../lib/demo.js";
+import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers } from "../lib/demo.js";
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
 import { findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory, addFriends, listBlockIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
@@ -26,6 +26,7 @@ router.get("/", async (req, res) => {
       await upgradeDemoCovers().catch((err) => console.error("Photos démo :", err.message));
       events = await listPublicUpcoming(limit);
     }
+    if (events.length && await varyDemoCovers().catch(() => false)) events = await listPublicUpcoming(limit);
   } catch (err) {
     console.error("Événements publics :", err.message);
     return res.status(500).json({ error: `base de données (${err.message}). Relancez supabase/schema.sql.` });

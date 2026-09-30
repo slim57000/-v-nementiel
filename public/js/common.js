@@ -111,7 +111,14 @@ const TYPE_COVER = {
   mariage: "live-mariage", fiancailles: "mariage", bapteme: "bebe", "baby-shower": "bebe", communion: "costume",
   anniversaire: "anniversaire", diplome: "diplome", retraite: "anniversaire", inauguration: "enfants", autre: "live-mariage",
 };
-export const coverOf = (ev) => ev.cover || `/img/demo/${TYPE_COVER[ev.type] || "live-mariage"}.jpg`;
+// Sans photo choisie : une variante de la photo du type, stable pour un même événement (selon son adresse).
+const VARIANTS = { "live-mariage": 5, mariage: 4, bebe: 4, costume: 4, anniversaire: 4, diplome: 4, enfants: 4 };
+export const coverOf = (ev) => {
+  if (ev.cover) return ev.cover;
+  const base = TYPE_COVER[ev.type] || "live-mariage";
+  const n = [...String(ev.slug || ev.name || "")].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % (VARIANTS[base] || 1);
+  return `/img/demo/${base}${n ? `-${n + 1}` : ""}.jpg`;
+};
 // Transforme un lien YouTube / Twitch en adresse de lecteur intégrable (null si non reconnu).
 export function embedUrl(url, slug = new URLSearchParams(location.search).get("e")) {
   // Caméra « téléphone » (LiveKit) : lecteur MaFeliza.
