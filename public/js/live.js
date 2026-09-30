@@ -180,15 +180,46 @@ async function poll() {
   setTimeout(poll, 3000);
 }
 
+// Réactions payantes (si le paiement est activé) : prix sous chaque bouton, paiement Stripe au clic.
+let prices = {};
+const euros = (cents) => `${(cents / 100).toLocaleString("fr-FR")} €`;
+fetch("/api/config").then((r) => r.json()).then((c) => {
+  prices = c.paidReactions || {};
+  if (!Object.keys(prices).length) return;
+  document.querySelectorAll("#reactions [data-emoji]").forEach((b) => {
+    b.insertAdjacentHTML("beforeend", `<small class="price">${prices[b.dataset.emoji] ? euros(prices[b.dataset.emoji]) : "Gratuit"}</small>`);
+  });
+}).catch(() => {});
+
 $("#reactions").addEventListener("click", async (e) => {
   const btn = e.target.closest("[data-emoji]");
   if (!btn) return;
-  floatEmoji(btn.dataset.emoji);
+  const emoji = btn.dataset.emoji;
+  if (prices[emoji]) {
+    const label = [...btn.childNodes].find((n) => n.nodeType === 3)?.textContent.trim();
+    if (!confirm(`Offrir « ${label} » ${emoji} pour ${euros(prices[emoji])} ? Votre nom s'affichera dans le chat.`)) return;
+    const name = await guestName();
+    try {
+      location.href = (await api(`${base}/checkout`, { method: "POST", body: { emoji, name } })).url;
+    } catch (err) {
+      toast(err.message);
+    }
+    return;
+  }
+  floatEmoji(emoji);
   let name = "Invité";
   try { name = localStorage.getItem("em-name") || name; } catch { /* ignoré */ }
-  api(`${base}/reactions`, { method: "POST", body: { emoji: btn.dataset.emoji, name } })
+  api(`${base}/reactions`, { method: "POST", body: { emoji, name } })
     .then((m) => mine.add(m.id), (err) => toast(err.message));
 });
+
+// Retour de Stripe après paiement : la réaction s'affiche pour tout le monde.
+const paidSession = new URLSearchParams(location.search).get("paid");
+if (paidSession) {
+  history.replaceState(null, "", `/live?e=${encodeURIComponent(slug)}`);
+  api(`${base}/paid`, { method: "POST", body: { session: paidSession } })
+    .then((r) => { if (!r.already) toast("Merci pour votre cadeau 💝"); }, (err) => toast(err.message));
+}
 
 // Menu ⋯ d'un message : signaler, masquer ; organisateur : supprimer, bloquer.
 $("#chat-list").addEventListener("click", (e) => {

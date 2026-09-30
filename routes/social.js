@@ -10,6 +10,7 @@ import { guestAuthor } from "../lib/guest.js";
 import { saveDataUrl, removeUpload, isOwnUpload, isVideoUrl, videoUploadTarget, MAX_VIDEO_BYTES } from "../lib/uploads.js";
 import { hasAccess } from "./public.js";
 import { currentOrganizer } from "./auth.js";
+import { PAYMENTS_ENABLED, PAID_REACTIONS, createCheckout, claimPayment } from "../lib/payments.js";
 
 const router = Router({ mergeParams: true });
 
@@ -64,8 +65,31 @@ router.post("/messages", notBlocked, async (req, res) => {
 router.post("/reactions", notBlocked, async (req, res) => {
   const emoji = String(req.body?.emoji || "");
   if (!REACTIONS.includes(emoji)) return res.status(400).json({ error: "Réaction inconnue." });
+  if (PAYMENTS_ENABLED && PAID_REACTIONS[emoji]) return res.status(402).json({ error: "Réaction payante." });
   if (tooFast(`${req.ip}:reaction`, 10, 10_000)) return res.status(429).json({ error: "Trop de réactions d'un coup." });
   res.status(201).json(await addMessage(req.event.id, { kind: "reaction", name: clean(req.body?.name, 30) || "Invité", text: emoji, author: req.author }));
+});
+
+// Réaction payante : page de paiement Stripe, puis affichage au retour (une fois par paiement).
+router.post("/checkout", notBlocked, async (req, res) => {
+  const emoji = String(req.body?.emoji || "");
+  if (!PAYMENTS_ENABLED || !PAID_REACTIONS[emoji]) return res.status(400).json({ error: "Réaction non payante." });
+  const origin = `${req.protocol}://${req.get("host")}`;
+  try {
+    res.json({ url: await createCheckout({ event: req.event, emoji, name: clean(req.body?.name, 30) || "Invité", origin }) });
+  } catch (err) {
+    res.status(502).json({ error: err.message });
+  }
+});
+
+router.post("/paid", async (req, res) => {
+  let paid;
+  try { paid = await claimPayment(String(req.body?.session || ""), req.event); } catch (err) { return res.status(400).json({ error: err.message }); }
+  if (!paid) return res.json({ ok: true, already: true });
+  const r = PAID_REACTIONS[paid.emoji];
+  await addMessage(req.event.id, { kind: "reaction", name: paid.name, text: paid.emoji, author: req.author });
+  const msg = await addMessage(req.event.id, { kind: "chat", name: paid.name, text: `a offert ${r ? r.label : "une réaction"} ${paid.emoji} 💝`, author: req.author });
+  res.json({ ok: true, message: msg });
 });
 
 router.get("/photos", async (req, res) => {

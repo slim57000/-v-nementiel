@@ -74,7 +74,7 @@ const EN = {
   "Code oublié ? Le recevoir par email": "Forgot your code? Get it by email", "Accéder à mes missions": "Open my assignments", "Enregistrer les liens": "Save links",
   "Envoyer une photo": "Send a photo", "● Ouvrir le live": "● Open the live",
   "Les événements publics à venir.": "Upcoming public events.", "Aucun événement public à venir pour le moment.": "No upcoming public events yet.",
-  "À découvrir": "Discover", "Page introuvable": "Page not found",
+  "À découvrir": "Discover", "Gratuit": "Free", "Merci pour votre cadeau 💝": "Thank you for your gift 💝", "Page introuvable": "Page not found",
   "Retour à l'accueil": "Back to home",
   "Découvrir les événements": "Discover events",
   "Ce lien n'existe pas ou l'événement a été supprimé. Vérifiez le lien reçu ou saisissez votre code d'invitation.": "This link doesn't exist or the event was deleted. Check the link you received or enter your invitation code.",
