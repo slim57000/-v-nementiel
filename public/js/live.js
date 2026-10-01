@@ -63,14 +63,28 @@ async function load() {
     $(".live-badge").textContent = "REPLAY";
     $(".live-badge").classList.add("is-replay");
   }
+  if (state === "pending") {
+    cameras = [];
+    $("#empty").innerHTML = '<span style="font-size:2rem">🎞️</span>Le replay n\'est pas disponible pour le moment.';
+  }
   if (state === "expired") {
     cameras = [];
     $("#empty").innerHTML = ev.replayDeleted
       ? '<span style="font-size:2rem">🎞️</span>Le replay a été supprimé par l\'organisateur.'
       : '<span style="font-size:2rem">🎞️</span>Le replay n\'est plus disponible.<br><small>Merci d\'avoir partagé ce moment !</small>';
   }
-  // Organisateur : supprimer le replay.
+  // Organisateur : mettre le replay en ligne (ou le retirer) et le supprimer.
   if (isOwner && state === "replay" && cameras.length) {
+    document.querySelector(".live-stage").insertAdjacentHTML("afterend", `<div class="replay-bar">
+      <span>${ev.replayOnline ? "🌍 Replay <b>en ligne</b> : vos invités peuvent le voir." : "🔒 Replay <b>retiré</b> : vous seul le voyez."}</span>
+      <button type="button" class="btn btn-sm" id="replay-pub">${ev.replayOnline ? "🙈 Retirer" : "🌍 Mettre en ligne"}</button></div>`);
+    $("#replay-pub").addEventListener("click", async () => {
+      try {
+        const r = await api(`/api/events/${ev.id}/replay`, { method: "PATCH", body: { online: !ev.replayOnline } });
+        toast(r.online ? "Replay remis en ligne ✓" : "Replay retiré : vous seul le voyez");
+        setTimeout(() => location.reload(), 1200);
+      } catch (err) { toast(err.message); }
+    });
     $("#stage").insertAdjacentHTML("beforeend", '<button type="button" class="replay-del" id="replay-del">🗑️ Supprimer le replay</button>');
     $("#replay-del").addEventListener("click", async () => {
       if (!confirm("Supprimer définitivement le replay ? Les invités ne pourront plus le revoir.")) return;

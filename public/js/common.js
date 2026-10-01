@@ -538,6 +538,8 @@ export function liveState(ev) {
   const today = new Date().toISOString().slice(0, 10);
   if (ev.date >= today) return "live";
   if (ev.replayDeleted) return "expired";
+  // Replay retiré par l'organisateur : invisible pour les invités.
+  if (ev.replayOnline === false && !ev.isOwner) return "pending";
   const end = new Date(`${ev.date}T00:00`);
   end.setDate(end.getDate() + (ev.replayDays || REPLAY_DAYS) + 1);
   return Date.now() < end ? "replay" : "expired";

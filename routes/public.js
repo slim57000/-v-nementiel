@@ -59,11 +59,12 @@ router.get("/:slug", async (req, res) => {
   }
   if (!isOwner) await bumpViews(event.id);
   const premium = await isPremium(event.organizerId);
-  const [program, replayDeleted] = await Promise.all([
+  const [program, replayDeleted, replayHidden] = await Promise.all([
     getSetting(`program:${event.id}`).catch(() => null),
     getSetting(`replayoff:${event.id}`).catch(() => null),
+    getSetting(`replayhide:${event.id}`).catch(() => null),
   ]);
-  res.json({ locked: false, isOwner, loggedIn: Boolean(me), ...publicView(event), id: event.id, premium, replayDays: replayDays(premium), replayDeleted: Boolean(replayDeleted), program: program || null });
+  res.json({ locked: false, isOwner, loggedIn: Boolean(me), ...publicView(event), id: event.id, premium, replayDays: replayDays(premium), replayDeleted: Boolean(replayDeleted), replayOnline: !replayHidden, program: program || null });
 });
 
 // Anti-bruteforce partagé (base de données) : 10 essais par IP (et événement) toutes les 15 minutes.

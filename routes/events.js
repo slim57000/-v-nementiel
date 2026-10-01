@@ -69,7 +69,7 @@ router.get("/", handle(async (req, res) => {
 router.get("/:id", handle(async (req, res) => {
   const event = await findOwned(req);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
-  res.json({ ...ownerView(event), premium: await isPremium(req.organizer.id), program: (await getSetting(`program:${event.id}`).catch(() => null)) || { steps: [], practical: "" } });
+  res.json({ ...ownerView(event), replayOnline: !(await getSetting(`replayhide:${event.id}`).catch(() => null)), premium: await isPremium(req.organizer.id), program: (await getSetting(`program:${event.id}`).catch(() => null)) || { steps: [], practical: "" } });
 }));
 
 // Statistiques pour l'organisateur : vues, pic de spectateurs, messages, réactions, photos, livre d'or, invitations.
@@ -151,13 +151,22 @@ router.post("/:id/invites", handle(async (req, res) => {
   res.status(201).json({ sent: sent.length });
 }));
 
+// Replay en ligne (par défaut) ou retiré temporairement par l'organisateur (réversible).
+router.patch("/:id/replay", handle(async (req, res) => {
+  const event = await findOwned(req);
+  if (!event) return res.status(404).json({ error: "Événement introuvable." });
+  const online = Boolean(req.body?.online);
+  await setSetting(`replayhide:${event.id}`, online ? null : true);
+  res.json({ online });
+}));
+
 // Supprimer le replay (organisateur) : vidéos enregistrées effacées et lecteur fermé aux invités.
 router.delete("/:id/replay", handle(async (req, res) => {
   const event = await findOwned(req);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
   const parts = (await getSetting(`replay:${event.id}`).catch(() => null)) || [];
   await Promise.all(parts.map((p) => removeUpload(p.url)));
-  await Promise.all([setSetting(`replay:${event.id}`, null), setSetting(`replayoff:${event.id}`, true)]);
+  await Promise.all([setSetting(`replay:${event.id}`, null), setSetting(`replayoff:${event.id}`, true), setSetting(`replayhide:${event.id}`, null)]);
   res.json({ ok: true });
 }));
 

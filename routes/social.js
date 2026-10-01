@@ -40,7 +40,10 @@ router.get("/lk", async (req, res) => {
   if (!isLkRoom(req.event, room)) return res.status(404).json({ error: "Direct introuvable." });
   const [live, all] = await Promise.all([isLive(room), getSetting(`replay:${req.event.id}`)]);
   // (replay supprimé par l'organisateur : la liste a été vidée)
-  const replay = (all || []).filter((s) => s.room === room).map((s) => s.url);
+  // Replay retiré par l'organisateur : invisible pour les invités (l'organisateur le voit toujours).
+  const past = req.event.date < new Date().toISOString().slice(0, 10);
+  const hidden = past && (await getSetting(`replayhide:${req.event.id}`)) && !(await isOwner(req));
+  const replay = hidden ? [] : (all || []).filter((s) => s.room === room).map((s) => s.url);
   res.json({
     live: live && LIVEKIT_ENABLED, replay,
     ...(live && LIVEKIT_ENABLED && { url: LIVEKIT_URL, token: lkToken({ room, identity: `v-${req.author}-${Date.now().toString(36)}`, name: "Invité" }) }),
