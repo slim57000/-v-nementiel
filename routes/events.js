@@ -151,6 +151,15 @@ router.post("/:id/invites", handle(async (req, res) => {
   res.status(201).json({ sent: sent.length });
 }));
 
+// Segments du replay (organisateur) : pour les inclure dans le zip des souvenirs.
+router.get("/:id/replay", handle(async (req, res) => {
+  const event = await findOwned(req);
+  if (!event) return res.status(404).json({ error: "Événement introuvable." });
+  const names = Object.fromEntries((event.cameras || []).map((c) => [c.url.replace(/^lk:/, ""), c.name]));
+  const parts = (await getSetting(`replay:${event.id}`).catch(() => null)) || [];
+  res.json(parts.map((p) => ({ url: p.url, at: p.at, camera: names[p.room] || "Caméra" })));
+}));
+
 // Replay en ligne (par défaut) ou retiré temporairement par l'organisateur (réversible).
 router.patch("/:id/replay", handle(async (req, res) => {
   const event = await findOwned(req);
