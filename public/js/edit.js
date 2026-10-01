@@ -286,7 +286,10 @@ $("#program-template").addEventListener("click", () => {
 {
   const input = $("#cagnotte");
   const isPot = (t) => /^https?:\/\/\S*(leetchi|lydia|paypal|lepotcommun|onparticipe|helloasso|gofundme)\S*$/i.test(t.trim());
-  const show = () => $("#cagnotte-ok").classList.toggle("hidden", !isPot(input.value));
+  const show = () => {
+    $("#cagnotte-ok").classList.toggle("hidden", !isPot(input.value));
+    $("#pot-amounts").classList.toggle("hidden", !input.value.trim()); // montants seulement si une cagnotte existe
+  };
   const tryPaste = async (manual) => {
     try {
       const t = (await navigator.clipboard.readText()).trim();

@@ -127,26 +127,22 @@
           </label>
         </div>
         <div class="cagnotte-promo">
-          <b>🎁 Créez une cagnotte, vos proches adorent participer !</b>
-          <p>Un bouton « Participer à la cagnotte » s'affiche sur votre faire-part et pendant le live. Les invités éloignés peuvent offrir un cadeau en un clic.</p>
+          <b>🎁 Ajoutez une cagnotte</b>
+          <p>Vos invités pourront participer depuis le faire-part et le live.</p>
           <div class="cagnotte-links">
-            <a href="https://www.leetchi.com" target="_blank" rel="noopener">Leetchi</a>
+            <a href="https://www.leetchi.com" target="_blank" rel="noopener">Créer sur Leetchi</a>
             <a href="https://lydia-app.com" target="_blank" rel="noopener">Lydia</a>
-            <a href="https://www.paypal.com/pools" target="_blank" rel="noopener">PayPal</a>
           </div>
-          <small>Créez-la en 2 minutes, copiez son lien, revenez ici : il se colle en un clic 👇</small>
         </div>
-        <label for="cagnotte">Lien de la cagnotte (Leetchi, Lydia…)</label>
         <div style="display:flex;gap:8px">
-          <input id="cagnotte" type="url" inputmode="url" maxlength="300" placeholder="https://www.leetchi.com/c/…" style="flex:1;min-width:0">
+          <input id="cagnotte" type="url" inputmode="url" maxlength="300" placeholder="Collez le lien de la cagnotte" aria-label="Lien de la cagnotte" style="flex:1;min-width:0">
           <button type="button" id="cagnotte-paste" class="btn btn-sm" style="flex:0 0 auto">📋 Coller</button>
         </div>
-        <div class="row" style="gap:8px;margin-top:10px">
-          <label style="flex:1;margin:0">Déjà collecté (€)<input id="pot-raised" type="number" inputmode="numeric" min="0" placeholder="0"></label>
-          <label style="flex:1;margin:0">Objectif (€)<input id="pot-goal" type="number" inputmode="numeric" min="0" placeholder="ex. 1500"></label>
+        <p id="cagnotte-ok" class="small hidden" style="color:#1a7f45;font-weight:600;margin:6px 0 0">✅ Cagnotte ajoutée</p>
+        <div id="pot-amounts" class="row hidden" style="gap:8px;margin-top:10px">
+          <label style="flex:1;margin:0">Collecté (€)<input id="pot-raised" type="number" inputmode="numeric" min="0" placeholder="0"></label>
+          <label style="flex:1;margin:0">Objectif (€)<input id="pot-goal" type="number" inputmode="numeric" min="0" placeholder="facultatif"></label>
         </div>
-        <p class="muted small" style="margin:4px 0 0">Mettez à jour le montant collecté quand vous voulez : il s'affiche sur la page de l'événement.</p>
-        <p id="cagnotte-ok" class="small hidden" style="color:#1a7f45;font-weight:600;margin:6px 0 0">✅ Cagnotte ajoutée : le bouton apparaîtra sur votre faire-part et pendant le live.</p>
       </section>
 
       <section class="card">
