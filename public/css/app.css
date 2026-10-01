@@ -717,3 +717,5 @@ details.advanced summary { cursor: pointer; font-weight: 600; font-size: .92rem;
 .live-note { font-family: system-ui, -apple-system, sans-serif; font-size: .88rem; line-height: 1.45; margin: 14px auto 0; max-width: 320px; padding: 10px 14px; border-radius: 14px; background: rgba(255,255,255,.6); color: #3a3236; }
 .invite.moderne .live-note { background: rgba(255,255,255,.12); color: inherit; }
 .invite.moderne .invite-extra .countdown-plain { color: inherit; }
+.theme-toggle { position: fixed; top: calc(10px + env(safe-area-inset-top)); right: 10px; z-index: 30; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: rgba(255,255,255,.85); backdrop-filter: blur(8px); font-size: 1.15rem; line-height: 1; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+[data-theme="dark"] .theme-toggle { background: rgba(29,26,33,.85); }

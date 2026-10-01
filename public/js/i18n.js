@@ -221,3 +221,19 @@ export function setTheme(value) {
 
 // Safari iOS ignore « user-scalable=no » : on bloque le zoom au pincement comme dans une application.
 for (const type of ["gesturestart", "gesturechange"]) document.addEventListener(type, (e) => e.preventDefault(), { passive: false });
+
+// Bouton jour / nuit sur l'accueil public et la connexion (le réglage complet est dans le Profil).
+if (["/", "/connexion"].includes(location.pathname)) {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "theme-toggle";
+  const paint = () => {
+    const dark = document.documentElement.dataset.theme === "dark";
+    btn.textContent = dark ? "☀️" : "🌙";
+    btn.setAttribute("aria-label", dark ? "Passer en mode jour" : "Passer en mode nuit");
+  };
+  btn.addEventListener("click", () => { setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"); paint(); });
+  paint();
+  const add = () => document.body.append(btn);
+  document.body ? add() : document.addEventListener("DOMContentLoaded", add);
+}
