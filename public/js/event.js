@@ -22,6 +22,8 @@ async function load() {
   try {
     ev = await api(`/api/public/${slug}`);
   } catch (err) {
+    // Événement supprimé ou lien erroné : on renvoie vers le site plutôt que de laisser une page vide.
+    if (err.status === 404) return location.replace(`/introuvable`);
     $("#loading").textContent = err.message;
     return;
   }

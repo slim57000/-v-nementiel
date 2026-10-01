@@ -25,9 +25,17 @@
     <p style="font-size:3rem;margin:24px 0 0">🎈</p>
     <h1>Page introuvable</h1>
     <p class="muted">Ce lien n'existe pas ou l'événement a été supprimé. Vérifiez le lien reçu ou saisissez votre code d'invitation.</p>
-    <a href="/" class="btn btn-block" style="margin-top:18px">Retour à l'accueil</a>
+    <p class="muted small" id="redirect-note">Redirection vers l'accueil…</p>
+    <a href="/" id="home-link" class="btn btn-block" style="margin-top:18px">Retour à l'accueil</a>
     <a href="/decouvrir" class="btn btn-ghost btn-block" style="margin-top:10px">Découvrir les événements</a>
   </main>
   <script type="module" src="/js/i18n.js"></script>
+  <script>
+    // Lien mort (ex. événement supprimé) : retour automatique sur le site, à l'accueil connecté si possible.
+    fetch("/api/auth/me").then((r) => (r.ok ? "/dashboard" : "/")).catch(() => "/").then((to) => {
+      document.getElementById("home-link").href = to;
+      setTimeout(() => location.replace(to), 2500);
+    });
+  </script>
 </body>
 </html>
