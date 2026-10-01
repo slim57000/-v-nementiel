@@ -285,7 +285,7 @@ $("#program-template").addEventListener("click", () => {
 // (et automatiquement au retour sur la page si le téléphone l'autorise).
 {
   const input = $("#cagnotte");
-  const isPot = (t) => /^https?:\/\/\S*(leetchi|lydia|paypal|lepotcommun|onparticipe|helloasso|gofundme)\S*$/i.test(t.trim());
+  const isPot = (t) => /^https?:\/\/\S*(leetchi|lydia|paypal|lepotcommun|onparticipe|helloasso|gofundme|kisskiss|ulule|sumeria)\S*$/i.test(t.trim());
   const show = () => {
     $("#cagnotte-ok").classList.toggle("hidden", !isPot(input.value));
     $("#pot-amounts").classList.toggle("hidden", !input.value.trim()); // montants seulement si une cagnotte existe
