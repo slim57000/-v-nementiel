@@ -35,6 +35,10 @@ async function load() {
   // Événement privé non déverrouillé : on passe par l'écran du code.
   if (ev.locked) return location.replace(`/e/${encodeURIComponent(slug)}`);
 
+  // Présence MaFeliza : lien vers la page de l'événement, et présentation du site aux visiteurs.
+  $("#event-link").href = `/e/${encodeURIComponent(ev.slug || slug)}`;
+  if (ev.loggedIn) $("#live-logo").href = "/dashboard";
+  else $("#live-promo").classList.remove("hidden");
   document.title = `Live — ${ev.name}`;
   $("#title").textContent = ev.name;
   // Croix : retour à la page précédente du site (accueil, découvrir, tableau de bord…), sinon à l'accueil.

@@ -10,7 +10,7 @@
   <link rel="modulepreload" href="/js/icons.js">
   <link rel="modulepreload" href="/js/i18n.js">
   <link rel="stylesheet" href="/css/app.css?v=88">
-  <link rel="stylesheet" href="/css/live.css?v=18">
+  <link rel="stylesheet" href="/css/live.css?v=19">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -22,6 +22,7 @@
 </head>
 <body class="live has-live-tabs">
   <header class="live-bar">
+    <a href="/" id="live-logo" class="live-logo" aria-label="MaFeliza"><img src="/img/logo.png" alt=""></a>
     <span class="live-badge">LIVE</span>
     <span class="viewers hidden" id="viewers" aria-label="Spectateurs"></span>
     <h1 id="title">Chargement…</h1>
@@ -63,6 +64,15 @@
       <div class="photo-strip" id="photo-strip">
         <div class="ph"></div><div class="ph"></div><div class="ph"></div><div class="ph"></div>
         <button id="add-photo" aria-label="Ajouter une photo">+</button>
+      </div>
+    </section>
+
+    <section class="live-links">
+      <a id="event-link" class="live-link-btn">💌 Voir le faire-part et le livre d'or</a>
+      <div id="live-promo" class="live-promo hidden">
+        <img src="/img/logo.png" alt="">
+        <div><b>Créé avec MaFeliza</b><span>Faire-part, live, photos et replay pour vos événements.</span></div>
+        <a href="/" class="live-promo-btn">Créer le mien</a>
       </div>
     </section>
   </main>

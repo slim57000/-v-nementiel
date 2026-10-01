@@ -93,3 +93,15 @@
 [data-theme="dark"] #stage.has-cover .live-empty { justify-content: flex-end; padding-bottom: 14px; }
 [data-theme="dark"] #stage.has-cover .live-empty > * , [data-theme="dark"] #stage.has-cover .live-empty { color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.7); }
 [data-theme="dark"] #stage.has-cover .live-empty > span { display: none; }
+/* Présence MaFeliza sur le live */
+.live-logo { flex: 0 0 auto; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: #fff; }
+.live-logo img { width: 24px; height: 24px; }
+.live-links { padding: 4px 16px 20px; display: grid; gap: 12px; }
+.live-link-btn { display: block; text-align: center; padding: 12px; border-radius: 14px; background: rgba(255,255,255,.08); color: inherit; text-decoration: none; font-weight: 600; }
+.live-promo { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 16px; background: linear-gradient(135deg, rgba(255,46,147,.18), rgba(165,60,255,.18)); }
+.live-promo.hidden { display: none; }
+.live-promo img { width: 36px; height: 36px; flex: 0 0 auto; }
+.live-promo div { flex: 1; min-width: 0; font-size: .82rem; line-height: 1.3; }
+.live-promo b { display: block; font-size: .92rem; }
+.live-promo span { opacity: .75; }
+.live-promo-btn { flex: 0 0 auto; padding: 9px 12px; border-radius: 12px; background: linear-gradient(135deg, #ff2e93, #b23cff); color: #fff; text-decoration: none; font-weight: 700; font-size: .85rem; white-space: nowrap; }
