@@ -144,6 +144,8 @@ router.post("/photos", notBlocked, async (req, res) => {
   const name = clean(req.body?.name, 30);
   if (!name) return res.status(400).json({ error: "Prénom obligatoire." });
   if (await tooFast(`${req.ip}:photo`, 20, 3_600_000)) return res.status(429).json({ error: "Limite de photos atteinte, réessayez plus tard." });
+  // Stories : réservées au créateur de l'événement.
+  if (req.body?.story && !(await isOwner(req))) return res.status(403).json({ error: "Seul l'organisateur peut publier des stories." });
   try {
     const url = req.body?.image ? await saveDataUrl(req.body.image) : await videoFrom(req.body);
     if (!url) return res.status(400).json({ error: "Ajoutez une photo ou une vidéo." });

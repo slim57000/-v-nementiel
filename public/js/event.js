@@ -143,8 +143,9 @@ async function renderStories(ev) {
       openStories(ordered, { onDelete: ev.isOwner ? async (p) => { await api(`${base}/photos/${p.id}`, { method: "DELETE" }); load(); } : null });
     };
   };
-  $("#add-story").classList.remove("hidden");
-  $("#add-story").onclick = () => pickAndUploadPhoto(ev.slug, { story: true }).then(() => { toast("Story publiée pour 24 h ✨"); load(); }, () => {});
+  // Stories : seul le créateur de l'événement peut en publier.
+  $("#add-story").classList.toggle("hidden", !ev.isOwner);
+  if (ev.isOwner) $("#add-story").onclick = () => pickAndUploadPhoto(ev.slug, { story: true }).then(() => { toast("Story publiée pour 24 h ✨"); load(); }, () => {});
   load();
 }
 
