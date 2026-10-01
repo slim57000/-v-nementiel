@@ -10,7 +10,7 @@
   <link rel="modulepreload" href="/js/icons.js">
   <link rel="modulepreload" href="/js/i18n.js">
   <link rel="preload" as="image" href="/img/maquette/collage.webp?v=16" type="image/webp">
-  <link rel="stylesheet" href="/css/app.css?v=79">
+  <link rel="stylesheet" href="/css/app.css?v=81">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -26,7 +26,7 @@
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
-  <main class="container" style="max-width:480px">
+  <main class="container home" style="max-width:480px">
     <picture><source srcset="/img/maquette/collage.webp?v=16" type="image/webp"><img class="hero-collage" src="/img/maquette/collage.jpg?v=16" alt="Mariage, baptême, anniversaire, remise de diplôme : tous vos moments" fetchpriority="high" width="1200" height="1380"></picture>
 
     <p style="text-align:center;margin:0">
@@ -34,12 +34,6 @@
     </p>
 
     <p class="slogan">Le premier réseau social<br>dédié à tous vos événements.<br><b>Partagez l'émotion avant, pendant, après.</b></p>
-
-    <div class="features">
-      <div><i data-icon="camera" style="color:#e8137a"></i>Live multicaméra</div>
-      <div><i data-icon="gift" style="color:#f0a020"></i>Cadeaux &amp; Cagnotte</div>
-      <div><i data-icon="camera" style="color:#2f6fe4"></i>Album photo collaboratif</div>
-    </div>
 
     <a id="create" href="/connexion?next=/edit" class="btn btn-block">Créer mon événement gratuitement</a>
     <button id="invited" class="btn btn-ghost btn-block" style="margin-top:10px;color:var(--text)">J'ai reçu une invitation</button>
@@ -51,6 +45,13 @@
       <button data-social="Facebook" aria-label="Continuer avec Facebook"></button>
     </div>
     <p class="muted small" style="text-align:center">Déjà inscrit ? <a href="/connexion">Se connecter</a></p>
+
+    <div class="features">
+      <div><i data-icon="camera" style="color:#e8137a"></i>Live multicaméra</div>
+      <div><i data-icon="gift" style="color:#f0a020"></i>Cadeaux &amp; Cagnotte</div>
+      <div><i data-icon="camera" style="color:#2f6fe4"></i>Album photo collaboratif</div>
+    </div>
+
 
     <section id="upcoming">
       <div class="section-title"><h2>En direct actuellement</h2><a href="/decouvrir" class="see-all">Voir tout</a></div>
