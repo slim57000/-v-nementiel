@@ -57,14 +57,17 @@ if (missingConfig.length) {
 }
 
 // Réglages publics lus par le navigateur (identifiant Google Analytics, facultatif).
-app.get("/api/config", async (req, res) => res.json({
-  gaId: process.env.GA_MEASUREMENT_ID || "",
-  emailEnabled: EMAIL_ENABLED,
-  vapidPublicKey: await vapidKey(),
-  realtime: REALTIME,
-  social: [GOOGLE_ENABLED && "google", FACEBOOK_ENABLED && "facebook"].filter(Boolean),
-  defaultLivePlatform: (await getSetting("defaultLivePlatform").catch(() => null)) || "youtube",
-}));
+app.get("/api/config", async (req, res) => {
+  const [vapidPublicKey, platform] = await Promise.all([vapidKey(), getSetting("defaultLivePlatform").catch(() => null)]);
+  res.json({
+    gaId: process.env.GA_MEASUREMENT_ID || "",
+    emailEnabled: EMAIL_ENABLED,
+    vapidPublicKey,
+    realtime: REALTIME,
+    social: [GOOGLE_ENABLED && "google", FACEBOOK_ENABLED && "facebook"].filter(Boolean),
+    defaultLivePlatform: platform || "youtube",
+  });
+});
 
 // QR code (SVG) d'un lien : faire-part, invitation au live.
 app.get("/api/qr", async (req, res) => {

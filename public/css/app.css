@@ -298,7 +298,8 @@ input::-webkit-date-and-time-value { text-align: center; }
   mask-image: linear-gradient(to bottom, transparent 0, #000 5%, #000 90%, transparent 100%), linear-gradient(to right, transparent 0, #000 2%, #000 98%, transparent 100%);
   mask-composite: intersect;
 }
-.hero-collage + p .logo-lg { margin-top: -34px; position: relative; }
+.hero-collage + p .logo-lg, picture + p .logo-lg { margin-top: -34px; position: relative; }
+.hero-collage { height: auto; }
 @media (min-width: 520px) { .hero-collage { border-radius: 0 0 32px 32px; } }
 .features i svg { display: block; }
 .socials button { display: flex; align-items: center; justify-content: center; }
