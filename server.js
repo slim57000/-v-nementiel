@@ -137,17 +137,16 @@ app.get(["/api/cron/daily", "/api/cron/replay-reminders"], async (req, res) => {
       if (offset === 1) sent += await remindInvites(event).catch(() => 0);
     }
   }
-  // Lendemain de l'événement : replay envoyé automatiquement par email (invités, organisateur, abonnés) et en notification,
+  // Lendemain de l'événement : replay envoyé automatiquement par email aux invités et à l'organisateur,
   // sauf s'il a été supprimé ou retiré par l'organisateur.
   for (const event of await listEventsOnDate(date(-1))) {
     if (event.suspended || !event.cameras?.length) continue;
     const [off, hide] = await Promise.all([getSetting(`replayoff:${event.id}`), getSetting(`replayhide:${event.id}`)].map((p) => p.catch(() => null)));
     if (off || hide) continue;
-    const followers = await listFollowerIds(event.id).catch(() => []);
-    const people = (await Promise.all([event.organizerId, ...followers].map((id) => findOrganizer(id).catch(() => null)))).filter(Boolean);
-    sent += await sendReplay(event, people.map((p) => p.email)).catch(() => 0);
-    pushed += await notify([event.organizerId, ...followers].map(orgOwner), {
-      title: `🎞️ Le replay de « ${event.name} » est disponible`, body: "Revivez le moment pendant 15 jours.", url: `/live?e=${event.slug}`,
+    const organizer = await findOrganizer(event.organizerId).catch(() => null);
+    sent += await sendReplay(event, organizer ? [organizer.email] : []).catch(() => 0);
+    pushed += await notify([orgOwner(event.organizerId)], {
+      title: `🎞️ Le replay de « ${event.name} » est disponible`, body: "Il a été envoyé à vos invités par email.", url: `/live?e=${event.slug}`,
     }).catch(() => 0);
   }
   res.json({ day, sent, pushed });
