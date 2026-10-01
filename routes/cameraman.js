@@ -59,7 +59,7 @@ router.post("/:slug/go-live", async (req, res) => {
     await saveEvent({ ...req.event, cameras: [...cameras, cam] });
   }
   const room = cam.url.slice(LK_PREFIX.length);
-  await markLive(room, true);
+  await Promise.all([markLive(room, true), setSetting(`replayoff:${req.event.id}`, null)]); // nouveau direct : nouveau replay
   res.json({ url: LIVEKIT_URL, token: lkToken({ room, identity: `cam-${room}`, name, publish: true }), name, room, record: HAS_STORAGE });
 });
 

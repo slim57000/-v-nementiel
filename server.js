@@ -1,7 +1,7 @@
 import { vapidKey, notify, orgOwner } from "./lib/push.js";
 import { guestAuthor } from "./lib/guest.js";
 import { savePushSub, listFollowerIds, deletePushSub } from "./lib/store.js";
-import { remindInvites } from "./lib/invites.js";
+import { remindInvites, sendReplay } from "./lib/invites.js";
 import { REALTIME } from "./lib/realtime.js";
 import { isPremium } from "./lib/premium.js";
 import { reportError } from "./lib/monitor.js";
@@ -136,6 +136,16 @@ app.get(["/api/cron/daily", "/api/cron/replay-reminders"], async (req, res) => {
       });
       if (offset === 1) sent += await remindInvites(event).catch(() => 0);
     }
+  }
+  // Lendemain de l'événement : replay envoyé automatiquement par email (invités, organisateur, abonnés) et en notification.
+  for (const event of await listEventsOnDate(date(-1))) {
+    if (event.suspended || !event.cameras?.length || await getSetting(`replayoff:${event.id}`).catch(() => null)) continue;
+    const followers = await listFollowerIds(event.id).catch(() => []);
+    const people = (await Promise.all([event.organizerId, ...followers].map((id) => findOrganizer(id).catch(() => null)))).filter(Boolean);
+    sent += await sendReplay(event, people.map((p) => p.email)).catch(() => 0);
+    pushed += await notify([event.organizerId, ...followers].map(orgOwner), {
+      title: `🎞️ Le replay de « ${event.name} » est disponible`, body: "Revivez le moment pendant 15 jours.", url: `/live?e=${event.slug}`,
+    }).catch(() => 0);
   }
   res.json({ day, sent, pushed });
 });

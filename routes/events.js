@@ -151,6 +151,16 @@ router.post("/:id/invites", handle(async (req, res) => {
   res.status(201).json({ sent: sent.length });
 }));
 
+// Supprimer le replay (organisateur) : vidéos enregistrées effacées et lecteur fermé aux invités.
+router.delete("/:id/replay", handle(async (req, res) => {
+  const event = await findOwned(req);
+  if (!event) return res.status(404).json({ error: "Événement introuvable." });
+  const parts = (await getSetting(`replay:${event.id}`).catch(() => null)) || [];
+  await Promise.all(parts.map((p) => removeUpload(p.url)));
+  await Promise.all([setSetting(`replay:${event.id}`, null), setSetting(`replayoff:${event.id}`, true)]);
+  res.json({ ok: true });
+}));
+
 router.delete("/:id", handle(async (req, res) => {
   const event = await findOwned(req);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });

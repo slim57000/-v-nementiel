@@ -39,6 +39,7 @@ router.get("/lk", async (req, res) => {
   const room = String(req.query.room || "");
   if (!isLkRoom(req.event, room)) return res.status(404).json({ error: "Direct introuvable." });
   const [live, all] = await Promise.all([isLive(room), getSetting(`replay:${req.event.id}`)]);
+  // (replay supprimé par l'organisateur : la liste a été vidée)
   const replay = (all || []).filter((s) => s.room === room).map((s) => s.url);
   res.json({
     live: live && LIVEKIT_ENABLED, replay,

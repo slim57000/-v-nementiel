@@ -65,7 +65,18 @@ async function load() {
   }
   if (state === "expired") {
     cameras = [];
-    $("#empty").innerHTML = '<span style="font-size:2rem">🎞️</span>Le replay n\'est plus disponible.<br><small>Merci d\'avoir partagé ce moment !</small>';
+    $("#empty").innerHTML = ev.replayDeleted
+      ? '<span style="font-size:2rem">🎞️</span>Le replay a été supprimé par l\'organisateur.'
+      : '<span style="font-size:2rem">🎞️</span>Le replay n\'est plus disponible.<br><small>Merci d\'avoir partagé ce moment !</small>';
+  }
+  // Organisateur : supprimer le replay.
+  if (isOwner && state === "replay" && cameras.length) {
+    $("#stage").insertAdjacentHTML("beforeend", '<button type="button" class="replay-del" id="replay-del">🗑️ Supprimer le replay</button>');
+    $("#replay-del").addEventListener("click", async () => {
+      if (!confirm("Supprimer définitivement le replay ? Les invités ne pourront plus le revoir.")) return;
+      try { await api(`/api/events/${ev.id}/replay`, { method: "DELETE" }); toast("Replay supprimé"); setTimeout(() => location.reload(), 700); }
+      catch (err) { toast(err.message); }
+    });
   }
   $("#cams").innerHTML = cameras.map((c, i) => {
     const thumb = thumbnailUrl(c.url);
