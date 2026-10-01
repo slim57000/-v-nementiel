@@ -89,6 +89,8 @@ async function showTab(tab) {
     : `<p class="muted small" style="text-align:center">${tab === "favorites" ? "Ajoutez des événements en favoris avec le ♡ sur leur page." : "Les événements auxquels vous participez apparaîtront ici."}</p>`;
 }
 $("#p-tabs").addEventListener("click", (e) => { if (e.target.dataset.tab) showTab(e.target.dataset.tab); });
+// Case « Participations » : ouvre l'onglet correspondant et y descend.
+$("#st-part-link").addEventListener("click", (e) => { e.preventDefault(); showTab("history"); $("#p-tabs").scrollIntoView({ behavior: "smooth", block: "start" }); });
 let videos = [];
 $("#p-list").addEventListener("click", (e) => {
   const tile = e.target.closest("[data-video]");
