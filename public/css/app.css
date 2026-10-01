@@ -720,3 +720,9 @@ details.advanced summary { cursor: pointer; font-weight: 600; font-size: .92rem;
 .invite.moderne .live-note { background: rgba(255,255,255,.12); color: inherit; }
 .theme-toggle { position: fixed; top: calc(10px + env(safe-area-inset-top)); right: 10px; z-index: 30; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: rgba(255,255,255,.85); backdrop-filter: blur(8px); font-size: 1.15rem; line-height: 1; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
 [data-theme="dark"] .theme-toggle { background: rgba(29,26,33,.85); }
+.cagnotte-promo { margin: 16px 0 10px; padding: 16px; border-radius: 16px; background: linear-gradient(135deg, #ff2e93, #b23cff); color: #fff; text-align: center; box-shadow: 0 6px 18px rgba(214,40,160,.3); }
+.cagnotte-promo b { display: block; font-size: 1.05rem; }
+.cagnotte-promo p { margin: 8px 0 12px; font-size: .9rem; line-height: 1.4; opacity: .95; }
+.cagnotte-promo small { display: block; margin-top: 10px; font-weight: 600; }
+.cagnotte-links { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.cagnotte-links a { padding: 7px 14px; border-radius: 99px; background: #fff; color: #c2187f; font-weight: 700; font-size: .85rem; text-decoration: none; }
