@@ -4,7 +4,7 @@ import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers } from "../lib/demo.js";
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
-import { listUnlistedIds, listAllUpcoming, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory, addFriends, listBlockIds, listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
+import { listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory, addFriends, listBlockIds, listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
 import { currentOrganizer } from "./auth.js";
 
@@ -43,8 +43,11 @@ router.get("/", async (req, res) => {
   const today = new Date().toISOString().slice(0, 10);
   // Événements privés et non répertoriés affichés à tous (cadenas ; le code reste requis pour entrer).
   const hidden = await listUnlistedIds();
-  const shown = (await listAllUpcoming(50).catch(() => []))
-    .filter((e) => !events.some((x) => x.id === e.id)).map((e) => withVisibility(e, hidden));
+  // Privés (requête dédiée) + non répertoriés (publics en base, masqués de la liste publique).
+  const [priv, unl] = await Promise.all([listAllUpcoming(50).catch(() => []), findEventsByIds([...hidden]).catch(() => [])]);
+  const shown = [...priv, ...unl.filter((e) => e && !e.suspended && e.date >= today)]
+    .filter((e, i, arr) => !events.some((x) => x.id === e.id) && arr.findIndex((x) => x.id === e.id) === i)
+    .map((e) => withVisibility(e, hidden));
   events = [...events, ...shown].sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
   res.json(await Promise.all(events.map(async (e) => {
     const { invite, inviteStyle, description, ...card } = publicView(e);
