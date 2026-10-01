@@ -197,6 +197,8 @@ function applyTheme() {
   const pref = themePref();
   const dark = pref === "dark" || (pref === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
   document.documentElement.dataset.theme = dark ? "dark" : "light";
+  // Collage de l'accueil : version à fond sombre quand le thème sombre est choisi à la main.
+  document.querySelectorAll("source[data-dark]").forEach((el) => { el.media = dark ? "all" : "not all"; });
 }
 applyTheme();
 matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", applyTheme);

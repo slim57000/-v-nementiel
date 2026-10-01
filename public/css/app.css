@@ -16,7 +16,7 @@
 [data-theme="dark"] .badge { background: #16301f; }
 [data-theme="dark"] .badge.private, [data-theme="dark"] .report-badge, [data-theme="dark"] .legal .todo { background: #3a2a10; color: #f5c77a; }
 [data-theme="dark"] .notice { color: var(--text); }
-[data-theme="dark"] .hero-collage { mix-blend-mode: normal; opacity: .95; }
+[data-theme="dark"] .hero-collage { mix-blend-mode: normal; }
 [data-theme="dark"] .legal-box p, [data-theme="dark"] .legal-box li { color: #d8d2de; }
 [data-theme="dark"] .toast { background: #f2eef5; color: #121014; }
 [data-theme="dark"] .see-all, [data-theme="dark"] .legal-card, [data-theme="dark"] .friend-row { color: var(--text); }
