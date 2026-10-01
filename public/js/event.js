@@ -155,9 +155,11 @@ async function renderStories(ev) {
 
 // Invité connecté : menu du bas + carte qui donne envie de découvrir le reste du site.
 function welcome(ev) {
-  if (!ev.loggedIn) return;
+  if (!ev.loggedIn) { $("#promo").classList.remove("hidden"); return; } // visiteur : on présente MaFeliza
+  $("#brand-link").href = "/dashboard";
+  $("#brand-cta").classList.add("hidden");
   tabbar("");
-  $("#back").href = "/dashboard";
+  $("#back").remove(); // le bouton retour est dans la barre du haut
   if (ev.isOwner) return;
   $("#welcome").innerHTML = `
     <h2>👋 Bienvenue sur MaFeliza !</h2>
