@@ -131,13 +131,14 @@ function render() {
   const keep = (e) => (filter === "upcoming" ? e.date >= today && !isLive(e) : filter === "live" ? isLive(e) : true);
   const shown = events.filter(keep);
   const mine = new Set(events.map((e) => e.slug));
-  const others = discover.filter((e) => !mine.has(e.slug) && keep(e));
+  // Grille : mes événements à venir en premier, puis les événements publics des autres.
+  const others = [...events.filter((e) => e.date >= today && keep(e)), ...discover.filter((e) => !mine.has(e.slug) && keep(e))];
   $("#empty").classList.toggle("hidden", shown.length > 0 || others.length > 0);
   $("#empty-text").innerHTML = events.length
     ? "Aucun événement dans cette catégorie."
     : "Vous n'avez pas encore d'événement.<br>Créez le premier en quelques minutes !";
   $("#list").innerHTML = shown.map(card).join("") + (others.length
-    ? `<div class="section-title"><h2>À découvrir</h2><a href="/decouvrir" class="see-all">Voir tout</a></div>
+    ? `<div class="section-title"><h2>Événements à venir</h2><a href="/decouvrir" class="see-all">Voir tout</a></div>
        <div class="p-grid">${others.map(publicCard).join("")}</div>`
     : "");
   syncFavs();
