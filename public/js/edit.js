@@ -148,6 +148,8 @@ form.addEventListener("submit", async (e) => {
       url: row.querySelector("[name=cam-url]").value,
     })).concat(phoneCams),
     cagnotteUrl: $("#cagnotte").value,
+    potRaised: $("#pot-raised").value,
+    potGoal: $("#pot-goal").value,
     program: [...document.querySelectorAll(".step-row")].map((r) => ({ time: r.querySelector("[name=step-time]").value, label: r.querySelector("[name=step-label]").value })),
     practical: $("#practical").value,
     cameramanNotes: $("#cameraman-notes").value,
@@ -207,6 +209,8 @@ async function init() {
     links.forEach(addCamera);
     if (links.length) $("#cam-advanced").open = true;
     $("#cagnotte").value = ev.cagnotteUrl;
+    $("#pot-raised").value = ev.pot?.raised || "";
+    $("#pot-goal").value = ev.pot?.goal || "";
     (ev.program?.steps || []).forEach(addStep);
     $("#practical").value = ev.program?.practical || "";
     $("#cameraman-notes").value = ev.cameramanNotes;

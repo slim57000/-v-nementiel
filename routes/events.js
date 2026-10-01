@@ -14,6 +14,9 @@ const cleanProgram = (body) => ({
     .filter((st) => st.label).slice(0, 12).sort((a, b) => a.time.localeCompare(b.time)),
   practical: String(body?.practical || "").trim().slice(0, 1500),
 });
+// Montant de la cagnotte (saisi par l'organisateur) : { raised, goal } en euros.
+const euros = (v) => Math.max(0, Math.min(1e7, Math.round(Number(String(v ?? "").replace(",", ".")) || 0)));
+const savePot = (id, body) => (body && ("potRaised" in body || "potGoal" in body) ? setSetting(`pot:${id}`, { raised: euros(body.potRaised), goal: euros(body.potGoal) }) : null);
 const saveProgram = (id, body) => (body && ("program" in body || "practical" in body) ? setSetting(`program:${id}`, cleanProgram(body)) : null);
 import { EMAIL_ENABLED } from "../lib/email.js";
 import { tooFast } from "../lib/limits.js";
@@ -70,7 +73,7 @@ router.get("/", handle(async (req, res) => {
 router.get("/:id", handle(async (req, res) => {
   const event = await findOwned(req);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
-  res.json({ ...ownerView(withVisibility(event, await listUnlistedIds())), showcase: (await listShowcaseIds()).has(event.id), replayOnline: !(await getSetting(`replayhide:${event.id}`).catch(() => null)), premium: await isPremium(req.organizer.id), program: (await getSetting(`program:${event.id}`).catch(() => null)) || { steps: [], practical: "" } });
+  res.json({ ...ownerView(withVisibility(event, await listUnlistedIds())), showcase: (await listShowcaseIds()).has(event.id), replayOnline: !(await getSetting(`replayhide:${event.id}`).catch(() => null)), premium: await isPremium(req.organizer.id), program: (await getSetting(`program:${event.id}`).catch(() => null)) || { steps: [], practical: "" }, pot: (await getSetting(`pot:${event.id}`).catch(() => null)) || { raised: 0, goal: 0 } });
 }));
 
 // Statistiques pour l'organisateur : vues, pic de spectateurs, messages, réactions, photos, livre d'or, invitations.
@@ -100,6 +103,7 @@ router.post("/", handle(async (req, res) => {
     cameramanCode: randomCode(),
   });
   await saveProgram(event.id, req.body);
+  await savePot(event.id, req.body);
   await setUnlisted(event.id, unlisted);
   await setShowcase(event.id, req.body.showcase !== false && (unlisted || event.visibility === "private"));
   res.status(201).json(ownerView(withVisibility(event, new Set(unlisted ? [event.id] : []))));
@@ -119,6 +123,7 @@ router.put("/:id", handle(async (req, res) => {
     cameramanCode: req.body.regenerateCameramanCode || !existing.cameramanCode ? randomCode() : existing.cameramanCode,
   });
   await saveProgram(event.id, req.body);
+  await savePot(event.id, req.body);
   await setUnlisted(event.id, unlisted);
   await setShowcase(event.id, req.body.showcase !== false && (unlisted || event.visibility === "private"));
   res.json(ownerView(withVisibility(event, new Set(unlisted ? [event.id] : []))));

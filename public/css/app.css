@@ -726,3 +726,9 @@ details.advanced summary { cursor: pointer; font-weight: 600; font-size: .92rem;
 .cagnotte-promo small { display: block; margin-top: 10px; font-weight: 600; }
 .cagnotte-links { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 .cagnotte-links a { padding: 7px 14px; border-radius: 99px; background: #fff; color: #c2187f; font-weight: 700; font-size: .85rem; text-decoration: none; }
+.pot-box { margin: 0 0 10px; padding: 14px 16px; border-radius: 16px; background: var(--card, #fff); box-shadow: var(--shadow); }
+.pot-head { display: flex; justify-content: space-between; align-items: baseline; font-weight: 600; }
+.pot-head b { font-size: 1.5rem; background: linear-gradient(135deg, #ff2e93, #b23cff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.pot-bar { height: 10px; border-radius: 99px; background: rgba(214,40,160,.15); margin: 8px 0 6px; overflow: hidden; }
+.pot-bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #ff2e93, #b23cff); }
+.pot-sub { font-size: .82rem; color: var(--muted); }

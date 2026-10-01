@@ -9,7 +9,7 @@
   <link rel="modulepreload" href="/js/common.js">
   <link rel="modulepreload" href="/js/icons.js">
   <link rel="modulepreload" href="/js/i18n.js">
-  <link rel="stylesheet" href="/css/app.css?v=89">
+  <link rel="stylesheet" href="/css/app.css?v=90">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -141,6 +141,11 @@
           <input id="cagnotte" type="url" inputmode="url" maxlength="300" placeholder="https://www.leetchi.com/c/…" style="flex:1;min-width:0">
           <button type="button" id="cagnotte-paste" class="btn btn-sm" style="flex:0 0 auto">📋 Coller</button>
         </div>
+        <div class="row" style="gap:8px;margin-top:10px">
+          <label style="flex:1;margin:0">Déjà collecté (€)<input id="pot-raised" type="number" inputmode="numeric" min="0" placeholder="0"></label>
+          <label style="flex:1;margin:0">Objectif (€)<input id="pot-goal" type="number" inputmode="numeric" min="0" placeholder="ex. 1500"></label>
+        </div>
+        <p class="muted small" style="margin:4px 0 0">Mettez à jour le montant collecté quand vous voulez : il s'affiche sur la page de l'événement.</p>
         <p id="cagnotte-ok" class="small hidden" style="color:#1a7f45;font-weight:600;margin:6px 0 0">✅ Cagnotte ajoutée : le bouton apparaîtra sur votre faire-part et pendant le live.</p>
       </section>
 

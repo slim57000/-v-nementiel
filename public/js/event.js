@@ -96,6 +96,14 @@ function showEvent(ev) {
   if (ev.cagnotteUrl) {
     $("#cagnotte-link").href = ev.cagnotteUrl;
     $("#cagnotte-link").classList.remove("hidden");
+    const pot = ev.pot;
+    if (pot && (pot.raised || pot.goal)) {
+      const eur = (n) => n.toLocaleString(LOCALE) + " €";
+      const pct = pot.goal ? Math.min(100, Math.round((pot.raised / pot.goal) * 100)) : 0;
+      $("#pot-box").innerHTML = `<div class="pot-head"><span>🎁 Cagnotte</span><b>${eur(pot.raised)}</b></div>`
+        + (pot.goal ? `<div class="pot-bar"><i style="width:${pct}%"></i></div><div class="pot-sub">${pct} % de l'objectif de ${eur(pot.goal)}</div>` : `<div class="pot-sub">déjà collectés</div>`);
+      $("#pot-box").classList.remove("hidden");
+    }
   }
 
   // Premium : page sans marque MaFeliza.
