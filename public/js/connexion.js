@@ -1,3 +1,4 @@
+// Écran de connexion / inscription : email + mot de passe, connexion sociale, mot de passe oublié (code à 6 chiffres).
 import { api, $, toast } from "./common.js";
 import { BRAND } from "./icons.js";
 

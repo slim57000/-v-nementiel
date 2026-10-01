@@ -1,3 +1,4 @@
+// Point d'entrée du serveur MaFeliza (Express) : sécurité, routes /api, pages HTML, tâches quotidiennes (rappels, envoi des replays).
 import { vapidKey, notify, orgOwner } from "./lib/push.js";
 import { guestAuthor } from "./lib/guest.js";
 import { savePushSub, listFollowerIds, deletePushSub } from "./lib/store.js";

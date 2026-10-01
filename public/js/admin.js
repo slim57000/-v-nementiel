@@ -1,3 +1,4 @@
+// Interface d'administration : utilisateurs, événements, signalements, événements de démonstration.
 import { api, $, esc, toast, formatDate, goLogin, EVENT_TYPES, LOCALE, backButton } from "./common.js";
 backButton();
 

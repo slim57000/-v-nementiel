@@ -1,3 +1,4 @@
+// Page publique d'un événement : faire-part, compte à rebours, stories, réponses, livre d'or, cagnotte.
 import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, guestName, LOCALE, placeholderCover, tabbar, createSheet } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 import { initGuestbook } from "./guestbook.js";

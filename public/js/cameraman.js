@@ -1,3 +1,4 @@
+// Espace caméraman : lancer le live depuis le téléphone (LiveKit) et enregistrer le replay par segments.
 import { api, $, toast, formatDate, pickAndUploadPhoto, livePlaceholder, shareSheet } from "./common.js";
 
 const params = new URLSearchParams(location.search);

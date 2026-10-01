@@ -1,3 +1,4 @@
+// API /api/auth : inscription, connexion (mot de passe, Google, Facebook), mot de passe oublié, administrateurs.
 import { Router } from "express";
 import { findOrganizerByEmail, findOrganizer, createOrganizer, deleteOrganizer, listEvents, saveOrganizer, getSetting, setSetting, clearLimit } from "../lib/store.js";
 import { loginCode } from "../lib/codes.js";

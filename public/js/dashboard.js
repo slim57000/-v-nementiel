@@ -1,3 +1,4 @@
+// Accueil connecté : ronds des stories, onglets Pour vous / En direct / À venir, cartes des événements.
 import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories, liveAttrs, createSheet, syncFavs } from "./common.js";
 import { icon } from "./icons.js";
 

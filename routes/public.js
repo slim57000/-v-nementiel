@@ -1,3 +1,4 @@
+// API /api/public : pages vues par les invités (événement, code d'accès, réponses, livre d'or, Découvrir).
 import { tooFast } from "../lib/limits.js";
 import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers } from "../lib/demo.js";

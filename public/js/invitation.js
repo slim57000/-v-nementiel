@@ -1,3 +1,4 @@
+// Rendu du faire-part selon le style choisi (classique, élégant, fleuri, moderne).
 import { esc, formatDate, EN } from "./common.js";
 
 // Textes préenregistrés par type d'événement : [accroche, texte]. Le premier est proposé par défaut.

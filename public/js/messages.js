@@ -1,3 +1,4 @@
+// Messagerie entre amis : conversations, ajout d'ami par code ou lien, suppression de messages.
 import { api, $, esc, toast, tabbar, goLogin, onRealtime, LOCALE, shareSheet, copy } from "./common.js";
 
 tabbar("messages");

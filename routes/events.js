@@ -1,3 +1,4 @@
+// API /api/events : espace organisateur (créer, modifier, supprimer ses événements, statistiques, replay, cagnotte).
 import { Router } from "express";
 import { requireOrganizer } from "./auth.js";
 import { parseEventInput, ownerView } from "../lib/events.js";

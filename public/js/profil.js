@@ -1,3 +1,4 @@
+// Profil : photo, nom, statistiques, amis, favoris, participations, thème, mot de passe.
 import { api, $, esc, toast, tabbar, goLogin, resizeImage, publicCard, viewPhoto, enablePush, pushState } from "./common.js";
 import { lang, setLang, themePref, setTheme } from "./i18n.js";
 

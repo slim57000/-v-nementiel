@@ -1,3 +1,4 @@
+// Page du live : lecteur vidéo, chat, réactions, photos des invités, cagnotte, replay.
 import { api, $, esc, shareSheet, toast, guestName, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, coverOf, onRealtime, embedUrl, thumbnailUrl } from "./common.js";
 import { icon } from "./icons.js";
 

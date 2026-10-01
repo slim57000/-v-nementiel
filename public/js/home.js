@@ -1,3 +1,4 @@
+// Page d'accueil publique (visiteurs non connectés).
 import { api, $, esc, toast, dayBadge, coverOf, liveAttrs } from "./common.js";
 import { icon, BRAND } from "./icons.js";
 

@@ -1,3 +1,4 @@
+// Création et modification d'un événement : infos, accès, faire-part, live, cagnotte, programme.
 import { api, $, esc, toast, resizeImage, goLogin, EVENT_TYPES, livePlaceholder, tabbar } from "./common.js";
 import { defaultInvite, renderInvite, invitePhotoUrl, templatesFor } from "./invitation.js";
 tabbar("");
