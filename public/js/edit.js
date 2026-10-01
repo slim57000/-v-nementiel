@@ -33,6 +33,7 @@ const values = () => ({
   location: field("location").value,
   description: field("description").value,
   visibility: field("visibility").value,
+  showcase: $("#showcase").checked,
   inviteStyle: field("style").value,
 });
 const invite = () => ({ kicker: $("#inv-kicker").value, title: $("#inv-title").value, text: $("#inv-text").value });
@@ -55,6 +56,7 @@ function refresh() {
 
   $("#inv-photo-file").classList.toggle("hidden", field("inv-photo").value !== "custom");
   const isPrivate = v.visibility === "private";
+  $("#showcase-wrap").classList.toggle("hidden", v.visibility === "public");
   $("#code-info").classList.toggle("hidden", !isPrivate || !id);
   $("#code-new").classList.toggle("hidden", !isPrivate || !!id);
 
@@ -225,6 +227,7 @@ async function init() {
     }
     form.querySelector(`[name=type][value="${ev.type}"]`).checked = true;
     form.querySelector(`[name=visibility][value="${ev.visibility}"]`).checked = true;
+    $("#showcase").checked = Boolean(ev.showcase);
     form.querySelector(`[name=style][value="${ev.inviteStyle}"]`).checked = true;
     $("#access-code").textContent = ev.accessCode;
     state.cover = ev.cover;

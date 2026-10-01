@@ -3,7 +3,7 @@ import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers } from "../lib/demo.js";
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
-import { listUnlistedIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory, addFriends, listBlockIds, listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
+import { listUnlistedIds, listShowcaseIds, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory, addFriends, listBlockIds, listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
 import { currentOrganizer } from "./auth.js";
 
@@ -40,8 +40,19 @@ router.get("/", async (req, res) => {
     return res.status(500).json({ error: `base de données (${err.message}). Relancez supabase/schema.sql.` });
   }
   const today = new Date().toISOString().slice(0, 10);
+  // Événements privés / non répertoriés que leur organisateur a choisi d'afficher (cadenas, code requis).
+  const [showIds, hidden] = await Promise.all([listShowcaseIds(), listUnlistedIds()]);
+  if (showIds.size) {
+    const shown = (await findEventsByIds([...showIds]).catch(() => []))
+      .filter((e) => e && !e.suspended && e.date >= today && !events.some((x) => x.id === e.id))
+      .map((e) => withVisibility(e, hidden));
+    events = [...events, ...shown].sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
+  }
   res.json(await Promise.all(events.map(async (e) => {
     const { invite, inviteStyle, description, ...card } = publicView(e);
+    // Privé : ni lieu ni caméras (le direct reste réservé aux invités).
+    if (e.visibility === "private") return { ...card, visibility: "private", location: "Sur invitation", cameras: [], viewers: 0 };
+    if (e.visibility === "unlisted") card.visibility = "unlisted";
     // Spectateurs en cours pour les directs du jour.
     const viewers = e.date === today && card.cameras.length ? await countViewers(e.id).catch(() => 0) : 0;
     return { ...card, viewers };

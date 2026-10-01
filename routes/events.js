@@ -5,7 +5,7 @@ import { randomCode, slugify } from "../lib/codes.js";
 import { saveDataUrl, removeUpload, isOwnUpload } from "../lib/uploads.js";
 import { sendInvites } from "../lib/invites.js";
 import { isPremium, getStats } from "../lib/premium.js";
-import { getSetting, setSetting, setUnlisted, listUnlistedIds, withVisibility } from "../lib/store.js";
+import { getSetting, setSetting, setUnlisted, listUnlistedIds, withVisibility, setShowcase, listShowcaseIds } from "../lib/store.js";
 
 // Programme de la journée (12 étapes max) et infos pratiques, stockés à part de l'événement.
 const cleanProgram = (body) => ({
@@ -70,7 +70,7 @@ router.get("/", handle(async (req, res) => {
 router.get("/:id", handle(async (req, res) => {
   const event = await findOwned(req);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
-  res.json({ ...ownerView(withVisibility(event, await listUnlistedIds())), replayOnline: !(await getSetting(`replayhide:${event.id}`).catch(() => null)), premium: await isPremium(req.organizer.id), program: (await getSetting(`program:${event.id}`).catch(() => null)) || { steps: [], practical: "" } });
+  res.json({ ...ownerView(withVisibility(event, await listUnlistedIds())), showcase: (await listShowcaseIds()).has(event.id), replayOnline: !(await getSetting(`replayhide:${event.id}`).catch(() => null)), premium: await isPremium(req.organizer.id), program: (await getSetting(`program:${event.id}`).catch(() => null)) || { steps: [], practical: "" } });
 }));
 
 // Statistiques pour l'organisateur : vues, pic de spectateurs, messages, réactions, photos, livre d'or, invitations.
@@ -101,6 +101,7 @@ router.post("/", handle(async (req, res) => {
   });
   await saveProgram(event.id, req.body);
   await setUnlisted(event.id, unlisted);
+  await setShowcase(event.id, req.body.showcase !== false && (unlisted || event.visibility === "private"));
   res.status(201).json(ownerView(withVisibility(event, new Set(unlisted ? [event.id] : []))));
 }));
 
@@ -119,6 +120,7 @@ router.put("/:id", handle(async (req, res) => {
   });
   await saveProgram(event.id, req.body);
   await setUnlisted(event.id, unlisted);
+  await setShowcase(event.id, req.body.showcase !== false && (unlisted || event.visibility === "private"));
   res.json(ownerView(withVisibility(event, new Set(unlisted ? [event.id] : []))));
 }));
 

@@ -176,7 +176,7 @@ export const isLiveNow = (ev) => ev.date === new Date().toISOString().slice(0, 1
 export function publicCard(ev) {
   const live = isLiveNow(ev);
   return `<a class="pub-card" href="${live ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`}" ${liveAttrs(ev)}>
-    <span class="tag">${live ? "● LIVE" : esc(dayBadge(ev.date))}</span>
+    <span class="tag">${live ? "● LIVE" : esc(dayBadge(ev.date))}${ev.visibility === "private" ? " · 🔒" : ev.visibility === "unlisted" ? " · 🔗" : ""}</span>
     <button type="button" class="card-fav" data-fav="${esc(ev.slug)}" aria-label="Ajouter aux favoris">♡</button>
     <b>${esc(ev.name)}</b>
     <span>${EVENT_TYPES[ev.type].icon} ${esc(ev.location)}</span>
