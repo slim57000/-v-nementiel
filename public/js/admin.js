@@ -52,7 +52,7 @@ const views = {
       <section class="card">
       <h2 style="font-size:1rem">Événements de démonstration</h2>
       <p class="muted small">50 faux événements (mariages, anniversaires…) créés sous le compte demo@evermoments.app, pour remplir Découvrir et l'accueil.</p>
-      <button class="btn btn-block" data-demo="add">➕ Créer 50 événements</button>
+      <button class="btn btn-block" data-demo="add"><b style="font-size:1.15em;line-height:1">+</b> Créer 50 événements</button>
       <button class="btn btn-ghost btn-block" data-demo="del" style="margin-top:8px">🗑️ Supprimer les événements de démo</button>
       <button class="btn btn-light btn-block" data-demo="msg" style="margin-top:8px">💬 Recevoir des messages privés de test</button>
       <button class="btn btn-light btn-block" data-demo="invite" style="margin-top:8px">💌 Recevoir un faire-part de test</button>

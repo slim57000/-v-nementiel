@@ -135,5 +135,5 @@ async function showFriends() {
     ? friends.map((f) => `<a href="/messages?u=${f.id}" class="friend-chip">
         <span class="avatar" ${f.avatar ? `style="background-image:url('${esc(f.avatar)}')"` : ""}>${f.avatar ? "" : esc(f.name.charAt(0).toUpperCase())}</span>
         <span>${esc(f.name)}</span></a>`).join("")
-    : '<p class="muted small" style="margin:8px 0 0">Pas encore d\'amis. Touchez « ➕ Ajouter » et envoyez votre lien à vos proches.</p>';
+    : '<p class="muted small" style="margin:8px 0 0">Pas encore d\'amis. Touchez « + » et envoyez votre lien à vos proches.</p>';
 }

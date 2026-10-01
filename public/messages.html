@@ -26,10 +26,10 @@
 
   <main class="container" id="list-view">
     <h1 style="text-align:center">Messages</h1>
-    <div class="row" style="gap:8px;margin-bottom:12px"><button type="button" class="btn" id="add-friend" style="flex:1">➕ Ajouter un ami</button><a href="/amis" class="btn btn-light" style="flex:1">👥 Mes amis</a></div>
+    <div class="row" style="gap:8px;margin-bottom:12px"><button type="button" class="btn" id="add-friend" style="flex:1;white-space:nowrap;padding-inline:10px"><b style="font-size:1.15em;line-height:1">+</b> Ajouter un ami</button><a href="/amis" class="btn btn-light" style="flex:1;white-space:nowrap;padding-inline:10px">👥 Mes amis</a></div>
     <div id="friends"></div>
     <p id="no-friends" class="card hidden" style="text-align:center">
-      Vous n'avez pas encore d'amis.<br><span class="muted small">Touchez « ➕ Ajouter un ami » et envoyez votre lien à vos proches : un clic et vous êtes amis. Les invités de vos événements privés deviennent aussi vos amis automatiquement.</span>
+      Vous n'avez pas encore d'amis.<br><span class="muted small">Touchez « Ajouter un ami » et envoyez votre lien à vos proches : un clic et vous êtes amis. Les invités de vos événements privés deviennent aussi vos amis automatiquement.</span>
     </p>
     <details id="blocked-box" class="card hidden">
       <summary><b>Personnes bloquées</b> <span class="muted" id="blocked-count"></span></summary>

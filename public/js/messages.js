@@ -15,7 +15,7 @@ const addFriend = async (code) => {
   location.href = "/amis?new=" + id;
 };
 const invited = new URLSearchParams(location.search).get("ami");
-// Depuis le profil (« ➕ Ajouter ») : ouvre directement la fenêtre d'ajout d'ami.
+// Depuis le profil (« + ») : ouvre directement la fenêtre d'ajout d'ami.
 if (new URLSearchParams(location.search).has("add")) setTimeout(() => $("#add-friend")?.click(), 300);
 if (invited) {
   // Non connecté : connexion puis retour ici avec le même lien.
@@ -26,7 +26,7 @@ $("#add-friend")?.addEventListener("click", async () => {
   try { ({ code } = await api("/api/me/friend-code")); } catch (err) { return err.status === 401 ? goLogin() : toast(err.message); }
   const link = `${location.origin}/messages?ami=${code}`;
   document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="friend-sheet" role="dialog" aria-modal="true">
-    <div class="card"><h2 style="margin-top:0">➕ Ajouter un ami</h2>
+    <div class="card"><h2 style="margin-top:0"><b style="font-size:1.15em;line-height:1">+</b> Ajouter un ami</h2>
       <p class="muted" style="margin-top:0">Envoyez votre lien : la personne l'ouvre et vous êtes amis.</p>
       <div class="code-remind"><span><b>Mon code ami</b><small class="muted">À donner de vive voix</small></span>
         <button type="button" class="code" id="fr-copy">${code} 📋</button></div>
