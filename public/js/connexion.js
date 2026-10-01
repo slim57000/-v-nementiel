@@ -1,8 +1,10 @@
-import { api, $ } from "./common.js";
+import { api, $, toast } from "./common.js";
+import { BRAND } from "./icons.js";
 
 // Page de retour après connexion (chemin interne uniquement).
 const next = new URLSearchParams(location.search).get("next");
 const target = next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+let social = []; // connexions sociales configurées sur le serveur
 
 api("/api/auth/me").then(() => location.replace(target)).catch(() => {});
 
@@ -83,13 +85,19 @@ $("#forgot-pw").addEventListener("click", (e) => {
 fetch("/api/config").then((r) => r.json()).then((c) => {
   if (c.emailEnabled) $("#forgot").classList.remove("hidden");
   // Connexion Google (si configurée), masquée dans l'application iOS / Android.
-  for (const provider of ["google", "facebook"]) {
-    if (c.social?.includes(provider) && !window.Capacitor?.isNativePlatform?.()) {
-      $(`#${provider}`).href = `/api/auth/${provider}?next=${encodeURIComponent(target)}`;
-      $(`#${provider}`).classList.remove("hidden");
-    }
-  }
+  social = c.social || [];
 }).catch(() => {});
+
+// Logos Apple / Google / Facebook : connexion si configurée, sinon « bientôt ». Masqués dans l'app iOS / Android.
+if (window.Capacitor?.isNativePlatform?.()) $("#social-block")?.remove();
+document.querySelectorAll("[data-social]").forEach((b) => {
+  b.innerHTML = BRAND[b.dataset.social.toLowerCase()];
+  b.addEventListener("click", () => {
+    const provider = b.dataset.social.toLowerCase();
+    if (social.includes(provider)) location.href = `/api/auth/${provider}?next=${encodeURIComponent(target)}`;
+    else toast(`Connexion ${b.dataset.social} : bientôt disponible`);
+  });
+});
 $("#forgot").addEventListener("click", async (e) => {
   e.preventDefault();
   $("#error").textContent = "";

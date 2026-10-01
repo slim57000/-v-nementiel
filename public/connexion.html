@@ -41,8 +41,14 @@
 
       <p id="error" class="error" role="alert"></p>
       <button class="btn btn-block" style="margin-top:8px">Continuer</button>
-      <a id="google" class="btn btn-light btn-block hidden" style="margin-top:10px">Continuer avec Google</a>
-      <a id="facebook" class="btn btn-light btn-block hidden" style="margin-top:10px">Continuer avec Facebook</a>
+      <div id="social-block">
+        <p class="divider">ou continuer avec</p>
+        <div class="socials">
+          <button type="button" data-social="Apple" aria-label="Continuer avec Apple"></button>
+          <button type="button" data-social="Google" aria-label="Continuer avec Google"></button>
+          <button type="button" data-social="Facebook" aria-label="Continuer avec Facebook"></button>
+        </div>
+      </div>
     </form>
 
     <div id="created" class="card hidden">
