@@ -9,7 +9,7 @@
   <link rel="modulepreload" href="/js/common.js">
   <link rel="modulepreload" href="/js/icons.js">
   <link rel="modulepreload" href="/js/i18n.js">
-  <link rel="stylesheet" href="/css/app.css?v=85">
+  <link rel="stylesheet" href="/css/app.css?v=86">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -37,17 +37,18 @@
 
   <div id="page" class="hidden">
     <main class="container" style="padding-top:12px">
-      <!-- Carte d'invitation (maquette « faire-part fleuri ») -->
-      <section class="invite-hero">
+      <!-- Une seule carte : le faire-part, avec compte à rebours et mention du live -->
+      <section class="invite-top">
         <a id="back" class="back-chip" href="/" aria-label="Retour">‹</a>
         <span id="lock" class="lock-chip"></span>
-        <img class="invite-hero-heart" src="/img/logo.png" alt="">
-        <h1 id="name" class="script"></h1>
-        <p id="subtitle" class="script-sub"></p>
-        <p id="date-big" class="date-big"></p>
-        <div class="ornament" aria-hidden="true"><span>◆</span></div>
-        <div id="countdown" class="countdown-plain" aria-live="off"></div>
-        <a id="signup" class="btn btn-block cta-stories hidden">Créer votre compte<br><small>pour voir les stories</small></a>
+        <div id="invite"></div>
+        <div id="invite-extra" class="invite-extra">
+          <div class="ornament" aria-hidden="true"><span>◆</span></div>
+          <div id="countdown" class="countdown-plain" aria-live="off"></div>
+          <p class="live-note">🎥 Vous ne pouvez pas être là ? Suivez l'événement <b>en direct</b> ici le jour J, et revivez-le en replay le lendemain.</p>
+          <a id="signup" class="btn btn-block cta-stories hidden">Créer votre compte<br><small>pour voir les stories</small></a>
+        </div>
+        <h1 id="name" class="sr-only"></h1><p id="subtitle" hidden></p><p id="date-big" hidden></p>
       </section>
       <section id="welcome" class="card welcome-card hidden"></section>
 
@@ -91,10 +92,6 @@
         <div id="rsvp-list"></div>
       </section>
 
-      <section class="card" style="background:transparent;box-shadow:none;padding:0">
-        <h2 style="text-align:center">Le faire-part</h2>
-        <div id="invite"></div>
-      </section>
 
       <section class="guestbook">
         <h2>Livre d'or <span class="muted" id="gb-count" style="font-weight:400"></span></h2>

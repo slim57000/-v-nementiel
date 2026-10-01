@@ -99,6 +99,7 @@ function showEvent(ev) {
   // Premium : page sans marque MaFeliza.
   if (ev.premium) document.querySelector(".invite-hero-heart")?.remove();
   renderInvite($("#invite"), ev, ev.invite, ev.inviteStyle, invitePhotoUrl(ev.invite, ev.cover));
+  $("#invite").append($("#invite-extra")); // compte à rebours et mention du live dans la carte du faire-part
   startCountdown(new Date(`${ev.date}T${ev.time}`));
 
   $("#share").onclick = () => shareSheet({ title: ev.name, text: `Vous êtes invité·e à « ${ev.name} » !`, url });

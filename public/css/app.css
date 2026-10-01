@@ -708,3 +708,12 @@ details.advanced summary { cursor: pointer; font-weight: 600; font-size: .92rem;
 .welcome-actions .btn:first-child { flex-basis: 100%; }
 [data-theme="dark"] .welcome-card { background: #1d1a21; }
 .has-tabbar .share-bar { bottom: calc(68px + env(safe-area-inset-bottom)); }
+/* Page événement : le faire-part fait office de carte d'en-tête */
+.invite-top { position: relative; margin-bottom: 18px; }
+.invite-top .invite { max-width: none; padding-top: 52px; }
+.invite-top .lock-chip, .invite-top .back-chip { z-index: 3; }
+.invite-extra { margin-top: 14px; font-family: inherit; }
+.invite-extra .countdown-plain { color: #2b2530; }
+.live-note { font-family: system-ui, -apple-system, sans-serif; font-size: .88rem; line-height: 1.45; margin: 14px auto 0; max-width: 320px; padding: 10px 14px; border-radius: 14px; background: rgba(255,255,255,.6); color: #3a3236; }
+.invite.moderne .live-note { background: rgba(255,255,255,.12); color: inherit; }
+.invite.moderne .invite-extra .countdown-plain { color: inherit; }
