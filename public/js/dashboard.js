@@ -24,6 +24,7 @@ if (new URLSearchParams(location.search).has("saved")) {
 
 let events = [];
 let discover = []; // événements publics des autres organisateurs
+let joined = []; // événements où je suis invité (privés compris)
 let stories = []; // stories des dernières 24 h, par événement
 let filter = "all";
 const today = new Date().toISOString().slice(0, 10);
@@ -33,7 +34,7 @@ const bg = (url) => (url ? `style="background-image:url('${esc(url)}')"` : "");
 
 async function load() {
   try {
-    [events, discover, stories] = await Promise.all([api("/api/events"), api("/api/public?limit=30").catch(() => []), api("/api/me/stories").catch(() => [])]);
+    [events, discover, stories, joined] = await Promise.all([api("/api/events"), api("/api/public?limit=30").catch(() => []), api("/api/me/stories").catch(() => []), api("/api/me/history").catch(() => [])]);
   } catch (err) {
     if (err.status === 401) return goLogin();
     return toast(err.message);
@@ -47,7 +48,8 @@ function renderStories() {
   const mine = new Set(events.map((e) => e.slug));
   // Événements avec des stories récentes en premier (rond coloré), puis les autres.
   const withStory = new Set(stories.map((g) => g.slug));
-  const all = [...events.filter((e) => e.date >= today), ...discover.filter((e) => !mine.has(e.slug)).slice(0, 12)];
+  const guest = joined.filter((e) => e.date >= today && !mine.has(e.slug));
+  const all = [...events.filter((e) => e.date >= today), ...guest, ...discover.filter((e) => !mine.has(e.slug) && !guest.some((g) => g.slug === e.slug)).slice(0, 12)];
   const extra = stories.filter((g) => !all.some((e) => e.slug === g.slug)).map((g) => ({ ...g }));
   const upcoming = [...extra, ...all].sort((a, b) => withStory.has(b.slug) - withStory.has(a.slug));
   $("#stories").innerHTML = `
@@ -131,8 +133,9 @@ function render() {
   const keep = (e) => (filter === "upcoming" ? e.date >= today && !isLive(e) : filter === "live" ? isLive(e) : true);
   const shown = events.filter(keep);
   const mine = new Set(events.map((e) => e.slug));
-  // Grille : mes événements à venir en premier, puis les événements publics des autres.
-  const others = [...events.filter((e) => e.date >= today && keep(e)), ...discover.filter((e) => !mine.has(e.slug) && keep(e))];
+  // Grille : mes événements à venir, ceux où je suis invité, puis les événements publics des autres.
+  const guest = joined.filter((e) => e.date >= today && !mine.has(e.slug) && keep(e));
+  const others = [...events.filter((e) => e.date >= today && keep(e)), ...guest, ...discover.filter((e) => !mine.has(e.slug) && !guest.some((g) => g.slug === e.slug) && keep(e))];
   $("#empty").classList.toggle("hidden", shown.length > 0 || others.length > 0);
   $("#empty-text").innerHTML = events.length
     ? "Aucun événement dans cette catégorie."
