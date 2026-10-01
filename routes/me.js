@@ -12,7 +12,7 @@ import {
   addFavorite, removeFavorite, listFavoriteIds, listHistoryIds,
   listFriendIds, removeFriends, addBlock, removeBlock, listBlockIds, addFriends,
   addDirectMessage, listDirectMessages, lastDirectMessage, deleteDirectMessage, listPhotos, listGuestbook, listPublicUpcoming, listRecentPhotos, listRecentGuestbook,
-  getSetting, setSetting,
+  getSetting, setSetting, listUnlistedIds, withVisibility,
 } from "../lib/store.js";
 
 const router = Router();
@@ -31,7 +31,7 @@ router.get("/", async (req, res) => {
   const me = req.organizer;
   // Une table manquante (schéma pas encore à jour) ne doit pas bloquer tout le profil.
   const safe = (p) => p.catch((err) => { console.error("Profil :", err.message); return []; });
-  const [events, history, friends] = await Promise.all([safe(listEvents(me.id)), safe(listHistoryIds(me.id)), safe(listFriendIds(me.id))]);
+  const [events, history, friends] = await Promise.all([safe(listEvents(me.id)), safe(invitedEvents(me.id)), safe(listFriendIds(me.id))]);
   res.json({ ...person(me), email: me.email, displayName: me.displayName || "", stats: { events: events.length, participations: history.length, friends: friends.length } });
 });
 
@@ -128,6 +128,12 @@ router.get("/stories", async (req, res) => {
 
 // --- Favoris et historique des participations ---
 const visibleEvents = (list) => list.filter((e) => e && !e.suspended);
+// Participations : seulement les événements où l'on a été invité (privés ou non répertoriés),
+// pas les événements publics simplement consultés.
+async function invitedEvents(meId) {
+  const [list, hidden] = await Promise.all([findEventsByIds(await listHistoryIds(meId)), listUnlistedIds()]);
+  return visibleEvents(list).filter((e) => withVisibility(e, hidden).visibility !== "public");
+}
 
 router.get("/favorites", async (req, res) => {
   res.json(visibleEvents(await findEventsByIds(await listFavoriteIds(req.organizer.id))).map(card));
@@ -147,7 +153,7 @@ router.delete("/favorites/:eventId", async (req, res) => {
 });
 
 router.get("/history", async (req, res) => {
-  res.json(visibleEvents(await findEventsByIds(await listHistoryIds(req.organizer.id))).map(card));
+  res.json((await invitedEvents(req.organizer.id)).map(card));
 });
 
 // --- Amis et blocages ---
