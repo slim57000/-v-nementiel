@@ -41,6 +41,8 @@ async function load() {
   render();
 }
 
+const VIS = { private: ["🔒 Privé", "private"], unlisted: ["🔗 Non répertorié", "unlisted"], public: ["🔓 Public", ""] };
+
 function renderStories() {
   const mine = new Set(events.map((e) => e.slug));
   // Événements avec des stories récentes en premier (rond coloré), puis les autres.
@@ -58,7 +60,7 @@ function renderStories() {
           <span class="story-badge ${live || badge === "Aujourd'hui" ? "today" : ""}">${live ? "LIVE" : badge}</span>
           </div>
         <span>${esc(ev.name)}</span>
-        ${ev.visibility ? `<small class="story-vis ${ev.visibility === "private" ? "private" : ""}">${ev.visibility === "private" ? "🔒 Privé" : "🔓 Public"}</small>` : ""}</a>`;
+        ${ev.visibility ? `<small class="story-vis ${(VIS[ev.visibility] || VIS.public)[1]}">${(VIS[ev.visibility] || VIS.public)[0]}</small>` : ""}</a>`;
     }).join("")}`;
 }
 
@@ -71,7 +73,7 @@ function card(ev) {
       <div class="ev-avatar" ${bg(coverOf(ev))}></div>
       <div><h3>${esc(ev.name)}</h3><div class="muted">${type.label} · ${esc(ev.location)}</div>
         ${ev.reports ? `<a class="report-badge" href="/e/${esc(ev.slug)}">⚠️ ${ev.reports} signalement${ev.reports > 1 ? "s" : ""}</a>` : ""}</div>
-      ${isLive(ev) ? '<span class="live-tag" style="margin-left:auto">LIVE</span>' : `<span class="badge ${isPrivate ? "private" : ""}">${isPrivate ? "🔒 Privé" : "🔓 Public"}</span>`}
+      ${isLive(ev) ? '<span class="live-tag" style="margin-left:auto">LIVE</span>' : `<span class="badge ${(VIS[ev.visibility] || VIS.public)[1]}">${(VIS[ev.visibility] || VIS.public)[0]}</span>`}
     </div>
     <div class="ev-cover" ${liveAttrs(ev)}>
       ${isLive(ev)

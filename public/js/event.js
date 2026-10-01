@@ -58,7 +58,7 @@ function showEvent(ev) {
   $("#date-big").textContent = new Date(`${ev.date}T${ev.time}`)
     .toLocaleDateString(LOCALE, { day: "numeric", month: "long", year: "numeric" })
     .replace(/^(\d+) (\p{L})/u, (m, d, l) => `${d} ${l.toUpperCase()}`);
-  $("#lock").textContent = ev.visibility === "private" ? "🔒 Privé" : "🔓 Public";
+  $("#lock").textContent = { private: "🔒 Privé", unlisted: "🔗 Non répertorié" }[ev.visibility] || "🔓 Public";
   renderStories(ev);
   initFavorite(ev);
   initGuestbook(ev);

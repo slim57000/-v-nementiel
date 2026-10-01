@@ -3,7 +3,7 @@ import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers } from "../lib/demo.js";
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
-import { findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory, addFriends, listBlockIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
+import { listUnlistedIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory, addFriends, listBlockIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
 import { currentOrganizer } from "./auth.js";
 
@@ -64,7 +64,7 @@ router.get("/:slug", async (req, res) => {
     getSetting(`replayoff:${event.id}`).catch(() => null),
     getSetting(`replayhide:${event.id}`).catch(() => null),
   ]);
-  res.json({ locked: false, isOwner, loggedIn: Boolean(me), ...publicView(event), id: event.id, premium, replayDays: replayDays(premium), replayDeleted: Boolean(replayDeleted), replayOnline: !replayHidden, program: program || null });
+  res.json({ locked: false, isOwner, loggedIn: Boolean(me), ...publicView(withVisibility(event, await listUnlistedIds())), id: event.id, premium, replayDays: replayDays(premium), replayDeleted: Boolean(replayDeleted), replayOnline: !replayHidden, program: program || null });
 });
 
 // Anti-bruteforce partagé (base de données) : 10 essais par IP (et événement) toutes les 15 minutes.

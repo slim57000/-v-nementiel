@@ -690,3 +690,6 @@ details.advanced summary { cursor: pointer; font-weight: 600; font-size: .92rem;
 .replay-del { position: absolute; top: 10px; right: 10px; z-index: 3; border: 0; border-radius: 99px; padding: 7px 12px; background: rgba(0,0,0,.6); color: #fff; font: inherit; font-size: .82rem; font-weight: 700; cursor: pointer; }
 .replay-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; max-width: 960px; margin: 0 auto; padding: 10px 14px; background: #1d1a20; color: #fff; font-size: .85rem; }
 .replay-bar .btn { flex: none; }
+.badge.unlisted { background: #eef2ff; color: #4338ca; }
+.story-vis.unlisted { color: #4338ca; }
+.choices .choice small { font-size: .72rem; }

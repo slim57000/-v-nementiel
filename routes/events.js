@@ -5,7 +5,7 @@ import { randomCode, slugify } from "../lib/codes.js";
 import { saveDataUrl, removeUpload, isOwnUpload } from "../lib/uploads.js";
 import { sendInvites } from "../lib/invites.js";
 import { isPremium, getStats } from "../lib/premium.js";
-import { getSetting, setSetting } from "../lib/store.js";
+import { getSetting, setSetting, setUnlisted, listUnlistedIds, withVisibility } from "../lib/store.js";
 
 // Programme de la journée (12 étapes max) et infos pratiques, stockés à part de l'événement.
 const cleanProgram = (body) => ({
@@ -63,13 +63,14 @@ router.get("/", handle(async (req, res) => {
   for (const event of events.filter((e) => !e.cameramanCode)) {
     Object.assign(event, await saveEvent({ ...event, cameramanCode: randomCode() }));
   }
-  res.json(await Promise.all(events.map(async (e) => ({ ...ownerView(e), reports: await countReports(e.id) }))));
+  const hidden = await listUnlistedIds();
+  res.json(await Promise.all(events.map(async (e) => ({ ...ownerView(withVisibility(e, hidden)), reports: await countReports(e.id) }))));
 }));
 
 router.get("/:id", handle(async (req, res) => {
   const event = await findOwned(req);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
-  res.json({ ...ownerView(event), replayOnline: !(await getSetting(`replayhide:${event.id}`).catch(() => null)), premium: await isPremium(req.organizer.id), program: (await getSetting(`program:${event.id}`).catch(() => null)) || { steps: [], practical: "" } });
+  res.json({ ...ownerView(withVisibility(event, await listUnlistedIds())), replayOnline: !(await getSetting(`replayhide:${event.id}`).catch(() => null)), premium: await isPremium(req.organizer.id), program: (await getSetting(`program:${event.id}`).catch(() => null)) || { steps: [], practical: "" } });
 }));
 
 // Statistiques pour l'organisateur : vues, pic de spectateurs, messages, réactions, photos, livre d'or, invitations.
@@ -88,7 +89,7 @@ router.get("/:id/stats", handle(async (req, res) => {
 }));
 
 router.post("/", handle(async (req, res) => {
-  const input = parseEventInput(req.body);
+  const { unlisted, ...input } = parseEventInput(req.body);
   const images = await applyImages(input, req.body, null);
   const event = await createEvent({
     ...input,
@@ -99,13 +100,14 @@ router.post("/", handle(async (req, res) => {
     cameramanCode: randomCode(),
   });
   await saveProgram(event.id, req.body);
-  res.status(201).json(ownerView(event));
+  await setUnlisted(event.id, unlisted);
+  res.status(201).json(ownerView(withVisibility(event, new Set(unlisted ? [event.id] : []))));
 }));
 
 router.put("/:id", handle(async (req, res) => {
   const existing = await findOwned(req);
   if (!existing) return res.status(404).json({ error: "Événement introuvable." });
-  const input = parseEventInput(req.body);
+  const { unlisted, ...input } = parseEventInput(req.body);
   input.invite.liveText ||= existing.invite?.liveText || "";
   const images = await applyImages(input, req.body, existing);
   const event = await saveEvent({
@@ -116,7 +118,8 @@ router.put("/:id", handle(async (req, res) => {
     cameramanCode: req.body.regenerateCameramanCode || !existing.cameramanCode ? randomCode() : existing.cameramanCode,
   });
   await saveProgram(event.id, req.body);
-  res.json(ownerView(event));
+  await setUnlisted(event.id, unlisted);
+  res.json(ownerView(withVisibility(event, new Set(unlisted ? [event.id] : []))));
 }));
 
 // Textes des faire-part modifiés depuis « Mes faire-part » (faire-part et invitation au live).
