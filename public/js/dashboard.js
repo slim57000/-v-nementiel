@@ -24,7 +24,7 @@ if (new URLSearchParams(location.search).has("saved")) {
 
 let events = [];
 let discover = []; // événements publics des autres organisateurs
-let joined = []; // événements où je suis invité (privés compris)
+let joined = []; // événements où je suis invité + ceux de mes amis (privés compris)
 let stories = []; // stories des dernières 24 h, par événement
 let filter = "all";
 const today = new Date().toISOString().slice(0, 10);
@@ -34,7 +34,7 @@ const bg = (url) => (url ? `style="background-image:url('${esc(url)}')"` : "");
 
 async function load() {
   try {
-    [events, discover, stories, joined] = await Promise.all([api("/api/events"), api("/api/public?limit=30").catch(() => []), api("/api/me/stories").catch(() => []), api("/api/me/history").catch(() => [])]);
+    [events, discover, stories, joined] = await Promise.all([api("/api/events"), api("/api/public?limit=30").catch(() => []), api("/api/me/stories").catch(() => []), api("/api/me/circle").catch(() => [])]);
   } catch (err) {
     if (err.status === 401) return goLogin();
     return toast(err.message);

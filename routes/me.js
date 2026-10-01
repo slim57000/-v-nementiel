@@ -152,6 +152,17 @@ router.delete("/favorites/:eventId", async (req, res) => {
   res.json({ favorite: false });
 });
 
+// Accueil : événements où je suis invité + événements à venir de mes amis (privés et non répertoriés compris).
+router.get("/circle", async (req, res) => {
+  const me = req.organizer;
+  const [invited, friendIds, hidden] = await Promise.all([invitedEvents(me.id).catch(() => []), listFriendIds(me.id).catch(() => []), listUnlistedIds()]);
+  const today = new Date().toISOString().slice(0, 10);
+  const friends = (await Promise.all(friendIds.slice(0, 50).map((id) => listEvents(id).catch(() => [])))).flat()
+    .filter((e) => e.date >= today).map((e) => withVisibility(e, hidden));
+  const all = visibleEvents([...invited, ...friends]).filter((e, i, arr) => arr.findIndex((x) => x.id === e.id) === i);
+  res.json(all.map(card));
+});
+
 router.get("/history", async (req, res) => {
   res.json((await invitedEvents(req.organizer.id)).map(card));
 });

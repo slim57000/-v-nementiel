@@ -3,7 +3,7 @@ import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers } from "../lib/demo.js";
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
-import { listUnlistedIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory, addFriends, listBlockIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
+import { listUnlistedIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory, addFriends, listBlockIds, listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
 import { currentOrganizer } from "./auth.js";
 
@@ -13,7 +13,15 @@ export const hasAccess = async (req, event) =>
   event.visibility === "public" ||
   getSigned(req, `ev${event.id}`) === codeFingerprint(event.accessCode) ||
   (event.cameramanCode && getSigned(req, `cam${event.id}`) === codeFingerprint(`cam:${event.cameramanCode}`)) ||
-  (await currentOrganizer(req))?.id === event.organizerId;
+  await ownerOrFriend(req, event);
+
+// Le créateur et ses amis (proches de confiance) accèdent à ses événements privés sans code.
+async function ownerOrFriend(req, event) {
+  const me = await currentOrganizer(req).catch(() => null);
+  if (!me) return false;
+  if (me.id === event.organizerId) return true;
+  return (await listFriendIds(me.id).catch(() => [])).includes(event.organizerId);
+}
 
 // Événements publics à venir : cartes de la page d'accueil et de « Découvrir ».
 router.get("/", async (req, res) => {
