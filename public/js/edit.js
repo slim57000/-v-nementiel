@@ -300,7 +300,7 @@ $("#program-template").addEventListener("click", () => {
     return false;
   };
   let waiting = false;
-  document.querySelectorAll(".cagnotte-links a").forEach((a) => a.addEventListener("click", () => { waiting = true; }));
+  addEventListener("blur", () => { waiting = true; }); // l'organisateur part créer sa cagnotte ailleurs
   addEventListener("focus", () => { if (waiting && !input.value) tryPaste(false).then((ok) => { if (ok) waiting = false; }); });
   $("#cagnotte-paste").addEventListener("click", () => tryPaste(true));
   input.addEventListener("input", show);
