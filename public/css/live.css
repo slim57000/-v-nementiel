@@ -87,3 +87,9 @@
 /* Titre du live : jusqu'à 2 lignes au lieu d'être coupé */
 .live-bar h1 { min-width: 0; font-size: .95rem; line-height: 1.2; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .live-bar { padding-top: calc(12px + env(safe-area-inset-top)); }
+/* Écran d'attente : photo du faire-part ; en thème sombre, sans voile, texte sur pastille */
+#stage.has-cover { background-image: linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.55)), var(--cover); background-size: cover; background-position: center; }
+[data-theme="dark"] #stage.has-cover { background-image: var(--cover); }
+[data-theme="dark"] #stage.has-cover .live-empty { justify-content: flex-end; padding-bottom: 14px; }
+[data-theme="dark"] #stage.has-cover .live-empty > * , [data-theme="dark"] #stage.has-cover .live-empty { color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.7); }
+[data-theme="dark"] #stage.has-cover .live-empty > span { display: none; }

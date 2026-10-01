@@ -97,7 +97,9 @@ async function load() {
     return `<button class="cam ${thumb ? "has-thumb" : ""}" data-index="${i}" ${thumb ? `style="background-image:url('${esc(thumb)}')"` : ""}>${esc(c.name)}</button>`;
   }).join("");
   // Fond du lecteur avant le direct : couverture de l'événement, sinon visuel de salle.
-  $("#stage").style.backgroundImage = `linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.55)), url("${coverOf(ev)}")`;
+  // Photo du faire-part en attente du direct (voile sombre en thème clair seulement, cf. live.css).
+  $("#stage").style.setProperty("--cover", `url("${coverOf(ev)}")`);
+  $("#stage").classList.add("has-cover");
   $("#cams-section").classList.toggle("hidden", cameras.length < 2);
   play(0);
   heartbeat();
