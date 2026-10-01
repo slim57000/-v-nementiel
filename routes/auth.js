@@ -247,10 +247,11 @@ export async function currentOrganizer(req) {
 // Administrateurs : emails listés dans ADMIN_EMAILS (séparés par des virgules).
 const ADMINS = (process.env.ADMIN_EMAILS || "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
 // Administrateurs : ceux de ADMIN_EMAILS (super-administrateurs, non retirables) + ceux nommés depuis l'interface.
-export const isSuperAdmin = (organizer) => Boolean(organizer && ADMINS.includes(organizer.email));
+const low = (e) => String(e || "").trim().toLowerCase();
+export const isSuperAdmin = (organizer) => Boolean(organizer && ADMINS.includes(low(organizer.email)));
 export const listExtraAdmins = async () => (await getSetting("admins").catch(() => null)) || [];
 export const isAdmin = async (organizer) =>
-  Boolean(organizer && (isSuperAdmin(organizer) || (await listExtraAdmins()).includes(organizer.email)));
+  Boolean(organizer && (isSuperAdmin(organizer) || (await listExtraAdmins()).map(low).includes(low(organizer.email))));
 
 export async function requireOrganizer(req, res, next) {
   req.organizer = await currentOrganizer(req);

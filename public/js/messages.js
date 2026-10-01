@@ -15,6 +15,8 @@ const addFriend = async (code) => {
   location.href = `/messages?u=${id}`;
 };
 const invited = new URLSearchParams(location.search).get("ami");
+// Depuis le profil (« ➕ Ajouter ») : ouvre directement la fenêtre d'ajout d'ami.
+if (new URLSearchParams(location.search).has("add")) setTimeout(() => $("#add-friend")?.click(), 300);
 if (invited) {
   // Non connecté : connexion puis retour ici avec le même lien.
   addFriend(invited).catch((err) => { if (err.status === 401) return goLogin(); history.replaceState(null, "", "/messages"); toast(err.message); });

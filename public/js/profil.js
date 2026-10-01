@@ -32,6 +32,7 @@ try {
   if (auth.premium) $("#email").insertAdjacentHTML("afterend", '<span class="badge" style="margin-top:6px">✨ Premium</span>');
   paintAvatar(me);
   showTab("favorites");
+  showFriends();
 } catch (err) {
   // Seule une session absente renvoie vers la connexion (sinon boucle connexion ⇄ profil).
   if (err.status === 401) goLogin();
@@ -126,3 +127,13 @@ $("#pw-save").addEventListener("click", async () => {
     toast("Mot de passe enregistré 🔒");
   } catch (err) { toast(err.message); }
 });
+
+// 👥 Mes amis : avatars cliquables (ouvrent la conversation), ou invitation à en ajouter.
+async function showFriends() {
+  const friends = await api("/api/me/friends").catch(() => []);
+  $("#friends-list").innerHTML = friends.length
+    ? friends.map((f) => `<a href="/messages?u=${f.id}" class="friend-chip">
+        <span class="avatar" ${f.avatar ? `style="background-image:url('${esc(f.avatar)}')"` : ""}>${f.avatar ? "" : esc(f.name.charAt(0).toUpperCase())}</span>
+        <span>${esc(f.name)}</span></a>`).join("")
+    : '<p class="muted small" style="margin:8px 0 0">Pas encore d\'amis. Touchez « ➕ Ajouter » et envoyez votre lien à vos proches.</p>';
+}
