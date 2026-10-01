@@ -700,3 +700,11 @@ details.advanced summary { cursor: pointer; font-weight: 600; font-size: .92rem;
 .home picture + p .logo-lg { margin-top: -26px; }
 .home .slogan { margin: 2px auto 12px; font-size: .92rem; line-height: 1.35; }
 .home .divider { margin: 12px 0 8px; }
+/* Page événement vue par un invité connecté : carte d'accueil + barre de partage au-dessus du menu */
+.welcome-card { margin: 14px 0; padding: 16px; background: linear-gradient(135deg, #fff4f1, #f6f0ff); border: 1px solid var(--border); border-radius: 16px; }
+.welcome-card h2 { margin: 0 0 6px; font-size: 1.1rem; }
+.welcome-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.welcome-actions .btn { flex: 1 1 auto; text-align: center; }
+.welcome-actions .btn:first-child { flex-basis: 100%; }
+[data-theme="dark"] .welcome-card { background: #1d1a21; }
+.has-tabbar .share-bar { bottom: calc(68px + env(safe-area-inset-bottom)); }

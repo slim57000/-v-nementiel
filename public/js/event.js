@@ -1,4 +1,4 @@
-import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, guestName, LOCALE, placeholderCover } from "./common.js";
+import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, guestName, LOCALE, placeholderCover, tabbar, createSheet } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 import { initGuestbook } from "./guestbook.js";
 
@@ -61,6 +61,7 @@ function showEvent(ev) {
   $("#lock").textContent = { private: "🔒 Privé", unlisted: "🔗 Non répertorié" }[ev.visibility] || "🔓 Public";
   renderStories(ev);
   initFavorite(ev);
+  welcome(ev);
   initGuestbook(ev);
 
   $("#when").textContent = formatDate(ev.date, ev.time);
@@ -135,7 +136,7 @@ async function renderStories(ev) {
         const thumb = isVideo(first.url) ? "background:#2b2530" : `background-image:url('${esc(first.url)}')`;
         return `<button class="story-circle has-story" data-who="${esc(name)}" aria-label="Stories de ${esc(name)}"><div style="${thumb}"></div><span class="story-label">${esc(name)}</span></button>`;
       }).join("")
-      : '<p class="muted small" style="margin:0">Aucune story pour l\'instant. Partagez la première !</p>';
+      : `<p class="muted small" style="margin:0">Aucune story pour l'instant.${ev.isOwner ? " Partagez la première !" : ""}</p>`;
     $("#stories-row").onclick = (e) => {
       const who = e.target.closest("[data-who]")?.dataset.who;
       if (!who) return;
@@ -147,6 +148,24 @@ async function renderStories(ev) {
   $("#add-story").classList.toggle("hidden", !ev.isOwner);
   if (ev.isOwner) $("#add-story").onclick = () => pickAndUploadPhoto(ev.slug, { story: true }).then(() => { toast("Story publiée pour 24 h ✨"); load(); }, () => {});
   load();
+}
+
+// Invité connecté : menu du bas + carte qui donne envie de découvrir le reste du site.
+function welcome(ev) {
+  if (!ev.loggedIn) return;
+  tabbar("");
+  $("#back").href = "/dashboard";
+  if (ev.isOwner) return;
+  $("#welcome").innerHTML = `
+    <h2>👋 Bienvenue sur MaFeliza !</h2>
+    <p class="muted small">Suivez cet événement, puis découvrez ceux de vos proches ou créez le vôtre : faire-part, live, photos et souvenirs au même endroit.</p>
+    <div class="welcome-actions">
+      <a class="btn" href="/edit" id="welcome-create">✨ Créer mon événement</a>
+      <a class="btn btn-light" href="/decouvrir">🔎 Découvrir</a>
+      <a class="btn btn-light" href="/amis">👥 Mes amis</a>
+    </div>`;
+  $("#welcome").classList.remove("hidden");
+  $("#welcome-create").addEventListener("click", createSheet);
 }
 
 // Favori (utilisateur connecté, hors organisateur).
