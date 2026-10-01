@@ -78,7 +78,7 @@ export function formatDate(date, time) {
 }
 
 // Redimensionne une photo côté navigateur (photos de téléphone souvent > 5 Mo) et renvoie une data URL JPEG.
-export function resizeImage(file, maxSize = 1600) {
+export function resizeImage(file, maxSize = 1280) {
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith("image/")) return reject(new Error("Merci de choisir une image."));
     const img = new Image();
@@ -90,8 +90,8 @@ export function resizeImage(file, maxSize = 1600) {
       canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(img.src);
       // WebP (≈ 30 % plus léger) quand le navigateur sait l'encoder, sinon JPEG.
-      const webp = canvas.toDataURL("image/webp", 0.8);
-      resolve(webp.startsWith("data:image/webp") ? webp : canvas.toDataURL("image/jpeg", 0.85));
+      const webp = canvas.toDataURL("image/webp", 0.75);
+      resolve(webp.startsWith("data:image/webp") ? webp : canvas.toDataURL("image/jpeg", 0.8));
     };
     img.onerror = () => reject(new Error("Image illisible."));
     img.src = URL.createObjectURL(file);
@@ -432,7 +432,7 @@ export function pickAndUploadPhoto(slug, { story = false } = {}) {
         const name = await guestName();
         const media = file.type.startsWith("video/")
           ? (toast("Envoi de la vidéo…"), await uploadVideo(slug, file))
-          : (toast("Envoi de la photo…"), { image: await resizeImage(file, 1600) });
+          : (toast("Envoi de la photo…"), { image: await resizeImage(file, 1280) });
         // Story : légende facultative (affichée sur la story).
         const caption = story ? (prompt("Ajouter une légende ? (facultatif)") || "").trim().slice(0, 120) : "";
         resolve(await api(`/api/public/${encodeURIComponent(slug)}/photos`, { method: "POST", body: { name, ...media, ...(story && { story: true, caption }) } }));

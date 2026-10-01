@@ -132,7 +132,7 @@ export function initGuestbook(ev) {
     const file = e.target.files[0];
     if (!file) return;
     try {
-      draft.image = await resizeImage(file, 1400);
+      draft.image = await resizeImage(file, 1280);
       draft.videoFile = null;
       $("#gb-video-preview").classList.add("hidden");
       $("#gb-photo-preview").src = draft.image;

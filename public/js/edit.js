@@ -128,7 +128,7 @@ $("#inv-photo-file").addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if (!file) return;
   try {
-    state.invitePhoto = await resizeImage(file, 1200);
+    state.invitePhoto = await resizeImage(file, 1080);
     refresh();
   } catch (err) { toast(err.message); }
 });
