@@ -134,10 +134,14 @@
             <a href="https://lydia-app.com" target="_blank" rel="noopener">Lydia</a>
             <a href="https://www.paypal.com/pools" target="_blank" rel="noopener">PayPal</a>
           </div>
-          <small>Créez-la en 2 minutes, puis collez son lien ci-dessous 👇</small>
+          <small>Créez-la en 2 minutes, copiez son lien, revenez ici : il se colle en un clic 👇</small>
         </div>
         <label for="cagnotte">Lien de la cagnotte (Leetchi, Lydia…)</label>
-        <input id="cagnotte" type="url" inputmode="url" maxlength="300" placeholder="https://www.leetchi.com/c/…">
+        <div style="display:flex;gap:8px">
+          <input id="cagnotte" type="url" inputmode="url" maxlength="300" placeholder="https://www.leetchi.com/c/…" style="flex:1;min-width:0">
+          <button type="button" id="cagnotte-paste" class="btn btn-sm" style="flex:0 0 auto">📋 Coller</button>
+        </div>
+        <p id="cagnotte-ok" class="small hidden" style="color:#1a7f45;font-weight:600;margin:6px 0 0">✅ Cagnotte ajoutée : le bouton apparaîtra sur votre faire-part et pendant le live.</p>
       </section>
 
       <section class="card">

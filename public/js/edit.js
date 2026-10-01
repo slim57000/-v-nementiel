@@ -276,3 +276,25 @@ $("#program-template").addEventListener("click", () => {
   $("#program").innerHTML = "";
   (PROGRAMS[type] || PROGRAMS.autre).forEach(([time, label]) => addStep({ time, label }));
 });
+
+// Cagnotte : après l'avoir créée sur Leetchi / Lydia / PayPal, le lien copié se colle en un clic
+// (et automatiquement au retour sur la page si le téléphone l'autorise).
+{
+  const input = $("#cagnotte");
+  const isPot = (t) => /^https?:\/\/\S*(leetchi|lydia|paypal|lepotcommun|onparticipe|helloasso|gofundme)\S*$/i.test(t.trim());
+  const show = () => $("#cagnotte-ok").classList.toggle("hidden", !isPot(input.value));
+  const tryPaste = async (manual) => {
+    try {
+      const t = (await navigator.clipboard.readText()).trim();
+      if (isPot(t) || (manual && /^https?:\/\//.test(t))) { input.value = t; show(); return true; }
+      if (manual) toast("Copiez d'abord le lien de votre cagnotte, puis touchez « Coller ».");
+    } catch { if (manual) input.focus(); }
+    return false;
+  };
+  let waiting = false;
+  document.querySelectorAll(".cagnotte-links a").forEach((a) => a.addEventListener("click", () => { waiting = true; }));
+  addEventListener("focus", () => { if (waiting && !input.value) tryPaste(false).then((ok) => { if (ok) waiting = false; }); });
+  $("#cagnotte-paste").addEventListener("click", () => tryPaste(true));
+  input.addEventListener("input", show);
+  setTimeout(show, 1500);
+}
