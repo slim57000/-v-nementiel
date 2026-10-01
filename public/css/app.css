@@ -686,3 +686,4 @@ details.advanced summary { cursor: pointer; font-weight: 600; font-size: .92rem;
 .friend-chip { flex: none; width: 64px; display: grid; justify-items: center; gap: 4px; color: inherit; text-decoration: none; font-size: .75rem; text-align: center; }
 .friend-chip span:last-child { width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .friend-chip .avatar { width: 52px; height: 52px; font-size: 1.2rem; }
+.friend-row.new { box-shadow: 0 0 0 3px #fd1a85; }

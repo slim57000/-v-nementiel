@@ -12,7 +12,7 @@ export const avatarHtml = (p) => (p?.avatar
 const addFriend = async (code) => {
   const { id } = await api("/api/me/friends/add", { method: "POST", body: { code } });
   toast("Vous êtes maintenant amis 🎉");
-  location.href = `/messages?u=${id}`;
+  location.href = "/amis?new=" + id;
 };
 const invited = new URLSearchParams(location.search).get("ami");
 // Depuis le profil (« ➕ Ajouter ») : ouvre directement la fenêtre d'ajout d'ami.

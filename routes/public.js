@@ -66,6 +66,14 @@ router.get("/:slug", async (req, res) => {
 // Anti-bruteforce partagé (base de données) : 10 essais par IP (et événement) toutes les 15 minutes.
 const tooManyTries = (key) => tooFast(`try:${key}`, 10, 15 * 60 * 1000);
 
+// Saisir le code d'invitation d'un événement = devenir ami avec son organisateur (si connecté, sauf blocage).
+async function befriendOrganizer(req, event) {
+  const me = await currentOrganizer(req).catch(() => null);
+  if (!me || me.id === event.organizerId) return;
+  const [mine, theirs] = await Promise.all([listBlockIds(me.id), listBlockIds(event.organizerId)]);
+  if (!mine.includes(event.organizerId) && !theirs.includes(me.id)) await addFriends(me.id, event.organizerId);
+}
+
 // « J'ai reçu une invitation » : le code seul suffit à retrouver l'événement.
 router.post("/join", async (req, res) => {
   const key = `${req.ip}:join`;
@@ -77,6 +85,7 @@ router.post("/join", async (req, res) => {
   }
   await clearLimit(`try:${key}`).catch(() => {});
   setSigned(res, `ev${event.id}`, codeFingerprint(event.accessCode));
+  await befriendOrganizer(req, event).catch(() => {});
   res.json({ slug: event.slug });
 });
 
@@ -93,6 +102,7 @@ router.post("/:slug/unlock", async (req, res) => {
   }
   await clearLimit(`try:${key}`).catch(() => {});
   setSigned(res, `ev${event.id}`, codeFingerprint(event.accessCode));
+  await befriendOrganizer(req, event).catch(() => {});
   res.json({ ok: true });
 });
 

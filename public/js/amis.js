@@ -20,6 +20,13 @@ function show() {
 try {
   friends = (await api("/api/me/friends")).sort((a, b) => a.name.localeCompare(b.name));
   show();
+  // Ami tout juste ajouté : message de bienvenue et mise en avant.
+  const added = new URLSearchParams(location.search).get("new");
+  if (added) {
+    history.replaceState(null, "", "/amis");
+    toast("Vous êtes maintenant amis 🎉");
+    document.querySelector(`[data-remove="${CSS.escape(added)}"]`)?.closest(".friend-row")?.classList.add("new");
+  }
 } catch (err) { if (err.status === 401) goLogin(); else toast(err.message); }
 
 $("#search").addEventListener("input", show);
