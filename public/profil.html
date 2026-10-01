@@ -9,7 +9,7 @@
   <link rel="modulepreload" href="/js/common.js">
   <link rel="modulepreload" href="/js/icons.js">
   <link rel="modulepreload" href="/js/i18n.js">
-  <link rel="stylesheet" href="/css/app.css?v=84">
+  <link rel="stylesheet" href="/css/app.css?v=85">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -43,8 +43,8 @@
 
     <section class="card" id="friends-card">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-        <h2 style="margin:0">👥 Mes amis</h2>
-        <span style="display:flex;gap:6px"><a href="/amis" class="btn btn-light btn-sm">Voir tout</a><a href="/messages?add=1" class="btn btn-sm">+</a></span>
+        <h2 style="margin:0;white-space:nowrap">👥 Mes amis</h2>
+        <span style="display:flex;gap:6px;flex-shrink:0"><a href="/amis" class="btn btn-light btn-sm" style="white-space:nowrap">Voir tout</a><a href="/messages?add=1" class="btn btn-sm">+</a></span>
       </div>
       <div id="friends-list" class="friends-strip"></div>
     </section>
