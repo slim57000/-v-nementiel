@@ -1,6 +1,7 @@
 // Espace caméraman : accès par un code dédié, gestion des liens du live et consignes.
 import express, { Router } from "express";
-import { findEventBySlug, findEventByCameramanCode, saveEvent, getSetting, setSetting } from "../lib/store.js";
+import { findEventBySlug, findEventByCameramanCode, saveEvent, getSetting, setSetting, addFriends, addHistory, listBlockIds } from "../lib/store.js";
+import { currentOrganizer } from "./auth.js";
 import { videoUploadTarget, saveLocalVideo, isOwnUpload, HAS_STORAGE, MAX_VIDEO_BYTES } from "../lib/uploads.js";
 import { parseCameras } from "../lib/events.js";
 import { LIVEKIT_ENABLED, LIVEKIT_URL, lkToken, newRoom, LK_PREFIX, isLkRoom, markLive, isLive } from "../lib/livekit.js";
@@ -27,6 +28,13 @@ router.post("/login", async (req, res) => {
   }
   attempts.delete(key);
   setSigned(res, `cam${event.id}`, fingerprint(event));
+  // Caméraman connecté : devient ami de l'organisateur et l'événement compte dans ses participations.
+  const me = await currentOrganizer(req).catch(() => null);
+  if (me && me.id !== event.organizerId) {
+    const [mine, theirs] = await Promise.all([listBlockIds(me.id), listBlockIds(event.organizerId)]).catch(() => [[], []]);
+    if (!mine.includes(event.organizerId) && !theirs.includes(me.id)) await addFriends(me.id, event.organizerId).catch(() => {});
+    await addHistory(me.id, event.id).catch(() => {});
+  }
   res.json({ slug: event.slug });
 });
 
