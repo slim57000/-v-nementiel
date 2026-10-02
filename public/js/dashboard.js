@@ -95,7 +95,7 @@ function card(ev) {
     </div>
     <div class="ev-cover" ${liveAttrs(ev)}>
       ${isLive(ev)
-        ? `<div class="live-now">🔴 C'EST AUJOURD'HUI</div>
+        ? `<div class="live-now">C'EST AUJOURD'HUI</div>
            <a class="btn btn-block" href="/live?e=${encodeURIComponent(ev.slug)}">${icon("play", 16)} Voir le live</a>`
         : `<div class="when">${esc(dayBadge(ev.date))}</div>
            <a class="btn btn-block" href="/e/${esc(ev.slug)}">Voir la page de l'événement</a>`}
