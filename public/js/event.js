@@ -89,6 +89,8 @@ function showEvent(ev) {
   $("#description").classList.toggle("hidden", !ev.description);
 
   const state = liveState(ev);
+  // Jour J : gros bouton dans la carte du faire-part, même avant le début du direct.
+  if (ev.date === new Date().toISOString().slice(0, 10)) liveToday(ev);
   if (ev.cameras.length && state !== "expired") {
     $("#live-link").href = `/live?e=${encodeURIComponent(ev.slug)}`;
     if (state === "replay") $("#live-link").textContent = "▶ Voir le replay";
@@ -180,6 +182,22 @@ function welcome(ev) {
     </div>`;
   $("#welcome").classList.remove("hidden");
   $("#welcome-create").addEventListener("click", createSheet);
+}
+
+// Jour J : l'organisateur lance le live en un clic, les invités le rejoignent.
+async function liveToday(ev) {
+  const box = document.createElement("div");
+  box.className = "live-today";
+  box.innerHTML = `<p class="live-today-title">🔴 C'est le grand jour !</p><a class="btn btn-block live-today-btn" href="/live?e=${encodeURIComponent(ev.slug)}">● Rejoindre le live</a>`;
+  $("#invite-extra").prepend(box);
+  $("#live-link").classList.add("hidden");
+  if (ev.isOwner) {
+    const own = await api(`/api/events/${ev.id}`).catch(() => null);
+    if (own?.cameramanCode) {
+      box.querySelector("a").textContent = "🎥 Lancer le live";
+      box.querySelector("a").href = `/cameraman?code=${encodeURIComponent(own.cameramanCode)}`;
+    }
+  }
 }
 
 // Favori (utilisateur connecté, hors organisateur).
