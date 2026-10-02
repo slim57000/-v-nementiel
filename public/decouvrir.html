@@ -48,7 +48,7 @@
     // La barre d'onglets n'est utile qu'aux organisateurs connectés.
     api("/api/auth/me").then(() => tabbar("discover")).catch(() => {});
     let events = [], filter = "all";
-    try { events = await api("/api/public?limit=50"); }
+    try { events = await api("/api/public?limit=50"); events.sort((a, b) => (a.visibility === "public") - (b.visibility === "public")); }
     catch (err) { $("#empty").textContent = "Chargement impossible : " + err.message; }
 
     // Recherche sans tenir compte des accents ni des majuscules.
