@@ -742,3 +742,13 @@ details.advanced summary { cursor: pointer; font-weight: 600; font-size: .92rem;
 .more-options[open] > summary { margin-bottom: 12px; }
 .more-options h3 { margin: 20px 0 8px; font-size: 1rem; }
 .btn-big { font-size: 1.15rem; padding: 18px; }
+/* Taille du texte « Grande » (Profil) */
+html.big-text { font-size: 118%; }
+html.big-text .small { font-size: 1rem; }
+html.big-text .tabbar a { font-size: .8rem; }
+/* Guide de première connexion */
+.guide-card h2 { text-align: center; margin-top: 0; }
+.guide-steps { padding: 0; margin: 0 0 18px; list-style: none; display: grid; gap: 14px; }
+.guide-steps li { display: grid; gap: 2px; padding: 12px 14px; border-radius: 14px; background: var(--bg); }
+.guide-steps b { font-size: 1.05rem; }
+.guide-steps span { color: var(--muted); }

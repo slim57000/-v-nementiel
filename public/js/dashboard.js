@@ -276,3 +276,18 @@ async function openStats(ev) {
 
 // « + Créer » des stories : même choix que le + du menu (story ou événement).
 document.addEventListener("click", (e) => { if (e.target.closest("[data-create]")) createSheet(e); });
+
+// Guide en 3 étapes, affiché une seule fois (première visite de l'accueil sur cet appareil).
+(() => {
+  try { if (localStorage.getItem("em-guide")) return; localStorage.setItem("em-guide", "1"); } catch { return; }
+  document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="guide" role="dialog" aria-modal="true"><div class="card guide-card">
+    <h2>Bienvenue sur MaFeliza 👋</h2>
+    <ol class="guide-steps">
+      <li><b>✨ Créez votre événement</b><span>Touchez le bouton rose « + » en bas : nom, date, lieu. Le faire-part se crée tout seul.</span></li>
+      <li><b>💌 Partagez-le</b><span>Envoyez le lien à vos proches par WhatsApp, SMS ou email.</span></li>
+      <li><b>🔴 Le jour J, lancez le live</b><span>Ouvrez votre événement et touchez « Lancer le live » : vos proches vous regardent en direct.</span></li>
+    </ol>
+    <button class="btn btn-block btn-big" id="guide-ok">C'est parti !</button>
+  </div></div>`);
+  $("#guide-ok").addEventListener("click", () => $("#guide").remove());
+})();

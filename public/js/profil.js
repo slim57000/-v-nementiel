@@ -1,15 +1,17 @@
 // Profil : photo, nom, statistiques, amis, favoris, participations, thème, mot de passe.
 import { api, $, esc, toast, tabbar, goLogin, resizeImage, publicCard, viewPhoto, enablePush, pushState } from "./common.js";
-import { lang, setLang, themePref, setTheme } from "./i18n.js";
+import { lang, setLang, themePref, setTheme, bigText, setBigText } from "./i18n.js";
 
 tabbar("profile");
 
 // Apparence (automatique / clair / sombre) et langue.
 function paintPrefs() {
+  document.querySelectorAll("[data-big]").forEach((b) => b.classList.toggle("active", (b.dataset.big === "1") === bigText()));
   document.querySelectorAll("[data-theme-pref]").forEach((b) => b.classList.toggle("active", b.dataset.themePref === themePref()));
   document.querySelectorAll("[data-lang]").forEach((b) => b.classList.toggle("active", b.dataset.lang === lang));
 }
 $("#theme").addEventListener("click", (e) => { if (e.target.dataset.themePref) { setTheme(e.target.dataset.themePref); paintPrefs(); } });
+$("#textsize").addEventListener("click", (e) => { if (e.target.dataset.big) { setBigText(e.target.dataset.big === "1"); paintPrefs(); } });
 $("#lang").addEventListener("click", (e) => { if (e.target.dataset.lang && e.target.dataset.lang !== lang) setLang(e.target.dataset.lang); });
 paintPrefs();
 

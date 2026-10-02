@@ -193,6 +193,10 @@ export function setLang(value) {
 
 // Thème : « auto » suit le réglage du téléphone.
 export const themePref = () => read(THEME_KEY) || "auto";
+// Taille du texte : « grande » pour les seniors (réglage du Profil, mémorisé sur l'appareil).
+export const bigText = () => read("em-big-text") === "1";
+export function setBigText(on) { write("em-big-text", on ? "1" : "0"); document.documentElement.classList.toggle("big-text", on); }
+document.documentElement.classList.toggle("big-text", bigText());
 function applyTheme() {
   const pref = themePref();
   const dark = pref === "dark" || (pref === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
