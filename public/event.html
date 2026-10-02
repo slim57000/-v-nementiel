@@ -9,7 +9,7 @@
   <link rel="modulepreload" href="/js/common.js">
   <link rel="modulepreload" href="/js/icons.js">
   <link rel="modulepreload" href="/js/i18n.js">
-  <link rel="stylesheet" href="/css/app.css?v=94">
+  <link rel="stylesheet" href="/css/app.css?v=95">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -24,6 +24,7 @@
   <p id="loading" class="container muted">Chargement…</p>
 
   <div id="locked" class="locked-screen hidden">
+    <a href="/" class="locked-brand"><img src="/img/logo.png" alt=""><span>MaFel<b>i</b>za</span></a>
     <form id="unlock" class="card" novalidate>
       <div class="big-lock" aria-hidden="true">🔒</div>
       <h1 id="locked-name" style="font-size:1.5rem"></h1>
@@ -32,7 +33,12 @@
       <input id="code" class="code-input" maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="CODE" required>
       <p id="unlock-error" class="error" role="alert"></p>
       <button class="btn btn-block" style="margin-top:12px">Accéder à l'événement</button>
+      <p class="muted small" style="margin:14px 0 0">💡 Le code est dans le message ou l'email d'invitation (6 lettres et chiffres).</p>
     </form>
+    <div class="locked-promo">
+      <b>MaFeliza</b>, le réseau social de vos événements : faire-part, live, photos et replay.
+      <a href="/">Découvrir MaFeliza →</a>
+    </div>
   </div>
 
   <div id="page" class="hidden">
