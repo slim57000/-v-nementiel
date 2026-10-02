@@ -48,7 +48,8 @@ router.get("/", async (req, res) => {
   const shown = [...priv, ...unl.filter((e) => e && !e.suspended && e.date >= today)]
     .filter((e, i, arr) => !events.some((x) => x.id === e.id) && arr.findIndex((x) => x.id === e.id) === i)
     .map((e) => withVisibility(e, hidden));
-  events = [...events, ...shown].sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
+  // Privés / non répertoriés en tête (sinon noyés parmi les nombreux événements démo), puis par date.
+  events = [...shown, ...events].sort((a, b) => (shown.includes(b) - shown.includes(a)) || `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
   res.json(await Promise.all(events.map(async (e) => {
     const { invite, inviteStyle, description, ...card } = publicView(e);
     // Privé : ni lieu ni caméras (le direct reste réservé aux invités).
