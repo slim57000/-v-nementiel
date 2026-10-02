@@ -10,7 +10,7 @@ const ago = (iso) => {
   if (s < 86400) return `il y a ${Math.round(s / 3600)} h`;
   return new Date(iso).toLocaleDateString(LOCALE, { day: "numeric", month: "long" });
 };
-const eventLink = (ev) => (isLiveNow(ev) ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${encodeURIComponent(ev.slug)}`);
+const eventLink = (ev) => (ev.date === new Date().toISOString().slice(0, 10) ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${encodeURIComponent(ev.slug)}`);
 
 let items = [];
 const liked = new Set((() => { try { return JSON.parse(localStorage.getItem("em-likes") || "[]"); } catch { return []; } })());

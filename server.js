@@ -232,7 +232,11 @@ if (!ON_VERCEL) {
   app.use(express.static(PUBLIC_DIR, {
     extensions: ["html"],
     // Photos et bibliothèques : gardées en cache ; CSS versionnée (?v=) : cache long.
-    setHeaders: (res, file) => { if (/[\\/](img|vendor)[\\/]/.test(file)) res.set("Cache-Control", "public, max-age=604800"); },
+    setHeaders: (res, file) => {
+      if (/[\\/](img|vendor)[\\/]/.test(file)) res.set("Cache-Control", "public, max-age=604800");
+      // Scripts : toujours revalidés, pour que les téléphones prennent la dernière version.
+      else if (/[\\/]js[\\/]/.test(file)) res.set("Cache-Control", "public, max-age=0, must-revalidate");
+    },
   }));
   app.use((req, res) => res.status(404).sendFile(`${PUBLIC_DIR}/404.html`));
   const port = process.env.PORT || 3000;

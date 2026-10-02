@@ -29,8 +29,8 @@ let joined = []; // événements où je suis invité + ceux de mes amis (privés
 let stories = []; // stories des dernières 24 h, par événement
 let filter = "all";
 const today = new Date().toISOString().slice(0, 10);
-// « En direct » : événement du jour avec au moins une caméra.
-const isLive = (e) => e.date === today && e.cameras?.length > 0;
+// Jour J : l'événement est considéré « en direct » (un clic sur sa miniature ouvre le live).
+const isLive = (e) => e.date === today;
 const bg = (url) => (url ? `style="background-image:url('${esc(url)}')"` : "");
 
 async function load() {
