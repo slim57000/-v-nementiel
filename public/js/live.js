@@ -92,8 +92,15 @@ async function load() {
     });
     $("#stage").insertAdjacentHTML("beforeend", '<button type="button" class="replay-del" id="replay-del">🗑️ Supprimer le replay</button>');
     $("#replay-del").addEventListener("click", async () => {
-      if (!confirm("Supprimer définitivement le replay ? Les invités ne pourront plus le revoir.")) return;
-      try { await api(`/api/events/${ev.id}/replay`, { method: "DELETE" }); toast("Replay supprimé"); setTimeout(() => location.reload(), 700); }
+      if (!confirm("Supprimer définitivement le replay ? Une copie (.zip) va d'abord être téléchargée sur votre appareil.")) return;
+      const btn = $("#replay-del");
+      btn.disabled = true;
+      btn.textContent = "⏳ Préparation du zip…";
+      // Copie du replay en .zip avant suppression ; si elle échoue, on ne supprime pas.
+      const { exportReplay } = await import("./export.js");
+      const saved = await exportReplay(ev).catch(() => false);
+      if (!saved && !confirm("Impossible de préparer le zip du replay. Supprimer quand même ?")) { btn.disabled = false; btn.textContent = "🗑️ Supprimer le replay"; return; }
+      try { await new Promise((r) => setTimeout(r, 1500)); await api(`/api/events/${ev.id}/replay`, { method: "DELETE" }); toast("Replay supprimé"); setTimeout(() => location.reload(), 700); }
       catch (err) { toast(err.message); }
     });
   }

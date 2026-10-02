@@ -49,3 +49,21 @@ export async function exportEvent(ev, onProgress = () => {}) {
   setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
   toast(failed ? `Archive créée (${failed} fichier(s) indisponible(s))` : `Archive créée : ${media.length} fichier(s) ✔`);
 }
+
+// Replay seul en .zip (proposé juste avant sa suppression, pour en garder une copie).
+export async function exportReplay(ev) {
+  const replay = await api(`/api/events/${ev.id}/replay`).catch(() => []);
+  if (!replay.length) return false;
+  const files = [], perCam = {};
+  for (const r of replay) {
+    const n = (perCam[r.camera] = (perCam[r.camera] || 0) + 1);
+    try { files.push({ name: `replay/${r.camera}-partie-${String(n).padStart(2, "0")}.${ext(r.url)}`.replace(/[\\:*?"<>|]/g, "_"), data: await fetchBytes(r.url) }); } catch { /* partie indisponible */ }
+  }
+  if (!files.length) return false;
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(makeZip(files)), download: `${ev.slug}-replay.zip` });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
+  return true;
+}
