@@ -52,6 +52,8 @@ function showSpace(ev) {
 async function load() {
   // Lien reçu de l'organisateur (/cameraman?code=XXXXXX) : connexion automatique.
   const code = params.get("code");
+  // Ouvert sans lien (ex. depuis le Profil) : dernier événement filmé sur ce téléphone.
+  if (!code && !slug) { try { slug = JSON.parse(localStorage.getItem("em-cam") || "[]")[0]?.slug || null; } catch { /* ignoré */ } }
   if (code && !slug) {
     try {
       ({ slug } = await api("/api/cameraman/login", { method: "POST", body: { code } }));

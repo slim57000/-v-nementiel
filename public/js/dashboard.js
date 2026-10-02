@@ -147,7 +147,12 @@ $("#stories").addEventListener("click", (e) => {
 function camReminder() {
   let list = [];
   try { list = JSON.parse(localStorage.getItem("em-cam") || "[]").filter((x) => x.date >= today); } catch { /* ignoré */ }
-  return list.map((x) => `<a class="cam-reminder" href="/cameraman?e=${encodeURIComponent(x.slug)}">
+  // Mes propres événements : celui du jour, sinon le prochain (l'organisateur filme souvent lui-même).
+  const own = events.filter((e) => e.date >= today && e.cameramanCode).sort((a, b) => a.date.localeCompare(b.date));
+  const mineToShow = own.filter((e) => e.date === today);
+  if (!mineToShow.length && own[0]) mineToShow.push(own[0]);
+  list = [...mineToShow.map((e) => ({ slug: e.slug, name: e.name, date: e.date, code: e.cameramanCode })), ...list.filter((x) => !mineToShow.some((e) => e.slug === x.slug))];
+  return list.map((x) => `<a class="cam-reminder" href="/cameraman?${x.code ? `code=${encodeURIComponent(x.code)}` : `e=${encodeURIComponent(x.slug)}`}">
     <span>🎥</span><div><b>Espace caméraman</b><small>${esc(x.name)}${x.date === today ? " · c'est aujourd'hui !" : ""}</small></div><em>Ouvrir ›</em></a>`).join("");
 }
 
