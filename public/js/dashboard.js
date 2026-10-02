@@ -47,6 +47,11 @@ async function load() {
 
 // Mélange privés / non répertoriés et publics (un sur deux), pour que les privés ne soient pas noyés en fin de liste.
 function mix(list) {
+  // Jour J d'abord : les événements qui commencent sont tout en haut (« ▶ Voir le live »).
+  const now = list.filter(isLive);
+  return [...now, ...mixRest(list.filter((e) => !isLive(e)))];
+}
+function mixRest(list) {
   const priv = list.filter((e) => e.visibility && e.visibility !== "public"), pub = list.filter((e) => !priv.includes(e));
   const out = [];
   while (priv.length || pub.length) { if (pub.length) out.push(pub.shift()); if (priv.length) out.push(priv.shift()); }
