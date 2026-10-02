@@ -752,3 +752,4 @@ html.big-text .tabbar a { font-size: .8rem; }
 .guide-steps li { display: grid; gap: 2px; padding: 12px 14px; border-radius: 14px; background: var(--bg); }
 .guide-steps b { font-size: 1.05rem; }
 .guide-steps span { color: var(--muted); }
+.segments button { white-space: nowrap; }
