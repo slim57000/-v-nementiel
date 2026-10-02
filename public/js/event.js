@@ -144,6 +144,8 @@ async function renderStories(ev) {
   const load = async () => {
     const stories = (await api(`${base}/stories`).catch(() => [])).filter((p) => !isHidden(p.author));
     const people = [...new Set(stories.map((p) => p.name))];
+    // Pas de story : la section n'est affichée qu'à l'organisateur (qui peut en publier).
+    document.querySelector(".stories-preview").classList.toggle("hidden", !people.length && !ev.isOwner);
     $("#stories-row").innerHTML = people.length
       ? people.map((name) => {
         const first = stories.find((p) => p.name === name);

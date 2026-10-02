@@ -9,7 +9,7 @@
   <link rel="modulepreload" href="/js/common.js">
   <link rel="modulepreload" href="/js/icons.js">
   <link rel="modulepreload" href="/js/i18n.js">
-  <link rel="stylesheet" href="/css/app.css?v=91">
+  <link rel="stylesheet" href="/css/app.css?v=92">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -28,7 +28,7 @@
     <h1 id="page-title" style="text-align:center">Nouvel événement</h1>
     <form id="form" class="form-centered" novalidate>
       <section class="card">
-        <h2>1. L'événement</h2>
+        <h2>1. Votre événement</h2>
         <label>Type d'événement</label>
         <div class="choices" id="types"></div>
 
@@ -43,9 +43,6 @@
         <label for="location">Lieu</label>
         <input id="location" name="location" required maxlength="200" placeholder="Adresse ou nom du lieu">
 
-        <label for="description">Description courte</label>
-        <textarea id="description" name="description" maxlength="1000" placeholder="Programme, tenue, infos pratiques…"></textarea>
-
         <label for="cover">Photo de couverture</label>
         <input id="cover" type="file" accept="image/*">
         <img id="cover-preview" class="cover-preview hidden" alt="Aperçu de la couverture">
@@ -53,11 +50,11 @@
       </section>
 
       <section class="card">
-        <h2>2. Accès</h2>
+        <h2>2. Qui peut le voir ?</h2>
         <div class="choices" style="grid-template-columns:repeat(3,minmax(0,1fr))">
-          <label class="choice" style="margin:0"><input type="radio" name="visibility" value="public" checked><span><b>🔓</b>Public<small class="muted">Visible dans Découvrir</small></span></label>
-          <label class="choice" style="margin:0"><input type="radio" name="visibility" value="unlisted"><span><b>🔗</b>Non répertorié<small class="muted">Seulement avec le lien</small></span></label>
-          <label class="choice" style="margin:0"><input type="radio" name="visibility" value="private"><span><b>🔒</b>Privé<small class="muted">Accès avec un code</small></span></label>
+          <label class="choice" style="margin:0"><input type="radio" name="visibility" value="public" checked><span><b>🔓</b>Tout le monde</span></label>
+          <label class="choice" style="margin:0"><input type="radio" name="visibility" value="unlisted"><span><b>🔗</b>Avec le lien</span></label>
+          <label class="choice" style="margin:0"><input type="radio" name="visibility" value="private"><span><b>🔒</b>Avec un code</span></label>
         </div>
         <div id="code-info" class="notice hidden">
           Code d'accès : <span class="code" id="access-code"></span>
@@ -73,7 +70,8 @@
       </section>
 
       <section class="card">
-        <h2>3. Faire-part</h2>
+        <h2>3. Votre faire-part</h2>
+        <p class="muted small" style="margin-top:0">Il est déjà rempli pour vous : choisissez simplement un style.</p>
         <label>Style</label>
         <div class="choices" id="styles">
           <label class="choice" style="margin:0"><input type="radio" name="style" value="classique" checked><span><b>📜</b>Classique</span></label>
@@ -85,16 +83,19 @@
         <label style="margin-top:20px">Aperçu</label>
         <div id="invite"></div>
 
-        <label for="inv-kicker">Accroche</label>
-        <input id="inv-kicker" maxlength="60">
-        <label for="inv-title">Titre</label>
-        <input id="inv-title" maxlength="150">
         <label for="inv-text">Texte</label>
         <textarea id="inv-text" maxlength="1500"></textarea>
         <div class="text-tools">
           <button type="button" id="gen-text" class="btn btn-light btn-sm">✨ Générer un texte</button>
           <button type="button" id="ready-texts" class="btn btn-ghost btn-sm">📚 Textes prêts</button>
         </div>
+
+        <details class="advanced">
+          <summary>Personnaliser le titre et la photo</summary>
+        <label for="inv-kicker">Accroche</label>
+        <input id="inv-kicker" maxlength="60">
+        <label for="inv-title">Titre</label>
+        <input id="inv-title" maxlength="150">
 
         <label>Photo du faire-part</label>
         <div class="choices" style="grid-template-columns:repeat(3,minmax(0,1fr))">
@@ -103,29 +104,11 @@
           <label class="choice" style="margin:0"><input type="radio" name="inv-photo" value="none"><span><b>🚫</b>Sans photo</span></label>
         </div>
         <input id="inv-photo-file" type="file" accept="image/*" class="hidden" style="margin-top:10px">
+        </details>
       </section>
 
       <section class="card">
-        <h2>4. Live &amp; cagnotte <small class="muted" style="font-weight:400">(facultatif)</small></h2>
-        <div class="notice live-simple">
-          <b>🔴 Le live, simplement</b>
-          <p class="small" style="margin:4px 0 0">Le jour J, appuyez sur <b>« Lancer le live »</b> depuis votre tableau de bord et filmez avec votre téléphone. Vous pouvez aussi envoyer le <b>lien caméraman</b> à un proche qui filmera pour vous.</p>
-        </div>
-        <details id="cam-advanced" class="advanced">
-          <summary>Options avancées : diffuser via YouTube ou Twitch</summary>
-          <p class="muted small">Collez le lien YouTube Live ou Twitch de chaque caméra. Les invités pourront changer d'angle pendant le direct.</p>
-          <div id="cameras"></div>
-          <button type="button" id="add-camera" class="btn btn-ghost btn-sm btn-center">+ Ajouter une caméra</button>
-        </details>
-        <label for="cameraman-notes">Consignes pour le(s) caméraman(s)</label>
-        <textarea id="cameraman-notes" maxlength="1000" placeholder="Horaires, moments à filmer, emplacements des caméras…" style="min-height:80px"></textarea>
-        <div id="cameraman-info" class="notice hidden">
-          Code caméraman : <span class="code" id="cameraman-code"></span>
-          <p class="small muted" style="margin:4px 0 0">Le plus simple : bouton <b>🎥 Caméraman</b> du tableau de bord, qui envoie un lien déjà connecté.</p>
-          <label style="font-weight:400;display:flex;gap:8px;align-items:center;margin:8px 0 0">
-            <input type="checkbox" id="regenerate-cam" style="width:auto"> Générer un nouveau code caméraman
-          </label>
-        </div>
+        <h2>4. Cagnotte <small class="muted" style="font-weight:400">(facultatif)</small></h2>
         <div class="cagnotte-promo">
           <b>🎁 Créez une cagnotte, vos proches adorent participer !</b>
           <p>Un bouton « Participer à la cagnotte » s'affiche sur votre faire-part et pendant le live : les invités, même éloignés, offrent un cadeau en un clic.</p>
@@ -142,8 +125,33 @@
         </div>
       </section>
 
-      <section class="card">
-        <h2>5. Programme &amp; infos pratiques <small class="muted" style="font-weight:400">(facultatif)</small></h2>
+      <details class="card more-options">
+        <summary>⚙️ Plus d'options <small class="muted" style="font-weight:400">(facultatif)</small></summary>
+        <label for="description">Description courte</label>
+        <textarea id="description" name="description" maxlength="1000" placeholder="Programme, tenue, infos pratiques…"></textarea>
+
+        <h3>Live</h3>
+        <div class="notice live-simple">
+          <b>🔴 Le live, simplement</b>
+          <p class="small" style="margin:4px 0 0">Le jour J, ouvrez la page de votre événement et appuyez sur <b>« 🎥 Lancer le live »</b> : votre téléphone filme, vos invités regardent. Vous pouvez aussi envoyer le <b>lien caméraman</b> à un proche qui filmera pour vous.</p>
+        </div>
+        <details id="cam-advanced" class="advanced">
+          <summary>Options avancées : diffuser via YouTube ou Twitch</summary>
+          <p class="muted small">Collez le lien YouTube Live ou Twitch de chaque caméra. Les invités pourront changer d'angle pendant le direct.</p>
+          <div id="cameras"></div>
+          <button type="button" id="add-camera" class="btn btn-ghost btn-sm btn-center">+ Ajouter une caméra</button>
+        </details>
+        <label for="cameraman-notes">Consignes pour le(s) caméraman(s)</label>
+        <textarea id="cameraman-notes" maxlength="1000" placeholder="Horaires, moments à filmer, emplacements des caméras…" style="min-height:80px"></textarea>
+        <div id="cameraman-info" class="notice hidden">
+          Code caméraman : <span class="code" id="cameraman-code"></span>
+          <p class="small muted" style="margin:4px 0 0">Le plus simple : bouton <b>🎥 Caméraman</b> du tableau de bord, qui envoie un lien déjà connecté.</p>
+          <label style="font-weight:400;display:flex;gap:8px;align-items:center;margin:8px 0 0">
+            <input type="checkbox" id="regenerate-cam" style="width:auto"> Générer un nouveau code caméraman
+          </label>
+        </div>
+
+        <h3>Programme &amp; infos pratiques</h3>
         <p class="muted small">Le déroulé de la journée, visible par les invités sur la page de l'événement.</p>
         <div id="program"></div>
         <div class="row" style="gap:8px;justify-content:center">
@@ -152,12 +160,12 @@
         </div>
         <label for="practical" style="margin-top:14px">Infos pratiques</label>
         <textarea id="practical" rows="3" maxlength="1500" placeholder="Dress code, parking, hébergement, contact le jour J…"></textarea>
-      </section>
+      </details>
 
       <p id="error" class="error" role="alert"></p>
-      <button class="btn btn-block" id="save">Enregistrer l'événement</button>
+      <button class="btn btn-block btn-big" id="save">✅ Enregistrer mon événement</button>
     </form>
   </main>
-  <script type="module" src="/js/edit.js?v=2"></script>
+  <script type="module" src="/js/edit.js?v=3"></script>
 </body>
 </html>
