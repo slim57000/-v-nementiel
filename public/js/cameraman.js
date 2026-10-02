@@ -31,11 +31,12 @@ function showSpace(ev) {
   $("#ev-when").textContent = `${formatDate(ev.date, ev.time)} · ${ev.location}`;
   $("#notes").textContent = ev.notes || "Aucune consigne particulière pour le moment.";
   // Mémorisé sur ce téléphone : rappel « Espace caméraman » sur l'accueil.
-  try {
-    const list = JSON.parse(localStorage.getItem("em-cam") || "[]").filter((x) => x.slug !== ev.slug);
-    list.unshift({ slug: ev.slug, name: ev.name, date: ev.date });
-    localStorage.setItem("em-cam", JSON.stringify(list.slice(0, 5)));
-  } catch { /* stockage indisponible */ }
+  // Lié au compte connecté (uid) : un autre compte sur ce téléphone ne le verra pas.
+  api("/api/auth/me").then((me) => {
+    const list = JSON.parse(localStorage.getItem("em-cam") || "[]").filter((x) => !(x.slug === ev.slug && x.uid === me.id));
+    list.unshift({ slug: ev.slug, name: ev.name, date: ev.date, uid: me.id });
+    localStorage.setItem("em-cam", JSON.stringify(list.slice(0, 10)));
+  }).catch(() => { /* non connecté ou stockage indisponible : pas de rappel */ });
   $("#cameras").innerHTML = "";
   // Caméras « téléphone » : pas de lien à modifier, conservées à l'enregistrement.
   const links = ev.cameras.filter((c) => !c.url.startsWith("lk:"));
@@ -53,7 +54,10 @@ async function load() {
   // Lien reçu de l'organisateur (/cameraman?code=XXXXXX) : connexion automatique.
   const code = params.get("code");
   // Ouvert sans lien (ex. depuis le Profil) : dernier événement filmé sur ce téléphone.
-  if (!code && !slug) { try { slug = JSON.parse(localStorage.getItem("em-cam") || "[]")[0]?.slug || null; } catch { /* ignoré */ } }
+  if (!code && !slug) {
+    const me = await api("/api/auth/me").catch(() => null);
+    try { slug = JSON.parse(localStorage.getItem("em-cam") || "[]").find((x) => me && x.uid === me.id)?.slug || ""; } catch { /* ignoré */ }
+  }
   if (code && !slug) {
     try {
       ({ slug } = await api("/api/cameraman/login", { method: "POST", body: { code } }));

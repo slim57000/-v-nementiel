@@ -28,6 +28,7 @@ let discover = []; // événements publics des autres organisateurs
 let joined = []; // événements où je suis invité + ceux de mes amis (privés compris)
 let stories = []; // stories des dernières 24 h, par événement
 let filter = "all";
+let myId = null; // compte connecté : les rappels caméraman de ce téléphone lui sont propres
 const today = new Date().toISOString().slice(0, 10);
 // Jour J : l'événement est considéré « en direct » (un clic sur sa miniature ouvre le live).
 const isLive = (e) => e.date === today;
@@ -35,7 +36,7 @@ const bg = (url) => (url ? `style="background-image:url('${esc(url)}')"` : "");
 
 async function load() {
   try {
-    [events, discover, stories, joined] = await Promise.all([api("/api/events"), api("/api/public?limit=30").catch(() => []), api("/api/me/stories").catch(() => []), api("/api/me/circle").catch(() => [])]);
+    [events, discover, stories, joined, myId] = await Promise.all([api("/api/events"), api("/api/public?limit=30").catch(() => []), api("/api/me/stories").catch(() => []), api("/api/me/circle").catch(() => []), api("/api/auth/me").then((m) => m.id).catch(() => null)]);
   } catch (err) {
     if (err.status === 401) return goLogin();
     return toast(err.message);
@@ -146,7 +147,7 @@ $("#stories").addEventListener("click", (e) => {
 // Rappel « Espace caméraman » : événements à venir pour lesquels ce téléphone filme.
 function camReminder() {
   let list = [];
-  try { list = JSON.parse(localStorage.getItem("em-cam") || "[]").filter((x) => x.date >= today); } catch { /* ignoré */ }
+  try { list = JSON.parse(localStorage.getItem("em-cam") || "[]").filter((x) => x.date >= today && myId && x.uid === myId); } catch { /* ignoré */ }
   // Mes propres événements : celui du jour, sinon le prochain (l'organisateur filme souvent lui-même).
   const own = events.filter((e) => e.date >= today && e.cameramanCode).sort((a, b) => a.date.localeCompare(b.date));
   const mineToShow = own.filter((e) => e.date === today);
