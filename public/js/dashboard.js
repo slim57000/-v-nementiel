@@ -45,6 +45,14 @@ async function load() {
   render();
 }
 
+// Mélange privés / non répertoriés et publics (un sur deux), pour que les privés ne soient pas noyés en fin de liste.
+function mix(list) {
+  const priv = list.filter((e) => e.visibility && e.visibility !== "public"), pub = list.filter((e) => !priv.includes(e));
+  const out = [];
+  while (priv.length || pub.length) { if (pub.length) out.push(pub.shift()); if (priv.length) out.push(priv.shift()); }
+  return out;
+}
+
 const VIS = { private: ["🔒 Privé", "private"], unlisted: ["🔗 Non répertorié", "unlisted"], public: ["🔓 Public", ""] };
 
 function renderStories() {
@@ -54,8 +62,7 @@ function renderStories() {
   const guest = joined.filter((e) => e.date >= today && !mine.has(e.slug));
   const all = [...events.filter((e) => e.date >= today), ...guest, ...discover.filter((e) => !mine.has(e.slug) && !guest.some((g) => g.slug === e.slug)).slice(0, 12)];
   const extra = stories.filter((g) => !all.some((e) => e.slug === g.slug)).map((g) => ({ ...g }));
-  const priv = (e) => (e.visibility && e.visibility !== "public" ? 1 : 0); // privés / non répertoriés d'abord
-  const upcoming = [...extra, ...all].sort((a, b) => (priv(b) - priv(a)) || (withStory.has(b.slug) - withStory.has(a.slug)));
+  const upcoming = mix([...extra, ...all].sort((a, b) => withStory.has(b.slug) - withStory.has(a.slug)));
   $("#stories").innerHTML = `
     <a class="story new" href="/edit" data-create><div class="story-img">+</div><span>Créer</span></a>
     ${upcoming.map((ev) => {
@@ -139,9 +146,7 @@ function render() {
   const mine = new Set(events.map((e) => e.slug));
   // Grille : mes événements à venir, ceux où je suis invité, puis les événements publics des autres.
   const guest = joined.filter((e) => e.date >= today && !mine.has(e.slug) && keep(e));
-  const priv = (e) => (e.visibility && e.visibility !== "public" ? 1 : 0);
-  const others = [...events.filter((e) => e.date >= today && keep(e)), ...guest, ...discover.filter((e) => !mine.has(e.slug) && !guest.some((g) => g.slug === e.slug) && keep(e))]
-    .map((e, i) => [e, i]).sort(([a, i], [b, j]) => (priv(b) - priv(a)) || i - j).map(([e]) => e);
+  const others = mix([...events.filter((e) => e.date >= today && keep(e)), ...guest, ...discover.filter((e) => !mine.has(e.slug) && !guest.some((g) => g.slug === e.slug) && keep(e))]);
   $("#empty").classList.toggle("hidden", shown.length > 0 || others.length > 0);
   $("#empty-text").innerHTML = events.length
     ? "Aucun événement dans cette catégorie."
