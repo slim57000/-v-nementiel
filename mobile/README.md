@@ -44,3 +44,40 @@ Sans Mac, un service de compilation en ligne comme **Codemagic** permet de compi
 | `android/` | Projet Android Studio (icônes et écrans de démarrage générés depuis le logo) |
 | `ios/` | Projet Xcode (Swift Package Manager, autorisations appareil photo / micro / photos) |
 | `www/` | Page affichée si la plateforme est injoignable (hors connexion) |
+
+
+## Fonctions natives (validation App Store / Google Play)
+
+L'application n'est pas un simple site affiché : elle utilise les fonctions du téléphone
+(`public/js/native.js`, actif seulement dans l'application) :
+
+- **Notifications push natives** : messages, réponses, rappels, début des lives. Toucher la notification ouvre la bonne page.
+- **Partage natif** : feuille de partage iOS / Android (WhatsApp, SMS, AirDrop…).
+- **Bouton retour Android** et **liens profonds** (un lien mafeliza.com s'ouvre dans l'application).
+- **Hors connexion** : bandeau « Pas de connexion internet », rechargement automatique au retour du réseau.
+- **Vibrations légères** sur les actions (j'aime, réactions, boutons).
+- Appareil photo, micro et photos (live, stories, livre d'or) avec textes d'autorisation en français.
+
+### Activer les notifications push
+
+**iPhone (APNs)**
+1. Xcode → cible **App** → *Signing & Capabilities* → **+ Capability** → **Push Notifications**
+   (et **Background Modes** → cocher *Remote notifications*, déjà déclaré dans Info.plist).
+2. [developer.apple.com](https://developer.apple.com/account/resources/authkeys/list) → **Keys** → **+** →
+   cocher *Apple Push Notifications service (APNs)* → télécharger le fichier `.p8`.
+3. Variables Vercel : `APNS_KEY` (contenu du .p8), `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_TOPIC` = `com.mafeliza.app`.
+
+**Android (Firebase)**
+1. [console.firebase.google.com](https://console.firebase.google.com) → créer le projet → ajouter une app Android
+   `com.mafeliza.app` → télécharger `google-services.json` dans `mobile/android/app/`.
+2. Paramètres du projet → **Comptes de service** → *Générer une clé privée* (fichier JSON).
+3. Variable Vercel : `FCM_SERVICE_ACCOUNT` = contenu de ce fichier JSON.
+
+Après chaque modification de `mobile/` : `cd mobile && npm install && npx cap sync`.
+
+### Conseils pour la validation Apple
+
+- Fournir un **compte de démonstration** (email + mot de passe) avec un événement contenant photos et un replay.
+- Les achats éventuels (Premium) doivent passer par l'**achat intégré Apple** dans l'application iPhone
+  (guideline 3.1.1) : sinon masquer l'offre Premium dans l'application.
+- La suppression de compte est disponible (Profil → Mes données → Supprimer mon compte).

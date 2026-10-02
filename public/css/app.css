@@ -766,3 +766,6 @@ html.big-text .tabbar a { font-size: .8rem; }
 .cam-reminder div { flex: 1; min-width: 0; display: grid; }
 .cam-reminder small { opacity: .9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cam-reminder em { font-style: normal; font-weight: 700; white-space: nowrap; }
+/* Application iPhone / Android */
+.offline-banner { position: fixed; top: env(safe-area-inset-top); left: 0; right: 0; z-index: 100; background: #1d1a21; color: #fff; text-align: center; padding: 10px; font-weight: 600; }
+.native-app .topbar { padding-top: calc(10px + env(safe-area-inset-top)); }

@@ -1,6 +1,7 @@
 // Utilitaires partagés par toutes les pages.
 import { icon } from "./icons.js";
 import { lang } from "./i18n.js"; // langue (FR/EN) et thème (clair/sombre), appliqués au chargement
+import { isNativeApp, nativeShare } from "./native.js";
 
 // Format des dates selon la langue choisie.
 export const LOCALE = lang === "en" ? "en-GB" : "fr-FR";
@@ -490,6 +491,7 @@ document.addEventListener("click", (e) => {
 
 // --- Partage : WhatsApp, Facebook, Instagram, SMS, email, copie, partage natif ---
 export function shareSheet({ title, text, url }) {
+  if (isNativeApp) { nativeShare({ title, text, url }); return; } // application : feuille de partage du téléphone
   const msg = `${text} ${url}`;
   const enc = encodeURIComponent;
   const links = [

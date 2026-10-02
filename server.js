@@ -1,5 +1,6 @@
 // Point d'entrée du serveur MaFeliza (Express) : sécurité, routes /api, pages HTML, tâches quotidiennes (rappels, envoi des replays).
 import { vapidKey, notify, orgOwner } from "./lib/push.js";
+import { saveNativeToken } from "./lib/native-push.js";
 import { guestAuthor } from "./lib/guest.js";
 import { savePushSub, listFollowerIds, deletePushSub } from "./lib/store.js";
 import { remindInvites, sendReplay } from "./lib/invites.js";
@@ -86,6 +87,15 @@ app.post("/api/push/subscribe", async (req, res) => {
   const organizer = await currentOrganizer(req);
   const owners = [organizer ? orgOwner(organizer.id) : null, `gid:${guestAuthor(req, res)}`].filter(Boolean);
   await savePushSub(owners[0], { endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } });
+  res.json({ ok: true });
+});
+// Application iPhone / Android : jeton de l'appareil (APNs ou Firebase) lié au compte connecté.
+app.post("/api/push/native", async (req, res) => {
+  const token = String(req.body?.token || "");
+  if (!/^[\w:.-]{20,300}$/.test(token)) return res.status(400).json({ error: "Jeton invalide." });
+  const organizer = await currentOrganizer(req);
+  const owner = organizer ? orgOwner(organizer.id) : `gid:${guestAuthor(req, res)}`;
+  await saveNativeToken(owner, token, req.body?.platform);
   res.json({ ok: true });
 });
 app.post("/api/push/unsubscribe", async (req, res) => {
