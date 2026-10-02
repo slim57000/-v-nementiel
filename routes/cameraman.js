@@ -1,40 +1,41 @@
 // Espace caméraman : accès par un code dédié, gestion des liens du live et consignes.
 import express, { Router } from "express";
-import { findEventBySlug, findEventByCameramanCode, saveEvent, getSetting, setSetting, addFriends, addHistory, listBlockIds } from "../lib/store.js";
+import { findEventBySlug, findEventByCameramanCode, saveEvent, getSetting, setSetting, addFriends, addHistory, listBlockIds, clearLimit } from "../lib/store.js";
 import { currentOrganizer } from "./auth.js";
 import { videoUploadTarget, saveLocalVideo, isOwnUpload, HAS_STORAGE, MAX_VIDEO_BYTES } from "../lib/uploads.js";
 import { parseCameras } from "../lib/events.js";
 import { LIVEKIT_ENABLED, LIVEKIT_URL, lkToken, newRoom, LK_PREFIX, isLkRoom, markLive, isLive } from "../lib/livekit.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
+import { tooFast } from "../lib/limits.js";
 
 const router = Router();
 const fingerprint = (event) => codeFingerprint(`cam:${event.cameramanCode}`);
 
-// Anti-bruteforce simple par IP (par instance).
-const attempts = new Map();
+// Anti-bruteforce partagé entre toutes les instances : 10 codes erronés par IP toutes les 15 minutes.
+const tooManyTries = (req) => tooFast(`trycam:${req.ip}`, 10, 15 * 60 * 1000);
+
+// Caméraman connecté : devient ami de l'organisateur et l'événement compte dans ses participations.
+// Appelé à chaque ouverture de l'espace, pas seulement à la saisie du code : le caméraman saisit
+// souvent son code avant de se connecter (ou crée son compte ensuite) et n'aurait jamais l'ami sinon.
+async function linkCameraman(req, event) {
+  const me = await currentOrganizer(req).catch(() => null);
+  if (!me || me.id === event.organizerId) return;
+  const [mine, theirs] = await Promise.all([listBlockIds(me.id), listBlockIds(event.organizerId)]).catch(() => [[], []]);
+  if (!mine.includes(event.organizerId) && !theirs.includes(me.id)) await addFriends(me.id, event.organizerId).catch(() => {});
+  await addHistory(me.id, event.id).catch(() => {});
+}
 
 router.post("/login", async (req, res) => {
-  const key = req.ip;
-  const a = attempts.get(key);
-  if (a && a.count >= 10 && Date.now() - a.since < 15 * 60 * 1000) {
-    return res.status(429).json({ error: "Trop d'essais, réessayez dans 15 minutes." });
-  }
   const code = String(req.body?.code || "").trim().toUpperCase();
   const event = /^[A-Z0-9]{6}$/.test(code) ? await findEventByCameramanCode(code) : null;
+  // Le bon code fonctionne toujours : le compteur ne freine que les essais ratés.
   if (!event) {
-    if (!a || Date.now() - a.since > 15 * 60 * 1000) attempts.set(key, { count: 1, since: Date.now() });
-    else a.count++;
+    if (await tooManyTries(req)) return res.status(429).json({ error: "Trop d'essais, réessayez dans 15 minutes." });
     return res.status(404).json({ error: "Code caméraman inconnu." });
   }
-  attempts.delete(key);
+  await clearLimit(`trycam:${req.ip}`).catch(() => {});
   setSigned(res, `cam${event.id}`, fingerprint(event));
-  // Caméraman connecté : devient ami de l'organisateur et l'événement compte dans ses participations.
-  const me = await currentOrganizer(req).catch(() => null);
-  if (me && me.id !== event.organizerId) {
-    const [mine, theirs] = await Promise.all([listBlockIds(me.id), listBlockIds(event.organizerId)]).catch(() => [[], []]);
-    if (!mine.includes(event.organizerId) && !theirs.includes(me.id)) await addFriends(me.id, event.organizerId).catch(() => {});
-    await addHistory(me.id, event.id).catch(() => {});
-  }
+  await linkCameraman(req, event).catch(() => {});
   res.json({ slug: event.slug });
 });
 
@@ -45,6 +46,8 @@ router.use("/:slug", async (req, res, next) => {
     return res.status(401).json({ error: "Saisissez votre code caméraman." });
   }
   req.event = event;
+  // Le compte peut s'être connecté après la saisie du code (cookie déjà posé) : on refait le lien ici.
+  await linkCameraman(req, event).catch(() => {});
   next();
 });
 

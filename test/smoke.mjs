@@ -49,5 +49,44 @@ assert.equal(gb.status, 201);
 assert.equal((await api(`/api/public/${slug}/guestbook/${gb.data.id}/replies`, { method: "POST", body: { name: "Moussa", text: "Merci" } })).data.replies.length, 1);
 ok("livre d'or et réponse");
 
+// Un client séparé = un autre appareil (biscuitisolé), pour l'espace caméraman.
+function device() {
+  let jar = "";
+  return async (path, { method = "GET", body } = {}) => {
+    const res = await fetch(B + path, { method, headers: { "Content-Type": "application/json", cookie: jar }, body: body && JSON.stringify(body) });
+    const set = res.headers.getSetCookie?.() || [];
+    if (set.length) jar = [...new Map([...jar.split("; ").filter(Boolean), ...set.map((c) => c.split(";")[0])].map((c) => [c.split("=")[0], c])).values()].join("; ");
+    return { status: res.status, data: await res.json().catch(() => null) };
+  };
+}
+const account = async (email) => {
+  const call = device();
+  await call("/api/auth/login", { method: "POST", body: { email, password: "motdepasse123" } });
+  return call;
+};
+
+// Espace caméraman : le caméraman saisit son code avant d'avoir un compte, puis se connecte.
+// L'amitié et la participation doivent alors être enregistrées malgré tout.
+const cam = device();
+assert.equal((await cam("/api/cameraman/login", { method: "POST", body: { code: ev.data.cameramanCode } })).status, 200); ok("espace caméraman ouvert sans compte");
+await cam("/api/auth/login", { method: "POST", body: { email: `cam${Date.now()}@example.com`, password: "motdepasse123" } });
+assert.equal((await cam(`/api/cameraman/${slug}`)).status, 200); ok("espace caméraman avec le compte");
+assert.equal((await cam("/api/me/friends")).data.length, 1, "le caméraman devient ami de l'organisateur");
+assert.equal((await cam("/api/me/history")).data.length, 1, "l'événement compte dans ses participations");
+ok("ajout automatique à la liste d'amis malgré une connexion tardive");
+
+// N'importe quel compte peut utiliser l'espace caméraman de l'événement.
+const autre = await account(`autre${Date.now()}@example.com`);
+assert.equal((await autre("/api/cameraman/login", { method: "POST", body: { code: ev.data.cameramanCode } })).status, 200);
+assert.equal((await autre(`/api/cameraman/${slug}`)).status, 200); ok("espace caméraman avec un autre compte");
+
+// Des codes erronés ne doivent jamais empêcher d'entrer avec le bon code.
+const flood = device();
+for (const code of ["AAAAAA", "BBBBBB", "CCCCCC", "DDDDDD", "EEEEEE", "FFFFFF", "GGGGGG", "HHHHHH", "KKKKKK", "MMMMMM", "NNNNNN", "PPPPPP"]) {
+  await flood("/api/cameraman/login", { method: "POST", body: { code } });
+}
+assert.equal((await flood("/api/cameraman/login", { method: "POST", body: { code: ev.data.cameramanCode } })).status, 200);
+ok("le bon code fonctionne malgré les essais ratés");
+
 console.log("\nTous les tests sont passés ✅");
 stop(0);

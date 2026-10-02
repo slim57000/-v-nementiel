@@ -1,5 +1,9 @@
 # Journal des modifications — MaFeliza
 
+## Version 1.8 — Corrections
+- **Espace caméraman et liste d'amis** : le caméraman qui saisit son code avant de se connecter (ou qui crée son compte ensuite) apparaît enfin dans les amis de l'organisateur, et l'événement compte dans ses participations.
+- **Espace caméraman accessible à tout le monde** : un code erronné saisi à la main n'était pas décompté du quota, ce qui bloquait ensuite le bon code pendant 15 minutes pour toute la maison (même adresse IP) ; le quota ne compte plus que les échecs et reste partagé entre les instances.
+
 ## Version 1.7 — Partager et revivre
 - **Replay du live téléphone** : le direct est enregistré automatiquement (morceaux de 4 min envoyés au fur et à mesure) ; dès l'arrêt, les invités le revoient sur la page du live pendant 15 jours.
 - **Devenir amis simplement** : « ➕ Ajouter un ami » dans Messages, un lien personnel à envoyer (un clic et c'est fait) ou un code ami à 6 caractères.
