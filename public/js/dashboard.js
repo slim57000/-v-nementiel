@@ -143,6 +143,14 @@ $("#stories").addEventListener("click", (e) => {
   openStories(g.items, { title: g.name });
 });
 
+// Rappel « Espace caméraman » : événements à venir pour lesquels ce téléphone filme.
+function camReminder() {
+  let list = [];
+  try { list = JSON.parse(localStorage.getItem("em-cam") || "[]").filter((x) => x.date >= today); } catch { /* ignoré */ }
+  return list.map((x) => `<a class="cam-reminder" href="/cameraman?e=${encodeURIComponent(x.slug)}">
+    <span>🎥</span><div><b>Espace caméraman</b><small>${esc(x.name)}${x.date === today ? " · c'est aujourd'hui !" : ""}</small></div><em>Ouvrir ›</em></a>`).join("");
+}
+
 function render() {
   renderStories();
   // « À venir » : pas encore commencé (les directs du jour sont dans « En direct »).
@@ -156,7 +164,7 @@ function render() {
   $("#empty-text").innerHTML = events.length
     ? "Aucun événement dans cette catégorie."
     : "Vous n'avez pas encore d'événement.<br>Créez le premier en quelques minutes !";
-  $("#list").innerHTML = shown.map(card).join("") + (others.length
+  $("#list").innerHTML = camReminder() + shown.map(card).join("") + (others.length
     ? `<div class="section-title"><h2>Événements à venir</h2><a href="/decouvrir" class="see-all">Voir tout</a></div>
        <div class="p-grid">${others.map(publicCard).join("")}</div>`
     : "");

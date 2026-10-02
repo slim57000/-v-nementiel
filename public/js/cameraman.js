@@ -30,6 +30,12 @@ function showSpace(ev) {
   $("#ev-name").textContent = ev.name;
   $("#ev-when").textContent = `${formatDate(ev.date, ev.time)} · ${ev.location}`;
   $("#notes").textContent = ev.notes || "Aucune consigne particulière pour le moment.";
+  // Mémorisé sur ce téléphone : rappel « Espace caméraman » sur l'accueil.
+  try {
+    const list = JSON.parse(localStorage.getItem("em-cam") || "[]").filter((x) => x.slug !== ev.slug);
+    list.unshift({ slug: ev.slug, name: ev.name, date: ev.date });
+    localStorage.setItem("em-cam", JSON.stringify(list.slice(0, 5)));
+  } catch { /* stockage indisponible */ }
   $("#cameras").innerHTML = "";
   // Caméras « téléphone » : pas de lien à modifier, conservées à l'enregistrement.
   const links = ev.cameras.filter((c) => !c.url.startsWith("lk:"));

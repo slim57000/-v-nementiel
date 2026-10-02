@@ -761,3 +761,8 @@ html.big-text .tabbar a { font-size: .8rem; }
 .locked-promo a { display: inline-block; margin-top: 8px; color: #fff; font-weight: 700; text-decoration: underline; }
 .locked-screen { flex-direction: column; }
 .logout-btn { background: var(--card, #fff); color: var(--text); border: 2px solid var(--text); font-weight: 700; font-size: 1.05rem; padding: 14px; box-shadow: none; }
+.cam-reminder { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; padding: 14px 16px; border-radius: 16px; background: linear-gradient(135deg, #ff2e93, #b23cff); color: #fff; text-decoration: none; box-shadow: var(--shadow); }
+.cam-reminder > span { font-size: 1.6rem; }
+.cam-reminder div { flex: 1; min-width: 0; display: grid; }
+.cam-reminder small { opacity: .9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cam-reminder em { font-style: normal; font-weight: 700; white-space: nowrap; }
