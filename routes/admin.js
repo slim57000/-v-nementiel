@@ -5,7 +5,7 @@ import { destroyEvent } from "./events.js";
 import { seedDemo, demoEvents, sendDemoMessages, sendDemoInvitation, createDemoAlbum } from "../lib/demo.js";
 import { isPremium, setPremium } from "../lib/premium.js";
 import { tooFast } from "../lib/limits.js";
-import { notify, orgOwner } from "../lib/push.js";
+import { notify, orgOwner, forget } from "../lib/push.js";
 import { sendEmail, EMAIL_ENABLED } from "../lib/email.js";
 import {
   searchEvents, searchOrganizers, findEvent, findOrganizer, saveOrganizer, saveEvent, listEvents,
@@ -184,8 +184,23 @@ router.post("/notify", async (req, res) => {
   const url = String(req.body?.url || "/dashboard").startsWith("/") ? String(req.body.url || "/dashboard") : "/dashboard";
   if (!title || !body) return res.status(400).json({ error: "Titre et message obligatoires." });
   const orgs = await searchOrganizers("", 100000);
-  const pushed = await notify(orgs.map((o) => orgOwner(o.id)), { title, body, url }).catch(() => 0);
+  const nid = Date.now().toString(36);
+  const pushed = await notify(orgs.map((o) => orgOwner(o.id)), { title, body, url, nid }).catch(() => 0);
+  // Historique des notifications envoyées (pour pouvoir les retirer ensuite).
+  const sent = (await getSetting("adminNotifs").catch(() => null)) || [];
+  await setSetting("adminNotifs", [{ nid, title, body, url, at: Date.now(), users: orgs.length }, ...sent].slice(0, 50));
   res.json({ users: orgs.length, pushed });
+});
+router.get("/notify", async (req, res) => res.json((await getSetting("adminNotifs").catch(() => null)) || []));
+// Suppression : retirée de l'historique et de la cloche 🔔 de tous les comptes (une notification déjà
+// affichée sur un téléphone ne peut pas être rappelée).
+router.delete("/notify/:nid", async (req, res) => {
+  const nid = String(req.params.nid);
+  const orgs = await searchOrganizers("", 100000);
+  await forget(orgs.map((o) => o.id), nid);
+  const sent = (await getSetting("adminNotifs").catch(() => null)) || [];
+  await setSetting("adminNotifs", sent.filter((n) => n.nid !== nid));
+  res.json({ ok: true });
 });
 
 // Boîte de réception « Contact » (formulaire du site) : lecture, réponse par email, suppression.

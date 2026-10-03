@@ -56,7 +56,7 @@ const views = {
       </div></section>`).join("") || "<p class='muted'>Aucun message reçu.</p>";
   },
   async settings() {
-    const s = await api("/api/admin/settings");
+    const [s, sent] = await Promise.all([api("/api/admin/settings"), api("/api/admin/notify").catch(() => [])]);
     return `<section class="card">
       <h2 style="font-size:1rem">📣 Envoyer une notification à tous</h2>
       <p class="muted small">Reçue dans la cloche 🔔 de chaque utilisateur, et en notification sur le téléphone de ceux qui les ont activées. Les notifications automatiques (messages, réponses, rappels J-1, début du live, replay) partent toutes seules.</p>
@@ -64,6 +64,9 @@ const views = {
       <textarea id="n-body" maxlength="200" rows="2" placeholder="Message" style="margin-top:8px"></textarea>
       <input id="n-url" placeholder="Lien (facultatif, ex. /decouvrir)" style="margin-top:8px">
       <button class="btn btn-block" data-act="notify" style="margin-top:8px">📣 Envoyer</button>
+      ${sent.length ? `<h3 style="font-size:.9rem;margin:16px 0 6px">Notifications envoyées</h3>${sent.map((n) => `<div class="admin-row" style="display:flex;gap:10px;align-items:center;padding:8px 0">
+        <div style="flex:1;min-width:0"><b>${esc(n.title)}</b><div class="muted small">${esc(n.body)}</div><small class="muted">${new Date(n.at).toLocaleString("fr-FR")} · ${n.users} compte(s)</small></div>
+        <button class="btn btn-ghost btn-sm" data-act="unnotify" data-nid="${esc(n.nid)}">🗑 Supprimer</button></div>`).join("")}` : ""}
       </section>
       <section class="card">
       <h2 style="font-size:1rem">Plateforme live par défaut</h2>
@@ -125,8 +128,15 @@ $("#content").addEventListener("click", async (e) => {
     try {
       const r = await api("/api/admin/notify", { method: "POST", body: { title: $("#n-title").value, body: $("#n-body").value, url: $("#n-url").value || "/dashboard" } });
       toast(`Notification envoyée à ${r.users} utilisateur(s) ✔`);
-      $("#n-title").value = $("#n-body").value = $("#n-url").value = "";
+      render();
     } catch (err) { toast(err.message); }
+    return;
+  }
+  if (btn?.dataset.act === "unnotify") {
+    if (!confirm("Retirer cette notification de la cloche de tous les utilisateurs ?")) return;
+    btn.disabled = true;
+    try { await api(`/api/admin/notify/${encodeURIComponent(btn.dataset.nid)}`, { method: "DELETE" }); toast("Notification supprimée ✔"); render(); }
+    catch (err) { toast(err.message); btn.disabled = false; }
     return;
   }
   if (btn?.dataset.act === "reply") {
