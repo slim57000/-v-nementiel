@@ -307,7 +307,8 @@ document.addEventListener("click", (e) => { if (e.target.closest("[data-create]"
     <h2>Bienvenue sur MaFeliza 👋</h2>
     <ol class="guide-steps">
       <li><b>✨ Créez votre événement</b><span>Touchez le bouton rose « + » en bas : nom, date, lieu. Le faire-part se crée tout seul.</span></li>
-      <li><b>💌 Partagez-le</b><span>Envoyez le lien à vos proches par WhatsApp, SMS ou email.</span></li>
+      <li><b>💌 Partagez-le</b><span>Envoyez le lien à vos proches par WhatsApp, SMS ou email. Plus vous le partagez, plus il y a de monde au rendez-vous !</span></li>
+      <li><b>🎁 Ajoutez une cagnotte</b><span>Vos proches, même éloignés, offrent un cadeau en un clic. Plus elle est partagée, plus elle grandit 😄</span></li>
       <li><b>🔴 Le jour J, lancez le live</b><span>Ouvrez votre événement et touchez « Lancer le live » : vos proches vous regardent en direct.</span></li>
     </ol>
     <button class="btn btn-block btn-big" id="guide-ok">C'est parti !</button>
