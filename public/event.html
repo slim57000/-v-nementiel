@@ -9,7 +9,7 @@
   <link rel="modulepreload" href="/js/common.js">
   <link rel="modulepreload" href="/js/icons.js">
   <link rel="modulepreload" href="/js/i18n.js">
-  <link rel="stylesheet" href="/css/app.css?v=106">
+  <link rel="stylesheet" href="/css/app.css?v=107">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -66,6 +66,20 @@
       <div id="pot-box" class="pot-box hidden"></div>
       <a id="cagnotte-link" class="btn btn-light btn-block hidden" style="margin-bottom:16px" target="_blank" rel="noopener">🎁 Participer à la cagnotte</a>
 
+      <!-- Actions rapides (style application) puis infos pratiques compactes -->
+      <nav class="quick-actions" aria-label="Actions rapides">
+        <a id="cal-ics" class="qa"><span>📅</span>Agenda</a>
+        <a id="map" class="qa" target="_blank" rel="noopener"><span>📍</span>Itinéraire</a>
+        <button type="button" id="qa-share" class="qa"><span>📤</span>Partager</button>
+        <a id="qa-pot" class="qa hidden"><span>🎁</span>Cagnotte</a>
+      </nav>
+      <section class="card event-facts">
+        <div class="fact"><span class="ico">📅</span><div><small>Date</small><b id="when"></b></div></div>
+        <div class="fact"><span class="ico">📍</span><div><small>Lieu</small><b id="where"></b></div></div>
+        <p id="description" style="white-space:pre-line;margin:12px 0 0"></p>
+        <a id="cal-google" class="small facts-link" target="_blank" rel="noopener">＋ Google Agenda</a>
+      </section>
+
       <section class="card rsvp" id="rsvp">
         <h2>Serez-vous là ?</h2>
         <div class="rsvp-choices">
@@ -78,18 +92,6 @@
         <p class="muted small" id="rsvp-summary" style="text-align:center;margin:10px 0 0"></p>
         <div id="rsvp-list"></div>
       </section>
-      <section class="card">
-        <ul class="info-list">
-          <li><span class="ico">📅</span><div><b>Date</b><div id="when"></div></div></li>
-          <li><span class="ico">📍</span><div><b>Lieu</b><div id="where"></div><a id="map" class="small" target="_blank" rel="noopener">Ouvrir dans Maps</a></div></li>
-        </ul>
-        <p id="description" style="white-space:pre-line;margin-bottom:0"></p>
-        <div class="row cal-row">
-          <a id="cal-ics" class="btn btn-light btn-sm">📅 Ajouter à mon calendrier</a>
-          <a id="cal-google" class="btn btn-ghost btn-sm" target="_blank" rel="noopener">Google Agenda</a>
-        </div>
-      </section>
-
       <section class="card hidden" id="program-card">
         <h2>🗓️ Programme</h2>
         <ol class="timeline" id="timeline"></ol>
@@ -153,6 +155,6 @@
     </form>
   </div>
 
-  <script type="module" src="/js/event.js?v=5"></script>
+  <script type="module" src="/js/event.js?v=6"></script>
 </body>
 </html>

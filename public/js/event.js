@@ -89,17 +89,22 @@ function showEvent(ev) {
     if (ev.program.practical) { $("#practical").textContent = ev.program.practical; $("#practical-box").classList.remove("hidden"); }
   }
   $("#description").textContent = ev.description;
-  $("#description").classList.toggle("hidden", !ev.description);
+  // Description masquée si elle répète déjà le texte du faire-part.
+  const inviteText = ev.invite?.text || "";
+  $("#description").classList.toggle("hidden", !ev.description || inviteText.includes(ev.description.trim()));
 
   const state = liveState(ev);
   // Jour J : gros bouton dans la carte du faire-part, même avant le début du direct.
   if (ev.date === new Date().toISOString().slice(0, 10)) liveToday(ev);
-  if (ev.cameras.length && state !== "expired") {
+  if (ev.cameras.length && state !== "expired" && !document.querySelector(".live-today")) {
     $("#live-link").href = `/live?e=${encodeURIComponent(ev.slug)}`;
     if (state === "replay") $("#live-link").textContent = "▶ Voir le replay";
     $("#live-link").classList.remove("hidden");
   }
   if (ev.cagnotteUrl) {
+    $("#qa-pot").href = ev.cagnotteUrl;
+    $("#qa-pot").onclick = (e) => { e.preventDefault(); openPot(ev.slug, ev.cagnotteUrl); };
+    $("#qa-pot").classList.remove("hidden");
     $("#cagnotte-link").href = ev.cagnotteUrl;
     $("#cagnotte-link").onclick = (e) => { e.preventDefault(); openPot(ev.slug, ev.cagnotteUrl); };
     $("#cagnotte-link").classList.remove("hidden");
@@ -120,6 +125,7 @@ function showEvent(ev) {
   startCountdown(new Date(`${ev.date}T${ev.time}`));
 
   $("#share").onclick = () => shareSheet({ title: ev.name, text: `Vous êtes invité·e à « ${ev.name} » !`, url });
+  $("#qa-share").onclick = () => $("#share").click();
   $("#copy").onclick = () => copy(url, "Lien copié !");
   $("#page").classList.remove("hidden");
 }
@@ -197,6 +203,7 @@ async function liveToday(ev) {
   box.innerHTML = `<p class="live-today-title">🔴 C'est le grand jour !</p><a class="btn btn-block live-today-btn" href="/live?e=${encodeURIComponent(ev.slug)}">● Rejoindre le live</a>`;
   $("#invite-extra").prepend(box);
   $("#live-link").classList.add("hidden");
+  $("#countdown").classList.add("hidden"); // « C'est le grand jour » suffit
   if (ev.isOwner) {
     const own = await api(`/api/events/${ev.id}`).catch(() => null);
     if (own?.cameramanCode) {

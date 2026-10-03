@@ -795,3 +795,28 @@ html.big-text .tabbar a { font-size: .8rem; }
 html:has(body.has-tabbar) { height: 100%; overflow: hidden; overscroll-behavior: none; }
 body.has-tabbar { position: fixed; inset: 0; overflow-x: clip; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
 .tabbar { transform: translateZ(0); }
+
+/* ---------- Page événement modernisée ---------- */
+.quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; margin: 0 0 16px; }
+.quick-actions .qa { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 4px; border-radius: 18px; border: 1px solid var(--border); background: var(--card); color: var(--text); font: inherit; font-size: .78rem; font-weight: 600; text-decoration: none; cursor: pointer; box-shadow: var(--shadow); }
+.quick-actions .qa span { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 14px; background: var(--primary-light); font-size: 1.3rem; }
+.quick-actions .qa:active { transform: scale(.96); }
+.quick-actions .qa.hidden { display: none; }
+.event-facts { display: grid; gap: 4px; padding: 16px 18px; border-radius: 22px; }
+.event-facts .fact { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+.event-facts .fact + .fact { border-top: 1px solid var(--border); }
+.event-facts .ico { width: 40px; height: 40px; flex: 0 0 40px; display: grid; place-items: center; border-radius: 12px; background: var(--primary-light); font-size: 1.15rem; }
+.event-facts small { display: block; color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; }
+.event-facts b { font-weight: 600; }
+.facts-link { color: var(--muted); margin-top: 8px; justify-self: start; }
+#page .card { border-radius: 22px; }
+#page .rsvp h2, #page .guestbook > h2, #page .stories-preview h2 { font-size: 1.15rem; letter-spacing: -.01em; }
+#page .rsvp-choices button { border-radius: 16px; padding: 14px 4px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+#page .rsvp-choices button.active { box-shadow: 0 0 0 2px var(--primary) inset; }
+#page #live-link, #page #cagnotte-link { border-radius: 16px; }
+#page #cagnotte-link { display: none; } /* remplacé par l'action rapide « Cagnotte » */
+/* Barre de partage flottante, façon application */
+#page .share-bar { position: sticky; bottom: calc(10px + env(safe-area-inset-bottom)); margin: 0 12px; padding: 8px; border: 1px solid var(--border); border-radius: 22px; background: color-mix(in srgb, var(--card) 88%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 10px 30px rgba(0,0,0,.15); }
+#page .share-bar .btn { border-radius: 16px; }
+.has-tabbar #page .share-bar { bottom: calc(76px + env(safe-area-inset-bottom)); }
+.invite-top .lock-chip { background: rgba(255,255,255,.9); color: #3a2a1a; border-radius: 999px; padding: 4px 10px; box-shadow: 0 2px 8px rgba(0,0,0,.12); }

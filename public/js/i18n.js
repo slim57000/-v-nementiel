@@ -46,7 +46,7 @@ const EN = {
   // Page événement
   "Aperçu des stories": "Stories preview", "● Rejoindre le live": "● Join the live", "🎁 Participer à la cagnotte": "🎁 Contribute to the money pot",
   "Ouvrir dans Maps": "Open in Maps", "Le faire-part": "The invitation", "Livre d'or": "Guestbook",
-  "✍️ Écrire dans le livre d'or": "✍️ Write in the guestbook", "Tous": "All", "Photos": "Photos", "Vocaux": "Voice", "À la une": "Featured",
+  "✍️ Écrire dans le livre d'or": "✍️ Write in the guestbook", "Tous": "All", "en direct": "live", "Agenda": "Calendar", "Itinéraire": "Directions", "Cagnotte": "Money pot", "＋ Google Agenda": "+ Google Calendar", "C'est aujourd'hui ! 🎉": "It's today! 🎉", "Lieu": "Venue", "Photos": "Photos", "Vocaux": "Voice", "À la une": "Featured",
   "📷 Ajouter une photo": "📷 Add a photo", "Accéder à l'événement ": "Open the event",
   "Cet événement est privé. Saisissez le code reçu avec votre invitation.": "This event is private. Enter the code you received with your invitation.",
   "jours": "days", "heures": "hours", "min": "min", "sec": "sec",
