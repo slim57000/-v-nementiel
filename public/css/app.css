@@ -776,11 +776,11 @@ html.big-text .tabbar a { font-size: .8rem; }
 .admin-stats span { font-size: .78rem; color: var(--muted); }
 .contact-msg p { margin: 8px 0; }
 /* Cagnotte affichée dans le site */
-.pot-frame { position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; background: #fff; }
+.pot-frame { position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; background: var(--bg); color: var(--text); }
 .pot-frame-bar { display: flex; align-items: center; gap: 12px; padding: calc(10px + env(safe-area-inset-top)) 14px 10px; background: linear-gradient(135deg, #ff2e93, #b23cff); color: #fff; }
 .pot-frame-bar b { flex: 1; }
 .pot-frame-out { color: #fff; font-size: .85rem; }
 .pot-frame-close { border: 0; background: rgba(255,255,255,.2); color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; }
-.pot-frame iframe { flex: 1; width: 100%; border: 0; }
+.pot-frame iframe { flex: 1; width: 100%; border: 0; background: #fff; }
 .pot-frame-pick { padding: 18px 16px; display: grid; gap: 10px; max-width: 480px; margin: 0 auto; width: 100%; box-sizing: border-box; }
 .pot-frame-pick p { margin: 0 0 6px; line-height: 1.5; }
