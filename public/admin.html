@@ -10,7 +10,7 @@
   <link rel="modulepreload" href="/js/common.js">
   <link rel="modulepreload" href="/js/icons.js">
   <link rel="modulepreload" href="/js/i18n.js">
-  <link rel="stylesheet" href="/css/app.css?v=98">
+  <link rel="stylesheet" href="/css/app.css?v=99">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -27,15 +27,17 @@
   </header>
   <main class="container" style="max-width:860px">
     <h1 style="text-align:center">Administration</h1>
+    <div class="admin-stats" id="stats"></div>
     <div class="segments" id="tabs">
       <button class="active" data-tab="events">Événements</button>
       <button data-tab="organizers">Utilisateurs</button>
       <button data-tab="reports">Signalements</button>
+      <button data-tab="contact">Contact <span id="contact-count"></span></button>
       <button data-tab="settings">Réglages</button>
     </div>
     <input id="q" type="search" placeholder="Rechercher…" aria-label="Rechercher" style="margin-bottom:14px">
     <div id="content"></div>
   </main>
-  <script type="module" src="/js/admin.js?v=2"></script>
+  <script type="module" src="/js/admin.js?v=3"></script>
 </body>
 </html>

@@ -277,7 +277,7 @@ router.post("/presence", async (req, res) => {
 router.post("/reports", async (req, res) => {
   const kind = String(req.body?.kind || "");
   const itemId = Number(req.body?.itemId);
-  if (!["message", "photo", "guestbook"].includes(kind) || !itemId) return res.status(400).json({ error: "Signalement invalide." });
+  if (!["message", "photo", "guestbook", "event"].includes(kind) || !itemId) return res.status(400).json({ error: "Signalement invalide." });
   if (await tooFast(`${req.ip}:report`, 10, 3_600_000)) return res.status(429).json({ error: "Trop de signalements, réessayez plus tard." });
   await addReport(req.event.id, { kind, itemId, reason: clean(req.body?.reason, 300), author: req.author });
   res.status(201).json({ ok: true });

@@ -21,7 +21,7 @@ import socialRoutes from "./routes/social.js";
 import cameramanRoutes from "./routes/cameraman.js";
 import adminRoutes from "./routes/admin.js";
 import meRoutes from "./routes/me.js";
-import { getSetting, listEventsOnDate, findOrganizer, listPublicUpcoming, listUnlistedIds } from "./lib/store.js";
+import { getSetting, setSetting, listEventsOnDate, findOrganizer, listPublicUpcoming, listUnlistedIds } from "./lib/store.js";
 import { EMAIL_ENABLED, sendEmail } from "./lib/email.js";
 import { UPLOAD_DIR } from "./lib/uploads.js";
 import { findEventBySlug } from "./lib/store.js";
@@ -89,6 +89,18 @@ app.post("/api/push/subscribe", async (req, res) => {
   await savePushSub(owners[0], { endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } });
   res.json({ ok: true });
 });
+// Formulaire de contact du site : message rangé dans la boîte « Contact » de l'administration.
+app.post("/api/contact", async (req, res) => {
+  const clean = (v, n) => String(v || "").trim().slice(0, n);
+  const msg = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), at: new Date().toISOString(),
+    name: clean(req.body?.name, 80), email: clean(req.body?.email, 200).toLowerCase(), subject: clean(req.body?.subject, 120), message: clean(req.body?.message, 5000) };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(msg.email) || msg.message.length < 5) return res.status(400).json({ error: "Email et message obligatoires." });
+  if (await tooFast(`${req.ip}:contact`, 5, 3_600_000)) return res.status(429).json({ error: "Trop de messages, réessayez plus tard." });
+  const list = (await getSetting("contact").catch(() => null)) || [];
+  await setSetting("contact", [msg, ...list].slice(0, 500));
+  res.status(201).json({ ok: true });
+});
+
 // Application iPhone / Android : jeton de l'appareil (APNs ou Firebase) lié au compte connecté.
 app.post("/api/push/native", async (req, res) => {
   const token = String(req.body?.token || "");

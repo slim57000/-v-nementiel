@@ -1,12 +1,12 @@
 // API /api/public : pages vues par les invités (événement, code d'accès, réponses, livre d'or, Découvrir).
 import { tooFast } from "../lib/limits.js";
 import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
-import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers } from "../lib/demo.js";
+import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers, rollDemoDates } from "../lib/demo.js";
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
 import { listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory, addFriends, listBlockIds, listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
-import { currentOrganizer } from "./auth.js";
+import { currentOrganizer, isAdmin } from "./auth.js";
 import { camerasWithLive } from "../lib/livekit.js";
 
 const router = Router();
@@ -22,6 +22,7 @@ async function ownerOrFriend(req, event) {
   const me = await currentOrganizer(req).catch(() => null);
   if (!me) return false;
   if (me.id === event.organizerId) return true;
+  if (await isAdmin(me).catch(() => false)) return true; // administration : accès à tous les événements (modération)
   return (await listFriendIds(me.id).catch(() => [])).includes(event.organizerId);
 }
 
@@ -37,6 +38,7 @@ router.get("/", async (req, res) => {
       events = await listPublicUpcoming(limit);
     }
     if (events.length && await varyDemoCovers().catch(() => false)) events = await listPublicUpcoming(limit);
+    if (await rollDemoDates().catch(() => false)) events = await listPublicUpcoming(limit);
   } catch (err) {
     console.error("Événements publics :", err.message);
     return res.status(500).json({ error: `base de données (${err.message}). Relancez supabase/schema.sql.` });

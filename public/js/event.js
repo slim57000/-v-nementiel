@@ -53,7 +53,10 @@ $("#unlock").addEventListener("submit", async (e) => {
   }
 });
 
+let current = null;
 function showEvent(ev) {
+  current = ev;
+  $("#report-event").classList.toggle("hidden", Boolean(ev.isOwner));
   const type = EVENT_TYPES[ev.type];
   document.title = ev.name;
   $("#name").textContent = ev.name;
@@ -201,6 +204,15 @@ async function liveToday(ev) {
     }
   }
 }
+
+// Signaler l'événement à l'administration (contenu choquant, arnaque…).
+document.addEventListener("click", async (e) => {
+  if (e.target.id !== "report-event" || !current) return;
+  const reason = prompt("Pourquoi signalez-vous cet événement ?");
+  if (reason === null) return;
+  try { await api(`/api/public/${encodeURIComponent(current.slug)}/reports`, { method: "POST", body: { kind: "event", itemId: current.id, reason } }); toast("Merci, l'équipe MaFeliza va vérifier 🙏"); }
+  catch (err) { toast(err.message); }
+});
 
 // Favori (utilisateur connecté, hors organisateur).
 async function initFavorite(ev) {

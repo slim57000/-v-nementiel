@@ -33,7 +33,7 @@ const views = {
   },
   async reports() {
     const list = await api("/api/admin/reports");
-    const kinds = { message: "Message du chat", photo: "Photo", guestbook: "Livre d'or" };
+    const kinds = { message: "Message du chat", photo: "Photo", guestbook: "Livre d'or", event: "Événement" };
     return list.map((r) => row(
       `<b>${kinds[r.kind] || r.kind}</b> sur « ${esc(r.eventName)} »`,
       `${esc(r.reason || "Sans motif")} · ${new Date(r.createdAt).toLocaleString(LOCALE)}`,
@@ -41,9 +41,31 @@ const views = {
        <button class="btn btn-ghost btn-sm" data-act="close-report" data-id="${r.id}">Traité</button>`,
     )).join("") || "<p class='muted'>Aucun signalement 🎉</p>";
   },
+  async contact() {
+    const list = await api("/api/admin/contact");
+    return list.map((m) => `<section class="card contact-msg">
+      <div class="admin-main"><b>${esc(m.name || "Sans nom")}</b> · <a href="mailto:${esc(m.email)}">${esc(m.email)}</a>
+        ${m.replied ? '<span class="badge">✅ Répondu</span>' : '<span class="badge private">Nouveau</span>'}
+        <div class="muted small">${esc(m.subject || "")} · ${new Date(m.at).toLocaleString(LOCALE)}</div></div>
+      <p style="white-space:pre-line">${esc(m.message)}</p>
+      ${m.replied ? `<p class="muted small" style="white-space:pre-line">↳ Réponse de ${esc(m.replied.by)} (${new Date(m.replied.at).toLocaleString(LOCALE)}) :\n${esc(m.replied.text)}</p>` : ""}
+      <textarea data-reply="${esc(m.id)}" rows="3" placeholder="Votre réponse (envoyée par email)…"></textarea>
+      <div class="row" style="gap:8px;margin-top:8px">
+        <button class="btn btn-sm" data-act="reply" data-id="${esc(m.id)}">✉️ Répondre</button>
+        <button class="btn btn-ghost btn-sm" data-act="del-contact" data-id="${esc(m.id)}">🗑️ Supprimer</button>
+      </div></section>`).join("") || "<p class='muted'>Aucun message reçu.</p>";
+  },
   async settings() {
     const s = await api("/api/admin/settings");
     return `<section class="card">
+      <h2 style="font-size:1rem">📣 Envoyer une notification à tous</h2>
+      <p class="muted small">Reçue dans la cloche 🔔 de chaque utilisateur, et en notification sur le téléphone de ceux qui les ont activées. Les notifications automatiques (messages, réponses, rappels J-1, début du live, replay) partent toutes seules.</p>
+      <input id="n-title" maxlength="80" placeholder="Titre (ex. Nouveauté !)">
+      <textarea id="n-body" maxlength="200" rows="2" placeholder="Message" style="margin-top:8px"></textarea>
+      <input id="n-url" placeholder="Lien (facultatif, ex. /decouvrir)" style="margin-top:8px">
+      <button class="btn btn-block" data-act="notify" style="margin-top:8px">📣 Envoyer</button>
+      </section>
+      <section class="card">
       <h2 style="font-size:1rem">Plateforme live par défaut</h2>
       <p class="muted small">Proposée aux organisateurs et caméramans lors de l'ajout d'une caméra.</p>
       <div class="segments" id="platform">
@@ -67,8 +89,19 @@ const views = {
   },
 };
 
+// Compteurs en haut de l'administration.
+async function stats() {
+  const s = await api("/api/admin/stats").catch(() => null);
+  if (!s) return;
+  const tile = (n, label) => `<div><b>${n}</b><span>${label}</span></div>`;
+  $("#stats").innerHTML = tile(s.users, "Utilisateurs") + tile(s.premium, "Premium") + tile(s.events, "Événements")
+    + tile(s.upcoming, "À venir") + tile(s.today, "Aujourd'hui") + tile(s.private, "🔒 Privés") + tile(s.unlisted, "🔗 Non répert.");
+  $("#contact-count").textContent = s.contact ? `(${s.contact})` : "";
+}
+stats();
+
 async function render() {
-  $("#q").classList.toggle("hidden", tab === "reports" || tab === "settings");
+  $("#q").classList.toggle("hidden", ["reports", "settings", "contact"].includes(tab));
   try {
     $("#content").innerHTML = await views[tab]($("#q").value.trim());
   } catch (err) {
@@ -87,6 +120,28 @@ $("#tabs").addEventListener("click", (e) => {
 $("#q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(render, 300); });
 
 $("#content").addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-act]");
+  if (btn?.dataset.act === "notify") {
+    try {
+      const r = await api("/api/admin/notify", { method: "POST", body: { title: $("#n-title").value, body: $("#n-body").value, url: $("#n-url").value || "/dashboard" } });
+      toast(`Notification envoyée à ${r.users} utilisateur(s) ✔`);
+      $("#n-title").value = $("#n-body").value = $("#n-url").value = "";
+    } catch (err) { toast(err.message); }
+    return;
+  }
+  if (btn?.dataset.act === "reply") {
+    const text = document.querySelector(`[data-reply="${btn.dataset.id}"]`).value.trim();
+    if (!text) return toast("Écrivez votre réponse.");
+    btn.disabled = true;
+    try { await api(`/api/admin/contact/${btn.dataset.id}/reply`, { method: "POST", body: { text } }); toast("Réponse envoyée ✉️"); stats(); render(); }
+    catch (err) { toast(err.message); btn.disabled = false; }
+    return;
+  }
+  if (btn?.dataset.act === "del-contact") {
+    if (!confirm("Supprimer ce message ?")) return;
+    await api(`/api/admin/contact/${btn.dataset.id}`, { method: "DELETE" }).catch(() => {});
+    stats(); return render();
+  }
   const { act, id, on, p, demo } = e.target.dataset;
   try {
     if (demo) {

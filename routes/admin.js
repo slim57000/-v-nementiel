@@ -5,6 +5,8 @@ import { destroyEvent } from "./events.js";
 import { seedDemo, demoEvents, sendDemoMessages, sendDemoInvitation, createDemoAlbum } from "../lib/demo.js";
 import { isPremium, setPremium } from "../lib/premium.js";
 import { tooFast } from "../lib/limits.js";
+import { notify, orgOwner } from "../lib/push.js";
+import { sendEmail, EMAIL_ENABLED } from "../lib/email.js";
 import {
   searchEvents, searchOrganizers, findEvent, findOrganizer, saveOrganizer, saveEvent, listEvents,
   listReports, deleteReport, countReports, getSetting, setSetting,
@@ -155,6 +157,60 @@ router.get("/reports", async (req, res) => {
 
 router.delete("/reports/:id", async (req, res) => {
   await deleteReport(Number(req.params.id));
+  res.json({ ok: true });
+});
+
+// Compteurs : utilisateurs, événements (par visibilité), à venir, aujourd'hui, premium.
+router.get("/stats", async (req, res) => {
+  const [orgs, events, hidden] = await Promise.all([searchOrganizers("", 100000), searchEvents("", 100000), getSetting("unlisted").catch(() => null)]);
+  const unl = new Set(hidden || []);
+  const today = new Date().toISOString().slice(0, 10);
+  const premium = (await Promise.all(orgs.map((o) => isPremium(o.id)))).filter(Boolean).length;
+  res.json({
+    users: orgs.length, premium,
+    events: events.length,
+    private: events.filter((e) => e.visibility === "private").length,
+    unlisted: events.filter((e) => e.visibility === "public" && unl.has(e.id)).length,
+    upcoming: events.filter((e) => e.date >= today).length,
+    today: events.filter((e) => e.date === today).length,
+    contact: ((await getSetting("contact").catch(() => null)) || []).filter((m) => !m.replied).length,
+  });
+});
+
+// Notification manuelle à tous les utilisateurs (cloche du site + push).
+router.post("/notify", async (req, res) => {
+  const title = String(req.body?.title || "").trim().slice(0, 80);
+  const body = String(req.body?.body || "").trim().slice(0, 200);
+  const url = String(req.body?.url || "/dashboard").startsWith("/") ? String(req.body.url || "/dashboard") : "/dashboard";
+  if (!title || !body) return res.status(400).json({ error: "Titre et message obligatoires." });
+  const orgs = await searchOrganizers("", 100000);
+  const pushed = await notify(orgs.map((o) => orgOwner(o.id)), { title, body, url }).catch(() => 0);
+  res.json({ users: orgs.length, pushed });
+});
+
+// Boîte de réception « Contact » (formulaire du site) : lecture, réponse par email, suppression.
+router.get("/contact", async (req, res) => res.json((await getSetting("contact").catch(() => null)) || []));
+router.post("/contact/:id/reply", async (req, res) => {
+  const list = (await getSetting("contact").catch(() => null)) || [];
+  const msg = list.find((m) => m.id === req.params.id);
+  const text = String(req.body?.text || "").trim().slice(0, 5000);
+  if (!msg || !text) return res.status(400).json({ error: "Message introuvable ou réponse vide." });
+  if (!EMAIL_ENABLED) return res.status(503).json({ error: "Envoi d'email non configuré (RESEND_API_KEY)." });
+  const esc = (t) => t.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+  const ok = await sendEmail({
+    to: msg.email, replyTo: process.env.CONTACT_EMAIL || "contact@mafeliza.com",
+    subject: `Re : ${msg.subject || "Votre message à MaFeliza"}`, title: "Réponse de MaFeliza",
+    body: `<p>Bonjour ${esc(msg.name || "")},</p><p style="white-space:pre-line">${esc(text)}</p>
+      <hr style="border:0;border-top:1px solid #eee;margin:20px 0"><p style="color:#888;font-size:13px;white-space:pre-line">Votre message :\n${esc(msg.message)}</p>`,
+  });
+  if (!ok) return res.status(502).json({ error: "L'email n'a pas pu être envoyé." });
+  msg.replied = { at: new Date().toISOString(), by: req.admin.email, text };
+  await setSetting("contact", list);
+  res.json({ ok: true });
+});
+router.delete("/contact/:id", async (req, res) => {
+  const list = (await getSetting("contact").catch(() => null)) || [];
+  await setSetting("contact", list.filter((m) => m.id !== req.params.id));
   res.json({ ok: true });
 });
 
