@@ -898,3 +898,7 @@ main { animation: em-fade .3s ease-out; }
 @keyframes em-pop { from { transform: translateX(-50%) scale(.9); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
 @keyframes em-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+/* Barre de partage de l'événement : une seule ligne compacte (Partager · Copier · ♡) */
+#page .share-bar .row { display: flex; flex-wrap: nowrap; gap: 6px; }
+#page .share-bar .btn { flex: 1 1 0; min-width: 0; min-height: 44px; padding: 8px 10px; font-size: .95rem; white-space: nowrap; box-shadow: none; }
+#page .share-bar .fav-btn { flex: 0 0 48px !important; }
