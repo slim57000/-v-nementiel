@@ -848,3 +848,53 @@ body.has-tabbar { position: fixed; inset: 0; overflow-x: clip; overflow-y: auto;
 .form-modern #types .choice span b { font-size: 1.15rem; flex: 0 0 auto; }
 .form-modern #s-event { position: relative; }
 .form-modern #cover.sr-only { left: 0; top: 0; margin: 0; }
+
+/* =====================================================================
+   Modernisation globale (2026) : verre dépoli, retours tactiles, focus doux,
+   feuilles animées, chargement animé. Respecte « réduire les animations ».
+   ===================================================================== */
+:root { --radius: 20px; --ease: cubic-bezier(.2, .8, .2, 1); }
+html { -webkit-tap-highlight-color: transparent; }
+::selection { background: color-mix(in srgb, var(--primary) 30%, transparent); }
+
+/* En-tête en verre dépoli */
+.topbar { background: color-mix(in srgb, var(--card) 82%, transparent); backdrop-filter: saturate(160%) blur(16px); -webkit-backdrop-filter: saturate(160%) blur(16px); }
+
+/* Barre du bas : onglet actif dans une pastille */
+.tabbar a .ico { padding: 4px 14px; border-radius: 14px; transition: background .2s var(--ease); }
+.tabbar a.active .ico { background: var(--primary-light); }
+.tabbar .plus { transition: transform .15s var(--ease); }
+.tabbar a:active .plus { transform: scale(.92); }
+
+/* Cartes : bord fin et ombre douce */
+.card { border: 1px solid color-mix(in srgb, var(--border) 70%, transparent); }
+
+/* Boutons : retour tactile et transitions */
+.btn, .choice span, .qa, .pot-service, .segments button, .rsvp-choices button { transition: transform .12s var(--ease), background-color .2s, border-color .2s, box-shadow .2s; }
+.btn:active, .choice span:active, .segments button:active, .rsvp-choices button:active { transform: scale(.97); }
+.btn { border-radius: 14px; }
+.btn:not(.btn-light):not(.btn-ghost):not(.btn-danger) { box-shadow: 0 6px 18px rgba(214, 40, 160, .25); }
+
+/* Champs : halo de focus aux couleurs du site */
+input, select, textarea { border-radius: 14px; transition: border-color .2s, box-shadow .2s; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 16%, transparent); }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Feuilles du bas : fond flouté, poignée et glissement */
+.sheet { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: em-fade .2s ease-out; }
+.sheet .card { position: relative; padding-top: 26px; animation: em-up .32s var(--ease); }
+.sheet .card::before { content: ""; position: absolute; top: 9px; left: 50%; width: 40px; height: 5px; margin-left: -20px; border-radius: 3px; background: var(--border); }
+
+/* Notifications éphémères en pilule */
+.toast { border-radius: 999px; padding: 12px 20px; box-shadow: 0 10px 30px rgba(0,0,0,.25); animation: em-pop .25s var(--ease); }
+
+/* Apparition douce des pages et chargement animé */
+main { animation: em-fade .3s ease-out; }
+#loading { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 40vh; }
+#loading::before { content: ""; width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--primary); animation: em-spin .8s linear infinite; }
+
+@keyframes em-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes em-up { from { transform: translateY(40px); opacity: .6; } to { transform: none; opacity: 1; } }
+@keyframes em-pop { from { transform: translateX(-50%) scale(.9); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
+@keyframes em-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
