@@ -61,6 +61,9 @@ function showSpace(ev) {
   if (ev.phoneLive) {
     $("#phone-live").classList.remove("hidden");
     $("#links-card h2").textContent = "🔗 Ou un lien YouTube / Twitch";
+  } else if (!document.getElementById("phone-off")) {
+    // Direct par téléphone indisponible (serveur sans LiveKit) : on le dit clairement au lieu de ne rien montrer.
+    $("#links-card").insertAdjacentHTML("beforebegin", `<p class="notice" id="phone-off">📱 Le direct depuis le téléphone n'est pas encore activé sur MaFeliza. En attendant, collez ci-dessous le lien d'un direct YouTube ou Twitch.</p>`);
   }
   $("#open-live").href = `/live?e=${encodeURIComponent(ev.slug)}`;
   $("#login").classList.add("hidden");

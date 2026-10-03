@@ -271,7 +271,10 @@ if (!ON_VERCEL) {
   }));
   app.use((req, res) => res.status(404).sendFile(`${PUBLIC_DIR}/404.html`));
   const port = process.env.PORT || 3000;
-  app.listen(port, () => console.log(`Plateforme événementielle : http://localhost:${port}`));
+  app.listen(port, () => {
+    console.log(`Plateforme événementielle : http://localhost:${port}`);
+    if (!process.env.LIVEKIT_URL || !process.env.LIVEKIT_API_KEY || !process.env.LIVEKIT_API_SECRET) console.warn("⚠️ LiveKit non configuré : le direct depuis le téléphone est désactivé (LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET).");
+  });
 }
 
 export default app;
