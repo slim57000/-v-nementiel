@@ -96,9 +96,11 @@ function showEvent(ev) {
   const state = liveState(ev);
   // Jour J : gros bouton dans la carte du faire-part, même avant le début du direct.
   if (ev.date === new Date().toISOString().slice(0, 10)) liveToday(ev);
-  if (ev.cameras.length && state !== "expired" && !document.querySelector(".live-today")) {
+  // Bouton du live toujours présent (public, privé ou non répertorié), même sans caméra encore ajoutée :
+  // la page du live affiche l'attente puis le direct (caméras téléphone comprises).
+  if ((state === "live" || (state === "replay" && ev.cameras.length)) && !document.querySelector(".live-today")) {
     $("#live-link").href = `/live?e=${encodeURIComponent(ev.slug)}`;
-    if (state === "replay") $("#live-link").textContent = "▶ Voir le replay";
+    $("#live-link").textContent = state === "replay" ? "▶ Voir le replay" : "📺 Regarder le live";
     $("#live-link").classList.remove("hidden");
   }
   if (ev.cagnotteUrl) {
