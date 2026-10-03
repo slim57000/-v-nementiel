@@ -103,11 +103,15 @@ router.post("/", handle(async (req, res) => {
     accessCode: randomCode(),
     cameramanCode: randomCode(),
   });
-  await saveProgram(event.id, req.body);
-  await savePot(event.id, req.body);
-  await setSetting(`evlang:${event.id}`, reqLang(req)).catch(() => {}); // langue des emails de l'événement
-  await setUnlisted(event.id, unlisted);
-  await setShowcase(event.id, req.body.showcase !== false && (unlisted || event.visibility === "private"));
+  // Réglages annexes en parallèle, chacun borné à 8 s : une base lente ne doit jamais bloquer la réponse
+  // (sinon l'organisateur reste sur la page de création sans être redirigé vers son faire-part).
+  const capped = (p) => Promise.race([Promise.resolve(p).catch((err) => console.error("Création, réglage annexe :", err.message)), new Promise((r) => setTimeout(r, 8000))]);
+  await Promise.all([
+    saveProgram(event.id, req.body), savePot(event.id, req.body),
+    setSetting(`evlang:${event.id}`, reqLang(req)), // langue des emails de l'événement
+    setUnlisted(event.id, unlisted),
+    setShowcase(event.id, req.body.showcase !== false && (unlisted || event.visibility === "private")),
+  ].map(capped));
   res.status(201).json(ownerView(withVisibility(event, new Set(unlisted ? [event.id] : []))));
 }));
 

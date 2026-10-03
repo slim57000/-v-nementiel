@@ -165,13 +165,19 @@ form.addEventListener("submit", async (e) => {
   btn.disabled = true;
   btn.textContent = tr("⏳ Enregistrement…");
   // Délai maximal : sans réponse au bout de 45 s (réseau faible), on rend la main avec un message clair.
-  const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error(tr("Le réseau est lent : l'enregistrement n'a pas abouti. Réessayez."))), 45000));
+  const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error(tr("Le réseau est lent : l'enregistrement n'a pas abouti. Réessayez."))), 25000));
   try {
     const saved = await Promise.race([api(id ? `/api/events/${id}` : "/api/events", { method: id ? "PUT" : "POST", body }), timeout]);
     // Nouvel événement : on montre directement ses faire-part à partager.
     location.href = id ? "/dashboard?saved=1" : `/faire-part?id=${saved.id}&new=1`;
   } catch (err) {
     if (err.status === 401) return goLogin();
+    // Pas de réponse mais l'événement a peut-être bien été créé : on le retrouve et on redirige quand même.
+    if (!id) {
+      const mine = await api("/api/events").catch(() => null);
+      const found = (mine?.events || mine || []).find?.((x) => x.name === String(body.name).trim() && x.date === body.date);
+      if (found) { location.href = `/faire-part?id=${found.id}&new=1`; return; }
+    }
     $("#error").textContent = err.message;
     toast(err.message);
     $("#error").scrollIntoView({ behavior: "smooth", block: "center" });
