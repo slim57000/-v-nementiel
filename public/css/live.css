@@ -115,3 +115,4 @@
 .live-promo b { display: block; font-size: .92rem; }
 .live-promo span { opacity: .75; }
 .live-promo-btn { flex: 0 0 auto; padding: 9px 12px; border-radius: 12px; background: linear-gradient(135deg, #ff2e93, #b23cff); color: #fff; text-decoration: none; font-weight: 700; font-size: .85rem; white-space: nowrap; }
+.replay-zip { padding: 12px 16px 0; }

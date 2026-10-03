@@ -67,3 +67,23 @@ export async function exportReplay(ev) {
   setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
   return true;
 }
+
+// Replay pour les invités : segments lus via la page publique (caméras « lk: »), réunis en .zip.
+export async function exportPublicReplay(ev, cameras) {
+  const files = [];
+  for (const c of cameras.filter((x) => String(x.url).startsWith("lk:"))) {
+    const room = c.url.slice(3);
+    const { replay = [] } = await api(`/api/public/${encodeURIComponent(ev.slug)}/lk?room=${encodeURIComponent(room)}`).catch(() => ({}));
+    let n = 0;
+    for (const url of replay) {
+      try { files.push({ name: `replay/${(c.name || "camera").replace(/[\\/:*?"<>|]/g, "_")}-partie-${String(++n).padStart(2, "0")}.${ext(url)}`, data: await fetchBytes(url) }); } catch { /* partie indisponible */ }
+    }
+  }
+  if (!files.length) return false;
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(makeZip(files)), download: `${ev.slug}-replay.zip` });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
+  return true;
+}

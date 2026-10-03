@@ -98,6 +98,24 @@ async function load() {
       ? '<span style="font-size:2rem">🎞️</span>Le replay a été supprimé par l\'organisateur.'
       : '<span style="font-size:2rem">🎞️</span>Le replay n\'est plus disponible.<br><small>Merci d\'avoir partagé ce moment !</small>';
   }
+  // Tout le monde (invités compris) : télécharger le replay en .zip. Lien « &zip=1 » de l'email : mis en avant.
+  if (state === "replay" && cameras.some((c) => String(c.url).startsWith("lk:"))) {
+    const bar = document.createElement("div");
+    bar.className = "replay-zip";
+    bar.innerHTML = `<button type="button" class="btn btn-block" id="replay-zip">📦 Télécharger le replay (.zip)</button>`;
+    document.querySelector(".live-stage").after(bar);
+    $("#replay-zip").addEventListener("click", async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.textContent = "⏳ Préparation du zip…";
+      const { exportPublicReplay } = await import("./export.js");
+      const ok = await exportPublicReplay(ev, cameras).catch(() => false);
+      toast(ok ? "Replay téléchargé ✔" : "Replay indisponible pour le moment");
+      btn.disabled = false;
+      btn.textContent = "📦 Télécharger le replay (.zip)";
+    });
+    if (new URLSearchParams(location.search).get("zip")) bar.scrollIntoView({ block: "center" });
+  }
   // Organisateur : mettre le replay en ligne (ou le retirer) et le supprimer.
   if (isOwner && state === "replay" && cameras.length) {
     document.querySelector(".live-stage").insertAdjacentHTML("afterend", `<div class="replay-bar">
