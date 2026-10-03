@@ -1,9 +1,9 @@
 // Administration de la plateforme : réservée aux emails listés dans ADMIN_EMAILS.
 import { Router } from "express";
-import { currentOrganizer, isAdmin, isSuperAdmin, listExtraAdmins } from "./auth.js";
+import { currentOrganizer, isAdmin, isSuperAdmin, listExtraAdmins, adminUntil } from "./auth.js";
 import { destroyEvent } from "./events.js";
 import { seedDemo, demoEvents, sendDemoMessages, sendDemoInvitation, createDemoAlbum } from "../lib/demo.js";
-import { isPremium, setPremium } from "../lib/premium.js";
+import { isPremium, setPremium, premiumUntil } from "../lib/premium.js";
 import { tooFast } from "../lib/limits.js";
 import { notify, orgOwner, forget } from "../lib/push.js";
 import { sendEmail, EMAIL_ENABLED } from "../lib/email.js";
@@ -108,17 +108,23 @@ router.delete("/events/:id", async (req, res) => {
 // Utilisateurs : recherche par email, blocage (suspend aussi tous leurs événements).
 router.get("/organizers", async (req, res) => {
   const organizers = await searchOrganizers(String(req.query.q || "").toLowerCase());
-  res.json(await Promise.all(organizers.map(async (o) => ({
-    id: o.id, email: o.email, blocked: Boolean(o.blocked), createdAt: o.createdAt,
-    events: (await listEvents(o.id)).length, admin: await isAdmin(o), superAdmin: isSuperAdmin(o), premium: await isPremium(o.id),
-  }))));
+  const untils = await adminUntil();
+  res.json(await Promise.all(organizers.map(async (o) => {
+    const admin = await isAdmin(o);
+    return {
+      id: o.id, email: o.email, blocked: Boolean(o.blocked), createdAt: o.createdAt,
+      events: (await listEvents(o.id)).length, admin, superAdmin: isSuperAdmin(o), premium: await isPremium(o.id),
+      premiumUntil: await premiumUntil(o.id), adminUntil: admin && !isSuperAdmin(o) ? untils[String(o.email).toLowerCase()] || null : null,
+    };
+  })));
 });
 
 // Offre premium : replay 30 jours, faire-part et page sans marque MaFeliza, badge.
 router.post("/organizers/:id/premium", async (req, res) => {
   const organizer = await findOrganizer(Number(req.params.id));
   if (!organizer) return res.status(404).json({ error: "Utilisateur introuvable." });
-  await setPremium(organizer.id, Boolean(req.body?.premium));
+  // Durée facultative en jours (0 ou vide = sans limite).
+  await setPremium(organizer.id, Boolean(req.body?.premium), Math.max(0, Math.min(3650, Number(req.body?.days) || 0)));
   res.json({ ok: true });
 });
 
@@ -133,6 +139,12 @@ router.post("/organizers/:id/admin", superOnly, async (req, res) => {
   const admins = new Set(await listExtraAdmins());
   on ? admins.add(organizer.email) : admins.delete(organizer.email);
   await setSetting("admins", [...admins]);
+  // Durée facultative en jours : au-delà, les droits tombent d'eux-mêmes.
+  const days = Math.max(0, Math.min(3650, Number(req.body?.days) || 0));
+  const untils = await adminUntil();
+  const key = String(organizer.email).toLowerCase();
+  if (on && days) untils[key] = Date.now() + days * 86400000; else delete untils[key];
+  await setSetting("adminUntil", untils);
   res.json({ ok: true });
 });
 

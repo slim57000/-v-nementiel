@@ -24,7 +24,7 @@ const views = {
   async organizers(q) {
     const list = await api(`/api/admin/organizers?q=${encodeURIComponent(q)}`);
     return list.map((o) => row(
-      `<b>${esc(o.email)}</b> ${o.superAdmin ? '<span class="badge">👑 Admin principal</span>' : o.admin ? '<span class="badge">Admin</span>' : ""} ${o.blocked ? '<span class="badge private">Bloqué</span>' : ""} ${o.premium ? '<span class="badge">✨ Premium</span>' : ""}`,
+      `<b>${esc(o.email)}</b> ${o.superAdmin ? '<span class="badge">👑 Admin principal</span>' : o.admin ? `<span class="badge">Admin${o.adminUntil ? ` · jusqu'au ${until(o.adminUntil)}` : ""}</span>` : ""} ${o.blocked ? '<span class="badge private">Bloqué</span>' : ""} ${o.premium ? `<span class="badge">✨ Premium${o.premiumUntil ? ` · jusqu'au ${until(o.premiumUntil)}` : ""}</span>` : ""}`,
       `${o.events} événement(s) · inscrit le ${new Date(o.createdAt).toLocaleDateString(LOCALE)}`,
       (o.superAdmin || !me.superAdmin ? "" : `<button class="btn btn-light btn-sm" data-act="admin" data-id="${o.id}" data-on="${!o.admin}">${o.admin ? "Retirer admin" : "👑 Passer admin"}</button> `)
       + `<button class="btn btn-light btn-sm" data-act="premium" data-id="${o.id}" data-on="${!o.premium}">${o.premium ? "Retirer Premium" : "✨ Passer Premium"}</button>`
@@ -102,6 +102,16 @@ async function stats() {
   $("#contact-count").textContent = s.contact ? `(${s.contact})` : "";
 }
 stats();
+
+// Durée d'un rôle : nombre de jours, vide = sans limite, Annuler = rien. Renvoie null si annulé.
+function askDays(role) {
+  const v = prompt(`${role} : durée en jours ?\n(laisser vide = sans limite)`, "");
+  if (v === null) return null;
+  const n = Math.round(Number(v.trim() || 0));
+  if (!Number.isFinite(n) || n < 0) { toast("Durée invalide"); return null; }
+  return n;
+}
+const until = (ms) => new Date(ms).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
 
 async function render() {
   $("#q").classList.toggle("hidden", ["reports", "settings", "contact"].includes(tab));
@@ -186,14 +196,18 @@ $("#content").addEventListener("click", async (e) => {
       await api(`/api/admin/events/${id}`, { method: "DELETE" });
     }
     if (act === "admin") {
+      const days = on === "true" ? askDays("Droits d'administration") : 0;
+      if (days === null) return;
       if (on === "true" || confirm("Retirer les droits d'administration à cet utilisateur ?")) {
-        await api(`/api/admin/organizers/${id}/admin`, { method: "POST", body: { admin: on === "true" } });
+        await api(`/api/admin/organizers/${id}/admin`, { method: "POST", body: { admin: on === "true", days } });
         toast(on === "true" ? "Utilisateur nommé administrateur 👑" : "Droits d'administration retirés");
         render();
       }
     }
     if (act === "premium") {
-      await api(`/api/admin/organizers/${id}/premium`, { method: "POST", body: { premium: on === "true" } });
+      const days = on === "true" ? askDays("Premium") : 0;
+      if (days === null) return;
+      await api(`/api/admin/organizers/${id}/premium`, { method: "POST", body: { premium: on === "true", days } });
       toast(on === "true" ? "Compte passé en Premium ✨" : "Premium retiré");
       render();
     }

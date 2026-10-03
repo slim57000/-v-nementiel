@@ -256,8 +256,15 @@ const ADMINS = (process.env.ADMIN_EMAILS || "").split(",").map((e) => e.trim().t
 const low = (e) => String(e || "").trim().toLowerCase();
 export const isSuperAdmin = (organizer) => Boolean(organizer && ADMINS.includes(low(organizer.email)));
 export const listExtraAdmins = async () => (await getSetting("admins").catch(() => null)) || [];
-export const isAdmin = async (organizer) =>
-  Boolean(organizer && (isSuperAdmin(organizer) || (await listExtraAdmins()).map(low).includes(low(organizer.email))));
+// Droits d'administration à durée limitée : { email: date de fin en ms } (absent = sans limite).
+export const adminUntil = async () => (await getSetting("adminUntil").catch(() => null)) || {};
+export const isAdmin = async (organizer) => {
+  if (!organizer) return false;
+  if (isSuperAdmin(organizer)) return true;
+  if (!(await listExtraAdmins()).map(low).includes(low(organizer.email))) return false;
+  const until = (await adminUntil())[low(organizer.email)];
+  return !until || until > Date.now();
+};
 
 export async function requireOrganizer(req, res, next) {
   req.organizer = await currentOrganizer(req);
