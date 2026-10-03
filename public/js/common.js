@@ -192,6 +192,10 @@ export function tabbar(active) {
   const tab = (key, href, ico, label) =>
     `<a href="${href}" class="${active === key ? "active" : ""}"><span class="ico">${icon(ico)}</span>${label}</a>`;
   document.body.classList.add("has-tabbar");
+  // Clavier ouvert (champ de saisie actif) : la barre est masquée plutôt que de remonter au-dessus du clavier.
+  const kb = () => document.documentElement.classList.toggle("kb-open", Boolean(document.activeElement?.matches?.("input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=file]), textarea, select, [contenteditable]")));
+  document.addEventListener("focusin", kb);
+  document.addEventListener("focusout", () => setTimeout(kb, 50));
   document.body.insertAdjacentHTML("beforeend", `
     <nav class="tabbar" aria-label="Navigation">
       ${tab("home", "/dashboard", "home", "Accueil")}
