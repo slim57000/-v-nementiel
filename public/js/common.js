@@ -696,3 +696,17 @@ document.addEventListener("click", (e) => {
   if (suppressClick && e.target.closest?.("[data-live-preview]")) { e.preventDefault(); suppressClick = false; }
 }, true);
 document.addEventListener("contextmenu", (e) => { if (e.target.closest?.("[data-live-preview]")) e.preventDefault(); });
+
+// Cagnotte DANS le site : fenêtre plein écran avec la page Leetchi / Lydia… quand le service l'accepte,
+// sinon ouverture dans un nouvel onglet (le live continue en arrière-plan).
+export async function openPot(slug, url) {
+  const win = (u) => window.open(u, "_blank", "noopener");
+  let info = { embeddable: false };
+  try { info = await api(`/api/public/${encodeURIComponent(slug)}/pot-frame`); } catch { /* ouverture classique */ }
+  if (!info.embeddable) return win(url);
+  document.body.insertAdjacentHTML("beforeend", `<div class="pot-frame" id="pot-frame" role="dialog" aria-modal="true">
+    <div class="pot-frame-bar"><b>🎁 Cagnotte</b><a href="${esc(url)}" target="_blank" rel="noopener" class="pot-frame-out">Ouvrir à part ↗</a><button type="button" class="pot-frame-close" aria-label="Fermer">✕</button></div>
+    <iframe src="${esc(url)}" title="Cagnotte" allow="payment" referrerpolicy="no-referrer-when-downgrade"></iframe></div>`);
+  const box = document.getElementById("pot-frame");
+  box.querySelector(".pot-frame-close").addEventListener("click", () => box.remove());
+}

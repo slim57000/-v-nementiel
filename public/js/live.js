@@ -1,5 +1,5 @@
 // Page du live : lecteur vidéo, chat, réactions, photos des invités, cagnotte, replay.
-import { api, $, esc, shareSheet, toast, guestName, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, coverOf, onRealtime, embedUrl, thumbnailUrl } from "./common.js";
+import { api, $, esc, shareSheet, toast, guestName, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, coverOf, onRealtime, embedUrl, thumbnailUrl, openPot } from "./common.js";
 import { icon } from "./icons.js";
 
 const slug = new URLSearchParams(location.search).get("e") || "";
@@ -72,6 +72,7 @@ async function load() {
   if (ev.cagnotteUrl) {
     for (const el of [$("#pot"), $("#pot-btn")]) {
       el.href = ev.cagnotteUrl;
+      el.onclick = (e) => { e.preventDefault(); openPot(ev.slug || slug, ev.cagnotteUrl); };
       el.classList.remove("hidden");
     }
   } else {
@@ -347,7 +348,7 @@ document.querySelector(".live-tabs").addEventListener("click", (e) => {
   const target = tab.getAttribute("href");
   if (target === "#chat-list") { go($("#chat")); $("#chat-text").focus({ preventScroll: true }); }
   else if (target === "#reactions") { go($("#reactions")); $("#reactions").animate([{ transform: "scale(1)" }, { transform: "scale(1.04)" }, { transform: "scale(1)" }], 400); }
-  else if (target === "#pot-btn") window.open($("#pot-btn").href, "_blank", "noopener");
+  else if (target === "#pot-btn") openPot(slug, $("#pot-btn").href);
   else if (target === "#photo-strip") { go($("#photo-strip")); if (!photos.length) $("#add-photo").click(); }
   else if (target === "#cams-section") {
     if ($("#cams-section").classList.contains("hidden")) toast(cameras.length ? "Une seule caméra pour ce direct 🎥" : "Aucune caméra pour le moment");

@@ -121,6 +121,32 @@ router.post("/join", async (req, res) => {
   res.json({ slug: event.slug });
 });
 
+// Cagnotte affichée DANS le site : vérifie si le service (Leetchi, Lydia…) accepte d'être intégré
+// (en-têtes X-Frame-Options / CSP frame-ancestors). Seuls les services de cagnotte connus sont testés.
+const POT_HOSTS = /(^|\.)(leetchi\.com|lepotcommun\.fr|onparticipe\.fr|helloasso\.com|lydia-app\.com|lydia\.me|sumeria\.eu|paypal\.com|paypal\.me|gofundme\.com|ulule\.com|kisskissbankbank\.com)$/i;
+const frameCache = new Map();
+async function embeddable(url) {
+  let u;
+  try { u = new URL(url); } catch { return false; }
+  if (u.protocol !== "https:" || !POT_HOSTS.test(u.hostname)) return false;
+  const hit = frameCache.get(url);
+  if (hit && Date.now() - hit.at < 6 * 3600_000) return hit.ok;
+  let ok = false;
+  try {
+    const res = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(5000), headers: { "User-Agent": "Mozilla/5.0 MaFeliza" } });
+    const xfo = (res.headers.get("x-frame-options") || "").toLowerCase();
+    const fa = ((res.headers.get("content-security-policy") || "").match(/frame-ancestors([^;]*)/i) || [])[1] || "";
+    ok = !xfo && (!fa || /\*|mafeliza\.com/i.test(fa)) && res.ok;
+  } catch { ok = false; }
+  frameCache.set(url, { ok, at: Date.now() });
+  return ok;
+}
+router.get("/:slug/pot-frame", async (req, res) => {
+  const event = await findEventBySlug(req.params.slug);
+  if (!event?.cagnotteUrl) return res.json({ embeddable: false });
+  res.json({ embeddable: await embeddable(event.cagnotteUrl), url: event.cagnotteUrl });
+});
+
 router.post("/:slug/unlock", async (req, res) => {
   const event = await findEventBySlug(req.params.slug);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
