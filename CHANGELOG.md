@@ -1,5 +1,10 @@
 # Journal des modifications — MaFeliza
 
+## Version 1.10 — Sécurité
+- **Faille XSS (critique)** : la fonction d'échappement utilisée partout n'échappait ni les guillemets doubles ni les simples. Une valeur contenant `"` refermait donc un attribut (`alt=`, `aria-label=`, `href=`…) et permettait d'injecter un gestionnaire d'événement chez tous les visiteurs. Sept insertions étaient concernées, dont le prénom d'un invité dans le livre d'or et celui d'une photo en direct, sans avoir besoin de compte. Aucun en-tête CSP ne vint ralentir l'exploitation.
+- **Faille IDOR (critique)** : n'importe quel compte connecté pouvait ajouter en favori un événement privé en devinant son identifiant numérique, puis lire dans son fil les photos et les messages du livre d'or de cet événement. L'accès est désormais vérifié au moment du favori, à la lecture des favoris et dans le fil (les favoris posés avant la correction sont ignorés).
+- `npm audit` : 0 vulnérabilité. En-têtes de sécurité, cookies signés (`httpOnly`, `sameSite`, `secure`) et requêtes paramétrées vérifiés.
+
 ## Version 1.9 — Live en multicaméra
 - **Le direct part tout seul** : à l'ouverture de l'espace caméraman, la caméra s'allume et le direct est publié chez les invités. Le navigateur demande l'autorisation ; si elle est refusée, le bouton « Démarrer le live » reste disponible. Un « ⏹ Arrêter » n'est pas relancé par un rechargement de page.
 - **Une caméra par téléphone** : chaque appareil retient son propre angle (le premier libre, « Caméra 1 », « Caméra 2 »…). Avant, deux téléphones prenaient le même nom et publiaient dans la même room, ce qui coupait le direct déjà en cours.

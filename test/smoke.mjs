@@ -36,7 +36,8 @@ assert.equal((await fetch(`${B}/page-inexistante`)).status, 404); ok("page 404")
 const pub = await api("/api/public?limit=50");
 assert.ok(pub.data.length >= 30, "événements de démonstration créés"); ok(`${pub.data.length} événements publics`);
 
-const login = await api("/api/auth/login", { method: "POST", body: { email: `ci${Date.now()}@example.com`, password: "motdepasse123" } });
+const ORG_EMAIL = `ci${Date.now()}@example.com`;
+const login = await api("/api/auth/login", { method: "POST", body: { email: ORG_EMAIL, password: "motdepasse123" } });
 assert.equal(login.data.created, true); ok("création de compte");
 
 const ev = await api("/api/events", { method: "POST", body: { name: "Mariage CI", type: "mariage", date: "2030-06-01", time: "15:00", location: "Lyon", visibility: "private", invite: { photo: "none" } } });
@@ -115,6 +116,17 @@ const listing = (await api("/api/public?limit=50")).data.find((e) => e.slug === 
 assert.equal(listing.name, "Événement privé"); assert.equal(listing.location, ""); assert.equal(listing.cover, "");
 assert.equal(listing.cameras.length, 0); assert.equal(listing.date, "");
 ok("événement privé masqué sur l'accueil public");
+
+// Sécurité : on ne peut pas s'abonner (favori) à un événement privé que l'on n'a pas ouvert.
+// Avant, un identifiant numérique suffisait à faire remonter photos et livre d'or dans le fil.
+const spy = await device();
+await spy("/api/auth/login", { method: "POST", body: { email: `spy${Date.now()}@example.com`, password: "motdepasse123" } });
+assert.equal((await spy(`/api/me/favorites/${ev.data.id}`, { method: "POST" })).status, 403, "favori refusé sans accès");
+assert.deepEqual((await spy("/api/me/favorites")).data, [], "aucun favori fuite vers le compte attaquant");
+const owner = await device();
+await owner("/api/auth/login", { method: "POST", body: { email: ORG_EMAIL, password: "motdepasse123" } });
+assert.equal((await owner(`/api/me/favorites/${ev.data.id}`, { method: "POST" })).status, 200, "l'organisateur peut mettre son événement en favori");
+ok("pas d'IDOR sur les favoris d'événements privés");
 
 console.log("\nTous les tests sont passés ✅");
 stop(0);

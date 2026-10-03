@@ -5,6 +5,7 @@ import { tooFast } from "../lib/limits.js";
 import { notify, orgOwner } from "../lib/push.js";
 import { ping, dmTopic } from "../lib/realtime.js";
 import { requireOrganizer } from "./auth.js";
+import { hasAccess } from "./public.js";
 import { publicView } from "../lib/events.js";
 import { saveDataUrl, removeUpload, isVideoUrl } from "../lib/uploads.js";
 import {
@@ -75,7 +76,9 @@ router.get("/feed", async (req, res) => {
   const [mine, historyIds, favIds, friendIds] = await Promise.all([
     listEvents(me.id), listHistoryIds(me.id), listFavoriteIds(me.id).catch(() => []), listFriendIds(me.id).catch(() => []),
   ]);
-  const joined = await findEventsByIds([...historyIds, ...favIds]).catch(() => []);
+  // Même filtre que pour les favoris : le fil remonte photos et livre d'or, donc un événement privé
+  // non ouvert n'a rien à y faire, même s'il traîne dans les favoris.
+  const joined = (await findEventsByIds([...historyIds, ...favIds]).catch(() => [])).filter(accessFilter(req));
   const friends = (await Promise.all(friendIds.slice(0, 20).map((id) => listEvents(id).catch(() => [])))).flat()
     .filter((e) => e.visibility === "public");
   const pub = await listPublicUpcoming(20).catch(() => []);
@@ -111,7 +114,7 @@ router.get("/stories", async (req, res) => {
   const [mine, historyIds, favIds, friendIds] = await Promise.all([
     listEvents(me.id), listHistoryIds(me.id), listFavoriteIds(me.id).catch(() => []), listFriendIds(me.id).catch(() => []),
   ]);
-  const joined = await findEventsByIds([...historyIds, ...favIds]).catch(() => []);
+  const joined = (await findEventsByIds([...historyIds, ...favIds]).catch(() => [])).filter(accessFilter(req));
   const friends = (await Promise.all(friendIds.slice(0, 20).map((id) => listEvents(id).catch(() => [])))).flat().filter((e) => e.visibility === "public");
   const events = visibleEvents([...mine, ...joined, ...friends]).filter((e, i, arr) => arr.findIndex((x) => x.id === e.id) === i).slice(0, 40);
   const byId = new Map(events.map((e) => [e.id, e]));
@@ -135,14 +138,30 @@ async function invitedEvents(meId) {
   return visibleEvents(list).filter((e) => withVisibility(e, hidden).visibility !== "public");
 }
 
+// Filtre d'accès, mémoïsé par requête : sans lui, un favori posé sur un événement privé
+// (ids numériques consécutifs) suffirait à faire remonter ses photos et son livre d'or dans le fil.
+const accessFilter = (req) => {
+  const cache = new Map();
+  return (event) => {
+    if (!event || cache.has(event.id)) return cache.get(event.id) || false;
+    const ok = hasAccess(req, event);
+    cache.set(event.id, ok);
+    return ok;
+  };
+};
+
 router.get("/favorites", async (req, res) => {
-  res.json(visibleEvents(await findEventsByIds(await listFavoriteIds(req.organizer.id))).map(card));
+  const allowed = accessFilter(req);
+  const list = (await findEventsByIds(await listFavoriteIds(req.organizer.id))).filter((e) => allowed(e));
+  res.json(visibleEvents(list).map(card));
 });
-// Favori par identifiant ou par adresse (slug) de l'événement.
+// Favori par identifiant ou par adresse (slug) de l'événement : l'accès est vérifié, sinon
+// n'importe quel compte pourrait découvrir les événements privés des autres par leur id numérique.
 const eventByRef = (ref) => (/^\d+$/.test(ref) ? findEvent(Number(ref)) : findEventBySlug(ref));
 router.post("/favorites/:eventId", async (req, res) => {
   const event = await eventByRef(req.params.eventId);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
+  if (!(await hasAccess(req, event))) return res.status(403).json({ error: "Accès réservé aux invités." });
   await addFavorite(req.organizer.id, event.id);
   res.json({ favorite: true });
 });

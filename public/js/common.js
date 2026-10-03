@@ -33,10 +33,13 @@ export async function api(path, options = {}) {
 
 export const $ = (sel, root = document) => root.querySelector(sel);
 
+// Échappement HTML complet. Les guillemets comptent autant que les chevrons : sans eux, une valeur
+// contenant « " » referme un attribut (alt=", title=", aria-label="…) et permet d'injecter un
+// gestionnaire d'événement. On passe donc par une table plutôt que par textContent, qui
+// n'échappe que &, < et >.
+const ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 export function esc(text) {
-  const div = document.createElement("div");
-  div.textContent = text ?? "";
-  return div.innerHTML;
+  return String(text ?? "").replace(/[&<>"']/g, (c) => ESCAPES[c]);
 }
 
 export function toast(message) {
