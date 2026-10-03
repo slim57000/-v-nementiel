@@ -793,5 +793,8 @@ html.big-text .tabbar a { font-size: .8rem; }
 /* Barre du bas fixe en toutes circonstances sur iPhone : calque propre (pas de tremblement au défilement),
    pas de flou (source de saccades sur Safari), pas de rebond de page qui l'entraîne, masquée quand le clavier est ouvert. */
 .tabbar { transform: translate3d(0,0,0); -webkit-transform: translate3d(0,0,0); backface-visibility: hidden; will-change: transform; backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--card); touch-action: manipulation; }
-html:has(body.has-tabbar), body.has-tabbar { overscroll-behavior-y: none; }
+/* Pages avec barre : la page défile à l'intérieur du corps (et non la fenêtre), ainsi Safari ne réduit/agrandit
+   jamais sa barre d'adresse et la barre du bas reste parfaitement immobile. */
+html:has(body.has-tabbar) { height: 100%; overflow: hidden; overscroll-behavior: none; }
+body.has-tabbar { position: fixed; inset: 0; overflow-x: clip; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
 html.kb-open .tabbar, html.kb-open .has-tabbar .share-bar { display: none; }
