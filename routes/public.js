@@ -55,10 +55,9 @@ router.get("/", async (req, res) => {
   events = [...shown, ...events].sort((a, b) => (shown.includes(b) - shown.includes(a)) || `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
   res.json(await Promise.all(events.map(async (e) => {
     const { invite, inviteStyle, description, ...card } = publicView(e);
-    // Privé : la carte reste visible (l'organisateur veut savoir qui a vu son faire-part), mais
-    // aucun contenu ne fuite — ni nom, ni date, ni photo, ni lieu, ni caméras. Seul le cadenas
-    // apparaît, et le clic mène à l'écran « entrez votre code » : l'accès passe par le code.
-    if (e.visibility === "private") return { ...card, name: "Événement privé", date: "", location: "", cover: "", cameras: [], viewers: 0 };
+    // Privé : la carte montre la photo et la date (badge « J-10 » juste), mais ni le nom, ni le lieu,
+    // ni les caméras. Le clic mène à l'écran « entrez votre code » : l'accès passe par le code.
+    if (e.visibility === "private") return { ...card, name: "Événement privé", time: "", location: "", cameras: [], viewers: 0 };
     if (e.visibility === "unlisted") card.visibility = "unlisted";
     // Spectateurs en cours pour les directs du jour.
     const viewers = e.date === today && card.cameras.length ? await countViewers(e.id).catch(() => 0) : 0;
