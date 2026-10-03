@@ -67,13 +67,20 @@ function liveCard({ href, image, tag, live, name, location, viewers, ev }) {
 }
 
 api("/api/public?limit=10").catch(() => []).then((events) => {
-  const cards = events
-    .map((e) => ({ ...e, live: e.date === today && e.cameras?.length > 0 }))
-    .sort((a, b) => b.live - a.live)
-    .map((e) => liveCard({
-      href: e.live ? `/live?e=${encodeURIComponent(e.slug)}` : `/e/${encodeURIComponent(e.slug)}`,
-      ev: e, image: coverOf(e), tag: e.live ? "LIVE" : dayBadge(e.date), live: e.live, name: e.name, location: e.location, viewers: e.viewers,
-    }));
+  // Les directs du jour d'abord, puis les événements privés (rien ne transparaît), puis le reste.
+  const built = events.map((e) => {
+    // Événement privé : ni nom, ni date, ni photo. Le clic mène à l'écran « entrez votre code ».
+    if (e.visibility === "private") return { live: false, html: liveCard({
+      href: `/e/${encodeURIComponent(e.slug)}`, image: "", tag: "🔒 Sur invitation", live: false,
+      name: "Événement privé", location: "Accès par code",
+    }) };
+    const live = e.date === today && Boolean(e.cameras?.length);
+    return { live, html: liveCard({
+      href: live ? `/live?e=${encodeURIComponent(e.slug)}` : `/e/${encodeURIComponent(e.slug)}`,
+      ev: e, image: coverOf(e), tag: live ? "LIVE" : dayBadge(e.date), live, name: e.name, location: e.location, viewers: e.viewers,
+    }) };
+  });
+  const cards = [...built].sort((a, b) => Number(b.live) - Number(a.live)).map((c) => c.html);
   EXAMPLES.slice(0, Math.max(0, 3 - cards.length)).forEach((ex) => cards.push(liveCard({ ...ex, href: "/decouvrir", tag: "Exemple" })));
   $("#upcoming-list").innerHTML = cards.join("");
 });

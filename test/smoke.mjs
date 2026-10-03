@@ -6,8 +6,12 @@ import { tmpdir } from "node:os";
 import assert from "node:assert/strict";
 
 const PORT = 3999, B = `http://localhost:${PORT}`;
+// Clés LiveKit factices : elles suffisent à activer le direct depuis le téléphone (aucun appel réseau
+// n'est fait — le serveur se contente de signer un jeton), ce qui permet de tester le multicaméra.
 const server = spawn(process.execPath, ["--no-warnings", "server.js"], {
-  env: { ...process.env, PORT, DATA_DIR: mkdtempSync(`${tmpdir()}/em-`), DEMO_EVENTS: "on" }, stdio: "inherit",
+  env: { ...process.env, PORT, DATA_DIR: mkdtempSync(`${tmpdir()}/em-`), DEMO_EVENTS: "on",
+         LIVEKIT_URL: "wss://test.livekit.cloud", LIVEKIT_API_KEY: "test-key", LIVEKIT_API_SECRET: "test-secret" },
+  stdio: "inherit",
 });
 const stop = (code) => { server.kill(); process.exit(code); };
 process.on("uncaughtException", (e) => { console.error("❌", e.message); stop(1); });
@@ -87,6 +91,30 @@ for (const code of ["AAAAAA", "BBBBBB", "CCCCCC", "DDDDDD", "EEEEEE", "FFFFFF", 
 }
 assert.equal((await flood("/api/cameraman/login", { method: "POST", body: { code: ev.data.cameramanCode } })).status, 200);
 ok("le bon code fonctionne malgré les essais ratés");
+
+// Live multicaméra : deux caméras « téléphone », une seule en direct. L'invité doit savoir
+// laquelle est réellement diffusée (le lecteur ouvre dessus et affiche une pastille).
+const camA = await device();
+await camA("/api/cameraman/login", { method: "POST", body: { code: ev.data.cameramanCode } });
+const a = (await camA(`/api/cameraman/${slug}/go-live`, { method: "POST", body: { name: "Caméra A" } })).data;
+const b = (await camA(`/api/cameraman/${slug}/go-live`, { method: "POST", body: { name: "Caméra B" } })).data;
+assert.ok(a?.room && b?.room && a.room !== b.room, "deux caméras « téléphone » ont deux rooms distinctes");
+await camA(`/api/cameraman/${slug}/stop-live`, { method: "POST", body: { room: a.room } });
+// L'invité doit d'abord entrer le code de l'événement (rien n'est renvoyé avant).
+const invitee = await device();
+assert.deepEqual((await invitee(`/api/public/${slug}`)).data.cameras, undefined, "rien n'est exposé avant le code");
+await invitee(`/api/public/${slug}/unlock`, { method: "POST", body: { code: ev.data.accessCode } });
+const seen = (await invitee(`/api/public/${slug}`)).data.cameras.filter((c) => c.url.startsWith("lk:"));
+assert.equal(seen.find((c) => c.live)?.url, `lk:${b.room}`, "l'invité voit quelle caméra est en direct");
+assert.equal(Math.max(0, seen.findIndex((c) => c.live)), 1, "le lecteur ouvre sur la caméra en direct");
+assert.ok(!seen.find((c) => c.url === `lk:${a.room}`)?.live, "une caméra arrêtée n'est pas annoncée en direct");
+ok("live multicaméra : angle en direct identifiable");
+
+// Un événement privé n'apparaît jamais en clair sur l'accueil (accessible par code seulement).
+const listing = (await api("/api/public?limit=50")).data.find((e) => e.slug === slug);
+assert.equal(listing.name, "Événement privé"); assert.equal(listing.location, ""); assert.equal(listing.cover, "");
+assert.equal(listing.cameras.length, 0); assert.equal(listing.date, "");
+ok("événement privé masqué sur l'accueil public");
 
 console.log("\nTous les tests sont passés ✅");
 stop(0);

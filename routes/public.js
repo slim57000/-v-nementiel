@@ -7,6 +7,7 @@ import { publicView } from "../lib/events.js";
 import { listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory, addFriends, listBlockIds, listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
 import { currentOrganizer } from "./auth.js";
+import { camerasWithLive } from "../lib/livekit.js";
 
 const router = Router();
 
@@ -52,8 +53,10 @@ router.get("/", async (req, res) => {
   events = [...shown, ...events].sort((a, b) => (shown.includes(b) - shown.includes(a)) || `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
   res.json(await Promise.all(events.map(async (e) => {
     const { invite, inviteStyle, description, ...card } = publicView(e);
-    // Privé : ni lieu ni caméras (le direct reste réservé aux invités).
-    if (e.visibility === "private") return { ...card, visibility: "private", location: "Sur invitation", cameras: [], viewers: 0 };
+    // Privé : la carte reste visible (l'organisateur veut savoir qui a vu son faire-part), mais
+    // aucun contenu ne fuite — ni nom, ni date, ni photo, ni lieu, ni caméras. Seul le cadenas
+    // apparaît, et le clic mène à l'écran « entrez votre code » : l'accès passe par le code.
+    if (e.visibility === "private") return { ...card, name: "Événement privé", date: "", location: "", cover: "", cameras: [], viewers: 0 };
     if (e.visibility === "unlisted") card.visibility = "unlisted";
     // Spectateurs en cours pour les directs du jour.
     const viewers = e.date === today && card.cameras.length ? await countViewers(e.id).catch(() => 0) : 0;
@@ -86,7 +89,8 @@ router.get("/:slug", async (req, res) => {
     getSetting(`replayhide:${event.id}`).catch(() => null),
     event.cagnotteUrl ? getSetting(`pot:${event.id}`).catch(() => null) : null,
   ]);
-  res.json({ locked: false, isOwner, loggedIn: Boolean(me), ...publicView(withVisibility(event, await listUnlistedIds())), id: event.id, premium, replayDays: replayDays(premium), replayDeleted: Boolean(replayDeleted), replayOnline: !replayHidden, program: program || null, pot: pot || null });
+  const view = publicView(withVisibility(event, await listUnlistedIds()));
+  res.json({ locked: false, isOwner, loggedIn: Boolean(me), ...view, cameras: await camerasWithLive(view.cameras), id: event.id, premium, replayDays: replayDays(premium), replayDeleted: Boolean(replayDeleted), replayOnline: !replayHidden, program: program || null, pot: pot || null });
 });
 
 // Anti-bruteforce partagé (base de données) : 10 essais par IP (et événement) toutes les 15 minutes.

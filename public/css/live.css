@@ -78,6 +78,16 @@
 .photo-strip .vid::after { content: "▶"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; pointer-events: none; text-shadow: 0 1px 6px rgba(0,0,0,.7); }
 .photo-strip .vid video { pointer-events: none; }
 .live-badge.is-replay { background: #6e6873; }
+/* Caméra en direct dans le sélecteur : pastille rouge, comme l'angle actuellement diffusé. */
+.cam.is-live::before { content: "● DIRECT"; background: #e11d48; }
+/* Mode immersif : le direct occupe tout l'écran, la page disparaît (tap ou bouton ⛶ pour revenir). */
+.live-immersive { overflow: hidden; }
+.live-immersive .live-bar, .live-immersive .live-body, .live-immersive .live-tabs { display: none; }
+.live-immersive .live-stage { max-width: none; width: 100%; height: 100dvh; aspect-ratio: auto; margin: 0; border-radius: 0; }
+/* Sortir du mode immersif : on revient à une scène lisible sans melebihi l'écran. */
+.live-stage { max-height: 78dvh; }
+.live-immersive .live-stage { max-height: none; }
+.live-immersive::after { content: "✕"; position: fixed; top: calc(14px + env(safe-area-inset-top)); right: 14px; z-index: 30; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: rgba(0,0,0,.5); color: #fff; font-size: 1rem; pointer-events: none; }
 /* Réactions : 5 colonnes qui tiennent toujours dans l'écran (+ bouton cagnotte) */
 /* (la cagnotte reste accessible en haut du direct et dans la barre du bas) */
 .reactions { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }

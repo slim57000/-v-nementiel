@@ -1,5 +1,14 @@
 # Journal des modifications — MaFeliza
 
+## Version 1.9 — Live en multicaméra
+- **Le direct part tout seul** : à l'ouverture de l'espace caméraman, la caméra s'allume et le direct est publié chez les invités. Le navigateur demande l'autorisation ; si elle est refusée, le bouton « Démarrer le live » reste disponible. Un « ⏹ Arrêter » n'est pas relancé par un rechargement de page.
+- **Une caméra par téléphone** : chaque appareil retient son propre angle (le premier libre, « Caméra 1 », « Caméra 2 »…). Avant, deux téléphones prenaient le même nom et publiaient dans la même room, ce qui coupait le direct déjà en cours.
+- **L'invité atterrit sur le bon angle** : l'API annonce désormais quelle caméra est réellement en direct ; le lecteur ouvre dessus et affiche une pastille rouge « ● DIRECT » sur les autres.
+- **Un angle qui démarre plus tard n'est plus un écran mort** : le lecteur attend le direct (au lieu d'afficher « le direct n'a pas encore commencé »), bascule sur le replay s'il existe et se reconnecte si le caméraman repart.
+- **Fini les bandes noires** : la scène prend le format réel du flux (un téléphone filme en portrait), la vidéo remplit l'espace et les bascules d'angle actualisent les pastilles toutes les 45 s.
+- **Plein écran** : bouton ⛶ dans la barre du live et tap sur la vidéo ; plein écran système quand le navigateur l'autorise, sinon mode immersif qui fonctionne aussi sur iOS. Tap à nouveau ou Échap pour revenir.
+- **Événements privés masqués sur l'accueil** : un visiteur déconnecté voit qu'il existe un événement privé, mais ni son nom, ni sa date, ni sa photo, ni son lieu, ni son direct. L'accès passe par le code d'invitation.
+
 ## Version 1.8 — Corrections
 - **Espace caméraman et liste d'amis** : le caméraman qui saisit son code avant de se connecter (ou qui crée son compte ensuite) apparaît enfin dans les amis de l'organisateur, et l'événement compte dans ses participations.
 - **Espace caméraman accessible à tout le monde** : un code erronné saisi à la main n'était pas décompté du quota, ce qui bloquait ensuite le bon code pendant 15 minutes pour toute la maison (même adresse IP) ; le quota ne compte plus que les échecs et reste partagé entre les instances.

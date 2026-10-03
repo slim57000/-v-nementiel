@@ -7,7 +7,7 @@
   <title>Direct MaFeliza</title>
   <style>
     html, body { margin: 0; height: 100%; background: #000; color: #fff; font: 15px/1.4 system-ui, -apple-system, sans-serif; overflow: hidden; }
-    video { width: 100%; height: 100%; object-fit: contain; display: block; background: #000; }
+    video { width: 100%; height: 100%; object-fit: cover; display: block; background: #000; }
     #tag { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,.6); color: #fff; font-size: .8rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
     #msg { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 16px; }
     #sound { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); border: 0; border-radius: 99px; padding: 10px 18px; font: inherit; font-weight: 700; background: #fff; color: #c20f68; cursor: pointer; }
@@ -28,13 +28,20 @@
     const { Room, RoomEvent, Track } = LivekitClient;
     const room = new Room({ adaptiveStream: true });
     let audio = null;
+    // Le flux remplit la scène : on annonce son format à la page du live, qui adapte sa hauteur.
+    const notifySize = () => {
+      const { videoWidth: w, videoHeight: h } = video;
+      if (w > 0 && h > 0) parent.postMessage({ type: "mf-size", w, h }, location.origin);
+    };
+    video.addEventListener("loadedmetadata", notifySize);
+    video.addEventListener("resize", notifySize);
     room.on(RoomEvent.TrackSubscribed, (track) => {
-      if (track.kind === Track.Kind.Video) { track.attach(video); say(""); }
+      if (track.kind === Track.Kind.Video) { track.attach(video); say(""); notifySize(); setTimeout(notifySize, 500); setTimeout(notifySize, 2000); }
       if (track.kind === Track.Kind.Audio) { audio = track.attach(); audio.muted = true; document.body.append(audio); sound.classList.remove("hidden"); }
     });
     room.on(RoomEvent.TrackUnsubscribed, (track) => {
       track.detach();
-      if (track.kind === Track.Kind.Video) { say("Le direct est en pause… le replay arrive dans un instant."); setTimeout(() => location.reload(), 45000); }
+      if (track.kind === Track.Kind.Video) { say("Le direct est en pause… le replay arrive dans un instant."); live = false; setTimeout(watch, 6000); }
     });
     room.on(RoomEvent.Disconnected, () => say("Direct terminé."));
     sound.addEventListener("click", async () => {
@@ -45,27 +52,39 @@
     });
     // Replay : les segments enregistrés s'enchaînent comme une seule vidéo.
     function playReplay(parts) {
+      live = true;
       let i = 0;
       const tag = document.getElementById("tag");
       tag.classList.remove("hidden");
       video.controls = true;
       video.muted = false;
-      const load = () => { video.src = parts[i]; tag.textContent = parts.length > 1 ? `▶ Replay · partie ${i + 1}/${parts.length}` : "▶ Replay"; };
+      const load = () => { video.src = parts[i]; tag.textContent = parts.length > 1 ? `▶ Replay · partie ${i + 1}/${parts.length}` : "▶ Replay"; notifySize(); };
       video.addEventListener("ended", () => { if (++i < parts.length) { load(); video.play().catch(() => {}); } });
       load();
       say("");
     }
 
-    (async () => {
+    // Le caméraman peut démarrer après l'arrivée de l'invité (multicaméra : un angle par téléphone).
+    // On attend donc le direct au lieu d'afficher un écran mort, et on bascule sur le replay s'il existe.
+    let live = false, waited = 0;
+    async function watch() {
       try {
         const res = await fetch(`/api/public/${encodeURIComponent(q.get("e"))}/lk?room=${encodeURIComponent(q.get("room"))}`);
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Direct indisponible.");
-        const { url, token, live, replay } = await res.json();
-        if (!live) return replay.length ? playReplay(replay) : say("Le direct va bientôt commencer…");
-        await room.connect(url, token);
-        if (![...room.remoteParticipants.values()].some((p) => p.videoTrackPublications.size)) say("Le direct va bientôt commencer…");
-      } catch (err) { say(err.message || "Direct indisponible."); }
-    })();
+        const { url, token, live: on, replay } = await res.json();
+        if (on) {
+          live = true;
+          await room.connect(url, token);
+          if (![...room.remoteParticipants.values()].some((p) => p.videoTrackPublications.size)) say("Le direct va bientôt commencer…");
+        } else if (replay.length) {
+          playReplay(replay);
+        } else {
+          say("Le direct va bientôt commencer…");
+          if (++waited < 120) setTimeout(watch, 5000); // ~10 minutes d'attente
+        }
+      } catch (err) { live = true; say(err.message || "Direct indisponible."); }
+    }
+    watch();
   </script>
 </body>
 </html>

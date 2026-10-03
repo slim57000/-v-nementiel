@@ -7,16 +7,36 @@ const slug = new URLSearchParams(location.search).get("e") || "";
 let cameras = [];
 let isOwner = false;
 const base = `/api/public/${encodeURIComponent(slug)}`;
+const stage = $("#stage");
+
+// Le lecteur annonce les dimensions réelles de son flux : la scène prend le format du direct,
+// ce qui supprime les bandes noires (un téléphone filme en portrait, une scène 16/9 laisse du vide).
+addEventListener("message", (e) => {
+  if (e.source !== $("#stage iframe")?.contentWindow || e.data?.type !== "mf-size") return;
+  const { w, h } = e.data;
+  if (w > 0 && h > 0) stage.style.aspectRatio = `${w} / ${h}`;
+});
 
 function play(index) {
   const src = embedUrl(cameras[index]?.url);
-  $("#stage iframe")?.remove();
+  const frame = $("#stage iframe");
+  frame?.remove();
+  // Une caméra « téléphone » a le format de son flux ; sinon on garde la 16/9 classique.
+  stage.style.aspectRatio = src?.startsWith("/lk?") ? "" : "16 / 9";
   $("#empty").classList.toggle("hidden", Boolean(src));
   if (src) {
     $("#stage").insertAdjacentHTML("afterbegin",
       `<iframe src="${esc(src)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="Direct"></iframe>`);
   }
   document.querySelectorAll(".cam").forEach((b, i) => b.classList.toggle("active", i === index));
+}
+
+// Boutons de caméra : pastille « EN DIRECT » sur l'angle réellement diffusé.
+function paintCams() {
+  $("#cams").innerHTML = cameras.map((c, i) => {
+    const thumb = thumbnailUrl(c.url);
+    return `<button class="cam ${thumb ? "has-thumb" : ""} ${c.live ? "is-live" : ""}" data-index="${i}" ${thumb ? `style="background-image:url('${esc(thumb)}')"` : ""}>${esc(c.name)}</button>`;
+  }).join("");
 }
 
 async function load() {
@@ -104,16 +124,25 @@ async function load() {
       catch (err) { toast(err.message); }
     });
   }
-  $("#cams").innerHTML = cameras.map((c, i) => {
-    const thumb = thumbnailUrl(c.url);
-    return `<button class="cam ${thumb ? "has-thumb" : ""}" data-index="${i}" ${thumb ? `style="background-image:url('${esc(thumb)}')"` : ""}>${esc(c.name)}</button>`;
-  }).join("");
+  paintCams();
   // Fond du lecteur avant le direct : couverture de l'événement, sinon visuel de salle.
   // Photo du faire-part en attente du direct (voile sombre en thème clair seulement, cf. live.css).
-  $("#stage").style.setProperty("--cover", `url("${coverOf(ev)}")`);
-  $("#stage").classList.add("has-cover");
+  stage.style.setProperty("--cover", `url("${coverOf(ev)}")`);
+  stage.classList.add("has-cover");
   $("#cams-section").classList.toggle("hidden", cameras.length < 2);
-  play(0);
+  // On ouvre sur l'angle réellement en direct (le caméraman n'est pas forcément le premier de la liste).
+  play(Math.max(0, cameras.findIndex((c) => c.live)));
+  // Un caméraman peut démarrer plus tard : on rafraîchit les pastilles sans changer l'angle choisi.
+  setInterval(async () => {
+    try {
+      const fresh = (await api(`/api/public/${encodeURIComponent(slug)}`)).cameras || [];
+      if (fresh.length !== cameras.length) return location.reload();
+      cameras.forEach((c, i) => { c.live = Boolean(fresh[i]?.live); });
+      const watching = Number(document.querySelector(".cam.active")?.dataset.index ?? -1);
+      paintCams();
+      if (watching >= 0) document.querySelectorAll(".cam")[watching]?.classList.add("active");
+    } catch { /* réseau : on réessaie */ }
+  }, 45000);
   heartbeat();
   poll();
   loadPhotos();
@@ -124,6 +153,26 @@ $("#cams").addEventListener("click", (e) => {
   const btn = e.target.closest(".cam");
   if (btn) play(Number(btn.dataset.index));
 });
+
+// --- Plein écran : bouton ⛶ et tap sur le direct ---
+// Deux niveaux : le plein écran système quand le navigateur l'autorise (bureau), sinon un mode
+// immersif en CSS qui fonctionne partout, y compris sur iOS où un <div> ne peut pas passer plein écran.
+function setImmersive(on) {
+  document.body.classList.toggle("live-immersive", on);
+  $("#fs").textContent = on ? "✕" : "⛶";
+  $("#fs").setAttribute("aria-label", on ? "Quitter le plein écran" : "Plein écran");
+}
+$("#fs").addEventListener("click", () => {
+  const on = !document.body.classList.contains("live-immersive");
+  if (on) stage.requestFullscreen?.().catch(() => {}); // refusé (iOS, iframe) : le mode immersif prend le relais
+  setImmersive(on);
+});
+stage.addEventListener("click", (e) => {
+  if (e.target.closest("a")) return; // cagnotte : le lien reste prioritaire
+  setImmersive(!document.body.classList.contains("live-immersive"));
+});
+// Échap (clavier Android) ou sortie du plein écran système : on rend la page.
+for (const type of ["fullscreenchange", "webkitfullscreenchange"]) document.addEventListener(type, () => { if (!document.fullscreenElement) setImmersive(false); });
 
 // --- Spectateurs : signal de présence toutes les 15 s ---
 let clientId;

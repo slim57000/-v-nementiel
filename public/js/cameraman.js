@@ -23,6 +23,22 @@ function addCamera(cam = {}) {
   row.querySelector("[name=cam-url]").value = cam.url || "";
 }
 
+// Chaque téléphone garde sa propre caméra, mémorisée sur l'appareil.
+// Indispensable en multicaméra : deux téléphones qui prenaient tous deux le nom par défaut
+// (« Caméra 1 ») publishaient dans la même room, et LiveKit coupait alors le direct déjà en cours.
+const NAME_KEY = "em-camname";
+const nameStore = (ev) => `${NAME_KEY}:${ev.slug}`;
+function myCameraName(ev) {
+  const key = nameStore(ev);
+  const taken = (ev.cameras || []).map((c) => c.name);
+  let name = "";
+  try { name = localStorage.getItem(key) || ""; } catch { /* stockage indisponible */ }
+  if (name && taken.includes(name)) return name;
+  const free = [1, 2, 3, 4, 5, 6].map((i) => `Caméra ${i}`).find((n) => !taken.includes(n)) || `Caméra ${taken.length + 1}`;
+  try { localStorage.setItem(key, free); } catch { /* ignoré */ }
+  return free;
+}
+
 let current = null;
 function showSpace(ev) {
   current = ev;
@@ -30,6 +46,7 @@ function showSpace(ev) {
   $("#ev-name").textContent = ev.name;
   $("#ev-when").textContent = `${formatDate(ev.date, ev.time)} · ${ev.location}`;
   $("#notes").textContent = ev.notes || "Aucune consigne particulière pour le moment.";
+  $("#cam-label").value = myCameraName(ev);
   // Mémorisé sur ce téléphone : rappel « Espace caméraman » sur l'accueil.
   // Lié au compte connecté (uid) : un autre compte sur ce téléphone ne le verra pas.
   api("/api/auth/me").then((me) => {
@@ -48,6 +65,21 @@ function showSpace(ev) {
   $("#open-live").href = `/live?e=${encodeURIComponent(ev.slug)}`;
   $("#login").classList.add("hidden");
   $("#space").classList.remove("hidden");
+  autoLive();
+}
+
+// --- Publication automatique : le direct part dès que le caméraman ouvre son espace ---
+// Le caméraman ne doit avoir qu'une chose à faire : tenir son téléphone. Si le navigateur refuse
+// la caméra, on laisse le bouton « Démarrer le live » sous la main. Un « Arrêter » manuel est
+// mémorisé pour que recharger la page ne relance pas un direct que le caméraman a coupé.
+const STOPPED = "em-cam-stop";
+const wasStopped = () => { try { return sessionStorage.getItem(STOPPED) === slug; } catch { return false; } };
+let autoTried = false;
+function autoLive() {
+  if (autoTried || !current?.phoneLive || wasStopped()) return;
+  autoTried = true;
+  status("Démarrage du direct…");
+  startLive().catch(() => {});
 }
 
 async function load() {
@@ -175,6 +207,8 @@ async function startLive() {
     recording = Boolean(record);
     startSegment();
     try { wakeLock = await navigator.wakeLock?.request("screen"); } catch { /* facultatif */ }
+    // Le nom choisi devient celui de cet appareil : il ne change plus au prochain rechargement.
+    try { sessionStorage.removeItem(STOPPED); localStorage.setItem(nameStore(current), name); } catch { /* ignoré */ }
     if (!current.cameras.some((c) => c.name === name && c.url.startsWith("lk:"))) current = await api(`/api/cameraman/${encodeURIComponent(slug)}`);
     $("#go-live").classList.add("hidden");
     $("#live-controls").classList.remove("hidden");
@@ -220,7 +254,11 @@ async function flipCamera() {
 }
 
 $("#go-live").addEventListener("click", startLive);
-$("#stop-live").addEventListener("click", () => stopLive());
+$("#stop-live").addEventListener("click", () => {
+  // Mémorisé pour qu'un rechargement de la page ne reparte pas tout seul.
+  try { sessionStorage.setItem(STOPPED, slug); } catch { /* ignoré */ }
+  stopLive();
+});
 $("#flip").addEventListener("click", flipCamera);
 addEventListener("beforeunload", (e) => { if (room) { e.preventDefault(); e.returnValue = ""; } });
 
