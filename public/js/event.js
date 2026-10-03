@@ -167,7 +167,7 @@ async function renderStories(ev) {
       const who = e.target.closest("[data-who]")?.dataset.who;
       if (!who) return;
       const ordered = [...stories.filter((p) => p.name === who), ...stories.filter((p) => p.name !== who)];
-      openStories(ordered, { onDelete: ev.isOwner ? async (p) => { await api(`${base}/photos/${p.id}`, { method: "DELETE" }); load(); } : null });
+      openStories(ordered, { slug: ev.slug, onDelete: ev.isOwner ? async (p) => { await api(`${base}/photos/${p.id}`, { method: "DELETE" }); load(); } : null });
     };
   };
   // Stories : seul le créateur de l'événement peut en publier.

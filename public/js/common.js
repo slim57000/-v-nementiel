@@ -601,7 +601,7 @@ const agoShort = (iso) => {
   const m = Math.max(1, Math.round((Date.now() - new Date(iso)) / 60000));
   return m < 60 ? `${m} min` : `${Math.round(m / 60)} h`;
 };
-export function openStories(items, { start = 0, title = "", onDelete } = {}) {
+export function openStories(items, { start = 0, title = "", onDelete, slug = "" } = {}) {
   if (!items.length) return;
   document.getElementById("story-viewer")?.remove();
   document.body.insertAdjacentHTML("beforeend", `
@@ -611,6 +611,7 @@ export function openStories(items, { start = 0, title = "", onDelete } = {}) {
       <div class="sv-media"></div>
       <p class="sv-caption"></p>
       ${onDelete ? '<button class="sv-del" aria-label="Supprimer la story">🗑️</button>' : ""}
+      <div class="sv-react">${["❤️", "😂", "😍", "👏", "🔥", "😮"].map((e) => `<button type="button" data-react-story="${e}" aria-label="Réagir ${e}">${e}<small></small></button>`).join("")}</div>
       <button class="sv-prev" aria-label="Story précédente"></button><button class="sv-next" aria-label="Story suivante"></button>
     </div>`);
   const root = document.getElementById("story-viewer");
@@ -627,6 +628,7 @@ export function openStories(items, { start = 0, title = "", onDelete } = {}) {
     bars.forEach((b, k) => { b.style.transition = "none"; b.style.width = k < i ? "100%" : "0%"; });
     root.querySelector(".sv-who").innerHTML = `<b>${esc(it.name)}</b> <span>${title ? `${esc(title)} · ` : ""}${lang === "en" ? `${agoShort(it.createdAt)} ago` : `il y a ${agoShort(it.createdAt)}`}</span>`;
     root.querySelector(".sv-caption").textContent = it.caption || "";
+    paintReactions(it);
     const media = root.querySelector(".sv-media");
     const run = (ms) => {
       requestAnimationFrame(() => { bars[i].style.transition = `width ${ms}ms linear`; bars[i].style.width = "100%"; });
@@ -642,6 +644,25 @@ export function openStories(items, { start = 0, title = "", onDelete } = {}) {
       run(5000);
     }
   };
+  // Réactions : compteur sous chaque emoji, petit envol de l'emoji touché, envoi au serveur.
+  function paintReactions(it) {
+    for (const b of root.querySelectorAll("[data-react-story]")) b.querySelector("small").textContent = it.reactions?.[b.dataset.reactStory] || "";
+  }
+  root.querySelector(".sv-react").addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-react-story]");
+    const it = items[i];
+    const where = it?.slug || slug;
+    if (!btn || !where) return;
+    const emoji = btn.dataset.reactStory;
+    const fly = document.createElement("span");
+    fly.className = "sv-fly"; fly.textContent = emoji;
+    fly.style.left = `${btn.getBoundingClientRect().left + 8}px`;
+    root.append(fly); setTimeout(() => fly.remove(), 1200);
+    it.reactions = { ...(it.reactions || {}), [emoji]: (it.reactions?.[emoji] || 0) + 1 };
+    paintReactions(it);
+    try { it.reactions = await api(`/api/public/${encodeURIComponent(where)}/stories/${it.id}/react`, { method: "POST", body: { emoji, name: (() => { try { return localStorage.getItem("em-name") || ""; } catch { return ""; } })() } }); paintReactions(it); }
+    catch (err) { toast(err.message); }
+  });
   root.querySelector(".sv-close").onclick = close;
   root.querySelector(".sv-prev").onclick = () => show(i - 1);
   root.querySelector(".sv-next").onclick = () => show(i + 1);

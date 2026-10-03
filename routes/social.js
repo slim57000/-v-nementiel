@@ -141,7 +141,28 @@ router.get("/photos", async (req, res) => {
 const DAY = 24 * 3600 * 1000;
 export const activeStories = (photos) => photos.filter((p) => p.story && Date.now() - new Date(p.createdAt) < DAY).reverse();
 router.get("/stories", async (req, res) => {
-  res.json(visible(req, activeStories(await listPhotos(req.event.id, 200))));
+  res.json(await withReactions(visible(req, activeStories(await listPhotos(req.event.id, 200)))));
+});
+
+// Réactions aux stories : compteur par emoji (réglage « storyreact:{id} »), l'organisateur est prévenu.
+export const STORY_EMOJIS = ["❤️", "😂", "😍", "👏", "🔥", "😮"];
+export const withReactions = (list) => Promise.all(list.map(async (p) => ({ ...p, reactions: (await getSetting(`storyreact:${p.id}`).catch(() => null)) || {} })));
+router.post("/stories/:id/react", async (req, res) => {
+  const emoji = String(req.body?.emoji || "");
+  if (!STORY_EMOJIS.includes(emoji)) return res.status(400).json({ error: "Réaction inconnue." });
+  if (await tooFast(`${req.ip}:storyreact`, 60, 600_000)) return res.status(429).json({ error: "Doucement 🙂 réessayez dans un instant." });
+  const photo = await findPhoto(Number(req.params.id) || req.params.id);
+  if (!photo?.story || photo.eventId !== req.event.id) return res.status(404).json({ error: "Story introuvable." });
+  const key = `storyreact:${photo.id}`;
+  const counts = (await getSetting(key).catch(() => null)) || {};
+  counts[emoji] = (counts[emoji] || 0) + 1;
+  await setSetting(key, counts);
+  // Une seule notification par personne et par story et par heure (pas de rafale).
+  if (!(await tooFast(`${req.ip}:storynotif:${photo.id}`, 1, 3_600_000))) {
+    const who = String(req.body?.name || "").trim().slice(0, 30) || "Un invité";
+    notify([orgOwner(req.event.organizerId)], { title: `${emoji} Réaction à votre story`, body: `${who} a réagi à votre story de « ${req.event.name} »`, url: `/e/${req.event.slug}` }).catch(() => {});
+  }
+  res.json(counts);
 });
 
 router.post("/photos", notBlocked, async (req, res) => {

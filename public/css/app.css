@@ -586,8 +586,8 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline: none; }
 .sv-head { position: absolute; top: calc(22px + env(safe-area-inset-top)); left: 14px; right: 8px; display: flex; align-items: center; justify-content: space-between; z-index: 3; text-shadow: 0 1px 3px rgba(0,0,0,.6); font-size: .9rem; }
 .sv-who span { opacity: .8; font-size: .8rem; }
 .sv-close, .sv-del { background: none; border: 0; color: #fff; font-size: 1.5rem; cursor: pointer; padding: 8px; }
-.sv-del { position: absolute; right: 12px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 3; font-size: 1.3rem; }
-.sv-caption { position: absolute; left: 16px; right: 16px; bottom: calc(70px + env(safe-area-inset-bottom)); z-index: 3; margin: 0; text-align: center; font-size: 1.05rem; font-weight: 600; text-shadow: 0 1px 4px rgba(0,0,0,.8); overflow-wrap: anywhere; }
+.sv-del { position: absolute; right: 8px; bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 3; font-size: 1.3rem; }
+.sv-caption { position: absolute; left: 16px; right: 16px; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 3; margin: 0; text-align: center; font-size: 1.05rem; font-weight: 600; text-shadow: 0 1px 4px rgba(0,0,0,.8); overflow-wrap: anywhere; }
 .sv-caption:empty { display: none; }
 .sv-prev, .sv-next { position: absolute; top: 80px; bottom: 80px; background: none; border: 0; z-index: 2; cursor: pointer; }
 .sv-prev { left: 0; width: 33%; } .sv-next { right: 0; width: 67%; }
@@ -906,3 +906,11 @@ main { animation: em-fade .3s ease-out; }
 #page .share-bar { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); margin: 0 auto; z-index: 15; max-width: 696px; }
 .has-tabbar #page .share-bar { bottom: calc(74px + env(safe-area-inset-bottom)); }
 #page main { padding-bottom: 76px; }
+
+/* Réactions aux stories : barre d'emojis en bas, compteur, envol de l'emoji touché */
+.sv-react { position: absolute; left: 12px; right: 60px; max-width: 420px; margin: 0 auto; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 4; display: flex; justify-content: space-around; gap: 4px; padding: 6px; border-radius: 999px; background: rgba(0,0,0,.35); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.sv-react button { border: 0; background: none; font-size: 1.5rem; line-height: 1; padding: 4px; cursor: pointer; display: flex; flex-direction: column; align-items: center; transition: transform .12s; }
+.sv-react button:active { transform: scale(1.35); }
+.sv-react small { font-size: .62rem; color: #fff; font-weight: 700; min-height: .8em; }
+.sv-fly { position: absolute; bottom: 80px; z-index: 5; font-size: 2.4rem; pointer-events: none; animation: sv-fly 1.2s ease-out forwards; }
+@keyframes sv-fly { from { transform: translateY(0) scale(1); opacity: 1; } to { transform: translateY(-260px) scale(1.6); opacity: 0; } }

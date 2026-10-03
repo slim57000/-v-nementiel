@@ -8,6 +8,7 @@ import { requireOrganizer } from "./auth.js";
 import { hasAccess } from "./public.js";
 import { publicView } from "../lib/events.js";
 import { saveDataUrl, removeUpload, isVideoUrl } from "../lib/uploads.js";
+import { withReactions } from "./social.js";
 import {
   saveOrganizer, listEvents, findEvent, findEventBySlug, findEventsByIds, findOrganizersByIds,
   addFavorite, removeFavorite, listFavoriteIds, listHistoryIds,
@@ -124,8 +125,9 @@ router.get("/stories", async (req, res) => {
   for (const p of photos.reverse()) {
     const e = byId.get(p.eventId);
     if (!groups.has(e.id)) groups.set(e.id, { slug: e.slug, name: e.name, cover: e.cover, type: e.type, date: e.date, cameras: e.cameras || [], isOwner: e.organizerId === me.id, items: [] });
-    groups.get(e.id).items.push({ id: p.id, name: p.name, url: p.url, caption: p.caption, createdAt: p.createdAt, author: p.author });
+    groups.get(e.id).items.push({ id: p.id, name: p.name, url: p.url, caption: p.caption, createdAt: p.createdAt, author: p.author, slug: e.slug });
   }
+  for (const g of groups.values()) g.items = await withReactions(g.items);
   res.json([...groups.values()]);
 });
 
