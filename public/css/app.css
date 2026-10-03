@@ -844,7 +844,7 @@ body.has-tabbar { position: fixed; inset: 0; overflow-x: clip; overflow-y: auto;
 /* Types : pastilles sur deux colonnes, icône à gauche, libellé lisible en entier */
 .form-modern #types { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; grid-auto-rows: auto; }
 .form-modern #types .choice { min-width: 0; }
-.form-modern #types .choice span { min-height: 0 !important; flex-direction: row; justify-content: flex-start; gap: 8px; padding: 10px 8px; font-size: .85rem; text-align: left; overflow-wrap: break-word; }
-.form-modern #types .choice span b { font-size: 1.3rem; }
+.form-modern #types .choice span { min-height: 0 !important; flex-direction: row; justify-content: flex-start; gap: 6px; padding: 10px 6px; font-size: .8rem; text-align: left; overflow-wrap: break-word; overflow: hidden; }
+.form-modern #types .choice span b { font-size: 1.15rem; flex: 0 0 auto; }
 .form-modern #s-event { position: relative; }
 .form-modern #cover.sr-only { left: 0; top: 0; margin: 0; }
