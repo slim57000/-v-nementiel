@@ -832,7 +832,8 @@ body.has-tabbar { position: fixed; inset: 0; overflow-x: clip; overflow-y: auto;
 .form-modern h2 { font-size: 1.2rem; letter-spacing: -.01em; margin-top: 0; text-align: center; }
 .form-modern label { font-size: .8rem; color: var(--muted); font-weight: 600; margin-top: 16px; }
 .form-modern .choice, .form-modern .advanced label.choice { margin: 0; }
-.form-modern input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), .form-modern select, .form-modern textarea { text-align: left; border-radius: 14px; }
+.form-modern input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), .form-modern select { text-align: center; border-radius: 14px; }
+.form-modern textarea { border-radius: 14px; }
 .form-modern .choice span { border-radius: 16px; }
 .dropzone { display: flex !important; flex-direction: column; align-items: center; gap: 4px; padding: 18px; margin: 6px 0 0 !important; border: 2px dashed var(--border); border-radius: 18px; background: var(--bg); color: var(--text) !important; font-size: .95rem !important; text-align: center !important; cursor: pointer; }
 .dropzone span { font-size: 1.6rem; }
