@@ -45,7 +45,7 @@ app.use((req, res, next) => {
   if (req.path.startsWith("/api/")) res.set("Cache-Control", "no-store");
   next();
 });
-app.use(express.json({ limit: "4.5mb" })); // images envoyées en base64 (limite Vercel)
+app.use(express.json({ limit: "15mb" })); // images envoyées en base64 (couverture + photo du faire-part)
 
 // Configuration incomplète : message explicite plutôt qu'un plantage.
 if (missingConfig.length) {

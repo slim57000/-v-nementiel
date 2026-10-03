@@ -161,15 +161,22 @@ form.addEventListener("submit", async (e) => {
     removeCover: state.removeCover,
     regenerateCode: $("#regenerate").checked,
   };
-  $("#save").disabled = true;
+  const btn = $("#save"), label = btn.innerHTML;
+  btn.disabled = true;
+  btn.textContent = tr("⏳ Enregistrement…");
+  // Délai maximal : sans réponse au bout de 45 s (réseau faible), on rend la main avec un message clair.
+  const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error(tr("Le réseau est lent : l'enregistrement n'a pas abouti. Réessayez."))), 45000));
   try {
-    const saved = await api(id ? `/api/events/${id}` : "/api/events", { method: id ? "PUT" : "POST", body });
+    const saved = await Promise.race([api(id ? `/api/events/${id}` : "/api/events", { method: id ? "PUT" : "POST", body }), timeout]);
     // Nouvel événement : on montre directement ses faire-part à partager.
     location.href = id ? "/dashboard?saved=1" : `/faire-part?id=${saved.id}&new=1`;
   } catch (err) {
     if (err.status === 401) return goLogin();
     $("#error").textContent = err.message;
-    $("#save").disabled = false;
+    toast(err.message);
+    $("#error").scrollIntoView({ behavior: "smooth", block: "center" });
+    btn.disabled = false;
+    btn.innerHTML = label;
   }
 });
 
