@@ -106,7 +106,7 @@ export function resizeImage(file, maxSize = 1280) {
 export function dayBadge(date) {
   const today = new Date(new Date().toDateString());
   const days = Math.round((new Date(`${date}T00:00`) - today) / 86400000);
-  return days > 0 ? `J-${days}` : days === 0 ? "Aujourd'hui" : "Passé";
+  return days > 0 ? (lang === "en" ? `D-${days}` : `J-${days}`) : days === 0 ? (lang === "en" ? "Today" : "Aujourd'hui") : (lang === "en" ? "Past" : "Passé");
 }
 
 // Vignette d'un événement public (accueil, Découvrir).
@@ -621,7 +621,7 @@ export function openStories(items, { start = 0, title = "", onDelete } = {}) {
     i = n;
     const it = items[i];
     bars.forEach((b, k) => { b.style.transition = "none"; b.style.width = k < i ? "100%" : "0%"; });
-    root.querySelector(".sv-who").innerHTML = `<b>${esc(it.name)}</b> <span>${title ? `${esc(title)} · ` : ""}il y a ${agoShort(it.createdAt)}</span>`;
+    root.querySelector(".sv-who").innerHTML = `<b>${esc(it.name)}</b> <span>${title ? `${esc(title)} · ` : ""}${lang === "en" ? `${agoShort(it.createdAt)} ago` : `il y a ${agoShort(it.createdAt)}`}</span>`;
     root.querySelector(".sv-caption").textContent = it.caption || "";
     const media = root.querySelector(".sv-media");
     const run = (ms) => {
