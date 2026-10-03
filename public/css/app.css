@@ -902,3 +902,7 @@ main { animation: em-fade .3s ease-out; }
 #page .share-bar .row { display: flex; flex-wrap: nowrap; gap: 6px; }
 #page .share-bar .btn { flex: 1 1 0; min-width: 0; min-height: 44px; padding: 8px 10px; font-size: .95rem; white-space: nowrap; box-shadow: none; }
 #page .share-bar .fav-btn { flex: 0 0 48px !important; }
+/* Barre de partage fixée juste au-dessus du dock (le « collant » d'iOS la faisait monter et descendre) */
+#page .share-bar { position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); margin: 0 auto; z-index: 15; max-width: 696px; }
+.has-tabbar #page .share-bar { bottom: calc(74px + env(safe-area-inset-bottom)); }
+#page main { padding-bottom: 76px; }
