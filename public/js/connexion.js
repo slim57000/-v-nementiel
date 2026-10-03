@@ -109,3 +109,14 @@ $("#forgot").addEventListener("click", async (e) => {
     $("#error").textContent = err.message;
   }
 });
+
+// Retour de Google en erreur : message clair (au lieu d'un simple retour sur la page de connexion).
+{
+  const err = new URLSearchParams(location.search).get("erreur");
+  const msgs = {
+    "google-session": "Connexion Google interrompue : rouvrez mafeliza.com (sans « www ») puis réessayez.",
+    "google-refus": "Connexion Google annulée.",
+    "google-jeton": "Google a refusé la connexion (configuration du serveur). Utilisez l'email en attendant.",
+  };
+  if (msgs[err]) setTimeout(() => import("./common.js").then(({ toast }) => toast(msgs[err])), 300);
+}

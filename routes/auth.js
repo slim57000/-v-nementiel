@@ -151,7 +151,12 @@ router.get("/google", (req, res) => {
 router.get("/google/callback", async (req, res) => {
   const [nonce, next] = (getSigned(req, "gstate") || "").split("~");
   res.clearCookie("gstate");
-  if (!nonce || req.query.state !== nonce || !req.query.code) return res.redirect("/connexion");
+  // Cookie « gstate » absent : le retour de Google arrive sur une autre adresse que le départ
+  // (www / sans www, http / https, PUBLIC_URL différente du domaine utilisé).
+  if (!nonce || req.query.state !== nonce || !req.query.code) {
+    console.error("Google : état absent ou différent", { host: req.get("host"), proto: req.protocol, publicUrl: process.env.PUBLIC_URL || "", hasCookie: Boolean(nonce), error: req.query.error || "" });
+    return res.redirect(`/connexion?erreur=google-${req.query.error ? "refus" : "session"}`);
+  }
   try {
     const who = await googleIdentity(String(req.query.code), callbackUrl(req));
     let organizer = await findOrganizerByEmail(who.email);
@@ -164,7 +169,7 @@ router.get("/google/callback", async (req, res) => {
     res.redirect(safeNext(decodeURIComponent(next || "")));
   } catch (err) {
     console.error("Google :", err.message);
-    res.redirect("/connexion");
+    res.redirect("/connexion?erreur=google-jeton");
   }
 });
 
