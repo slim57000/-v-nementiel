@@ -481,10 +481,20 @@ export const lang = read(LANG_KEY) || (navigator.language?.startsWith("en") ? "e
 try { document.cookie = `em-lang=${lang}; path=/; max-age=31536000; SameSite=Lax`; } catch { /* cookies bloqués */ }
 export const t = (fr) => (lang === "en" && EN[fr]) || fr;
 // Traduction d'une phrase complète : exacte si possible, sinon morceau par morceau.
+// Noms d'événements courants (« Mariage de Awa & Samuel », « Les 30 ans de Léo »…) : traduits par motif.
+const NAME_RULES = [
+  [/^Mariage de (.+)$/, "$1's wedding"], [/^Les (\d+) ans de (.+)$/, "$2's $1th birthday"], [/^Anniversaire de (.+)$/, "$1's birthday"],
+  [/^Baptême de (.+)$/, "$1's baptism"], [/^Communion de (.+)$/, "$1's communion"], [/^Fiançailles de (.+)$/, "$1's engagement"],
+  [/^Baby shower de (.+)$/, "$1's baby shower"], [/^Remise de diplôme de (.+)$/, "$1's graduation"], [/^Pot de retraite de (.+)$/, "$1's retirement party"],
+  [/^Soirée de gala chez (.+)$/, "Gala evening at $1's"], [/^Inauguration (.+)$/, "$1 grand opening"], [/^Anniversaire de test \(album\)$/, "Test birthday (album)"],
+];
+Object.assign(EN, {"Ils se disent oui": "They're saying yes", "Joyeux anniversaire": "Happy birthday", "Un jour béni": "A blessed day", "Première communion": "First communion", "Ils se fiancent": "They're getting engaged", "Bébé arrive !": "Baby is coming!", "Félicitations !": "Congratulations!", "Bonne retraite !": "Happy retirement!", "Grande ouverture": "Grand opening", "Nous avons la joie de vous convier à notre mariage.": "We are delighted to invite you to our wedding.", "Venez fêter cette belle année avec nous !": "Come and celebrate this wonderful year with us!", "Nous serons heureux de vous accueillir pour le baptême.": "We will be happy to welcome you to the baptism.", "Partagez avec nous ce moment de foi.": "Share this moment of faith with us.", "Nous célébrons nos fiançailles.": "We are celebrating our engagement.", "Une douce fête pour accueillir bébé.": "A sweet party to welcome baby.", "Célébrons ensemble cette réussite.": "Let's celebrate this success together.", "Une nouvelle vie commence.": "A new life begins.", "Découvrez notre nouvel espace.": "Discover our new space.", "Une soirée inoubliable vous attend.": "An unforgettable evening awaits you.", "Nous avons la joie de vous convier à notre mariage, suivi d'un dîner et d'une soirée dansante.": "We are delighted to invite you to our wedding, followed by dinner and a dance party.", "Une belle soirée entre amis.": "A lovely evening with friends."});
+
 export function tr(text) {
   if (lang !== "en" || !text) return text;
   const s = String(text);
   if (EN[s.trim()]) return s.replace(s.trim(), EN[s.trim()]);
+  for (const [re, en] of NAME_RULES) if (re.test(s.trim())) return s.replace(s.trim(), s.trim().replace(re, en));
   let out = s;
   for (const [fr, en] of FRAG) if (out.includes(fr)) out = out.split(fr).join(en);
   return out.replace(/“\s+/g, "“").replace(/\s+”/g, "”"); // guillemets anglais sans espaces
