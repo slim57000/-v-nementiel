@@ -702,17 +702,17 @@ document.addEventListener("contextmenu", (e) => { if (e.target.closest?.("[data-
 // Création d'une cagnotte SANS quitter le site : le service choisi s'ouvre dans une fenêtre
 // (ou un onglet s'il refuse d'être intégré) ; à la fermeture, `onClose` récupère le lien copié.
 const POT_SERVICES = [
-  ["Leetchi", "https://www.leetchi.com/fr"],
-  ["Le Pot Commun", "https://www.lepotcommun.fr"],
-  ["On Participe", "https://www.onparticipe.fr"],
-  ["HelloAsso", "https://www.helloasso.com"],
+  ["Leetchi", "https://www.leetchi.com/fr", "🎁"],
+  ["Le Pot Commun", "https://www.lepotcommun.fr", "🫙"],
+  ["On Participe", "https://www.onparticipe.fr", "🤝"],
+  ["HelloAsso", "https://www.helloasso.com", "💜"],
 ];
 export function createPot(onClose) {
   document.body.insertAdjacentHTML("beforeend", `<div class="pot-frame" id="pot-frame" role="dialog" aria-modal="true">
     <div class="pot-frame-bar"><b>🎁 Créer ma cagnotte</b><button type="button" class="pot-frame-close" aria-label="Fermer">✕</button></div>
     <div class="pot-frame-pick">
       <p>Choisissez le service de cagnotte. Une fois la cagnotte créée, <b>copiez son lien</b> puis touchez <b>✕</b> : il sera ajouté à votre événement.</p>
-      ${POT_SERVICES.map(([n, u]) => `<button type="button" class="btn btn-light btn-block" data-pot-url="${esc(u)}">${esc(n)}</button>`).join("")}
+      ${POT_SERVICES.map(([n, u, i]) => `<button type="button" class="pot-service" data-pot-url="${esc(u)}"><span>${i}</span><b>${esc(n)}</b><i>›</i></button>`).join("")}
     </div></div>`);
   const box = document.getElementById("pot-frame");
   box.querySelector(".pot-frame-close").addEventListener("click", () => { box.remove(); onClose?.(); });
