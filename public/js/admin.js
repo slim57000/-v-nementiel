@@ -26,7 +26,7 @@ const views = {
     return list.map((o) => row(
       `<b>${esc(o.email)}</b> ${o.superAdmin ? '<span class="badge">👑 Admin principal</span>' : o.admin ? `<span class="badge">Admin${o.adminUntil ? ` · jusqu'au ${until(o.adminUntil)}` : ""}</span>` : ""} ${o.blocked ? '<span class="badge private">Bloqué</span>' : ""} ${o.premium ? `<span class="badge">✨ Premium${o.premiumUntil ? ` · jusqu'au ${until(o.premiumUntil)}` : ""}</span>` : ""}`,
       `${o.events} événement(s) · inscrit le ${new Date(o.createdAt).toLocaleDateString(LOCALE)}`,
-      (o.superAdmin || !me.superAdmin ? "" : `<button class="btn btn-light btn-sm" data-act="admin" data-id="${o.id}" data-on="${!o.admin}">${o.admin ? "Retirer admin" : "👑 Passer admin"}</button> ${o.admin ? `<button class="btn btn-ghost btn-sm" data-act="admin-dur" data-id="${o.id}">⏱ Durée admin</button> ` : ""}`)
+      (o.superAdmin ? "" : `<button class="btn btn-light btn-sm" data-act="admin" data-id="${o.id}" data-on="${!o.admin}">${o.admin ? "Retirer admin" : "👑 Passer admin"}</button> ${o.admin ? `<button class="btn btn-ghost btn-sm" data-act="admin-dur" data-id="${o.id}">⏱ Durée admin</button> ` : ""}`)
       + `<button class="btn btn-light btn-sm" data-act="premium" data-id="${o.id}" data-on="${!o.premium}">${o.premium ? "Retirer Premium" : "✨ Passer Premium"}</button>${o.premium ? ` <button class="btn btn-ghost btn-sm" data-act="premium-dur" data-id="${o.id}">⏱ Durée Premium</button>` : ""}`
       + (o.admin ? "" : ` <button class="btn ${o.blocked ? "btn-light" : "btn-danger"} btn-sm" data-act="block" data-id="${o.id}" data-on="${!o.blocked}">${o.blocked ? "Débloquer" : "Bloquer"}</button>`),
     )).join("") || "<p class='muted'>Aucun utilisateur.</p>";

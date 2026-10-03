@@ -128,8 +128,8 @@ router.post("/organizers/:id/premium", async (req, res) => {
   res.json({ ok: true });
 });
 
-// Nommer ou retirer un administrateur (les super-administrateurs de ADMIN_EMAILS ne peuvent pas être retirés).
-router.post("/organizers/:id/admin", superOnly, async (req, res) => {
+// Nommer ou retirer un administrateur : ouvert à tous les administrateurs (le principal, de ADMIN_EMAILS, ne peut pas être retiré).
+router.post("/organizers/:id/admin", async (req, res) => {
   const organizer = await findOrganizer(Number(req.params.id));
   if (!organizer) return res.status(404).json({ error: "Utilisateur introuvable." });
   const on = Boolean(req.body?.admin);
