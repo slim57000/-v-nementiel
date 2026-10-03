@@ -699,6 +699,32 @@ document.addEventListener("contextmenu", (e) => { if (e.target.closest?.("[data-
 
 // Cagnotte DANS le site : fenêtre plein écran avec la page Leetchi / Lydia… quand le service l'accepte,
 // sinon ouverture dans un nouvel onglet (le live continue en arrière-plan).
+// Création d'une cagnotte SANS quitter le site : le service choisi s'ouvre dans une fenêtre
+// (ou un onglet s'il refuse d'être intégré) ; à la fermeture, `onClose` récupère le lien copié.
+const POT_SERVICES = [
+  ["Leetchi", "https://www.leetchi.com/fr/creer-une-cagnotte"],
+  ["Le Pot Commun", "https://www.lepotcommun.fr/pot/creer"],
+  ["On Participe", "https://www.onparticipe.fr"],
+  ["HelloAsso", "https://www.helloasso.com"],
+];
+export function createPot(onClose) {
+  document.body.insertAdjacentHTML("beforeend", `<div class="pot-frame" id="pot-frame" role="dialog" aria-modal="true">
+    <div class="pot-frame-bar"><b>🎁 Créer ma cagnotte</b><button type="button" class="pot-frame-close" aria-label="Fermer">✕</button></div>
+    <div class="pot-frame-pick">
+      <p>Choisissez le service de cagnotte. Une fois la cagnotte créée, <b>copiez son lien</b> puis touchez <b>✕</b> : il sera ajouté à votre événement.</p>
+      ${POT_SERVICES.map(([n, u]) => `<button type="button" class="btn btn-light btn-block" data-pot-url="${esc(u)}">${esc(n)}</button>`).join("")}
+    </div></div>`);
+  const box = document.getElementById("pot-frame");
+  box.querySelector(".pot-frame-close").addEventListener("click", () => { box.remove(); onClose?.(); });
+  box.querySelector(".pot-frame-pick").addEventListener("click", async (e) => {
+    const url = e.target.closest("[data-pot-url]")?.dataset.potUrl;
+    if (!url) return;
+    const { embeddable } = await api(`/api/public/pot-check?url=${encodeURIComponent(url)}`).catch(() => ({}));
+    if (!embeddable) { window.open(url, "_blank", "noopener"); return; } // le service refuse l'intégration : onglet à part
+    box.querySelector(".pot-frame-pick").outerHTML = `<iframe src="${esc(url)}" title="Cagnotte" allow="payment; clipboard-write"></iframe>`;
+  });
+}
+
 export async function openPot(slug, url) {
   const win = (u) => window.open(u, "_blank", "noopener");
   let info = { embeddable: false };

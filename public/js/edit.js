@@ -1,5 +1,5 @@
 // Création et modification d'un événement : infos, accès, faire-part, live, cagnotte, programme.
-import { api, $, esc, toast, resizeImage, goLogin, EVENT_TYPES, livePlaceholder, tabbar } from "./common.js";
+import { api, $, esc, toast, resizeImage, goLogin, EVENT_TYPES, livePlaceholder, tabbar, createPot } from "./common.js";
 import { tr } from "./i18n.js";
 import { defaultInvite, renderInvite, invitePhotoUrl, templatesFor } from "./invitation.js";
 tabbar("");
@@ -304,6 +304,8 @@ $("#program-template").addEventListener("click", () => {
   addEventListener("blur", () => { waiting = true; }); // l'organisateur part créer sa cagnotte ailleurs
   addEventListener("focus", () => { if (waiting && !input.value) tryPaste(false).then((ok) => { if (ok) waiting = false; }); });
   $("#cagnotte-paste").addEventListener("click", () => tryPaste(true));
+  // Création depuis le site : à la fermeture de la fenêtre, le lien copié est collé automatiquement.
+  $("#cagnotte-create").addEventListener("click", () => { waiting = true; createPot(() => tryPaste(false).then((ok) => ok || toast("Copiez le lien de votre cagnotte puis touchez « 📋 Coller »."))); });
   input.addEventListener("input", show);
   setTimeout(show, 1500);
 }

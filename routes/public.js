@@ -67,6 +67,8 @@ router.get("/", async (req, res) => {
 });
 
 // Événement privé non déverrouillé : on ne renvoie que le strict minimum pour l'écran cadenas.
+// Vérification d'une adresse de cagnotte quelconque (création d'une cagnotte depuis le site).
+router.get("/pot-check", async (req, res) => res.json({ embeddable: await embeddable(String(req.query.url || "")) }));
 router.get("/:slug", async (req, res) => {
   const event = await findEventBySlug(req.params.slug);
   if (!event || event.suspended) return res.status(404).json({ error: "Événement introuvable." });
