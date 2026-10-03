@@ -203,7 +203,7 @@ Object.assign(EN, {
  "🚪 Se déconnecter": "🚪 Sign out",
  "La suppression de votre compte efface définitivement vos événements, leurs photos, messages et livre d'or.": "Deleting your account permanently erases your events, their photos, messages and guestbook.",
  "Mot de passe actuel": "Current password",
- "Nouveau mot de passe (8 caractères min.)": "New password (8 characters min.)",
+ "Nouveau mot de passe (8 caractères min.)": "New password (8+ chars)",
  "← Mes événements": "← My events",
  "1. Votre événement": "1. Your event",
  "2. Qui peut le voir ?": "2. Who can see it?",
