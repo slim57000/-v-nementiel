@@ -9,8 +9,8 @@ $("#fav-btn").addEventListener("click", async () => {
     <span class="fav-thumb" style="background-image:url('${esc(coverOf(ev))}')"></span>
     <span><b>${esc(ev.name)}</b><small class="muted">${esc(formatDate(ev.date, ev.time))}</small></span></a>`).join("");
   document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="fav-sheet" role="dialog" aria-modal="true">
-    <div class="card"><h2 style="margin-top:0">❤️ Mes favoris</h2>
-      <div class="notif-list">${rows || '<p class="muted">Touchez ♡ sur la page d\'un événement pour le retrouver ici.</p>'}</div>
+    <div class="card"><h2 style="margin-top:0;text-align:center">❤️ Mes favoris</h2>
+      <div class="notif-list">${rows || '<p class="muted" style="text-align:center">Touchez ♡ sur la page d\'un événement pour le retrouver ici.</p>'}</div>
       <button class="btn btn-light btn-block" type="button" id="fav-close">Fermer</button></div></div>`);
   const sheet = $("#fav-sheet");
   sheet.addEventListener("click", (e) => { if (e.target === sheet || e.target.id === "fav-close") sheet.remove(); });
