@@ -789,3 +789,9 @@ html.big-text .tabbar a { font-size: .8rem; }
 .pot-service b { flex: 1; }
 .pot-service i { font-style: normal; font-size: 1.5rem; color: var(--muted); }
 .pot-service:active { transform: scale(.98); }
+
+/* Barre du bas immobile sur iPhone : sur les pages qui l'affichent, le contenu défile à l'intérieur du corps
+   (la fenêtre, elle, ne défile jamais), donc Safari ne replie/déplie plus sa barre d'adresse et le dock ne bouge pas. */
+html:has(body.has-tabbar) { height: 100%; overflow: hidden; overscroll-behavior: none; }
+body.has-tabbar { position: fixed; inset: 0; overflow-x: clip; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
+.tabbar { transform: translateZ(0); }
