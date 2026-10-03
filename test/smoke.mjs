@@ -113,7 +113,7 @@ ok("live multicaméra : angle en direct identifiable");
 
 // Un événement privé n'apparaît jamais en clair sur l'accueil (accessible par code seulement).
 const listing = (await api("/api/public?limit=50")).data.find((e) => e.slug === slug);
-assert.equal(listing.name, "Événement privé"); assert.equal(listing.location, ""); assert.equal(listing.cover, "");
+assert.equal(listing.name, "Événement privé"); assert.equal(listing.location, ""); // la photo et la date restent visibles (choix produit)
 assert.equal(listing.cameras.length, 0); assert.equal(listing.date, "");
 ok("événement privé masqué sur l'accueil public");
 
