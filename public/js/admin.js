@@ -26,8 +26,8 @@ const views = {
     return list.map((o) => row(
       `<b>${esc(o.email)}</b> ${o.superAdmin ? '<span class="badge">👑 Admin principal</span>' : o.admin ? `<span class="badge">Admin${o.adminUntil ? ` · jusqu'au ${until(o.adminUntil)}` : ""}</span>` : ""} ${o.blocked ? '<span class="badge private">Bloqué</span>' : ""} ${o.premium ? `<span class="badge">✨ Premium${o.premiumUntil ? ` · jusqu'au ${until(o.premiumUntil)}` : ""}</span>` : ""}`,
       `${o.events} événement(s) · inscrit le ${new Date(o.createdAt).toLocaleDateString(LOCALE)}`,
-      (o.superAdmin || !me.superAdmin ? "" : `<button class="btn btn-light btn-sm" data-act="admin" data-id="${o.id}" data-on="${!o.admin}">${o.admin ? "Retirer admin" : "👑 Passer admin"}</button> `)
-      + `<button class="btn btn-light btn-sm" data-act="premium" data-id="${o.id}" data-on="${!o.premium}">${o.premium ? "Retirer Premium" : "✨ Passer Premium"}</button>`
+      (o.superAdmin || !me.superAdmin ? "" : `<button class="btn btn-light btn-sm" data-act="admin" data-id="${o.id}" data-on="${!o.admin}">${o.admin ? "Retirer admin" : "👑 Passer admin"}</button> ${o.admin ? `<button class="btn btn-ghost btn-sm" data-act="admin-dur" data-id="${o.id}">⏱ Durée admin</button> ` : ""}`)
+      + `<button class="btn btn-light btn-sm" data-act="premium" data-id="${o.id}" data-on="${!o.premium}">${o.premium ? "Retirer Premium" : "✨ Passer Premium"}</button>${o.premium ? ` <button class="btn btn-ghost btn-sm" data-act="premium-dur" data-id="${o.id}">⏱ Durée Premium</button>` : ""}`
       + (o.admin ? "" : ` <button class="btn ${o.blocked ? "btn-light" : "btn-danger"} btn-sm" data-act="block" data-id="${o.id}" data-on="${!o.blocked}">${o.blocked ? "Débloquer" : "Bloquer"}</button>`),
     )).join("") || "<p class='muted'>Aucun utilisateur.</p>";
   },
@@ -55,8 +55,8 @@ const views = {
         <button class="btn btn-ghost btn-sm" data-act="del-contact" data-id="${esc(m.id)}">🗑️ Supprimer</button>
       </div></section>`).join("") || "<p class='muted'>Aucun message reçu.</p>";
   },
-  async settings() {
-    const [s, sent] = await Promise.all([api("/api/admin/settings"), api("/api/admin/notify").catch(() => [])]);
+  async notifs() {
+    const sent = await api("/api/admin/notify").catch(() => []);
     return `<section class="card">
       <h2 style="font-size:1rem">📣 Envoyer une notification à tous</h2>
       <p class="muted small">Reçue dans la cloche 🔔 de chaque utilisateur, et en notification sur le téléphone de ceux qui les ont activées. Les notifications automatiques (messages, réponses, rappels J-1, début du live, replay) partent toutes seules.</p>
@@ -67,8 +67,11 @@ const views = {
       ${sent.length ? `<h3 style="font-size:.9rem;margin:16px 0 6px">Notifications envoyées</h3>${sent.map((n) => `<div class="admin-row" style="display:flex;gap:10px;align-items:center;padding:8px 0">
         <div style="flex:1;min-width:0"><b>${esc(n.title)}</b><div class="muted small">${esc(n.body)}</div><small class="muted">${new Date(n.at).toLocaleString("fr-FR")} · ${n.users} compte(s)</small></div>
         <button class="btn btn-ghost btn-sm" data-act="unnotify" data-nid="${esc(n.nid)}">🗑 Supprimer</button></div>`).join("")}` : ""}
-      </section>
-      <section class="card">
+      </section>`;
+  },
+  async settings() {
+    const s = await api("/api/admin/settings");
+    return `<section class="card">
       <h2 style="font-size:1rem">Plateforme live par défaut</h2>
       <p class="muted small">Proposée aux organisateurs et caméramans lors de l'ajout d'une caméra.</p>
       <div class="segments" id="platform">
@@ -103,13 +106,31 @@ async function stats() {
 }
 stats();
 
-// Durée d'un rôle : nombre de jours, vide = sans limite, Annuler = rien. Renvoie null si annulé.
+// Durée d'un rôle : fenêtre avec raccourcis, saisie libre, « Illimité » (0) et « Annuler » (null).
 function askDays(role) {
-  const v = prompt(`${role} : durée en jours ?\n(laisser vide = sans limite)`, "");
-  if (v === null) return null;
-  const n = Math.round(Number(v.trim() || 0));
-  if (!Number.isFinite(n) || n < 0) { toast("Durée invalide"); return null; }
-  return n;
+  return new Promise((resolve) => {
+    document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="days-sheet" role="dialog" aria-modal="true"><div class="card" style="text-align:center">
+      <h2 style="margin-top:0">⏱ Durée · ${esc(role)}</h2>
+      <div class="choices" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+        ${[[7, "7 jours"], [30, "30 jours"], [90, "3 mois"], [365, "1 an"]].map(([d, l]) => `<button type="button" class="btn btn-light" data-days="${d}">${l}</button>`).join("")}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px"><input id="days-custom" type="number" inputmode="numeric" min="1" max="3650" placeholder="Nombre de jours" style="flex:1;text-align:center"><button type="button" class="btn" id="days-ok">OK</button></div>
+      <button type="button" class="btn btn-light btn-block" data-days="0" style="margin-top:10px">♾️ Illimité</button>
+      <button type="button" class="btn btn-ghost btn-block" id="days-cancel" style="margin-top:8px">Annuler</button>
+    </div></div>`);
+    const sheet = $("#days-sheet");
+    const done = (v) => { sheet.remove(); resolve(v); };
+    sheet.addEventListener("click", (e) => {
+      if (e.target === sheet || e.target.id === "days-cancel") return done(null);
+      const d = e.target.closest("[data-days]")?.dataset.days;
+      if (d !== undefined) return done(Number(d));
+      if (e.target.id === "days-ok") {
+        const n = Math.round(Number($("#days-custom").value));
+        if (!(n >= 1 && n <= 3650)) return toast("Entrez un nombre de jours (1 à 3650)");
+        done(n);
+      }
+    });
+  });
 }
 const until = (ms) => new Date(ms).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
 
@@ -196,7 +217,7 @@ $("#content").addEventListener("click", async (e) => {
       await api(`/api/admin/events/${id}`, { method: "DELETE" });
     }
     if (act === "admin") {
-      const days = on === "true" ? askDays("Droits d'administration") : 0;
+      const days = on === "true" ? await askDays("Administrateur") : 0;
       if (days === null) return;
       if (on === "true" || confirm("Retirer les droits d'administration à cet utilisateur ?")) {
         await api(`/api/admin/organizers/${id}/admin`, { method: "POST", body: { admin: on === "true", days } });
@@ -204,8 +225,16 @@ $("#content").addEventListener("click", async (e) => {
         render();
       }
     }
+    if (act === "admin-dur" || act === "premium-dur") {
+      const admin = act === "admin-dur";
+      const days = await askDays(admin ? "Administrateur" : "Premium");
+      if (days === null) return;
+      await api(`/api/admin/organizers/${id}/${admin ? "admin" : "premium"}`, { method: "POST", body: { [admin ? "admin" : "premium"]: true, days } });
+      toast(days ? `Durée enregistrée : ${days} jour(s)` : "Durée retirée : rôle illimité ♾️");
+      render();
+    }
     if (act === "premium") {
-      const days = on === "true" ? askDays("Premium") : 0;
+      const days = on === "true" ? await askDays("Premium") : 0;
       if (days === null) return;
       await api(`/api/admin/organizers/${id}/premium`, { method: "POST", body: { premium: on === "true", days } });
       toast(on === "true" ? "Compte passé en Premium ✨" : "Premium retiré");
