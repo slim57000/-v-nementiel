@@ -126,6 +126,8 @@ function showEvent(ev) {
 
   $("#share").onclick = () => shareSheet({ title: ev.name, text: `Vous êtes invité·e à « ${ev.name} » !`, url });
   $("#qa-share").onclick = () => $("#share").click();
+  $("#qa-comment").onclick = () => { $("#gb-open").scrollIntoView({ behavior: "smooth", block: "center" }); $("#gb-open").click(); };
+  eventReactions(ev);
   $("#copy").onclick = () => copy(url, "Lien copié !");
   $("#page").classList.remove("hidden");
 }
@@ -290,4 +292,24 @@ async function initRsvp(ev) {
   $("#rsvp").addEventListener("click", (e) => { if (e.target.dataset.rsvp) send(e.target.dataset.rsvp); });
   $("#rsvp-count").addEventListener("change", () => { const a = document.querySelector("[data-rsvp].active"); if (a) send(a.dataset.rsvp); });
   load();
+}
+
+// Réactions à l'événement : rangée d'emojis avec compteurs, envol de l'emoji touché.
+function eventReactions(ev) {
+  const box = $("#ev-react");
+  let counts = ev.reactions || {};
+  const paint = () => {
+    box.innerHTML = ["❤️", "😂", "😍", "👏", "🔥", "😮"].map((e) => `<button type="button" data-ev-react="${e}">${e}<small>${counts[e] || ""}</small></button>`).join("");
+  };
+  paint();
+  box.onclick = async (e) => {
+    const emoji = e.target.closest("[data-ev-react]")?.dataset.evReact;
+    if (!emoji) return;
+    const fly = document.createElement("span");
+    fly.className = "ev-fly"; fly.textContent = emoji;
+    e.target.closest("button").append(fly); setTimeout(() => fly.remove(), 1000);
+    counts = { ...counts, [emoji]: (counts[emoji] || 0) + 1 }; paint();
+    try { counts = await api(`/api/public/${encodeURIComponent(ev.slug)}/event-react`, { method: "POST", body: { emoji } }); paint(); }
+    catch (err) { toast(err.message); }
+  };
 }

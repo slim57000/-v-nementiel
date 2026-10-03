@@ -611,7 +611,10 @@ export function openStories(items, { start = 0, title = "", onDelete, slug = "" 
       <div class="sv-media"></div>
       <p class="sv-caption"></p>
       ${onDelete ? '<button class="sv-del" aria-label="Supprimer la story">🗑️</button>' : ""}
-      <div class="sv-react">${["❤️", "😂", "😍", "👏", "🔥", "😮"].map((e) => `<button type="button" data-react-story="${e}" aria-label="Réagir ${e}">${e}<small></small></button>`).join("")}</div>
+      <div class="sv-react">${["❤️", "😂", "😍", "👏", "🔥", "😮"].map((e) => `<button type="button" data-react-story="${e}" aria-label="Réagir ${e}">${e}<small></small></button>`).join("")}<button type="button" class="sv-com-btn" aria-label="Commentaires">💬<small></small></button></div>
+      <div class="sv-comments hidden"><div class="sv-com-list"></div>
+        <form class="sv-com-form"><input maxlength="300" placeholder="Écrire un commentaire…" aria-label="Commentaire"><button class="btn btn-sm">Envoyer</button></form>
+        <button type="button" class="sv-com-close btn btn-ghost btn-sm">Fermer</button></div>
       <button class="sv-prev" aria-label="Story précédente"></button><button class="sv-next" aria-label="Story suivante"></button>
     </div>`);
   const root = document.getElementById("story-viewer");
@@ -647,7 +650,40 @@ export function openStories(items, { start = 0, title = "", onDelete, slug = "" 
   // Réactions : compteur sous chaque emoji, petit envol de l'emoji touché, envoi au serveur.
   function paintReactions(it) {
     for (const b of root.querySelectorAll("[data-react-story]")) b.querySelector("small").textContent = it.reactions?.[b.dataset.reactStory] || "";
+    root.querySelector(".sv-com-btn small").textContent = it.comments?.length || "";
   }
+  // Commentaires : le panneau met la story en pause ; à la fermeture, elle reprend.
+  const panel = root.querySelector(".sv-comments");
+  const paintComments = (it) => {
+    panel.querySelector(".sv-com-list").innerHTML = (it.comments || []).map((c) => `<p><b>${esc(c.name)}</b> ${esc(c.text)}${onDelete ? ` <button type="button" data-del-com="${esc(c.id)}" aria-label="Retirer">✕</button>` : ""}</p>`).join("")
+      || `<p class="muted">${lang === "en" ? "No comments yet. Be the first!" : "Aucun commentaire. Soyez le premier !"}</p>`;
+    panel.querySelector(".sv-com-list").scrollTop = 1e6;
+  };
+  root.querySelector(".sv-com-btn").addEventListener("click", () => {
+    clearTimeout(timer); video?.pause?.();
+    const w = getComputedStyle(bars[i]).width; bars[i].style.transition = "none"; bars[i].style.width = w; // barre figée pendant la lecture
+    paintComments(items[i]); panel.classList.remove("hidden");
+  });
+  panel.querySelector(".sv-com-close").addEventListener("click", () => { panel.classList.add("hidden"); show(i); });
+  panel.querySelector(".sv-com-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const input = panel.querySelector("input"), it = items[i], where = it?.slug || slug;
+    const text = input.value.trim();
+    if (!text || !where) return;
+    let name = "";
+    try { name = localStorage.getItem("em-name") || ""; } catch { /* stockage indisponible */ }
+    try {
+      it.comments = await api(`/api/public/${encodeURIComponent(where)}/stories/${it.id}/comments`, { method: "POST", body: { text, name } });
+      input.value = ""; paintComments(it); paintReactions(it);
+    } catch (err) { toast(err.message); }
+  });
+  panel.querySelector(".sv-com-list").addEventListener("click", async (e) => {
+    const cid = e.target.closest("[data-del-com]")?.dataset.delCom;
+    const it = items[i], where = it?.slug || slug;
+    if (!cid || !where) return;
+    try { it.comments = await api(`/api/public/${encodeURIComponent(where)}/stories/${it.id}/comments/${encodeURIComponent(cid)}`, { method: "DELETE" }); paintComments(it); paintReactions(it); }
+    catch (err) { toast(err.message); }
+  });
   root.querySelector(".sv-react").addEventListener("click", async (e) => {
     const btn = e.target.closest("[data-react-story]");
     const it = items[i];

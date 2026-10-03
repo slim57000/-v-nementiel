@@ -146,7 +146,11 @@ router.get("/stories", async (req, res) => {
 
 // Réactions aux stories : compteur par emoji (réglage « storyreact:{id} »), l'organisateur est prévenu.
 export const STORY_EMOJIS = ["❤️", "😂", "😍", "👏", "🔥", "😮"];
-export const withReactions = (list) => Promise.all(list.map(async (p) => ({ ...p, reactions: (await getSetting(`storyreact:${p.id}`).catch(() => null)) || {} })));
+export const withReactions = (list) => Promise.all(list.map(async (p) => ({
+  ...p,
+  reactions: (await getSetting(`storyreact:${p.id}`).catch(() => null)) || {},
+  comments: (await getSetting(`storycomments:${p.id}`).catch(() => null)) || [],
+})));
 router.post("/stories/:id/react", async (req, res) => {
   const emoji = String(req.body?.emoji || "");
   if (!STORY_EMOJIS.includes(emoji)) return res.status(400).json({ error: "Réaction inconnue." });
@@ -161,6 +165,53 @@ router.post("/stories/:id/react", async (req, res) => {
   if (!(await tooFast(`${req.ip}:storynotif:${photo.id}`, 1, 3_600_000))) {
     const who = String(req.body?.name || "").trim().slice(0, 30) || "Un invité";
     notify([orgOwner(req.event.organizerId)], { title: `${emoji} Réaction à votre story`, body: `${who} a réagi à votre story de « ${req.event.name} »`, url: `/e/${req.event.slug}` }).catch(() => {});
+  }
+  res.json(counts);
+});
+
+// Commentaires des stories : visibles par tous ceux qui voient la story ; l'organisateur peut en retirer.
+async function storyOf(req) {
+  const photo = await findPhoto(Number(req.params.id) || req.params.id);
+  return photo?.story && photo.eventId === req.event.id ? photo : null;
+}
+router.post("/stories/:id/comments", notBlocked, async (req, res) => {
+  const me = await currentOrganizer(req).catch(() => null);
+  const name = clean(me?.displayName || me?.email?.split("@")[0] || req.body?.name, 30);
+  const text = clean(req.body?.text, 300);
+  if (!name || !text) return res.status(400).json({ error: "Écrivez votre commentaire." });
+  if (await tooFast(`${req.ip}:storycomment`, 10, 60_000)) return res.status(429).json({ error: "Doucement 🙂 réessayez dans un instant." });
+  const photo = await storyOf(req);
+  if (!photo) return res.status(404).json({ error: "Story introuvable." });
+  const key = `storycomments:${photo.id}`;
+  const list = (await getSetting(key).catch(() => null)) || [];
+  list.push({ id: Date.now().toString(36), name, text, at: Date.now() });
+  await setSetting(key, list.slice(-100));
+  if (me?.id !== req.event.organizerId) {
+    notify([orgOwner(req.event.organizerId)], { title: `💬 ${name} a commenté votre story`, body: text.slice(0, 140), url: `/e/${req.event.slug}` }).catch(() => {});
+  }
+  res.status(201).json(list.slice(-100));
+});
+router.delete("/stories/:id/comments/:cid", async (req, res) => {
+  if (!(await isOwner(req))) return res.status(403).json({ error: "Réservé à l'organisateur." });
+  const photo = await storyOf(req);
+  if (!photo) return res.status(404).json({ error: "Story introuvable." });
+  const key = `storycomments:${photo.id}`;
+  const list = ((await getSetting(key).catch(() => null)) || []).filter((c) => c.id !== req.params.cid);
+  await setSetting(key, list);
+  res.json(list);
+});
+
+// Réactions à l'événement lui-même (page de l'événement) : compteur par emoji, organisateur prévenu.
+router.post("/event-react", async (req, res) => {
+  const emoji = String(req.body?.emoji || "");
+  if (!STORY_EMOJIS.includes(emoji)) return res.status(400).json({ error: "Réaction inconnue." });
+  if (await tooFast(`${req.ip}:evreact`, 60, 600_000)) return res.status(429).json({ error: "Doucement 🙂 réessayez dans un instant." });
+  const key = `evreact:${req.event.id}`;
+  const counts = (await getSetting(key).catch(() => null)) || {};
+  counts[emoji] = (counts[emoji] || 0) + 1;
+  await setSetting(key, counts);
+  if (!(await tooFast(`${req.ip}:evreactnotif:${req.event.id}`, 1, 3_600_000))) {
+    notify([orgOwner(req.event.organizerId)], { title: `${emoji} Réaction à votre événement`, body: `Quelqu'un a réagi à « ${req.event.name} »`, url: `/e/${req.event.slug}` }).catch(() => {});
   }
   res.json(counts);
 });
