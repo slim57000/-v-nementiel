@@ -69,9 +69,9 @@ function liveCard({ href, image, tag, live, name, location, viewers, ev }) {
 api("/api/public?limit=10").catch(() => []).then((events) => {
   // Les directs du jour d'abord, puis les événements privés (rien ne transparaît), puis le reste.
   const built = events.map((e) => {
-    // Événement privé : ni nom, ni date, ni photo. Le clic mène à l'écran « entrez votre code ».
+    // Événement privé : sa photo, mais ni nom ni lieu. Le clic mène à l'écran « entrez votre code ».
     if (e.visibility === "private") return { live: false, html: liveCard({
-      href: `/e/${encodeURIComponent(e.slug)}`, image: "", tag: "🔒 Sur invitation", live: false,
+      href: `/e/${encodeURIComponent(e.slug)}`, image: e.cover ? coverOf(e) : "", tag: "🔒 Sur invitation", live: false,
       name: "Événement privé", location: "Accès par code",
     }) };
     const live = e.date === today && Boolean(e.cameras?.length);
