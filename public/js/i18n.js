@@ -291,8 +291,196 @@ Object.assign(EN, {
  "Caméra 1": "Camera 1"
 });
 
+// Textes des messages, confirmations et partages.
+Object.assign(EN, {
+ "Les photos et messages de vos invités apparaîtront ici.": "Your guests' photos and messages will appear here.",
+ "Écrire à": "Write to",
+ "Vous êtes maintenant amis 🎉": "You are now friends 🎉",
+ "Retirer cette personne de vos amis ?": "Remove this person from your friends?",
+ "Ami retiré": "Friend removed",
+ "6 caméras maximum": "6 cameras maximum",
+ "Caméra": "Camera",
+ "Démarrage du direct…": "Starting the live…",
+ "Liens enregistrés ✔": "Links saved ✔",
+ "Image partagée ✔": "Picture shared ✔",
+ "Un morceau du replay n'a pas pu être enregistré.": "Part of the replay could not be saved.",
+ "Ce navigateur ne permet pas de filmer. Utilisez Safari ou Chrome à jour.": "This browser cannot film. Use an up-to-date Safari or Chrome.",
+ "Accès à la caméra…": "Accessing the camera…",
+ "⚠️ Réseau instable, reconnexion…": "⚠️ Unstable network, reconnecting…",
+ "Les invités vous voient. Gardez cet écran ouvert.": "Guests can see you. Keep this screen open.",
+ "⚠️ Connexion perdue : vérifiez le réseau puis relancez.": "⚠️ Connection lost: check the network then restart.",
+ "Autorisez la caméra et le micro dans les réglages du navigateur.": "Allow the camera and microphone in your browser settings.",
+ "Direct arrêté. Le replay est disponible pour les invités.": "Live stopped. The replay is available to guests.",
+ "Direct arrêté": "Live stopped",
+ "Impossible de changer de caméra.": "Unable to switch camera.",
+ "Lien collé ✓ Pensez à enregistrer.": "Link pasted ✓ Remember to save.",
+ "Une erreur est survenue.": "Something went wrong.",
+ "Merci de choisir une image.": "Please choose an image.",
+ "Ajouté à vos favoris ❤️": "Added to your favorites ❤️",
+ "Retiré des favoris": "Removed from favorites",
+ "Ajouter aux favoris": "Add to favorites",
+ "Créez d'abord un événement pour y publier une story.": "Create an event first to post a story to it.",
+ "Sur quel événement ?": "On which event?",
+ "Aucune notification pour le moment.": "No notifications yet.",
+ "Pourquoi signalez-vous ce contenu ? (facultatif)": "Why are you reporting this content? (optional)",
+ "Merci, le signalement a été transmis.": "Thank you, your report has been sent.",
+ "Vous ne verrez plus les contenus de cette personne.": "You won't see this person's content anymore.",
+ "Bloquer cette personne ? Ses contenus seront masqués et elle ne pourra plus publier.": "Block this person? Their content will be hidden and they won't be able to post.",
+ "Personne bloquée.": "Person blocked.",
+ "Vidéo illisible.": "Unreadable video.",
+ "Envoi de la vidéo impossible, réessayez.": "Video upload failed, try again.",
+ "Vidéo trop lourde (4 Mo maximum).": "Video too large (4 MB maximum).",
+ "Envoi de la vidéo…": "Uploading the video…",
+ "Ajouter une légende ? (facultatif)": "Add a caption? (optional)",
+ "Message copié : collez-le dans Instagram": "Message copied: paste it in Instagram",
+ "Les notifications ne sont pas encore activées sur la plateforme.": "Notifications are not enabled on the platform yet.",
+ "Notifications indisponibles ici. Sur iPhone : Partager → « Sur l'écran d'accueil », puis ouvrez MaFeliza depuis l'icône.": "Notifications unavailable here. On iPhone: Share → “Add to Home Screen”, then open MaFeliza from the icon.",
+ "Notifications refusées dans les réglages du téléphone.": "Notifications are blocked in your phone settings.",
+ "Story précédente": "Previous story",
+ "Nouveau compte : choisissez un mot de passe (8 caractères minimum).": "New account: choose a password (8 characters minimum).",
+ "Saisissez votre mot de passe.": "Enter your password.",
+ "📧 Si un compte existe pour cette adresse, un code valable 15 minutes vient d'y être envoyé.": "📧 If an account exists for this address, a code valid for 15 minutes has just been sent to it.",
+ "Connexion Google interrompue : rouvrez mafeliza.com (sans « www ») puis réessayez.": "Google sign-in interrupted: reopen mafeliza.com (without “www”) and try again.",
+ "Connexion Google annulée.": "Google sign-in cancelled.",
+ "Google a refusé la connexion (configuration du serveur). Utilisez l'email en attendant.": "Google refused the sign-in (server configuration). Use email in the meantime.",
+ "Touchez ♡ sur la page d'un événement pour le retrouver ici.": "Tap ♡ on an event page to find it here.",
+ "🔗 Non répertorié": "🔗 Unlisted",
+ "🔒 Privé": "🔒 Private",
+ "🔓 Public": "🔓 Public",
+ "Vous n'avez pas encore d'événement.": "You don't have any events yet.",
+ "Créez le premier en quelques minutes !": "Create your first one in a few minutes!",
+ "Code copié !": "Code copied!",
+ "Lien avec code copié !": "Link with code copied!",
+ "📨 Envoyée": "📨 Sent",
+ "Choisissez la photo du faire-part ou une autre option.": "Choose the invitation photo or another option.",
+ "Toutes les personnes ont été débloquées": "Everyone has been unblocked",
+ "12 étapes maximum": "12 steps maximum",
+ "Cérémonie à la mairie": "Civil ceremony",
+ "Cérémonie religieuse": "Religious ceremony",
+ "Vin d'honneur": "Reception drinks",
+ "Dîner": "Dinner",
+ "Soirée dansante": "Dancing party",
+ "Accueil des invités": "Guests welcome",
+ "Demande officielle": "Official proposal",
+ "Soirée": "Party",
+ "Accueil et apéritif": "Welcome and drinks",
+ "Gâteau et bougies": "Cake and candles",
+ "Cérémonie": "Ceremony",
+ "Déjeuner": "Lunch",
+ "Goûter": "Afternoon snack",
+ "Apéritif": "Drinks",
+ "Ouverture des cadeaux": "Opening the gifts",
+ "Remise des diplômes": "Graduation ceremony",
+ "Dîner de célébration": "Celebration dinner",
+ "Copiez d'abord le lien de votre cagnotte, puis touchez « Coller ».": "First copy your money pot link, then tap “Paste”.",
+ "déjà collectés": "already collected",
+ "Aucune story pour l'instant.": "No stories yet.",
+ "Pourquoi signalez-vous cet événement ?": "Why are you reporting this event?",
+ "Merci, l'équipe MaFeliza va vérifier 🙏": "Thank you, the MaFeliza team will check 🙏",
+ "❌ Ne vient pas": "❌ Not coming",
+ "Super, à bientôt ! 🎉": "Great, see you soon! 🎉",
+ "Réponse enregistrée": "Answer saved",
+ "Dommage ! Réponse enregistrée": "Too bad! Answer saved",
+ "À donner à vos invités pour entrer": "Give it to your guests to get in",
+ "Permet de retrouver l'événement (Découvrir → code)": "Lets guests find the event (Discover → code)",
+ "🎥 Code caméraman": "🎥 Camera operator code",
+ "Pour la personne qui filme le live": "For the person filming the live",
+ "Scannez pour suivre le live": "Scan to watch the live",
+ "Scannez pour ouvrir l'événement": "Scan to open the event",
+ "Texte enregistré ✓": "Text saved ✓",
+ "Événement introuvable.": "Event not found.",
+ "a partagé": "shared",
+ "a écrit dans le livre d'or": "wrote in the guestbook",
+ "Répondre": "Reply",
+ "Votre réponse": "Your reply",
+ "Enregistrement vocal non disponible sur ce navigateur.": "Voice recording isn't available on this browser.",
+ "Micro refusé : autorisez-le pour enregistrer un vocal.": "Microphone blocked: allow it to record a voice message.",
+ "Écrivez un message, ajoutez une photo, une vidéo ou un vocal.": "Write a message, add a photo, a video or a voice message.",
+ "Événement privé": "Private event",
+ "Accès par code": "Access by code",
+ "Le replay n'est pas disponible pour le moment.": "The replay isn't available yet.",
+ "Le replay a été supprimé par l'organisateur.": "The replay was deleted by the organizer.",
+ "Le replay n'est plus disponible.": "The replay is no longer available.",
+ "Merci d'avoir partagé ce moment !": "Thank you for sharing this moment!",
+ "⏳ Préparation du zip…": "⏳ Preparing the zip…",
+ "Replay téléchargé ✔": "Replay downloaded ✔",
+ "Replay indisponible pour le moment": "Replay unavailable for now",
+ "Replay retiré : vous seul le voyez": "Replay hidden: only you can see it",
+ "Supprimer définitivement le replay ? Une copie (.zip) va d'abord être téléchargée sur votre appareil.": "Permanently delete the replay? A copy (.zip) will first be downloaded to your device.",
+ "Impossible de préparer le zip du replay. Supprimer quand même ?": "Unable to prepare the replay zip. Delete anyway?",
+ "Replay supprimé": "Replay deleted",
+ "Quitter le plein écran": "Exit full screen",
+ "Plein écran": "Full screen",
+ "Invité": "Guest",
+ "Une seule caméra pour ce direct 🎥": "Only one camera for this live 🎥",
+ "Aucune caméra pour le moment": "No camera yet",
+ "Ajoute-moi sur MaFeliza": "Add me on MaFeliza",
+ "Personne débloquée": "Person unblocked",
+ "Supprimer ce message ? Il disparaîtra aussi chez votre ami.": "Delete this message? It will also disappear for your friend.",
+ "Message supprimé": "Message deleted",
+ "Supprimer toute la conversation de votre côté ?": "Delete the whole conversation on your side?",
+ "Conversation supprimée": "Conversation deleted",
+ "Bloquer cette personne ? Elle ne pourra plus vous écrire.": "Block this person? They won't be able to write to you anymore.",
+ "Profil momentanément indisponible, réessayez plus tard.": "Profile temporarily unavailable, try again later.",
+ "Votre nom (affiché à vos amis) :": "Your name (shown to your friends):",
+ "Nom enregistré": "Name saved",
+ "Photo de profil mise à jour": "Profile photo updated",
+ "Les cagnottes des événements que vous suivez apparaîtront ici.": "Money pots of the events you follow will appear here.",
+ "Les vidéos partagées dans vos événements apparaîtront ici.": "Videos shared in your events will appear here.",
+ "Cette action est définitive. Tapez SUPPRIMER pour confirmer.": "This action is final. Type SUPPRIMER to confirm.",
+ "🔔 Notifications activées ✔": "🔔 Notifications enabled ✔",
+ "Notifications activées 🔔": "Notifications enabled 🔔",
+ "Mot de passe enregistré 🔒": "Password saved 🔒",
+ "Mes cadeaux": "My gifts",
+ "Mes vidéos": "My videos",
+ "Favoris": "Favorites",
+ "Participations": "Participations",
+ "Événements": "Events",
+ "Amis": "Friends"
+});
+// Morceaux de phrases contenant un nom ou un code (« Vous êtes invité·e à « X » ! »…), traduits sur place.
+const FRAG = Object.entries({
+ "💌 Vous êtes invité·e à «": "💌 You're invited to “",
+ "Vous êtes invité·e à «": "You're invited to “",
+ "» ! Code d'accès :": "”! Access code:",
+ "Code d'accès :": "Access code:",
+ "📺 Suivez «": "📺 Watch “",
+ "🔴 Suivez «": "🔴 Watch “",
+ "» en direct sur MaFeliza !": "” live on MaFeliza!",
+ "» en direct ! Code d'accès :": "” live! Access code:",
+ "» en direct !": "” live!",
+ "🎥 Vous filmez «": "🎥 You're filming “",
+ "» ! Ouvrez ce lien puis appuyez sur « Démarrer le live » (code :": "”! Open this link then tap “Start the live” (code:",
+ "📸 Un beau moment de «": "📸 A lovely moment from “",
+ "» sur MaFeliza": "” on MaFeliza",
+ "Supprimer définitivement «": "Permanently delete “",
+ "👋 Ajoute-moi en ami sur MaFeliza pour partager nos événements :": "👋 Add me as a friend on MaFeliza to share our events:",
+ "Vidéo trop longue (": "Video too long (",
+ "Archive créée (": "Archive created (",
+ "Archive créée :": "Archive created:",
+ "⏹ Arrêter (": "⏹ Stop (",
+ "invitation(s) envoyée(s) ✉️": "invitation(s) sent ✉️",
+ "· c'est aujourd'hui !": "· it's today!",
+ "Caméraman —": "Camera operator —",
+ "Vidéo de": "Video by",
+ "Replay <b>en ligne</b>": "Replay <b>online</b>",
+ ": vos invités peuvent le voir.": ": your guests can see it.",
+ ": vous seul le voyez.": ": only you can see it.",
+ "» !": "”!",
+ "» ?": "”?"
+}).sort((a, b) => b[0].length - a[0].length);
+
 export const lang = read(LANG_KEY) || (navigator.language?.startsWith("en") ? "en" : "fr");
 export const t = (fr) => (lang === "en" && EN[fr]) || fr;
+// Traduction d'une phrase complète : exacte si possible, sinon morceau par morceau.
+export function tr(text) {
+  if (lang !== "en" || !text) return text;
+  const s = String(text);
+  if (EN[s.trim()]) return s.replace(s.trim(), EN[s.trim()]);
+  let out = s;
+  for (const [fr, en] of FRAG) if (out.includes(fr)) out = out.split(fr).join(en);
+  return out.replace(/“\s+/g, "“").replace(/\s+”/g, "”"); // guillemets anglais sans espaces
+}
 
 // Traduit un nœud et ses descendants (textes et attributs usuels).
 function translate(root) {
@@ -301,6 +489,7 @@ function translate(root) {
   for (let n = walker.nextNode(); n; n = walker.nextNode()) {
     const key = n.nodeValue.trim();
     if (key && EN[key]) n.nodeValue = n.nodeValue.replace(key, EN[key]);
+    else if (key) { const v = tr(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; }
   }
   const els = root.querySelectorAll ? root.querySelectorAll("[placeholder],[aria-label],[title]") : [];
   for (const el of els) {
@@ -313,12 +502,17 @@ function translate(root) {
 
 if (lang === "en") {
   document.documentElement.lang = "en";
+  // Fenêtres du navigateur (confirmations, questions) : traduites elles aussi.
+  for (const fn of ["confirm", "alert", "prompt"]) {
+    const orig = window[fn].bind(window);
+    window[fn] = (msg, ...rest) => orig(tr(msg), ...rest);
+  }
   const start = () => {
     translate(document.body);
     new MutationObserver((muts) => {
       for (const m of muts) for (const node of m.addedNodes) {
         if (node.nodeType === 1) translate(node);
-        else if (node.nodeType === 3 && EN[node.nodeValue.trim()]) node.nodeValue = EN[node.nodeValue.trim()];
+        else if (node.nodeType === 3) { const v = tr(node.nodeValue); if (v !== node.nodeValue) node.nodeValue = v; }
       }
     }).observe(document.body, { childList: true, subtree: true });
   };

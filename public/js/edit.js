@@ -1,5 +1,6 @@
 // Création et modification d'un événement : infos, accès, faire-part, live, cagnotte, programme.
 import { api, $, esc, toast, resizeImage, goLogin, EVENT_TYPES, livePlaceholder, tabbar } from "./common.js";
+import { tr } from "./i18n.js";
 import { defaultInvite, renderInvite, invitePhotoUrl, templatesFor } from "./invitation.js";
 tabbar("");
 let phoneCams = []; // caméras « téléphone » (live en un clic)
@@ -259,7 +260,7 @@ function addStep(step = {}) {
     </div>`);
   const row = list.lastElementChild;
   row.querySelector("[name=step-time]").value = step.time || "";
-  row.querySelector("[name=step-label]").value = step.label || "";
+  row.querySelector("[name=step-label]").value = tr(step.label || "");
 }
 const PROGRAMS = {
   mariage: [["14:00", "Cérémonie à la mairie"], ["15:30", "Cérémonie religieuse"], ["17:00", "Vin d'honneur"], ["20:00", "Dîner"], ["22:30", "Soirée dansante"]],
