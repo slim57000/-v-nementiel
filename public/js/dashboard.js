@@ -296,12 +296,10 @@ async function openStats(ev) {
 // « + Créer » des stories : même choix que le + du menu (story ou événement).
 document.addEventListener("click", (e) => { if (e.target.closest("[data-create]")) createSheet(e); });
 
-// Guide en 3 étapes, affiché une fois par compte (chaque nouveau compte le voit, même sur un appareil déjà utilisé).
+// Tuto de bienvenue : affiché à chaque connexion (marqueur « em-tuto » posé par le serveur, effacé ici).
 (async () => {
-  const uid = await api("/api/auth/me").then((m) => m.id).catch(() => null);
-  if (!uid) return;
-  const key = `em-guide:${uid}`;
-  try { if (localStorage.getItem(key)) return; localStorage.setItem(key, "1"); } catch { return; }
+  if (!/(^|; )em-tuto=1/.test(document.cookie)) return;
+  document.cookie = "em-tuto=; path=/; max-age=0";
   if (document.getElementById("guide")) return; // jamais deux guides superposés
   document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="guide" role="dialog" aria-modal="true"><div class="card guide-card">
     <h2>Bienvenue sur MaFeliza 👋</h2>

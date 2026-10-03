@@ -11,6 +11,12 @@ import { randomBytes, randomInt } from "node:crypto";
 import { tooFast } from "../lib/limits.js";
 import { isPremium } from "../lib/premium.js";
 
+// Connexion ouverte : cookie de session + marqueur lisible par la page d'accueil pour afficher le tuto.
+function logIn(res, id) {
+  setSigned(res, "org", String(id));
+  res.cookie("em-tuto", "1", { path: "/", maxAge: 3_600_000, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
+}
+
 const router = Router();
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -32,7 +38,7 @@ router.post("/login", async (req, res) => {
     if (bad) return res.status(400).json({ needPassword: true, isNew: true, error: bad });
     const created = await createOrganizer(email, loginCode());
     await setPassword(created.id, password);
-    setSigned(res, "org", String(created.id));
+    logIn(res, created.id);
     return res.json({ created: true });
   }
 
@@ -56,7 +62,7 @@ router.post("/login", async (req, res) => {
       : "Email ou mot de passe incorrect." });
   }
   await clearLimit(`login:${email}`).catch(() => {});
-  setSigned(res, "org", String(organizer.id));
+  logIn(res, organizer.id);
   res.json({ created: false });
 });
 
@@ -95,7 +101,7 @@ router.post("/reset", async (req, res) => {
   if (!organizer || organizer.blocked) return res.status(400).json({ error: "Compte indisponible." });
   await setPassword(organizer.id, req.body.password);
   await setSetting(`reset:${token}`, null);
-  setSigned(res, "org", String(organizer.id));
+  logIn(res, organizer.id);
   res.json({ ok: true });
 });
 
@@ -114,7 +120,7 @@ router.post("/reset-code", async (req, res) => {
   if (!organizer || organizer.blocked) return res.status(400).json({ error: "Compte indisponible." });
   await setPassword(organizer.id, req.body.password);
   await setSetting(`resetcode:${email}`, null);
-  setSigned(res, "org", String(organizer.id));
+  logIn(res, organizer.id);
   res.json({ ok: true });
 });
 
@@ -165,7 +171,7 @@ router.get("/google/callback", async (req, res) => {
       organizer = await saveOrganizer({ ...organizer, displayName: who.name.slice(0, 40), avatar: who.avatar });
     }
     if (organizer.blocked) return res.redirect("/connexion");
-    setSigned(res, "org", String(organizer.id));
+    logIn(res, organizer.id);
     res.redirect(safeNext(decodeURIComponent(next || "")));
   } catch (err) {
     console.error("Google :", err.message);
@@ -193,7 +199,7 @@ router.get("/facebook/callback", async (req, res) => {
       organizer = await saveOrganizer({ ...organizer, displayName: who.name.slice(0, 40), avatar: who.avatar });
     }
     if (organizer.blocked) return res.redirect("/connexion");
-    setSigned(res, "org", String(organizer.id));
+    logIn(res, organizer.id);
     res.redirect(safeNext(decodeURIComponent(next || "")));
   } catch (err) {
     console.error("Facebook :", err.message);
