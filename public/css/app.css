@@ -829,7 +829,7 @@ body.has-tabbar { position: fixed; inset: 0; overflow-x: clip; overflow-y: auto;
 .steps-nav a.active i { background: linear-gradient(135deg, #fd1a85, #c60bd2); color: #fff; }
 .form-modern .card { border-radius: 24px; padding: 20px 18px; scroll-margin-top: 130px; }
 .form-modern h2, .form-modern label { text-align: left; }
-.form-modern h2 { font-size: 1.2rem; letter-spacing: -.01em; margin-top: 0; }
+.form-modern h2 { font-size: 1.2rem; letter-spacing: -.01em; margin-top: 0; text-align: center; }
 .form-modern label { font-size: .8rem; color: var(--muted); font-weight: 600; margin-top: 16px; }
 .form-modern .choice, .form-modern .advanced label.choice { margin: 0; }
 .form-modern input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), .form-modern select, .form-modern textarea { text-align: left; border-radius: 14px; }
