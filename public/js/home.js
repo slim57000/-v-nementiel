@@ -71,7 +71,7 @@ api("/api/public?limit=10").catch(() => []).then((events) => {
   const built = events.map((e) => {
     // Événement privé : sa photo, mais ni nom ni lieu. Le clic mène à l'écran « entrez votre code ».
     if (e.visibility === "private") return { live: false, html: liveCard({
-      href: `/e/${encodeURIComponent(e.slug)}`, image: e.cover ? coverOf(e) : "", tag: "🔒 Sur invitation", live: false,
+      href: `/e/${encodeURIComponent(e.slug)}`, image: coverOf(e), tag: "🔒 Sur invitation", live: false,
       name: "Événement privé", location: "Accès par code",
     }) };
     const live = e.date === today && Boolean(e.cameras?.length);

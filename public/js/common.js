@@ -138,7 +138,10 @@ export const placeholderCover = (type) => (placeholders[type] ||= `data:image/sv
   + `<stop offset="0" stop-color="#fe7320"/><stop offset=".5" stop-color="#fd1a85"/><stop offset="1" stop-color="#8a1de9"/></linearGradient></defs>`
   + `<rect width="800" height="500" fill="url(#g)"/><text x="400" y="250" font-size="150" text-anchor="middle" dominant-baseline="central">${EVENT_TYPES[type]?.icon || "🎉"}</text></svg>`,
 )}`);
-export const coverOf = (ev) => ev.cover || placeholderCover(ev.type);
+// Événement sans photo : une belle photo d'illustration selon son type (plutôt qu'un simple dégradé).
+const TYPE_PHOTOS = { mariage: "mariage-porte", anniversaire: "anniversaire-bougies", bapteme: "bebe", communion: "communion-priere", fiancailles: "alliances",
+  "baby-shower": "baby-shower-f", diplome: "diplome-lancer", retraite: "anniversaire-f", inauguration: "inauguration-f", autre: "live-mariage-5" };
+export const coverOf = (ev) => ev.cover || (TYPE_PHOTOS[ev.type] ? `/img/demo/${TYPE_PHOTOS[ev.type]}.jpg` : placeholderCover(ev.type));
 // Transforme un lien YouTube / Twitch en adresse de lecteur intégrable (null si non reconnu).
 export function embedUrl(url, slug = new URLSearchParams(location.search).get("e")) {
   // Caméra « téléphone » (LiveKit) : lecteur MaFeliza.
