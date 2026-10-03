@@ -702,8 +702,8 @@ document.addEventListener("contextmenu", (e) => { if (e.target.closest?.("[data-
 // Création d'une cagnotte SANS quitter le site : le service choisi s'ouvre dans une fenêtre
 // (ou un onglet s'il refuse d'être intégré) ; à la fermeture, `onClose` récupère le lien copié.
 const POT_SERVICES = [
-  ["Leetchi", "https://www.leetchi.com/fr/creer-une-cagnotte"],
-  ["Le Pot Commun", "https://www.lepotcommun.fr/pot/creer"],
+  ["Leetchi", "https://www.leetchi.com/fr"],
+  ["Le Pot Commun", "https://www.lepotcommun.fr"],
   ["On Participe", "https://www.onparticipe.fr"],
   ["HelloAsso", "https://www.helloasso.com"],
 ];
