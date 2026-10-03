@@ -937,3 +937,11 @@ main { animation: em-fade .3s ease-out; }
 .guide-card h2 { font-size: 1.55rem; }
 .guide-steps b { font-size: 1.22rem; }
 .guide-steps span { font-size: 1.08rem; line-height: 1.45; color: var(--text); opacity: .8; }
+
+/* Encart cagnotte de la page événement */
+.pot-promo { margin: 0 0 16px; padding: 16px; border-radius: 22px; text-align: center; background: var(--primary-light); border: 1px solid var(--border); }
+.pot-promo b { font-size: 1.05rem; }
+.pot-promo p { margin: 6px 0 12px; color: var(--text); opacity: .85; }
+.pot-promo-actions { display: flex; gap: 8px; justify-content: center; }
+.pot-promo-actions .btn { flex: 1; }
+.pot-promo .btn-light { background: var(--card); border: 1px solid var(--border); }

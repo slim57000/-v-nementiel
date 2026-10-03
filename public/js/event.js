@@ -108,6 +108,14 @@ function showEvent(ev) {
     $("#cagnotte-link").href = ev.cagnotteUrl;
     $("#cagnotte-link").onclick = (e) => { e.preventDefault(); openPot(ev.slug, ev.cagnotteUrl); };
     $("#cagnotte-link").classList.remove("hidden");
+    // Encart cagnotte : participer, et surtout la faire tourner (plus elle est partagée, plus elle grandit).
+    $("#pot-box").insertAdjacentHTML("afterend", `<div class="pot-promo">
+      <b>🎁 Une cagnotte est ouverte !</b>
+      <p>Plus elle est partagée, plus elle grandit 😄 Faites-la tourner autour de vous !</p>
+      <div class="pot-promo-actions"><button type="button" class="btn btn-sm" id="pot-give">Participer</button><button type="button" class="btn btn-light btn-sm" id="pot-share">🔁 La partager</button></div>
+    </div>`);
+    $("#pot-give").onclick = () => openPot(ev.slug, ev.cagnotteUrl);
+    $("#pot-share").onclick = () => shareSheet({ title: ev.name, text: `🎁 Participez à la cagnotte de « ${ev.name} » ! Plus on est nombreux, plus le cadeau est beau 😄`, url: location.href.split("?")[0] });
     const pot = ev.pot;
     if (pot && (pot.raised || pot.goal)) {
       const eur = (n) => n.toLocaleString(LOCALE) + " €";
