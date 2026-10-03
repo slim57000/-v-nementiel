@@ -302,6 +302,7 @@ document.addEventListener("click", (e) => { if (e.target.closest("[data-create]"
   if (!uid) return;
   const key = `em-guide:${uid}`;
   try { if (localStorage.getItem(key)) return; localStorage.setItem(key, "1"); } catch { return; }
+  if (document.getElementById("guide")) return; // jamais deux guides superposés
   document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="guide" role="dialog" aria-modal="true"><div class="card guide-card">
     <h2>Bienvenue sur MaFeliza 👋</h2>
     <ol class="guide-steps">
@@ -311,5 +312,7 @@ document.addEventListener("click", (e) => { if (e.target.closest("[data-create]"
     </ol>
     <button class="btn btn-block btn-big" id="guide-ok">C'est parti !</button>
   </div></div>`);
-  $("#guide-ok").addEventListener("click", () => $("#guide").remove());
+  // Fermeture : bouton « C'est parti ! » ou toucher en dehors de la carte.
+  const guide = document.getElementById("guide");
+  guide.addEventListener("click", (e) => { if (e.target === guide || e.target.closest("#guide-ok")) guide.remove(); });
 })();
