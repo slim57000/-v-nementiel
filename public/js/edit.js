@@ -309,3 +309,16 @@ $("#program-template").addEventListener("click", () => {
   input.addEventListener("input", show);
   setTimeout(show, 1500);
 }
+
+// Barre d'étapes : défilement doux vers la partie touchée, et étape visible surlignée.
+{
+  const links = [...document.querySelectorAll("#steps-nav a")];
+  for (const a of links) a.addEventListener("click", (e) => { e.preventDefault(); document.querySelector(a.getAttribute("href"))?.scrollIntoView({ behavior: "smooth", block: "start" }); });
+  const io = new IntersectionObserver((entries) => {
+    for (const en of entries) if (en.isIntersecting) for (const a of links) a.classList.toggle("active", a.getAttribute("href") === `#${en.target.id}`);
+  }, { rootMargin: "-45% 0px -50% 0px" });
+  for (const a of links) { const sec = document.querySelector(a.getAttribute("href")); if (sec) io.observe(sec); }
+  links[0]?.classList.add("active");
+  // Zone photo : texte adapté quand une photo est choisie.
+  $("#cover").addEventListener("change", () => { if ($("#cover").files[0]) document.querySelector(".dropzone b").textContent = tr("Changer la photo"); });
+}

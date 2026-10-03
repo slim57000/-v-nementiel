@@ -9,7 +9,7 @@
   <link rel="modulepreload" href="/js/common.js">
   <link rel="modulepreload" href="/js/icons.js">
   <link rel="modulepreload" href="/js/i18n.js">
-  <link rel="stylesheet" href="/css/app.css?v=107">
+  <link rel="stylesheet" href="/css/app.css?v=110">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -26,8 +26,12 @@
   </header>
   <main class="container">
     <h1 id="page-title" style="text-align:center">Nouvel événement</h1>
-    <form id="form" class="form-centered" novalidate>
-      <section class="card">
+    <!-- Étapes : raccourcis vers chaque partie, l'étape visible est surlignée -->
+    <nav class="steps-nav" id="steps-nav" aria-label="Étapes">
+      <a href="#s-event"><i>1</i>Événement</a><a href="#s-vis"><i>2</i>Visibilité</a><a href="#s-inv"><i>3</i>Faire-part</a><a href="#s-pot"><i>4</i>Cagnotte</a>
+    </nav>
+    <form id="form" class="form-centered form-modern" novalidate>
+      <section class="card" id="s-event">
         <h2>1. Votre événement</h2>
         <label>Type d'événement</label>
         <div class="choices" id="types"></div>
@@ -43,13 +47,14 @@
         <label for="location">Lieu</label>
         <input id="location" name="location" required maxlength="200" placeholder="Adresse ou nom du lieu">
 
-        <label for="cover">Photo de couverture</label>
-        <input id="cover" type="file" accept="image/*">
+        <label>Photo de couverture</label>
+        <label for="cover" class="dropzone"><span>📷</span><b>Ajouter une photo</b></label>
+        <input id="cover" type="file" accept="image/*" class="sr-only">
         <img id="cover-preview" class="cover-preview hidden" alt="Aperçu de la couverture">
         <button type="button" id="remove-cover" class="btn btn-ghost btn-sm hidden" style="margin-top:8px">Retirer la photo</button>
       </section>
 
-      <section class="card">
+      <section class="card" id="s-vis">
         <h2>2. Qui peut le voir ?</h2>
         <div class="choices" style="grid-template-columns:repeat(3,minmax(0,1fr))">
           <label class="choice" style="margin:0"><input type="radio" name="visibility" value="public" checked><span><b>🔓</b>Tout le monde</span></label>
@@ -69,7 +74,7 @@
         <p id="code-new" class="muted small hidden">Un code sera généré automatiquement à l'enregistrement.</p>
       </section>
 
-      <section class="card">
+      <section class="card" id="s-inv">
         <h2>3. Votre faire-part</h2>
         <p class="muted small" style="margin-top:0">Il est déjà rempli pour vous : choisissez simplement un style.</p>
         <label>Style</label>
@@ -107,7 +112,7 @@
         </details>
       </section>
 
-      <section class="card">
+      <section class="card" id="s-pot">
         <h2>4. Cagnotte <small class="muted" style="font-weight:400">(facultatif)</small></h2>
         <div class="cagnotte-promo">
           <b>🎁 Créez une cagnotte, vos proches adorent participer !</b>
@@ -164,9 +169,9 @@
       </details>
 
       <p id="error" class="error" role="alert"></p>
-      <button class="btn btn-block btn-big" id="save">✅ Enregistrer mon événement</button>
+      <button class="btn btn-block btn-big save-sticky" id="save">✅ Enregistrer mon événement</button>
     </form>
   </main>
-  <script type="module" src="/js/edit.js?v=4"></script>
+  <script type="module" src="/js/edit.js?v=5"></script>
 </body>
 </html>

@@ -820,3 +820,30 @@ body.has-tabbar { position: fixed; inset: 0; overflow-x: clip; overflow-y: auto;
 #page .share-bar .btn { border-radius: 16px; }
 .has-tabbar #page .share-bar { bottom: calc(76px + env(safe-area-inset-bottom)); }
 .invite-top .lock-chip { background: rgba(255,255,255,.9); color: #3a2a1a; border-radius: 999px; padding: 4px 10px; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+
+/* ---------- Page de création modernisée ---------- */
+.steps-nav { position: sticky; top: 57px; z-index: 9; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin: 0 0 14px; padding: 6px; border-radius: 18px; border: 1px solid var(--border); background: color-mix(in srgb, var(--card) 90%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: var(--shadow); }
+.steps-nav a { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; border-radius: 12px; font-size: .7rem; font-weight: 600; color: var(--muted); text-decoration: none; }
+.steps-nav i { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: var(--border); color: var(--text); font-style: normal; font-size: .75rem; }
+.steps-nav a.active { color: var(--primary); background: var(--primary-light); }
+.steps-nav a.active i { background: linear-gradient(135deg, #fd1a85, #c60bd2); color: #fff; }
+.form-modern .card { border-radius: 24px; padding: 20px 18px; scroll-margin-top: 130px; }
+.form-modern h2, .form-modern label { text-align: left; }
+.form-modern h2 { font-size: 1.2rem; letter-spacing: -.01em; margin-top: 0; }
+.form-modern label { font-size: .8rem; color: var(--muted); font-weight: 600; margin-top: 16px; }
+.form-modern .choice, .form-modern .advanced label.choice { margin: 0; }
+.form-modern input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), .form-modern select, .form-modern textarea { text-align: left; border-radius: 14px; }
+.form-modern .choice span { border-radius: 16px; }
+.dropzone { display: flex !important; flex-direction: column; align-items: center; gap: 4px; padding: 18px; margin: 6px 0 0 !important; border: 2px dashed var(--border); border-radius: 18px; background: var(--bg); color: var(--text) !important; font-size: .95rem !important; text-align: center !important; cursor: pointer; }
+.dropzone span { font-size: 1.6rem; }
+.dropzone:active { border-color: var(--primary); }
+.form-modern .cagnotte-promo { background: var(--primary-light); color: var(--text); box-shadow: none; border: 1px solid var(--border); }
+.form-modern .cagnotte-promo small { color: var(--primary); }
+.save-sticky { position: sticky; bottom: calc(80px + env(safe-area-inset-bottom)); z-index: 8; border-radius: 18px; box-shadow: 0 10px 28px rgba(214,40,160,.35); }
+/* Types : pastilles sur deux colonnes, icône à gauche, libellé lisible en entier */
+.form-modern #types { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; grid-auto-rows: auto; }
+.form-modern #types .choice { min-width: 0; }
+.form-modern #types .choice span { min-height: 0 !important; flex-direction: row; justify-content: flex-start; gap: 10px; padding: 10px 12px; font-size: .88rem; text-align: left; }
+.form-modern #types .choice span b { font-size: 1.3rem; }
+.form-modern #s-event { position: relative; }
+.form-modern #cover.sr-only { left: 0; top: 0; margin: 0; }
