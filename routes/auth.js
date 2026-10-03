@@ -3,7 +3,7 @@ import { Router } from "express";
 import { findOrganizerByEmail, findOrganizer, createOrganizer, deleteOrganizer, listEvents, saveOrganizer, getSetting, setSetting, clearLimit } from "../lib/store.js";
 import { loginCode } from "../lib/codes.js";
 import { setSigned, getSigned } from "../lib/session.js";
-import { codeEmail, resetEmail, EMAIL_ENABLED, lastEmailError } from "../lib/email.js";
+import { codeEmail, resetEmail, EMAIL_ENABLED, lastEmailError, reqLang } from "../lib/email.js";
 import { setPassword, hasPassword, checkPassword, passwordError } from "../lib/password.js";
 import { GOOGLE_ENABLED, googleAuthUrl, googleIdentity } from "../lib/google.js";
 import { FACEBOOK_ENABLED, facebookAuthUrl, facebookIdentity } from "../lib/facebook.js";
@@ -75,7 +75,7 @@ router.post("/forgot", async (req, res) => {
       setSetting(`reset:${token}`, { id: organizer.id, exp }),
       setSetting(`resetcode:${email}`, { id: organizer.id, code, exp, tries: 0 }),
     ]);
-    if (!(await resetEmail(email, `${origin(req)}/reinitialiser?token=${token}`, code))) {
+    if (!(await resetEmail(email, `${origin(req)}/reinitialiser?token=${token}`, code, reqLang(req)))) {
       const unverified = /own email address|verify a domain|not verified/i.test(lastEmailError);
       return res.status(502).json({ error: unverified
         ? "L'envoi d'emails est en cours d'activation (domaine mafeliza.com à vérifier dans Resend). Réessayez plus tard ou connectez-vous avec Google."
@@ -214,7 +214,7 @@ router.post("/send-code", async (req, res) => {
   if (organizer && !organizer.blocked) {
     const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
     await setSetting(`otp:${email}`, { code, exp: Date.now() + 15 * 60 * 1000 });
-    await codeEmail(email, code, true);
+    await codeEmail(email, code, true, reqLang(req));
   }
   res.json({ ok: true });
 });

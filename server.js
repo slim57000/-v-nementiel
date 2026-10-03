@@ -23,6 +23,7 @@ import adminRoutes from "./routes/admin.js";
 import meRoutes from "./routes/me.js";
 import { getSetting, setSetting, listEventsOnDate, findOrganizer, listPublicUpcoming, listUnlistedIds } from "./lib/store.js";
 import { EMAIL_ENABLED, sendEmail } from "./lib/email.js";
+import { eventLang } from "./lib/invites.js";
 import { UPLOAD_DIR } from "./lib/uploads.js";
 import { findEventBySlug } from "./lib/store.js";
 import { ON_VERCEL, missingConfig } from "./lib/config.js";
@@ -132,7 +133,15 @@ app.get(["/api/cron/daily", "/api/cron/replay-reminders"], async (req, res) => {
     if (!event.cameras?.length) continue;
     const organizer = await findOrganizer(event.organizerId);
     if (!organizer) continue;
-    const ok = await sendEmail({
+    const en = (await eventLang(event)) === "en";
+    const ok = await sendEmail(en ? {
+      to: organizer.email, lang: "en",
+      subject: `The replay of “${event.name}” expires in 2 days`,
+      title: "Remember to save your replay",
+      body: `<p>The replay of <b>${event.name.replace(/</g, "&lt;")}</b> will no longer be offered to guests in 2 days.</p>
+        <p>The replay, photos, videos, voice messages and guest messages can be downloaded as one .zip file from
+        your home page → 📦 Download (zip).</p>`,
+    } : {
       to: organizer.email,
       subject: `Le replay de « ${event.name} » expire dans 2 jours`,
       title: "Pensez à récupérer votre replay",

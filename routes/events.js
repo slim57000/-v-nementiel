@@ -19,7 +19,7 @@ const cleanProgram = (body) => ({
 const euros = (v) => Math.max(0, Math.min(1e7, Math.round(Number(String(v ?? "").replace(",", ".")) || 0)));
 const savePot = (id, body) => (body && ("potRaised" in body || "potGoal" in body) ? setSetting(`pot:${id}`, { raised: euros(body.potRaised), goal: euros(body.potGoal) }) : null);
 const saveProgram = (id, body) => (body && ("program" in body || "practical" in body) ? setSetting(`program:${id}`, cleanProgram(body)) : null);
-import { EMAIL_ENABLED } from "../lib/email.js";
+import { EMAIL_ENABLED, reqLang } from "../lib/email.js";
 import { tooFast } from "../lib/limits.js";
 import { listMessages, listInvites, listEvents, findEvent, createEvent, saveEvent, deleteEvent, listPhotos, listGuestbook, countReports } from "../lib/store.js";
 
@@ -105,6 +105,7 @@ router.post("/", handle(async (req, res) => {
   });
   await saveProgram(event.id, req.body);
   await savePot(event.id, req.body);
+  await setSetting(`evlang:${event.id}`, reqLang(req)).catch(() => {}); // langue des emails de l'événement
   await setUnlisted(event.id, unlisted);
   await setShowcase(event.id, req.body.showcase !== false && (unlisted || event.visibility === "private"));
   res.status(201).json(ownerView(withVisibility(event, new Set(unlisted ? [event.id] : []))));
@@ -125,6 +126,7 @@ router.put("/:id", handle(async (req, res) => {
   });
   await saveProgram(event.id, req.body);
   await savePot(event.id, req.body);
+  await setSetting(`evlang:${event.id}`, reqLang(req)).catch(() => {}); // langue des emails de l'événement
   await setUnlisted(event.id, unlisted);
   await setShowcase(event.id, req.body.showcase !== false && (unlisted || event.visibility === "private"));
   res.json(ownerView(withVisibility(event, new Set(unlisted ? [event.id] : []))));
