@@ -10,7 +10,7 @@ KEY = open(os.environ["KEY_PATH"]).read()
 TMP = os.environ.get("RUNNER_TEMP", "/tmp")
 STATE = f"{TMP}/asc_state.json"
 
-def api(method, path, body=None):
+def api(method, path, body=None, allow=()):
     token = jwt.encode({"iss": ISSUER, "iat": int(time.time()), "exp": int(time.time()) + 900, "aud": "appstoreconnect-v1"},
                        KEY, algorithm="ES256", headers={"kid": KEY_ID, "typ": "JWT"})
     req = urllib.request.Request(f"https://api.appstoreconnect.apple.com/v1{path}", method=method,
@@ -21,6 +21,8 @@ def api(method, path, body=None):
             raw = r.read()
             return json.loads(raw) if raw else {}
     except urllib.error.HTTPError as e:
+        if e.code in allow:
+            return {"error": e.code}
         sys.exit(f"API Apple {method} {path} : {e.code} {e.read().decode()[:800]}")
 
 def run(*cmd):
@@ -31,7 +33,17 @@ def setup():
     run("openssl", "genrsa", "-out", f"{TMP}/dist.key", "2048")
     run("openssl", "req", "-new", "-key", f"{TMP}/dist.key", "-out", f"{TMP}/dist.csr", "-subj", "/CN=MaFeliza CI/O=MaFeliza/C=FR")
     csr = open(f"{TMP}/dist.csr").read()
-    cert = api("POST", "/certificates", {"data": {"type": "certificates", "attributes": {"certificateType": "DISTRIBUTION", "csrContent": csr}}})["data"]
+    body = {"data": {"type": "certificates", "attributes": {"certificateType": "DISTRIBUTION", "csrContent": csr}}}
+    cert = api("POST", "/certificates", body, allow=(409,))
+    if cert.get("error") == 409:
+        # Limite Apple atteinte : l'ancien certificat de distribution (inutilisable ici, sans sa clé privée)
+        # est révoqué. Les apps déjà publiées ne sont pas affectées.
+        for t in ("DISTRIBUTION", "IOS_DISTRIBUTION"):
+            for old in api("GET", f"/certificates?filter[certificateType]={t}&limit=50")["data"]:
+                print(f"Révocation de l'ancien certificat : {old['attributes'].get('name')} ({old['id']})")
+                api("DELETE", f"/certificates/{old['id']}")
+        cert = api("POST", "/certificates", body)
+    cert = cert["data"]
     open(f"{TMP}/dist.cer", "wb").write(base64.b64decode(cert["attributes"]["certificateContent"]))
     # 2. Identifiant de l'app (créé s'il n'existe pas encore)
     found = api("GET", f"/bundleIds?filter[identifier]={BUNDLE}&filter[platform]=IOS")["data"]
