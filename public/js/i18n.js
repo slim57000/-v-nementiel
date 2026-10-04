@@ -523,6 +523,12 @@ function translate(root) {
 
 if (lang === "en") {
   document.documentElement.lang = "en";
+  // Pages rédigées dans les deux langues (pages légales) : on affiche la version anglaise.
+  const swap = () => {
+    document.querySelectorAll("[data-fr]").forEach((el) => { el.hidden = true; });
+    document.querySelectorAll("[data-en]").forEach((el) => { el.hidden = false; });
+  };
+  document.body ? swap() : addEventListener("DOMContentLoaded", swap);
   // Fenêtres du navigateur (confirmations, questions) : traduites elles aussi.
   for (const fn of ["confirm", "alert", "prompt"]) {
     const orig = window[fn].bind(window);
