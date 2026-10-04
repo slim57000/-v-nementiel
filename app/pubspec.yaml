@@ -1,0 +1,37 @@
+name: mafeliza
+description: Application MaFeliza (iPhone / Android) — affiche mafeliza.com avec les fonctions du téléphone.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  webview_flutter: ^4.10.0
+  webview_flutter_android: ^4.3.0
+  webview_flutter_wkwebview: ^3.18.0
+  permission_handler: ^11.3.1
+  url_launcher: ^6.3.1
+  connectivity_plus: ^6.1.0
+  file_picker: ^8.1.2
+
+dev_dependencies:
+  flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.1
+
+flutter:
+  uses-material-design: true
+
+# Icône et écran de démarrage générés à partir du logo :
+#   dart run flutter_launcher_icons && dart run flutter_native_splash:create
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon.png"
+  remove_alpha_ios: true
+
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/icon.png

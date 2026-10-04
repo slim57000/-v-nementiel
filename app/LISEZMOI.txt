@@ -1,0 +1,16 @@
+MaFeliza — application Android / iPhone (Flutter)
+=================================================
+Dossier app/ du dépôt (le site ne l'utilise pas). google-services.json n'est pas publié : le copier ici à la main.
+
+Compiler (Windows, Flutter et Android Studio installés) :
+  1. Ouvrir PowerShell dans ce dossier
+  2. powershell -ExecutionPolicy Bypass -File .\compiler.ps1
+  3. Le fichier est créé ici : build\app\outputs\flutter-apk\app-release.apk
+     -> l'envoyer sur le téléphone Android pour l'installer.
+
+Identifiant de l'application : fr.mafeliza.app (projet Firebase « mafeliza-47422»).
+Pour le Google Play : flutter build appbundle (fichier .aab), signé avec votre propre clé.
+iPhone : compilé et envoyé sur TestFlight par GitHub (onglet Actions → « iPhone → TestFlight » → Run workflow).
+
+L'application affiche mafeliza.com : toute mise à jour du site apparaît
+immédiatement dans l'application, sans republier sur les stores.

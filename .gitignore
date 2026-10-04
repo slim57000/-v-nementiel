@@ -5,3 +5,14 @@ uploads/
 data/
 mobile-flutter/
 mafeliza-app/
+
+# Application (dossier app/) : fichiers générés et clés jamais publiés
+app/google-services.json
+app/android/
+app/ios/
+app/build/
+app/.dart_tool/
+app/.flutter-plugins*
+app/pubspec.lock
+app/*.p8
+app/*.p12
