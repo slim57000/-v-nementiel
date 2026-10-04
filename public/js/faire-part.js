@@ -11,7 +11,7 @@ function liveInvite(ev) {
   if (EN) {
     return {
       kicker: "Live invitation", title: ev.name,
-      text: `Can't make it? Watch it live from your phone on ${formatDate(ev.date, ev.time)}.\n\nMessages, reactions and photos: share this moment with us!`,
+      text: `We are delighted to announce our celebration, held in an intimate setting on ${formatDate(ev.date)}.\n\nBecause you matter to us and we want to share this moment despite the distance, we invite you to follow our ceremony live!\n\nWebsite link or QR code below${ev.time ? `: the broadcast starts at ${ev.time}` : ""}.`,
     };
   }
   const what = { mariage: "notre mariage", bapteme: "le baptême", communion: "la communion", fiancailles: "nos fiançailles",
@@ -20,7 +20,8 @@ function liveInvite(ev) {
   return {
     kicker: "Invitation au live",
     title: ev.name,
-    text: `Nous avons la joie de vous annoncer ${what}, le ${formatDate(ev.date, ev.time).toLowerCase()}.\n\nParce que vous comptez pour nous et que nous souhaitons partager ce moment malgré la distance, nous vous invitons à le suivre en direct !\n\nScannez le QR code ou ouvrez le lien : messages, réactions et photos, vivez ce moment avec nous.`,
+    // Formulation par défaut : « en petit comité… suivre notre cérémonie en direct », avec l'heure de diffusion.
+    text: `Nous avons la joie de vous annoncer ${what} qui se déroulera en petit comité le ${formatDate(ev.date).toLowerCase()}.\n\nParce que vous comptez pour nous et que nous souhaitons partager ce moment malgré la distance, nous vous invitons à suivre notre cérémonie en direct !\n\nLien du site ou QR code ci-dessous${ev.time ? ` : la diffusion commence à ${ev.time.replace(":", "h")}` : ""}.`,
   };
 }
 
@@ -28,13 +29,13 @@ function liveInvite(ev) {
 function liveTexts(ev) {
   const when = formatDate(ev.date, ev.time);
   if (EN) return [liveInvite(ev).text,
-    `We are delighted to announce our celebration, held in an intimate setting on ${when}.\n\nBecause you matter to us and we want to share this moment despite the distance, we invite you to follow the ceremony live!\n\nScan the QR code or open the link a few minutes before it starts.`,
+    `Can't make it? Watch it live from your phone on ${when}.\n\nMessages, reactions and photos: share this moment with us!`,
     `Save the date: ${when}.\n\nWherever you are, join us live from your phone, tablet or computer. Send your messages and reactions: we will see them in real time ❤️`];
   const what = { mariage: "notre mariage", bapteme: "le baptême", communion: "la communion", fiancailles: "nos fiançailles",
     anniversaire: "l'anniversaire", "baby-shower": "la baby shower", diplome: "la remise de diplôme",
     retraite: "le départ en retraite", inauguration: "l'inauguration" }[ev.type] || "l'événement";
   return [liveInvite(ev).text,
-    `Nous avons la joie de vous annoncer ${what}, qui se déroulera en petit comité le ${when.toLowerCase()}.\n\nParce que vous comptez pour nous et que nous souhaitons partager ce moment malgré la distance, nous vous invitons à suivre la cérémonie en direct !\n\nScannez le QR code ou ouvrez le lien quelques minutes avant le début de la diffusion.`,
+    `Nous avons la joie de vous annoncer ${what}, le ${when.toLowerCase()}.\n\nParce que vous comptez pour nous et que nous souhaitons partager ce moment malgré la distance, nous vous invitons à le suivre en direct !\n\nScannez le QR code ou ouvrez le lien : messages, réactions et photos, vivez ce moment avec nous.`,
     `Réservez la date : ${when.toLowerCase()}.\n\nOù que vous soyez, rejoignez-nous en direct depuis votre téléphone, votre tablette ou votre ordinateur. Envoyez-nous vos messages et vos réactions : nous les verrons en temps réel ❤️`,
     `Vous ne pourrez pas être à nos côtés ? Pas de souci : ${what} sera diffusé en direct le ${when.toLowerCase()}.\n\nInstallez-vous confortablement, ouvrez le lien et vivez ce moment avec nous comme si vous y étiez !`];
 }

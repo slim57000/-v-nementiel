@@ -76,9 +76,11 @@ export async function share({ title, text, url }) {
 export const eventUrl = (slug) => `${location.origin}/e/${slug}`;
 
 export function formatDate(date, time) {
-  const d = new Date(`${date}T${time}`);
+  const d = new Date(`${date}T${time || "12:00"}`);
   const day = d.toLocaleDateString(LOCALE, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-  return EN ? `${day} at ${time}` : `${day.charAt(0).toUpperCase()}${day.slice(1)} à ${time.replace(":", "h")}`;
+  const cap = EN ? day : `${day.charAt(0).toUpperCase()}${day.slice(1)}`;
+  if (!time) return cap; // date seule (sans heure)
+  return EN ? `${cap} at ${time}` : `${cap} à ${time.replace(":", "h")}`;
 }
 
 // Redimensionne une photo côté navigateur (photos de téléphone souvent > 5 Mo) et renvoie une data URL JPEG.
