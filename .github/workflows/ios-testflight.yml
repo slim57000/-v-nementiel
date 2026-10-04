@@ -45,21 +45,22 @@ jobs:
             -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_$KEY_ID.p8" \
             -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER_ID"
 
+      - name: Certificat de distribution et profil (API App Store Connect)
+        env:
+          KEY_PATH: ${{ runner.temp }}/keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
+        run: |
+          python3 -m pip install --quiet --break-system-packages pyjwt cryptography
+          python3 asc_signing.py setup
+
       - name: Envoyer sur TestFlight
         run: |
-          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0"><dict>
-            <key>method</key><string>app-store-connect</string>
-            <key>destination</key><string>upload</string>
-            <key>teamID</key><string>$APPLE_TEAM_ID</string>
-            <key>signingStyle</key><string>automatic</string>
-            <key>uploadSymbols</key><true/>
-          </dict></plist>
-          PLIST
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" \
-            -allowProvisioningUpdates \
             -authenticationKeyPath "$RUNNER_TEMP/keys/AuthKey_$KEY_ID.p8" \
             -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER_ID"
+
+      - name: Supprimer le certificat et le profil temporaires
+        if: always()
+        env:
+          KEY_PATH: ${{ runner.temp }}/keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8
+        run: python3 asc_signing.py cleanup || true
