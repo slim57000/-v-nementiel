@@ -20,41 +20,14 @@ foreach ($f in @("android/app/build.gradle.kts", "android/app/build.gradle")) {
     (Get-Content $f -Raw) -replace 'compileSdk\s*=\s*flutter\.compileSdkVersion', 'compileSdk = 36' -replace 'compileSdkVersion\s+flutter\.compileSdkVersion', 'compileSdkVersion 36' | Set-Content $f -Encoding UTF8
   }
 }
-# Modules Flutter compilés avec un SDK trop ancien -> forcés en 36 au bon moment (finalizeDsl).
-# (remplace l'ancienne version « afterEvaluate », refusée par Gradle : « too late to set compileSdk »)
-$root = "android/build.gradle.kts"
-if (Test-Path $root) {
-  $t = Get-Content $root -Raw
-  $t = [regex]::Replace($t, '(?s)\r?\n// MaFeliza-SDK36 .*?\r?\n}\r?\n', "`n")
-  if ($t -notmatch "MaFeliza-SDK36b") {
-    $t += @"
-
-// MaFeliza-SDK36b : modules Flutter compilés avec un SDK trop ancien -> forcés en 36.
-subprojects {
-    plugins.withId("com.android.library") {
-        extensions.getByType<com.android.build.api.variant.LibraryAndroidComponentsExtension>().finalizeDsl { it.compileSdk = 36 }
-    }
-}
-"@
+# Nettoyage : anciens blocs « MaFeliza-SDK36 » retirés (refusés par Gradle). file_picker 10 suit désormais
+# le SDK de Flutter, plus besoin de forcer les modules.
+foreach ($root in @("android/build.gradle.kts", "android/build.gradle")) {
+  if (Test-Path $root) {
+    $t = Get-Content $root -Raw
+    $t = [regex]::Replace($t, '(?s)\r?\n// MaFeliza-SDK36b? .*?\r?\n}\r?\n', "`n")
+    Set-Content $root $t -Encoding UTF8
   }
-  Set-Content $root $t -Encoding UTF8
-}
-$rootG = "android/build.gradle"
-if (Test-Path $rootG) {
-  $t = Get-Content $rootG -Raw
-  $t = [regex]::Replace($t, '(?s)\r?\n// MaFeliza-SDK36 .*?\r?\n}\r?\n', "`n")
-  if ($t -notmatch "MaFeliza-SDK36b") {
-    $t += @"
-
-// MaFeliza-SDK36b : modules Flutter compilés avec un SDK trop ancien -> forcés en 36.
-subprojects {
-    plugins.withId("com.android.library") {
-        project.extensions.getByName("androidComponents").finalizeDsl { ext -> ext.compileSdk = 36 }
-    }
-}
-"@
-  }
-  Set-Content $rootG $t -Encoding UTF8
 }
 
 # 3. Autorisations Android (internet, caméra, micro, notifications) et nom affiché
