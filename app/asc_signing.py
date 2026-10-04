@@ -60,7 +60,10 @@ def setup():
     open(f"{pdir}/{prof['attributes']['uuid']}.mobileprovision", "wb").write(base64.b64decode(prof["attributes"]["profileContent"]))
     # 4. Trousseau temporaire avec la clé + le certificat
     run("openssl", "x509", "-inform", "DER", "-in", f"{TMP}/dist.cer", "-out", f"{TMP}/dist.pem")
-    run("openssl", "pkcs12", "-export", "-legacy", "-inkey", f"{TMP}/dist.key", "-in", f"{TMP}/dist.pem", "-out", f"{TMP}/dist.p12", "-passout", "pass:ci")
+    # OpenSSL 3 : « -legacy » pour que le trousseau macOS lise le .p12 ; LibreSSL (macOS) ne connaît pas ce drapeau.
+    p12 = ["openssl", "pkcs12", "-export", "-inkey", f"{TMP}/dist.key", "-in", f"{TMP}/dist.pem", "-out", f"{TMP}/dist.p12", "-passout", "pass:ci"]
+    if subprocess.run(p12[:3] + ["-legacy"] + p12[3:]).returncode != 0:
+        run(*p12)
     kc = f"{TMP}/ci.keychain-db"
     run("security", "create-keychain", "-p", "ci", kc)
     run("security", "set-keychain-settings", "-lut", "21600", kc)
