@@ -1,5 +1,7 @@
 # Compile l'application Android MaFeliza (Flutter) — à lancer dans ce dossier :
-#   powershell -ExecutionPolicy Bypass -File .\compiler.ps1
+#   powershell -ExecutionPolicy Bypass -File .\compiler.ps1           -> APK à installer sur un téléphone
+#   powershell -ExecutionPolicy Bypass -File .\compiler.ps1 -Bundle   -> fichier .aab signé pour le Play Store
+param([switch]$Bundle)
 $ErrorActionPreference = "Stop"
 
 # 1. Dossiers Android / iOS (une seule fois)
@@ -76,7 +78,62 @@ if (Test-Path "google-services.json") { Copy-Item google-services.json android/a
 flutter pub get
 dart run flutter_launcher_icons
 dart run flutter_native_splash:create
-flutter build apk --release
+if (-not $Bundle) {
+  flutter build apk --release
+  Write-Host ""
+  Write-Host "Application prete : build\app\outputs\flutter-apk\app-release.apk" -ForegroundColor Green
+  exit 0
+}
 
+# 7. Play Store : clé de signature (« upload key »), créée une seule fois et gardée HORS du projet.
+$ks = "$HOME\mafeliza-upload.jks"
+$props = "android/key.properties"
+if (-not (Test-Path $props)) {
+  $keytool = (Get-Command keytool -ErrorAction SilentlyContinue).Source
+  if (-not $keytool) { $keytool = @("$env:JAVA_HOME\bin\keytool.exe", "C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1 }
+  if (-not $keytool) { throw "keytool introuvable : installez Android Studio." }
+  $pw = Read-Host "Choisissez un mot de passe pour la cle Play Store (6 caracteres min., a NOTER)"
+  if (-not (Test-Path $ks)) {
+    & $keytool -genkeypair -v -keystore $ks -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload `
+      -storepass $pw -keypass $pw -dname "CN=MaFeliza, O=MaFeliza, C=FR"
+  }
+  @"
+storePassword=$pw
+keyPassword=$pw
+keyAlias=upload
+storeFile=$($ks -replace '\\','/')
+"@ | Set-Content $props -Encoding ASCII
+}
+
+# Signature « release » branchée sur cette clé (au lieu de la clé de débogage refusée par Google)
+$g = "android/app/build.gradle.kts"
+$t = Get-Content $g -Raw
+if ($t -notmatch "keystoreProperties") {
+  $t = @"
+import java.util.Properties
+import java.io.FileInputStream
+
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+
+"@ + $t
+  $t = $t -replace '(\n\s*)buildTypes \{', @"
+`$1signingConfigs {
+        create("release") {
+            keyAlias = keystoreProperties["keyAlias"] as String
+            keyPassword = keystoreProperties["keyPassword"] as String
+            storeFile = file(keystoreProperties["storeFile"] as String)
+            storePassword = keystoreProperties["storePassword"] as String
+        }
+    }
+`$1buildTypes {
+"@
+  $t = $t -replace 'signingConfig = signingConfigs\.getByName\("debug"\)', 'signingConfig = signingConfigs.getByName("release")'
+  Set-Content $g $t -Encoding UTF8
+}
+
+flutter build appbundle --release
 Write-Host ""
-Write-Host "Application prete : build\app\outputs\flutter-apk\app-release.apk" -ForegroundColor Green
+Write-Host "Fichier Play Store pret : build\app\outputs\bundle\release\app-release.aab" -ForegroundColor Green
+Write-Host "IMPORTANT : sauvegardez $ks et son mot de passe (necessaires pour chaque mise a jour)." -ForegroundColor Yellow
