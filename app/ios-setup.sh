@@ -14,6 +14,18 @@ set_plist() { /usr/libexec/PlistBuddy -c "Delete :$1" "$PL" 2>/dev/null || true;
 set_plist NSCameraUsageDescription string "MaFeliza utilise l'appareil photo pour le live et les photos de l'événement."
 set_plist NSMicrophoneUsageDescription string "MaFeliza utilise le micro pour le live et les messages vocaux."
 set_plist NSPhotoLibraryUsageDescription string "MaFeliza accède à vos photos pour les partager avec les invités."
+set_plist NSPhotoLibraryAddUsageDescription string "MaFeliza enregistre les photos et vidéos de l'événement dans votre galerie."
+# Textes exigés par Apple car le module d'autorisations référence ces fonctions (non utilisées par MaFeliza)
+set_plist NSLocationWhenInUseUsageDescription string "MaFeliza n'utilise votre position que si vous choisissez d'ouvrir l'itinéraire vers le lieu de l'événement."
+set_plist NSLocationAlwaysAndWhenInUseUsageDescription string "MaFeliza n'utilise pas votre position en arrière-plan."
+set_plist NSContactsUsageDescription string "MaFeliza peut vous proposer d'inviter vos contacts à un événement."
+set_plist NSCalendarsUsageDescription string "MaFeliza peut ajouter la date de l'événement à votre calendrier."
+set_plist NSCalendarsFullAccessUsageDescription string "MaFeliza peut ajouter la date de l'événement à votre calendrier."
+set_plist NSRemindersUsageDescription string "MaFeliza peut créer un rappel pour l'événement."
+set_plist NSBluetoothAlwaysUsageDescription string "MaFeliza peut utiliser un micro ou des écouteurs Bluetooth pendant le live."
+set_plist NSSpeechRecognitionUsageDescription string "MaFeliza n'utilise pas la reconnaissance vocale."
+set_plist NSMotionUsageDescription string "MaFeliza n'utilise pas les capteurs de mouvement."
+set_plist NSAppleMusicUsageDescription string "MaFeliza n'accède pas à votre bibliothèque musicale."
 set_plist CFBundleDisplayName string "MaFeliza"
 set_plist ITSAppUsesNonExemptEncryption bool false
 
