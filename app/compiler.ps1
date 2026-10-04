@@ -66,7 +66,11 @@ if ($y -notmatch "NSCameraUsageDescription") {
 }
 
 # 5. Firebase (notifications Android)
-Copy-Item google-services.json android/app/google-services.json -Force
+# (facultatif pour l'instant : les notifications Firebase ne sont pas encore branchées dans l'app)
+if (-not (Test-Path "google-services.json") -and (Test-Path "$HOME\Desktop\mafeliza-app\google-services.json")) {
+  Copy-Item "$HOME\Desktop\mafeliza-app\google-services.json" "google-services.json"
+}
+if (Test-Path "google-services.json") { Copy-Item google-services.json android/app/google-services.json -Force }
 
 # 6. Dépendances, icône, écran de démarrage, compilation
 flutter pub get
