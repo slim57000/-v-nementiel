@@ -6,6 +6,7 @@ import { seedDemo, demoEvents, sendDemoMessages, sendDemoInvitation, createDemoA
 import { isPremium, setPremium, premiumUntil } from "../lib/premium.js";
 import { tooFast } from "../lib/limits.js";
 import { notify, orgOwner, forget } from "../lib/push.js";
+import { analyticsSummary } from "../lib/analytics.js";
 import { sendEmail, EMAIL_ENABLED } from "../lib/email.js";
 import {
   searchEvents, searchOrganizers, findEvent, findOrganizer, saveOrganizer, saveEvent, listEvents,
@@ -173,6 +174,9 @@ router.delete("/reports/:id", async (req, res) => {
 });
 
 // Compteurs : utilisateurs, événements (par visibilité), à venir, aujourd'hui, premium.
+// Audience du site (30 derniers jours) : pages vues, visiteurs, pages, sources, appareils.
+router.get("/analytics", async (req, res) => res.json(await analyticsSummary(Math.min(90, Number(req.query.days) || 30))));
+
 router.get("/stats", async (req, res) => {
   const [orgs, events, hidden] = await Promise.all([searchOrganizers("", 100000), searchEvents("", 100000), getSetting("unlisted").catch(() => null)]);
   const unl = new Set(hidden || []);

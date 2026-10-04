@@ -489,7 +489,17 @@ export function cookieBanner() {
 }
 
 if (readConsent() === "accepted") loadAnalytics();
+
 else if (!readConsent()) addEventListener("DOMContentLoaded", cookieBanner);
+
+// Statistiques de fréquentation MaFeliza (sans cookie, rien d'identifiant) : une page vue par chargement.
+try {
+  if (!sessionStorage.getItem(`hit:${location.pathname}`)) {
+    sessionStorage.setItem(`hit:${location.pathname}`, "1");
+    const body = JSON.stringify({ path: location.pathname, ref: document.referrer, lang });
+    navigator.sendBeacon?.("/api/hit", new Blob([body], { type: "application/json" })) || fetch("/api/hit", { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true });
+  }
+} catch { /* statistiques facultatives */ }
 // Tout lien [data-cookies] rouvre le choix.
 document.addEventListener("click", (e) => {
   if (e.target.closest("[data-cookies]")) { e.preventDefault(); cookieBanner(); }

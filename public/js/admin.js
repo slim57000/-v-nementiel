@@ -55,6 +55,19 @@ const views = {
         <button class="btn btn-ghost btn-sm" data-act="del-contact" data-id="${esc(m.id)}">🗑️ Supprimer</button>
       </div></section>`).join("") || "<p class='muted'>Aucun message reçu.</p>";
   },
+  async audience() {
+    const a = await api("/api/admin/analytics?days=30");
+    const max = Math.max(1, ...a.days.map((d) => d.views));
+    const sum = (k) => a.days.reduce((n, d) => n + d[k], 0);
+    const list = (rows, label) => `<h3 style="font-size:.9rem;margin:16px 0 6px">${label}</h3>${rows.length ? rows.map(([k, n]) => `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)"><span>${esc(k)}</span><b>${n}</b></div>`).join("") : '<p class="muted small">Pas encore de données.</p>'}`;
+    return `<section class="card">
+      <h2 style="font-size:1rem">📈 Audience · 30 derniers jours</h2>
+      <div class="admin-stats">${[["Pages vues", sum("views")], ["Visiteurs", sum("visitors")], ["Aujourd'hui", a.days.at(-1).visitors]].map(([l, n]) => `<div><b>${n}</b><small>${l}</small></div>`).join("")}</div>
+      <div style="display:flex;align-items:flex-end;gap:3px;height:120px;margin:16px 0 4px">${a.days.map((d) => `<i title="${d.date} : ${d.views} vues, ${d.visitors} visiteurs" style="flex:1;background:linear-gradient(#fd1a85,#c60bd2);border-radius:4px 4px 0 0;height:${Math.max(2, (d.views / max) * 100)}%"></i>`).join("")}</div>
+      <p class="muted small" style="margin:0">Pages vues par jour · sans cookie, aucune donnée personnelle conservée</p>
+      ${list(a.pages, "Pages les plus vues")}${list(a.sources, "D'où viennent les visiteurs")}${list(a.devices, "Appareils")}${list(a.langs, "Langue")}
+    </section>`;
+  },
   async notifs() {
     const sent = await api("/api/admin/notify").catch(() => []);
     return `<section class="card">
