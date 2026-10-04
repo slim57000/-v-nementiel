@@ -18,8 +18,24 @@ set_plist CFBundleDisplayName string "MaFeliza"
 set_plist ITSAppUsesNonExemptEncryption bool false
 
 flutter pub get
-dart run flutter_launcher_icons
-dart run flutter_native_splash:create
+# Icône et écran de démarrage pour iPhone seulement (le dossier android/ n'existe pas sur ce Mac)
+cat > /tmp/icons-ios.yaml <<YAML
+flutter_launcher_icons:
+  android: false
+  ios: true
+  image_path: "assets/icon.png"
+  remove_alpha_ios: true
+YAML
+cat > /tmp/splash-ios.yaml <<YAML
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/icon.png
+  android: false
+  ios: true
+  web: false
+YAML
+dart run flutter_launcher_icons -f /tmp/icons-ios.yaml
+dart run flutter_native_splash:create --path=/tmp/splash-ios.yaml
 
 # Podfile : iOS 13 minimum et autorisations activées pour permission_handler
 flutter build ios --config-only --release
