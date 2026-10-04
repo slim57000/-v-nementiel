@@ -949,3 +949,11 @@ main { animation: em-fade .3s ease-out; }
 .quick-actions { gap: 6px; }
 .quick-actions .qa { min-width: 0; padding: 10px 2px; font-size: .7rem; letter-spacing: -.01em; }
 .quick-actions .qa span { width: 40px; height: 40px; font-size: 1.2rem; }
+/* Guide : fenêtre centrée qui tient dans l'écran visible (barres Safari comprises), défilement interne si besoin */
+#guide { align-items: center; padding: calc(10px + env(safe-area-inset-top)) 12px calc(10px + env(safe-area-inset-bottom)); }
+#guide .guide-card { border-radius: 24px; max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); padding: 22px 18px 18px; }
+#guide .guide-card h2 { font-size: 1.4rem; margin-bottom: 12px; }
+#guide .guide-steps { gap: 10px; margin-bottom: 14px; }
+#guide .guide-steps li { padding: 10px 12px; }
+#guide .guide-steps b { font-size: 1.12rem; }
+#guide .guide-steps span { font-size: 1rem; line-height: 1.4; }
