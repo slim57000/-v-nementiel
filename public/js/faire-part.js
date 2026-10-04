@@ -24,6 +24,22 @@ function liveInvite(ev) {
   };
 }
 
+// Autres textes proposés pour l'invitation au live (bouton « Texte proposé » : un nouveau à chaque appui).
+function liveTexts(ev) {
+  const when = formatDate(ev.date, ev.time);
+  if (EN) return [liveInvite(ev).text,
+    `We are delighted to announce our celebration, held in an intimate setting on ${when}.\n\nBecause you matter to us and we want to share this moment despite the distance, we invite you to follow the ceremony live!\n\nScan the QR code or open the link a few minutes before it starts.`,
+    `Save the date: ${when}.\n\nWherever you are, join us live from your phone, tablet or computer. Send your messages and reactions: we will see them in real time ❤️`];
+  const what = { mariage: "notre mariage", bapteme: "le baptême", communion: "la communion", fiancailles: "nos fiançailles",
+    anniversaire: "l'anniversaire", "baby-shower": "la baby shower", diplome: "la remise de diplôme",
+    retraite: "le départ en retraite", inauguration: "l'inauguration" }[ev.type] || "l'événement";
+  return [liveInvite(ev).text,
+    `Nous avons la joie de vous annoncer ${what}, qui se déroulera en petit comité le ${when.toLowerCase()}.\n\nParce que vous comptez pour nous et que nous souhaitons partager ce moment malgré la distance, nous vous invitons à suivre la cérémonie en direct !\n\nScannez le QR code ou ouvrez le lien quelques minutes avant le début de la diffusion.`,
+    `Réservez la date : ${when.toLowerCase()}.\n\nOù que vous soyez, rejoignez-nous en direct depuis votre téléphone, votre tablette ou votre ordinateur. Envoyez-nous vos messages et vos réactions : nous les verrons en temps réel ❤️`,
+    `Vous ne pourrez pas être à nos côtés ? Pas de souci : ${what} sera diffusé en direct le ${when.toLowerCase()}.\n\nInstallez-vous confortablement, ouvrez le lien et vivez ce moment avec nous comme si vous y étiez !`];
+}
+let liveTextIdx = 0;
+
 // Invitation au live : texte personnalisé par l'organisateur, sinon le texte proposé.
 const liveCard = (ev) => {
   const auto = liveInvite(ev);
@@ -100,7 +116,11 @@ $("#edit-text").addEventListener("click", () => {
   $("#edit-text").classList.add("hidden");
   form.text.focus();
 });
-$("#fp-reset").addEventListener("click", () => { form.text.value = liveInvite(ev).text; });
+$("#fp-reset").addEventListener("click", () => {
+  const list = liveTexts(ev);
+  liveTextIdx = (liveTextIdx + 1) % list.length;
+  form.text.value = list[liveTextIdx];
+});
 $("#fp-cancel").addEventListener("click", closeEditor);
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
