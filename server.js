@@ -12,7 +12,8 @@ import { GOOGLE_ENABLED } from "./lib/google.js";
 import { FACEBOOK_ENABLED } from "./lib/facebook.js";
 import express from "express";
 import QRCode from "qrcode";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import authRoutes, { currentOrganizer } from "./routes/auth.js";
 import eventRoutes from "./routes/events.js";
@@ -193,7 +194,23 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/me", meRoutes);
 
 // Page publique : on injecte titre + balises Open Graph pour un bel aperçu dans WhatsApp/SMS.
-const eventTemplate = readFileSync(new URL("./public/event.html", import.meta.url), "utf8");
+// Versions automatiques des scripts et styles (empreinte du contenu) : chaque mise à jour change leur
+// adresse, si bien qu'aucun téléphone ne garde un ancien fichier en cache (y compris les modules importés,
+// redirigés par une « import map » ajoutée en tête de chaque page).
+const ASSET_VERSIONS = {};
+for (const dir of ["js", "css"]) {
+  for (const f of readdirSync(`${PUBLIC_DIR}/${dir}`).filter((n) => /\.(js|css)$/.test(n))) {
+    ASSET_VERSIONS[`/${dir}/${f}`] = createHash("sha1").update(readFileSync(`${PUBLIC_DIR}/${dir}/${f}`)).digest("hex").slice(0, 10);
+  }
+}
+const IMPORT_MAP = `<script type="importmap">${JSON.stringify({ imports: Object.fromEntries(Object.entries(ASSET_VERSIONS).filter(([k]) => k.endsWith(".js")).map(([k, v]) => [k, `${k}?v=${v}`])) })}</script>`;
+export const versionHtml = (html) => html
+  .replace(/((?:src|href)=")(\/(?:js|css)\/[\w.-]+\.(?:js|css))(?:\?v=[\w]+)?"/g, (m, a, path) => (ASSET_VERSIONS[path] ? `${a}${path}?v=${ASSET_VERSIONS[path]}"` : m))
+  .replace(/<script/i, `${IMPORT_MAP}<script`);
+const pageCache = new Map();
+const versionedPage = (file) => pageCache.get(file) ?? pageCache.set(file, versionHtml(readFileSync(file, "utf8"))).get(file);
+
+const eventTemplate = versionHtml(readFileSync(new URL("./public/event.html", import.meta.url), "utf8"));
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 app.get("/e/:slug", async (req, res) => {
@@ -260,6 +277,13 @@ app.use((err, req, res, next) => {
 // En local uniquement : sur Vercel, public/ est servi par le CDN et api/index.js reçoit le reste (vercel.json).
 if (!ON_VERCEL) {
   app.use("/uploads", express.static(UPLOAD_DIR, { maxAge: "30d", immutable: true }));
+  // Pages HTML : servies avec les versions automatiques des scripts, toujours revalidées.
+  app.get(/^\/(?:[\w-]+(?:\.html)?)?$/, (req, res, next) => {
+    const name = req.path === "/" ? "index" : req.path.slice(1).replace(/\.html$/, "");
+    const file = `${PUBLIC_DIR}/${name}.html`;
+    if (!existsSync(file)) return next();
+    res.set("Cache-Control", "no-cache").type("html").send(versionedPage(file));
+  });
   app.use(express.static(PUBLIC_DIR, {
     extensions: ["html"],
     // Photos et bibliothèques : gardées en cache ; CSS versionnée (?v=) : cache long.

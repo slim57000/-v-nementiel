@@ -945,3 +945,7 @@ main { animation: em-fade .3s ease-out; }
 .pot-promo-actions { display: flex; gap: 8px; justify-content: center; }
 .pot-promo-actions .btn { flex: 1; }
 .pot-promo .btn-light { background: var(--card); border: 1px solid var(--border); }
+/* Actions rapides à 5 tuiles : libellés plus compacts pour tenir en entier */
+.quick-actions { gap: 6px; }
+.quick-actions .qa { min-width: 0; padding: 10px 2px; font-size: .7rem; letter-spacing: -.01em; }
+.quick-actions .qa span { width: 40px; height: 40px; font-size: 1.2rem; }
