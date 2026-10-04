@@ -95,6 +95,7 @@ document.querySelectorAll("[data-social]").forEach((b) => {
   b.innerHTML = BRAND[b.dataset.social.toLowerCase()];
   b.addEventListener("click", () => {
     const provider = b.dataset.social.toLowerCase();
+    if (provider === "magic") return magicLink();
     if (social.includes(provider)) location.href = `/api/auth/${provider}?next=${encodeURIComponent(target)}`;
     else toast(`Connexion ${b.dataset.social} : bientôt disponible`);
   });
@@ -117,6 +118,23 @@ $("#forgot").addEventListener("click", async (e) => {
     "google-session": "Connexion Google interrompue : rouvrez mafeliza.com (sans « www ») puis réessayez.",
     "google-refus": "Connexion Google annulée.",
     "google-jeton": "Google a refusé la connexion (configuration du serveur). Utilisez l'email en attendant.",
+    "apple-session": "Connexion Apple interrompue : rouvrez mafeliza.com puis réessayez.",
+    "apple-refus": "Connexion Apple annulée.",
+    "apple-jeton": "Apple a refusé la connexion (configuration du serveur). Utilisez l'email en attendant.",
+    "lien-expire": "Ce lien de connexion a expiré ou a déjà servi : demandez-en un nouveau avec l'enveloppe ✉️.",
   };
   if (msgs[err]) setTimeout(() => import("./common.js").then(({ toast }) => toast(msgs[err])), 300);
 }
+
+// Lien magique : on reçoit par email un lien qui connecte en un clic (sans mot de passe).
+async function magicLink() {
+  let email = $("#email").value.trim();
+  if (!email) email = (prompt("Votre adresse email : nous vous envoyons un lien de connexion.") || "").trim();
+  if (!email) return;
+  try {
+    await api("/api/auth/magic", { method: "POST", body: { email, next: target } });
+    toast("📧 Lien envoyé ! Ouvrez l'email et touchez « Me connecter ».");
+    $("#error").textContent = "";
+  } catch (err) { $("#error").textContent = err.message; }
+}
+if (new URLSearchParams(location.search).has("lien")) setTimeout(() => { $("#email").focus(); toast("Entrez votre email puis touchez l'enveloppe ✉️ pour recevoir un lien de connexion."); }, 600);

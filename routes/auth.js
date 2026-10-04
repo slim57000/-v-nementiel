@@ -1,12 +1,13 @@
 // API /api/auth : inscription, connexion (mot de passe, Google, Facebook), mot de passe oublié, administrateurs.
-import { Router } from "express";
+import express, { Router } from "express";
 import { findOrganizerByEmail, findOrganizer, createOrganizer, deleteOrganizer, listEvents, saveOrganizer, getSetting, setSetting, clearLimit } from "../lib/store.js";
 import { loginCode } from "../lib/codes.js";
 import { setSigned, getSigned } from "../lib/session.js";
-import { codeEmail, resetEmail, EMAIL_ENABLED, lastEmailError, reqLang } from "../lib/email.js";
+import { codeEmail, resetEmail, magicEmail, EMAIL_ENABLED, lastEmailError, reqLang } from "../lib/email.js";
 import { setPassword, hasPassword, checkPassword, passwordError } from "../lib/password.js";
 import { GOOGLE_ENABLED, googleAuthUrl, googleIdentity } from "../lib/google.js";
 import { FACEBOOK_ENABLED, facebookAuthUrl, facebookIdentity } from "../lib/facebook.js";
+import { APPLE_ENABLED, appleAuthUrl, appleIdentity } from "../lib/apple.js";
 import { randomBytes, randomInt } from "node:crypto";
 import { tooFast } from "../lib/limits.js";
 import { isPremium } from "../lib/premium.js";
@@ -205,6 +206,67 @@ router.get("/facebook/callback", async (req, res) => {
     console.error("Facebook :", err.message);
     res.redirect("/connexion");
   }
+});
+
+// Connexion Apple : Apple revient en POST (form_post) depuis son domaine ; les cookies « Lax » n'y sont pas
+// envoyés, donc on redirige d'abord vers une adresse GET du site (où le cookie d'état est bien lu).
+const appleCallbackUrl = (req) => `${origin(req)}/api/auth/apple/callback`;
+router.get("/apple", (req, res) => {
+  if (!APPLE_ENABLED) return res.redirect("/connexion");
+  const nonce = randomBytes(12).toString("hex");
+  setSigned(res, "gstate", `${nonce}~${encodeURIComponent(safeNext(req.query.next))}`);
+  res.redirect(appleAuthUrl(appleCallbackUrl(req), nonce));
+});
+router.post("/apple/callback", express.urlencoded({ extended: false }), (req, res) => {
+  const q = new URLSearchParams({ code: req.body?.code || "", state: req.body?.state || "", user: req.body?.user || "", error: req.body?.error || "" });
+  res.redirect(303, `/api/auth/apple/finish?${q}`);
+});
+router.get("/apple/finish", async (req, res) => {
+  const [nonce, next] = (getSigned(req, "gstate") || "").split("~");
+  res.clearCookie("gstate");
+  if (!nonce || req.query.state !== nonce || !req.query.code) {
+    console.error("Apple : état absent ou différent", { hasCookie: Boolean(nonce), error: req.query.error || "" });
+    return res.redirect(`/connexion?erreur=apple-${req.query.error ? "refus" : "session"}`);
+  }
+  try {
+    const who = await appleIdentity(String(req.query.code), appleCallbackUrl(req), String(req.query.user || ""));
+    let organizer = await findOrganizerByEmail(who.email);
+    if (!organizer) {
+      organizer = await createOrganizer(who.email, loginCode());
+      if (who.name) organizer = await saveOrganizer({ ...organizer, displayName: who.name.slice(0, 40) });
+    }
+    if (organizer.blocked) return res.redirect("/connexion");
+    logIn(res, organizer.id);
+    res.redirect(safeNext(decodeURIComponent(next || "")));
+  } catch (err) {
+    console.error("Apple :", err.message);
+    res.redirect("/connexion?erreur=apple-jeton");
+  }
+});
+
+// Lien magique : email -> lien de connexion à usage unique (15 min). Crée le compte s'il n'existe pas.
+router.post("/magic", async (req, res) => {
+  if (!EMAIL_ENABLED) return res.status(503).json({ error: "L'envoi d'emails n'est pas encore activé." });
+  const email = String(req.body?.email || "").trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) return res.status(400).json({ error: "Adresse email invalide." });
+  if (await tooFast(`magic:${email}`, 5, 3_600_000) || await tooFast(`magicip:${req.ip}`, 20, 3_600_000)) {
+    return res.status(429).json({ error: "Trop de demandes : réessayez dans un moment." });
+  }
+  const token = randomBytes(24).toString("hex");
+  await setSetting(`magic:${token}`, { email, exp: Date.now() + 15 * 60_000, next: safeNext(req.body?.next) });
+  await magicEmail(email, `${origin(req)}/api/auth/magic/${token}`, reqLang(req)).catch(() => null);
+  res.json({ ok: true });
+});
+router.get("/magic/:token", async (req, res) => {
+  const key = `magic:${String(req.params.token).replace(/[^a-f0-9]/g, "")}`;
+  const link = await getSetting(key).catch(() => null);
+  await setSetting(key, null).catch(() => {}); // usage unique
+  if (!link || link.exp < Date.now()) return res.redirect("/connexion?erreur=lien-expire");
+  let organizer = await findOrganizerByEmail(link.email);
+  if (!organizer) organizer = await createOrganizer(link.email, loginCode());
+  if (organizer.blocked) return res.redirect("/connexion");
+  logIn(res, organizer.id);
+  res.redirect(safeNext(link.next));
 });
 
 // « Code oublié » : renvoie le code organisateur par email (réponse identique que le compte existe ou non).

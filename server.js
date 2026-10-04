@@ -10,6 +10,7 @@ import { reportError } from "./lib/monitor.js";
 import { tooFast } from "./lib/limits.js";
 import { GOOGLE_ENABLED } from "./lib/google.js";
 import { FACEBOOK_ENABLED } from "./lib/facebook.js";
+import { APPLE_ENABLED } from "./lib/apple.js";
 import express from "express";
 import QRCode from "qrcode";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
@@ -68,7 +69,7 @@ app.get("/api/config", async (req, res) => {
     emailEnabled: EMAIL_ENABLED,
     vapidPublicKey,
     realtime: REALTIME,
-    social: [GOOGLE_ENABLED && "google", FACEBOOK_ENABLED && "facebook"].filter(Boolean),
+    social: [GOOGLE_ENABLED && "google", FACEBOOK_ENABLED && "facebook", APPLE_ENABLED && "apple"].filter(Boolean),
     defaultLivePlatform: platform || "youtube",
   });
 });

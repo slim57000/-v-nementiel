@@ -21,6 +21,7 @@ let social = [];
 fetch("/api/config").then((r) => r.json()).then((c) => { social = c.social || []; }).catch(() => {});
 document.querySelectorAll("[data-social]").forEach((b) => b.addEventListener("click", () => {
   const provider = b.dataset.social.toLowerCase();
+  if (provider === "magic") { location.href = "/connexion?lien=1"; return; }
   if (social.includes(provider)) location.href = `/api/auth/${provider}?next=/dashboard`;
   else toast(`Connexion ${b.dataset.social} : bientôt disponible`);
 }));
