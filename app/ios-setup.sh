@@ -40,5 +40,10 @@ dart run flutter_native_splash:create --path=/tmp/splash-ios.yaml
 # Podfile : iOS 13 minimum et autorisations activées pour permission_handler
 flutter build ios --config-only --release
 POD=ios/Podfile
+# Podfile absent tant que CocoaPods n'a pas tourné : on reprend le modèle officiel de Flutter.
+if [ ! -f "$POD" ]; then
+  FLUTTER_ROOT="$(cd "$(dirname "$(command -v flutter)")/.." && pwd)"
+  cp "$FLUTTER_ROOT/packages/flutter_tools/templates/cocoapods/Podfile-ios" "$POD"
+fi
 sed -i '' "s/^# *platform :ios.*/platform :ios, '13.0'/" "$POD"
 grep -q "PERMISSION_CAMERA" "$POD" || perl -0pi -e "s/flutter_additional_ios_build_settings\(target\)/flutter_additional_ios_build_settings(target)\n    target.build_configurations.each do |config|\n      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['\\\$(inherited)', 'PERMISSION_CAMERA=1', 'PERMISSION_MICROPHONE=1', 'PERMISSION_PHOTOS=1', 'PERMISSION_NOTIFICATIONS=1']\n    end/" "$POD"
