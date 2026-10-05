@@ -189,10 +189,13 @@ async function dailyJob() {
   }
   // Lendemain de l'événement : replay envoyé automatiquement par email aux invités et à l'organisateur,
   // sauf s'il a été supprimé ou retiré par l'organisateur.
-  for (const event of await listEventsOnDate(date(-1))) {
+  // Rattrapage sur 3 jours (serveur arrêté, tâche manquée) ; jamais deux envois pour un même événement.
+  const recent = (await Promise.all([-1, -2, -3].map((d) => listEventsOnDate(date(d)).catch(() => [])))).flat();
+  for (const event of recent) {
     if (event.suspended || !event.cameras?.length) continue;
-    const [off, hide] = await Promise.all([getSetting(`replayoff:${event.id}`), getSetting(`replayhide:${event.id}`)].map((p) => p.catch(() => null)));
-    if (off || hide) continue;
+    const [off, hide, done] = await Promise.all([getSetting(`replayoff:${event.id}`), getSetting(`replayhide:${event.id}`), getSetting(`replaysent:${event.id}`)].map((p) => p.catch(() => null)));
+    if (off || hide || done) continue;
+    await setSetting(`replaysent:${event.id}`, new Date().toISOString());
     const organizer = await findOrganizer(event.organizerId).catch(() => null);
     sent += await sendReplay(event, organizer ? [organizer.email] : []).catch(() => 0);
     pushed += await notify([orgOwner(event.organizerId)], {

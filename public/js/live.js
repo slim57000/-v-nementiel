@@ -121,7 +121,18 @@ async function load() {
   if (isOwner && state === "replay" && cameras.length) {
     document.querySelector(".live-stage").insertAdjacentHTML("afterend", `<div class="replay-bar">
       <span>${ev.replayOnline ? "🌍 Replay <b>en ligne</b> : vos invités peuvent le voir." : "🔒 Replay <b>retiré</b> : vous seul le voyez."}</span>
-      <button type="button" class="btn btn-sm" id="replay-pub">${ev.replayOnline ? "🙈 Retirer" : "🌍 Mettre en ligne"}</button></div>`);
+      <button type="button" class="btn btn-sm" id="replay-pub">${ev.replayOnline ? "🙈 Retirer" : "🌍 Mettre en ligne"}</button>
+      ${ev.replayOnline ? '<button type="button" class="btn btn-sm btn-light" id="replay-mail">📧 Envoyer aux invités</button>' : ""}</div>`);
+    $("#replay-mail")?.addEventListener("click", async (e) => {
+      const btn = e.currentTarget;
+      if (!confirm("Envoyer maintenant le lien du replay par email à vos invités (et à vous) ?")) return;
+      btn.disabled = true;
+      try {
+        const r = await api(`/api/events/${ev.id}/replay/send`, { method: "POST" });
+        toast(r.sent ? `📧 Replay envoyé à ${r.sent} adresse(s) ✔` : "Aucune adresse à qui l'envoyer (ajoutez des invités par email).");
+      } catch (err) { toast(err.message); }
+      btn.disabled = false;
+    });
     $("#replay-pub").addEventListener("click", async () => {
       try {
         const r = await api(`/api/events/${ev.id}/replay`, { method: "PATCH", body: { online: !ev.replayOnline } });

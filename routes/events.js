@@ -4,7 +4,7 @@ import { requireOrganizer } from "./auth.js";
 import { parseEventInput, ownerView } from "../lib/events.js";
 import { randomCode, slugify } from "../lib/codes.js";
 import { saveDataUrl, removeUpload, isOwnUpload } from "../lib/uploads.js";
-import { sendInvites } from "../lib/invites.js";
+import { sendInvites, sendReplay } from "../lib/invites.js";
 import { isPremium, getStats } from "../lib/premium.js";
 import { getSetting, setSetting, setUnlisted, listUnlistedIds, withVisibility, setShowcase, listShowcaseIds } from "../lib/store.js";
 
@@ -184,6 +184,18 @@ router.patch("/:id/replay", handle(async (req, res) => {
   const online = Boolean(req.body?.online);
   await setSetting(`replayhide:${event.id}`, online ? null : true);
   res.json({ online });
+}));
+
+// Envoyer le replay par email maintenant (organisateur) : invités + organisateur, sans attendre le lendemain.
+router.post("/:id/replay/send", handle(async (req, res) => {
+  const event = await findOwned(req);
+  if (!event) return res.status(404).json({ error: "Événement introuvable." });
+  if (!EMAIL_ENABLED) return res.status(503).json({ error: "L'envoi d'emails n'est pas configuré sur le serveur (RESEND_API_KEY)." });
+  if (!process.env.PUBLIC_URL) return res.status(503).json({ error: "Adresse du site manquante sur le serveur (PUBLIC_URL)." });
+  if (await tooFast(`replaysend:${event.id}`, 3, 3600_000)) return res.status(429).json({ error: "Déjà envoyé : réessayez dans une heure." });
+  const sent = await sendReplay(event, [req.organizer.email]);
+  await setSetting(`replaysent:${event.id}`, new Date().toISOString());
+  res.json({ sent });
 }));
 
 // Supprimer le replay (organisateur) : vidéos enregistrées effacées et lecteur fermé aux invités.
