@@ -186,6 +186,8 @@ $("#fs").addEventListener("click", () => {
   if (on) stage.requestFullscreen?.().catch(() => {}); // refusé (iOS, iframe) : le mode immersif prend le relais
   setImmersive(on);
 });
+// Bouton ✕ du plein écran (créé ici s'il manque à la page, par exemple une ancienne version encore en mémoire).
+if (!$("#fs-exit")) stage.insertAdjacentHTML("beforeend", '<button type="button" class="fs-exit" id="fs-exit" aria-label="Quitter le plein écran">✕</button>');
 $("#fs-exit").addEventListener("click", (e) => {
   e.stopPropagation();
   if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
