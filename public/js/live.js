@@ -186,8 +186,13 @@ $("#fs").addEventListener("click", () => {
   if (on) stage.requestFullscreen?.().catch(() => {}); // refusé (iOS, iframe) : le mode immersif prend le relais
   setImmersive(on);
 });
+$("#fs-exit").addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+  setImmersive(false);
+});
 stage.addEventListener("click", (e) => {
-  if (e.target.closest("a")) return; // cagnotte : le lien reste prioritaire
+  if (e.target.closest("a, button")) return; // cagnotte : le lien reste prioritaire
   setImmersive(!document.body.classList.contains("live-immersive"));
 });
 // Échap (clavier Android) ou sortie du plein écran système : on rend la page.

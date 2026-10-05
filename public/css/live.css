@@ -87,7 +87,6 @@
 /* Sortir du mode immersif : on revient à une scène lisible sans melebihi l'écran. */
 .live-stage { max-height: 78dvh; }
 .live-immersive .live-stage { max-height: none; }
-.live-immersive::after { content: "✕"; position: fixed; top: calc(14px + env(safe-area-inset-top)); right: 14px; z-index: 30; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: rgba(0,0,0,.5); color: #fff; font-size: 1rem; pointer-events: none; }
 /* Réactions : 5 colonnes qui tiennent toujours dans l'écran (+ bouton cagnotte) */
 /* (la cagnotte reste accessible en haut du direct et dans la barre du bas) */
 .reactions { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
@@ -116,4 +115,7 @@
 .live-promo span { opacity: .75; }
 .live-promo-btn { flex: 0 0 auto; padding: 9px 12px; border-radius: 12px; background: linear-gradient(135deg, #ff2e93, #b23cff); color: #fff; text-decoration: none; font-weight: 700; font-size: .85rem; white-space: nowrap; }
 .replay-zip { padding: 12px 16px 0; }
-.live-immersive .replay-del { top: calc(14px + env(safe-area-inset-top)); right: auto; left: 14px; } /* la croix ✕ occupe le coin droit */
+/* Plein écran : vrai bouton ✕ au-dessus de la vidéo (l'iframe capte les touchers), sans le bouton Supprimer. */
+.fs-exit { display: none; position: absolute; top: calc(12px + env(safe-area-inset-top)); right: 12px; z-index: 6; width: 42px; height: 42px; border: 0; border-radius: 50%; background: rgba(0,0,0,.6); color: #fff; font-size: 1.1rem; cursor: pointer; }
+.live-immersive .fs-exit { display: grid; place-items: center; }
+.live-immersive .replay-del { display: none; }
