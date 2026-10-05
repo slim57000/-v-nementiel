@@ -61,6 +61,9 @@ const views = {
     const sum = (k) => a.days.reduce((n, d) => n + d[k], 0);
     const list = (rows, label) => `<h3 style="font-size:.9rem;margin:16px 0 6px">${label}</h3>${rows.length ? rows.map(([k, n]) => `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)"><span>${esc(k)}</span><b>${n}</b></div>`).join("") : '<p class="muted small">Pas encore de données.</p>'}`;
     return `<section class="card">
+      <h2 style="font-size:1rem">🟢 En ligne maintenant</h2>
+      <div class="admin-stats">${[["Personnes sur le site", a.online?.total ?? 0], ["Utilisateurs connectés", a.online?.logged ?? 0], ["Visiteurs non connectés", (a.online?.total ?? 0) - (a.online?.logged ?? 0)]].map(([l, n]) => `<div><b>${n}</b><small>${l}</small></div>`).join("")}</div>
+      <p class="muted small" style="margin:6px 0 18px">Actifs sur les 2 dernières minutes · <a href="#" data-act="refresh-audience">Actualiser</a></p>
       <h2 style="font-size:1rem">📈 Audience · 30 derniers jours</h2>
       <div class="admin-stats">${[["Pages vues", sum("views")], ["Visiteurs", sum("visitors")], ["Aujourd'hui", a.days.at(-1).visitors]].map(([l, n]) => `<div><b>${n}</b><small>${l}</small></div>`).join("")}</div>
       <div style="display:flex;align-items:flex-end;gap:3px;height:120px;margin:16px 0 4px">${a.days.map((d) => `<i title="${d.date} : ${d.views} vues, ${d.visitors} visiteurs" style="flex:1;background:linear-gradient(#fd1a85,#c60bd2);border-radius:4px 4px 0 0;height:${Math.max(2, (d.views / max) * 100)}%"></i>`).join("")}</div>
@@ -168,6 +171,7 @@ $("#q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeou
 
 $("#content").addEventListener("click", async (e) => {
   const btn = e.target.closest("[data-act]");
+  if (btn?.dataset.act === "refresh-audience") { e.preventDefault(); render(); return; }
   if (btn?.dataset.act === "notify") {
     try {
       const r = await api("/api/admin/notify", { method: "POST", body: { title: $("#n-title").value, body: $("#n-body").value, url: $("#n-url").value || "/dashboard" } });

@@ -11,7 +11,8 @@ import { tooFast } from "./lib/limits.js";
 import { GOOGLE_ENABLED } from "./lib/google.js";
 import { FACEBOOK_ENABLED } from "./lib/facebook.js";
 import { APPLE_ENABLED } from "./lib/apple.js";
-import { recordHit } from "./lib/analytics.js";
+import { recordHit, ping } from "./lib/analytics.js";
+import { getSigned } from "./lib/session.js";
 import express from "express";
 import QRCode from "qrcode";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
@@ -96,6 +97,8 @@ app.post("/api/push/subscribe", async (req, res) => {
 // Formulaire de contact du site : message rangé dans la boîte « Contact » de l'administration.
 // Statistiques de fréquentation (sans cookie) : une page vue envoyée par chaque page du site.
 app.post("/api/hit", async (req, res) => {
+  ping(req, getSigned(req, "org"));
+  if (req.body?.ping) return res.status(204).end();
   if (!(await tooFast(`hit:${req.ip}`, 120, 60_000))) recordHit(req, { path: String(req.body?.path || ""), ref: String(req.body?.ref || ""), lang: req.body?.lang });
   res.status(204).end();
 });
