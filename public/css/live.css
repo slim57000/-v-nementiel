@@ -116,3 +116,4 @@
 .live-promo span { opacity: .75; }
 .live-promo-btn { flex: 0 0 auto; padding: 9px 12px; border-radius: 12px; background: linear-gradient(135deg, #ff2e93, #b23cff); color: #fff; text-decoration: none; font-weight: 700; font-size: .85rem; white-space: nowrap; }
 .replay-zip { padding: 12px 16px 0; }
+.live-immersive .replay-del { top: calc(14px + env(safe-area-inset-top)); right: auto; left: 14px; } /* la croix ✕ occupe le coin droit */
