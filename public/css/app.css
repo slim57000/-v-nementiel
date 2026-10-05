@@ -982,3 +982,48 @@ main { animation: em-fade .3s ease-out; }
 @keyframes here-in { from { opacity:0; transform:translateY(6px) scale(.95); } }
 .here-pop { animation:here-pop .6s ease; }
 @keyframes here-pop { 40% { transform:scale(1.12); } }
+
+/* ✨ Film souvenir */
+.film-card { position: relative; display: flex; align-items: center; gap: 12px; width: 100%; margin: 12px 0; padding: 18px 16px; border: 0; border-radius: 20px; overflow: hidden; color: #fff; text-align: left; font: inherit; cursor: pointer; background: #1a0b16; box-shadow: 0 10px 30px rgba(198,11,210,.25); }
+.film-card-bg { position: absolute; inset: 0; background: center / cover; opacity: .55; animation: film-kb 12s ease-in-out infinite alternate; }
+.film-card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(253,26,133,.85), rgba(198,11,210,.35)); }
+.film-card-txt, .film-card-play { position: relative; z-index: 1; }
+.film-card-txt { flex: 1; display: grid; gap: 2px; }
+.film-card-txt b { font-size: 1.15rem; }
+.film-card-txt small { opacity: .9; }
+.film-card-play { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: #fd1a85; font-size: 1.1rem; animation: here-pop 2s infinite; }
+.film { position: fixed; inset: 0; z-index: 90; background: #000; color: #fff; overflow: hidden; }
+.film-stage, .film-scene { position: absolute; inset: 0; }
+.film-scene { animation: film-in .9s ease both; display: grid; place-items: center; }
+@keyframes film-in { from { opacity: 0; } }
+.film-bg { position: absolute; inset: -4%; background: center / cover; }
+.film-bg.blur { filter: blur(24px) brightness(.55); }
+.film-bg.kb, .film-media.kb { animation: film-kb 5s ease-out both; }
+.film-media.kb2 { animation-name: film-kb2; }
+@keyframes film-kb { from { transform: scale(1); } to { transform: scale(1.12); } }
+@keyframes film-kb2 { from { transform: scale(1.12) translateX(2%); } to { transform: scale(1) translateX(-2%); } }
+.film-media { position: relative; max-width: 100%; max-height: 100%; object-fit: contain; }
+.film-text { position: relative; z-index: 1; text-align: center; padding: 24px; max-width: 560px; text-shadow: 0 2px 12px rgba(0,0,0,.6); }
+.film-title { align-self: end; margin-bottom: 18vh; }
+.film-title h2 { font-size: 2.2rem; margin: 6px 0 0; animation: film-up 1.2s .3s ease both; }
+.film-title small { text-transform: uppercase; letter-spacing: .12em; font-size: .8rem; animation: film-up 1s ease both; }
+@keyframes film-up { from { opacity: 0; transform: translateY(16px); } }
+.film-quote p { font-family: Georgia, serif; font-style: italic; font-size: 1.6rem; line-height: 1.35; margin: 0 0 12px; animation: film-up 1s ease both; }
+.film-scene:has(.film-quote) { background: radial-gradient(circle at 50% 40%, #6d0a52, #1a0414 70%); }
+.film-quote::before { content: "❝"; display: block; font-size: 3rem; color: #fd1a85; line-height: 1; margin-bottom: 6px; }
+.film-end h2 { font-size: 1.7rem; animation: film-up 1s ease both; }
+.film-end::before { content: ""; position: absolute; inset: -40vh -40vw; background: rgba(0,0,0,.45); z-index: -1; }
+.film-actions { display: flex; gap: 10px; justify-content: center; margin: 18px 0; }
+.film-actions button, .film-start { border: 0; border-radius: 999px; padding: 12px 20px; font: inherit; font-weight: 700; cursor: pointer; background: #fff; color: #c20f68; }
+.film-actions button + button { background: linear-gradient(135deg,#fd1a85,#c60bd2); color: #fff; }
+.film-made { display: inline-flex; align-items: center; gap: 6px; opacity: .85; }
+.film-made img { height: 18px; }
+.film-who { position: absolute; left: 16px; bottom: calc(24px + env(safe-area-inset-bottom)); background: rgba(0,0,0,.45); padding: 6px 12px; border-radius: 999px; font-size: .85rem; }
+.film-bars { position: absolute; top: calc(10px + env(safe-area-inset-top)); left: 10px; right: 10px; display: flex; gap: 3px; z-index: 5; }
+.film-bars i { flex: 1; height: 3px; border-radius: 3px; background: rgba(255,255,255,.3); overflow: hidden; }
+.film-bars b { display: block; height: 100%; width: 0; background: #fff; }
+.film-x, .film-sound { position: absolute; top: calc(22px + env(safe-area-inset-top)); z-index: 6; width: 42px; height: 42px; border: 0; border-radius: 50%; background: rgba(0,0,0,.45); color: #fff; font-size: 1.1rem; cursor: pointer; }
+.film-x { right: 12px; }
+.film-sound { right: 62px; }
+.film-start { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 7; font-size: 1.15rem; padding: 16px 28px; box-shadow: 0 10px 40px rgba(253,26,133,.5); }
+.film:has(.film-start) .film-stage { background: #000 center / cover; }

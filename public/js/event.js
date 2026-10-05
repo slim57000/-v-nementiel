@@ -1,5 +1,5 @@
 // Page publique d'un événement : faire-part, compte à rebours, stories, réponses, livre d'or, cagnotte.
-import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, guestName, LOCALE, placeholderCover, tabbar, createSheet, openPot } from "./common.js";
+import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, EN, guestName, LOCALE, placeholderCover, tabbar, createSheet, openPot } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 import { initGuestbook } from "./guestbook.js";
 
@@ -16,7 +16,7 @@ async function load() {
   const code = new URLSearchParams(location.search).get("code");
   if (code) {
     await api(`/api/public/${slug}/unlock`, { method: "POST", body: { code } }).catch(() => {});
-    history.replaceState(null, "", location.pathname);
+    history.replaceState(null, "", location.pathname + (new URLSearchParams(location.search).get("film") ? "?film=1" : ""));
   }
 
   let ev;
@@ -139,6 +139,7 @@ function showEvent(ev) {
   $("#qa-comment").onclick = () => { $("#gb-open").scrollIntoView({ behavior: "smooth", block: "center" }); $("#gb-open").click(); };
   eventReactions(ev);
   hereBadge(ev);
+  filmCard(ev);
   $("#copy").onclick = () => copy(url, "Lien copié !");
   $("#page").classList.remove("hidden");
 }
@@ -306,6 +307,22 @@ async function initRsvp(ev) {
 }
 
 // Réactions à l'événement : rangée d'emojis avec compteurs, envol de l'emoji touché.
+// ✨ Film souvenir : proposé dès le jour J (s'il y a au moins 3 photos ou vidéos), ouvert directement par le lien « ?film=1 ».
+async function filmCard(ev) {
+  if (!ev.date || ev.date > new Date().toISOString().slice(0, 10)) return;
+  const { filmScenes, playFilm } = await import("./film.js");
+  const { scenes, count } = await filmScenes(ev);
+  if (count < 3) return;
+  const card = document.createElement("button");
+  card.type = "button";
+  card.className = "film-card";
+  card.innerHTML = `<span class="film-card-bg" style="background-image:url('${esc(scenes.find((s) => s.kind === "photo")?.url || "")}')"></span>
+    <span class="film-card-txt"><b>${EN ? "✨ Relive the event" : "✨ Revivez l'événement"}</b><small>${EN ? `The memory film · ${count} photos and videos` : `Le film souvenir · ${count} photos et vidéos`}</small></span><span class="film-card-play">▶</span>`;
+  card.onclick = () => playFilm(ev, scenes);
+  $("#ev-react")?.before(card);
+  if (new URLSearchParams(location.search).get("film")) playFilm(ev, scenes);
+}
+
 // « 🔴 12 personnes sont là en ce moment » : compteur en direct (dès 2 personnes), rafraîchi toutes les 20 s.
 function hereBadge(ev) {
   const box = document.createElement("div");
