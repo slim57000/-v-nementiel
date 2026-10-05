@@ -56,11 +56,12 @@ const views = {
       </div></section>`).join("") || "<p class='muted'>Aucun message reçu.</p>";
   },
   async audience() {
-    const a = await api("/api/admin/analytics?days=30");
+    const a = await api("/api/admin/analytics?days=30").catch(() => ({ days: [{ date: "", views: 0, visitors: 0 }], pages: [], sources: [], devices: [], langs: [] }));
     const max = Math.max(1, ...a.days.map((d) => d.views));
     const sum = (k) => a.days.reduce((n, d) => n + d[k], 0);
     const list = (rows, label) => `<h3 style="font-size:.9rem;margin:16px 0 6px">${label}</h3>${rows.length ? rows.map(([k, n]) => `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)"><span>${esc(k)}</span><b>${n}</b></div>`).join("") : '<p class="muted small">Pas encore de données.</p>'}`;
-    return `<div id="live-now">${await liveNow()}</div>
+    const live = await liveNow().catch(() => `<section class="card"><p class="muted small">🟢 Vue « En direct » indisponible : le serveur doit être redémarré (sudo systemctl restart mafeliza).</p></section>`);
+    return `<div id="live-now">${live}</div>
       <section class="card">
       <h2 style="font-size:1rem">📈 Audience · 30 derniers jours</h2>
       <div class="admin-stats">${[["Pages vues", sum("views")], ["Visiteurs", sum("visitors")], ["Aujourd'hui", a.days.at(-1).visitors]].map(([l, n]) => `<div><b>${n}</b><small>${l}</small></div>`).join("")}</div>
