@@ -236,7 +236,11 @@ for (const dir of ["js", "css"]) {
   }
 }
 const IMPORT_MAP = `<script type="importmap">${JSON.stringify({ imports: Object.fromEntries(Object.entries(ASSET_VERSIONS).filter(([k]) => k.endsWith(".js")).map(([k, v]) => [k, `${k}?v=${v}`])) })}</script>`;
+// Nom du site pour Google (sinon il le devine) : « MaFeliza » dans chaque page.
+const SITE_NAME = `<meta property="og:site_name" content="MaFeliza"><meta name="application-name" content="MaFeliza">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"MaFeliza","alternateName":["Ma Feliza","mafeliza.com"],"url":"https://mafeliza.com/"}</script>`;
 export const versionHtml = (html) => html
+  .replace(/<\/head>/i, (m) => (html.includes("og:site_name") ? m : `${SITE_NAME}\n${m}`))
   .replace(/((?:src|href)=")(\/(?:js|css)\/[\w.-]+\.(?:js|css))(?:\?v=[\w]+)?"/g, (m, a, path) => (ASSET_VERSIONS[path] ? `${a}${path}?v=${ASSET_VERSIONS[path]}"` : m))
   .replace(/<script/i, `${IMPORT_MAP}<script`);
 const pageCache = new Map();
