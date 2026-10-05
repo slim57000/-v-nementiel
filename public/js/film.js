@@ -3,8 +3,8 @@
 import { api, esc, formatDate, coverOf, isVideo, isHidden, shareSheet, EN } from "./common.js";
 
 const T = EN
-  ? { thanks: "Thank you for sharing this moment 💛", made: "Made with MaFeliza", replay: "↺ Watch again", share: "Share", play: "▶ Play the film", close: "Close" }
-  : { thanks: "Merci d'avoir partagé ce moment 💛", made: "Fait avec MaFeliza", replay: "↺ Revoir", share: "Partager", play: "▶ Lancer le film", close: "Fermer" };
+  ? { thanks: "Thank you for sharing this moment 💛", made: "Made with MaFeliza", create: "✨ Create yours", replay: "↺ Watch again", share: "Share", play: "▶ Play the film", close: "Close" }
+  : { thanks: "Merci d'avoir partagé ce moment 💛", made: "Fait avec MaFeliza", create: "✨ Créez le vôtre", replay: "↺ Revoir", share: "Partager", play: "▶ Lancer le film", close: "Fermer" };
 
 // Médias et messages de l'événement : de quoi faire un film ?
 export async function filmScenes(ev) {
@@ -64,6 +64,7 @@ export function playFilm(ev, scenes) {
       <button type="button" class="film-x" aria-label="${T.close}">✕</button>
       <button type="button" class="film-sound" aria-label="Son">🔊</button>
       <div class="film-stage"></div>
+      ${ev.premium ? "" : '<span class="film-brand"><img src="/img/logo.png" alt="">mafeliza.com</span>'}
       <button type="button" class="film-start">${T.play}</button>
     </div>`);
   const root = document.getElementById("film"), stage = root.querySelector(".film-stage");
@@ -86,7 +87,7 @@ export function playFilm(ev, scenes) {
     return `<div class="film-bg kb" style="background-image:url('${esc(coverOf(ev))}')"></div>
       <div class="film-text film-end"><h2>${T.thanks}</h2><p>${esc(ev.name)}</p>
       <div class="film-actions"><button type="button" data-film="again">${T.replay}</button><button type="button" data-film="share">↗ ${T.share}</button></div>
-      <small class="film-made"><img src="/img/logo.png" alt=""> ${T.made}</small></div>`;
+      ${ev.premium ? "" : `<a class="film-made" href="/?ref=film"><img src="/img/logo.png" alt=""> ${T.made} · <b>${T.create}</b></a>`}</div>`;
   };
   const next = () => {
     i++;

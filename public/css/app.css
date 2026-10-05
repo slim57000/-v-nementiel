@@ -1016,7 +1016,9 @@ main { animation: em-fade .3s ease-out; }
 .film-actions { display: flex; gap: 10px; justify-content: center; margin: 18px 0; }
 .film-actions button, .film-start { border: 0; border-radius: 999px; padding: 12px 20px; font: inherit; font-weight: 700; cursor: pointer; background: #fff; color: #c20f68; }
 .film-actions button + button { background: linear-gradient(135deg,#fd1a85,#c60bd2); color: #fff; }
-.film-made { display: inline-flex; align-items: center; gap: 6px; opacity: .85; }
+.film-made { display: inline-flex; align-items: center; gap: 6px; opacity: .9; color: #fff; text-decoration: none; }
+.film-brand { position: absolute; right: 12px; bottom: calc(24px + env(safe-area-inset-bottom)); z-index: 5; display: flex; align-items: center; gap: 5px; padding: 4px 10px 4px 6px; border-radius: 999px; background: rgba(0,0,0,.35); font-size: .75rem; font-weight: 700; opacity: .75; pointer-events: none; }
+.film-brand img { height: 16px; }
 .film-made img { height: 18px; }
 .film-who { position: absolute; left: 16px; bottom: calc(24px + env(safe-area-inset-bottom)); background: rgba(0,0,0,.45); padding: 6px 12px; border-radius: 999px; font-size: .85rem; }
 .film-bars { position: absolute; top: calc(10px + env(safe-area-inset-top)); left: 10px; right: 10px; display: flex; gap: 3px; z-index: 5; }

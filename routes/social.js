@@ -4,7 +4,7 @@ import { Router } from "express";
 import { tooFast } from "../lib/limits.js";
 import { notify, orgOwner } from "../lib/push.js";
 import { ping, eventTopic } from "../lib/realtime.js";
-import { recordPeak } from "../lib/premium.js";
+import { recordPeak, isPremium } from "../lib/premium.js";
 import {
   findEventBySlug, addMessage, listMessages, addPhoto, listPhotos, findPhoto, deletePhoto,
   addGuestbookEntry, listGuestbook, findGuestbookEntry, updateGuestbookEntry, likeGuestbookEntry, deleteGuestbookEntry,
@@ -46,6 +46,8 @@ router.get("/lk", async (req, res) => {
   const replay = hidden ? [] : (all || []).filter((s) => s.room === room).map((s) => s.url);
   res.json({
     live: live && LIVEKIT_ENABLED, replay,
+    // Signature MaFeliza sur le replay (retirée pour les organisateurs Premium).
+    brand: replay.length ? !(await isPremium(req.event.organizerId).catch(() => false)) : false,
     ...(live && LIVEKIT_ENABLED && { url: LIVEKIT_URL, token: lkToken({ room, identity: `v-${req.author}-${Date.now().toString(36)}`, name: "Invité" }) }),
   });
 });

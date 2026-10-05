@@ -12,6 +12,14 @@
     #msg { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 16px; }
     #sound { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); border: 0; border-radius: 99px; padding: 10px 18px; font: inherit; font-weight: 700; background: #fff; color: #c20f68; cursor: pointer; }
     .hidden { display: none !important; }
+    #brand { position: absolute; right: 10px; bottom: 54px; display: flex; align-items: center; gap: 5px; padding: 4px 9px 4px 6px; border-radius: 99px; background: rgba(0,0,0,.35); color: #fff; font-size: .75rem; font-weight: 700; text-decoration: none; opacity: .75; }
+    #brand img { height: 16px; }
+    #endcard { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 20px; background: radial-gradient(circle at 50% 40%, rgba(109,10,82,.92), rgba(10,2,8,.95)); animation: fade .8s ease both; }
+    #endcard h2 { margin: 8px 0 6px; font-size: 1.35rem; }
+    #endcard p { margin: 0 0 16px; opacity: .85; }
+    #endcard a { display: inline-block; padding: 11px 20px; border-radius: 99px; background: linear-gradient(135deg,#fd1a85,#c60bd2); color: #fff; font-weight: 700; text-decoration: none; }
+    #endcard button { margin-top: 12px; background: none; border: 0; color: #fff; opacity: .8; font: inherit; text-decoration: underline; cursor: pointer; }
+    @keyframes fade { from { opacity: 0; } }
   </style>
 </head>
 <body>
@@ -19,6 +27,10 @@
   <div id="msg">Connexion au direct…</div>
   <button id="sound" class="hidden" type="button">🔊 Activer le son</button>
   <span id="tag" class="hidden"></span>
+  <a id="brand" class="hidden" href="https://mafeliza.com/?ref=replay" target="_top"><img src="/img/logo.png" alt="">mafeliza.com</a>
+  <div id="endcard" class="hidden"><div><img src="/img/logo.png" alt="" style="height:44px">
+    <h2>Ce moment a été partagé avec MaFeliza 💛</h2><p>Faire-part, live, photos et souvenirs de vos proches, au même endroit.</p>
+    <a href="https://mafeliza.com/?ref=replay" target="_top">✨ Créez le vôtre</a><br><button type="button" id="again">↺ Revoir</button></div></div>
   <script src="/vendor/livekit-client.umd.js"></script>
   <script>
     // Lecteur d'une caméra « téléphone » (LiveKit) : affiché dans le live comme une vidéo YouTube.
@@ -51,7 +63,18 @@
       sound.classList.add("hidden");
     });
     // Replay : les segments enregistrés s'enchaînent comme une seule vidéo.
-    function playReplay(parts) {
+    function playReplay(parts, brand) {
+      // Signature discrète + écran de fin (sauf organisateur Premium).
+      if (brand) {
+        document.getElementById("brand").classList.remove("hidden");
+        if (/em-lang=en/.test(document.cookie) || (!/em-lang=/.test(document.cookie) && navigator.language?.startsWith("en"))) {
+          document.querySelector("#endcard h2").textContent = "This moment was shared with MaFeliza 💛";
+          document.querySelector("#endcard p").textContent = "Invitations, live, photos and memories of your loved ones, in one place.";
+          document.querySelector("#endcard a").textContent = "✨ Create yours";
+          document.getElementById("again").textContent = "↺ Watch again";
+        }
+        document.getElementById("again").onclick = () => { document.getElementById("endcard").classList.add("hidden"); i = 0; load(); video.play().catch(() => {}); };
+      }
       live = true;
       let i = 0;
       const tag = document.getElementById("tag");
@@ -59,7 +82,10 @@
       video.controls = true;
       video.muted = false;
       const load = () => { video.src = parts[i]; tag.textContent = parts.length > 1 ? `▶ Replay · partie ${i + 1}/${parts.length}` : "▶ Replay"; notifySize(); };
-      video.addEventListener("ended", () => { if (++i < parts.length) { load(); video.play().catch(() => {}); } });
+      video.addEventListener("ended", () => {
+        if (++i < parts.length) { load(); video.play().catch(() => {}); }
+        else if (brand) document.getElementById("endcard").classList.remove("hidden");
+      });
       load();
       say("");
     }
@@ -71,13 +97,13 @@
       try {
         const res = await fetch(`/api/public/${encodeURIComponent(q.get("e"))}/lk?room=${encodeURIComponent(q.get("room"))}`);
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Direct indisponible.");
-        const { url, token, live: on, replay } = await res.json();
+        const { url, token, live: on, replay, brand } = await res.json();
         if (on) {
           live = true;
           await room.connect(url, token);
           if (![...room.remoteParticipants.values()].some((p) => p.videoTrackPublications.size)) say("Le direct va bientôt commencer…");
         } else if (replay.length) {
-          playReplay(replay);
+          playReplay(replay, brand);
         } else {
           say("Le direct va bientôt commencer…");
           if (++waited < 120) setTimeout(watch, 5000); // ~10 minutes d'attente
