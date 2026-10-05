@@ -60,10 +60,8 @@ const views = {
     const max = Math.max(1, ...a.days.map((d) => d.views));
     const sum = (k) => a.days.reduce((n, d) => n + d[k], 0);
     const list = (rows, label) => `<h3 style="font-size:.9rem;margin:16px 0 6px">${label}</h3>${rows.length ? rows.map(([k, n]) => `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)"><span>${esc(k)}</span><b>${n}</b></div>`).join("") : '<p class="muted small">Pas encore de données.</p>'}`;
-    return `<section class="card">
-      <h2 style="font-size:1rem">🟢 En ligne maintenant</h2>
-      <div class="admin-stats">${[["Personnes sur le site", a.online?.total ?? 0], ["Utilisateurs connectés", a.online?.logged ?? 0], ["Visiteurs non connectés", (a.online?.total ?? 0) - (a.online?.logged ?? 0)]].map(([l, n]) => `<div><b>${n}</b><small>${l}</small></div>`).join("")}</div>
-      <p class="muted small" style="margin:6px 0 18px">Actifs sur les 2 dernières minutes · <a href="#" data-act="refresh-audience">Actualiser</a></p>
+    return `<div id="live-now">${await liveNow()}</div>
+      <section class="card">
       <h2 style="font-size:1rem">📈 Audience · 30 derniers jours</h2>
       <div class="admin-stats">${[["Pages vues", sum("views")], ["Visiteurs", sum("visitors")], ["Aujourd'hui", a.days.at(-1).visitors]].map(([l, n]) => `<div><b>${n}</b><small>${l}</small></div>`).join("")}</div>
       <div style="display:flex;align-items:flex-end;gap:3px;height:120px;margin:16px 0 4px">${a.days.map((d) => `<i title="${d.date} : ${d.views} vues, ${d.visitors} visiteurs" style="flex:1;background:linear-gradient(#fd1a85,#c60bd2);border-radius:4px 4px 0 0;height:${Math.max(2, (d.views / max) * 100)}%"></i>`).join("")}</div>
@@ -150,8 +148,36 @@ function askDays(role) {
 }
 const until = (ms) => new Date(ms).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
 
+// « En direct » : rafraîchi tout seul toutes les 5 s tant que l'onglet Audience est affiché.
+const PAGE_NAMES = { "/": "Accueil", "/decouvrir": "Découvrir", "/dashboard": "Mes événements", "/edit": "Création d'événement", "/live": "Regarde un live",
+  "/lk": "Regarde un live", "/cameraman": "Filme un live 🎥", "/messages": "Messages", "/amis": "Amis", "/profil": "Profil", "/fil": "Fil", "/connexion": "Connexion",
+  "/faire-part": "Faire-part", "/album": "Album", "/admin": "Administration", "/e/…": "Page d'un événement" };
+const pageName = (p) => PAGE_NAMES[p] || PAGE_NAMES[p.replace(/^\/e\/.*/, "/e/…")] || p;
+const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? "à l'instant" : m < 60 ? `depuis ${m} min` : `depuis ${Math.floor(m / 60)} h ${m % 60}`; };
+let lastTotal = null;
+async function liveNow() {
+  const o = await api(`/api/admin/online?t=${Date.now()}`, { cache: "no-store" });
+  const bump = lastTotal != null && o.total !== lastTotal ? " live-bump" : "";
+  lastTotal = o.total;
+  return `<section class="card live-now">
+    <div class="live-head"><span class="live-dot"></span><h2 style="font-size:1rem;margin:0">En direct sur MaFeliza</h2>
+      <a href="#" data-act="refresh-audience" class="muted small" style="margin-left:auto">↻ Actualiser</a></div>
+    <div class="live-big${bump}"><b>${o.total}</b><span>${o.total > 1 ? "personnes sur le site en ce moment" : "personne sur le site en ce moment"}</span></div>
+    <div class="admin-stats">${[["Utilisateurs connectés", o.logged], ["Visiteurs non connectés", o.total - o.logged]].map(([l, n]) => `<div><b>${n}</b><small>${l}</small></div>`).join("")}</div>
+    ${o.pages.length ? `<h3 style="font-size:.9rem;margin:16px 0 6px">Où sont-ils ?</h3>${o.pages.map(([p, n]) => `<div class="live-bar"><span>${esc(pageName(p))}</span><i style="width:${Math.max(8, (n / o.total) * 100)}%"></i><b>${n}</b></div>`).join("")}` : ""}
+    ${o.people.length ? `<h3 style="font-size:.9rem;margin:16px 0 6px">Qui est là ?</h3><div class="live-people">${o.people.map((v) => `<div class="live-person"><span class="live-av">${v.name ? esc(v.name.trim()[0] || "?").toUpperCase() : "👤"}</span><div style="flex:1;min-width:0"><b>${v.name ? esc(v.name) : "Visiteur"}</b> <small class="muted">${v.device}</small><div class="muted small">${esc(pageName(v.path))} · ${ago(v.since)}</div></div></div>`).join("")}</div>` : ""}
+    <p class="muted small" style="margin:12px 0 0">Actifs sur les 2 dernières minutes · mis à jour toutes les 5 s</p>
+  </section>`;
+}
+async function refreshLive(manual) {
+  const box = document.getElementById("live-now");
+  if (!box) return;
+  try { box.innerHTML = await liveNow(); if (manual) toast("Mis à jour ✔"); } catch { /* réessaie au prochain tour */ }
+}
+setInterval(() => { if (tab === "audience" && !document.hidden) refreshLive(); }, 5000);
+
 async function render() {
-  $("#q").classList.toggle("hidden", ["reports", "settings", "contact"].includes(tab));
+  $("#q").classList.toggle("hidden", ["reports", "settings", "contact", "audience", "notifs"].includes(tab));
   try {
     $("#content").innerHTML = await views[tab]($("#q").value.trim());
   } catch (err) {
@@ -171,7 +197,7 @@ $("#q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeou
 
 $("#content").addEventListener("click", async (e) => {
   const btn = e.target.closest("[data-act]");
-  if (btn?.dataset.act === "refresh-audience") { e.preventDefault(); render(); return; }
+  if (btn?.dataset.act === "refresh-audience") { e.preventDefault(); refreshLive(true); return; }
   if (btn?.dataset.act === "notify") {
     try {
       const r = await api("/api/admin/notify", { method: "POST", body: { title: $("#n-title").value, body: $("#n-body").value, url: $("#n-url").value || "/dashboard" } });

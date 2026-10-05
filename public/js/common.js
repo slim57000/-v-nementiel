@@ -501,8 +501,9 @@ try {
     const body = JSON.stringify({ path: location.pathname, ref: document.referrer, lang });
     navigator.sendBeacon?.("/api/hit", new Blob([body], { type: "application/json" })) || fetch("/api/hit", { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true });
   }
-  // Signe de vie toutes les 60 s tant que la page est visible : compteur « en ligne maintenant ».
-  setInterval(() => { if (!document.hidden) navigator.sendBeacon?.("/api/hit", new Blob(['{"ping":1}'], { type: "application/json" })); }, 60_000);
+  // Signe de vie dès l'ouverture puis toutes les 30 s tant que la page est visible : compteur « en ligne maintenant ».
+  const alive = () => { if (!document.hidden) fetch("/api/hit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ping: 1, path: location.pathname }), keepalive: true }).catch(() => {}); };
+  alive(); setInterval(alive, 30_000); document.addEventListener("visibilitychange", alive);
 } catch { /* statistiques facultatives */ }
 // Tout lien [data-cookies] rouvre le choix.
 document.addEventListener("click", (e) => {

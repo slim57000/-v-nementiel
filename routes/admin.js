@@ -6,11 +6,11 @@ import { seedDemo, demoEvents, sendDemoMessages, sendDemoInvitation, createDemoA
 import { isPremium, setPremium, premiumUntil } from "../lib/premium.js";
 import { tooFast } from "../lib/limits.js";
 import { notify, orgOwner, forget } from "../lib/push.js";
-import { analyticsSummary } from "../lib/analytics.js";
+import { analyticsSummary, onlineNow } from "../lib/analytics.js";
 import { sendEmail, EMAIL_ENABLED } from "../lib/email.js";
 import {
   searchEvents, searchOrganizers, findEvent, findOrganizer, saveOrganizer, saveEvent, listEvents,
-  listReports, deleteReport, countReports, getSetting, setSetting,
+  listReports, deleteReport, countReports, getSetting, setSetting, findOrganizersByIds,
 } from "../lib/store.js";
 
 const router = Router();
@@ -175,6 +175,15 @@ router.delete("/reports/:id", async (req, res) => {
 
 // Compteurs : utilisateurs, événements (par visibilité), à venir, aujourd'hui, premium.
 // Audience du site (30 derniers jours) : pages vues, visiteurs, pages, sources, appareils.
+// En direct : qui est sur le site maintenant, et sur quelle page (noms des comptes connectés, visiteurs anonymes).
+router.get("/online", async (req, res) => {
+  const { total, logged, list } = onlineNow(true);
+  const users = new Map((await findOrganizersByIds([...new Set(list.filter((v) => v.userId).map((v) => v.userId))]).catch(() => [])).map((u) => [u.id, u]));
+  const pages = {};
+  for (const v of list) { const p = v.path.replace(/^\/e\/[^/?#]+.*/, "/e/…"); pages[p] = (pages[p] || 0) + 1; }
+  res.json({ total, logged, pages: Object.entries(pages).sort((a, b) => b[1] - a[1]).slice(0, 8),
+    people: list.sort((a, b) => b.at - a.at).slice(0, 30).map((v) => ({ name: v.userId ? (users.get(v.userId)?.name || String(users.get(v.userId)?.email || "Utilisateur").split("@")[0]) : null, path: v.path, device: v.device, since: v.since })) });
+});
 router.get("/analytics", async (req, res) => res.json(await analyticsSummary(Math.min(90, Number(req.query.days) || 30))));
 
 router.get("/stats", async (req, res) => {

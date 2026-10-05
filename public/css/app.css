@@ -957,3 +957,18 @@ main { animation: em-fade .3s ease-out; }
 #guide .guide-steps li { padding: 10px 12px; }
 #guide .guide-steps b { font-size: 1.12rem; }
 #guide .guide-steps span { font-size: 1rem; line-height: 1.4; }
+
+/* Administration · En direct */
+.live-now .live-head { display:flex; align-items:center; gap:10px; }
+.live-dot { width:12px; height:12px; border-radius:50%; background:#22c55e; box-shadow:0 0 0 0 rgba(34,197,94,.6); animation:live-pulse 1.6s infinite; flex:none; }
+@keyframes live-pulse { 70% { box-shadow:0 0 0 12px rgba(34,197,94,0); } 100% { box-shadow:0 0 0 0 rgba(34,197,94,0); } }
+.live-big { text-align:center; margin:14px 0 10px; }
+.live-big b { display:block; font-size:3.4rem; line-height:1; background:linear-gradient(135deg,#fd1a85,#c60bd2); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.live-big span { color:var(--muted); font-size:.9rem; }
+.live-bump b { animation:live-bump .6s ease; }
+@keyframes live-bump { 40% { transform:scale(1.25); } }
+.live-bar { display:grid; grid-template-columns:1fr 40% auto; align-items:center; gap:8px; padding:5px 0; font-size:.9rem; }
+.live-bar i { height:8px; border-radius:8px; background:linear-gradient(90deg,#fd1a85,#c60bd2); }
+.live-people { display:grid; gap:8px; max-height:300px; overflow-y:auto; }
+.live-person { display:flex; gap:10px; align-items:center; }
+.live-av { width:34px; height:34px; border-radius:50%; display:grid; place-items:center; flex:none; color:#fff; font-weight:700; background:linear-gradient(135deg,#fd1a85,#c60bd2); }

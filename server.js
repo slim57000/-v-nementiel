@@ -97,7 +97,7 @@ app.post("/api/push/subscribe", async (req, res) => {
 // Formulaire de contact du site : message rangé dans la boîte « Contact » de l'administration.
 // Statistiques de fréquentation (sans cookie) : une page vue envoyée par chaque page du site.
 app.post("/api/hit", async (req, res) => {
-  ping(req, getSigned(req, "org"));
+  ping(req, getSigned(req, "org"), req.body?.path);
   if (req.body?.ping) return res.status(204).end();
   if (!(await tooFast(`hit:${req.ip}`, 120, 60_000))) recordHit(req, { path: String(req.body?.path || ""), ref: String(req.body?.ref || ""), lang: req.body?.lang });
   res.status(204).end();
