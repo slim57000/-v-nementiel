@@ -136,6 +136,9 @@ app.post("/api/push/unsubscribe", async (req, res) => {
 app.get(["/api/cron/daily", "/api/cron/replay-reminders"], async (req, res) => {
   const secret = process.env.CRON_SECRET;
   if (secret && req.get("authorization") !== `Bearer ${secret}`) return res.status(401).json({ error: "Non autorisé." });
+  res.json(await dailyJob());
+});
+async function dailyJob() {
   // Rappel 2 jours avant la fin du replay : J+13 (15 jours, gratuit) ou J+28 (30 jours, premium).
   const day = new Date(Date.now() - 13 * 86400000).toISOString().slice(0, 10);
   const dayPremium = new Date(Date.now() - 28 * 86400000).toISOString().slice(0, 10);
@@ -196,8 +199,20 @@ app.get(["/api/cron/daily", "/api/cron/replay-reminders"], async (req, res) => {
       title: `🎞️ Le replay de « ${event.name} » est disponible`, body: "Il a été envoyé à vos invités par email.", url: `/live?e=${event.slug}`,
     }).catch(() => 0);
   }
-  res.json({ day, sent, pushed });
-});
+  return { day, sent, pushed };
+}
+// Sur le VPS (pas de Vercel Cron) : le serveur lance lui-même la tâche une fois par jour, à partir de 9 h (heure de Paris).
+// La date du dernier passage est enregistrée en base : jamais deux envois le même jour, même après un redémarrage.
+async function dailyTick() {
+  const now = new Date();
+  const hour = Number(new Intl.DateTimeFormat("fr-FR", { hour: "numeric", hourCycle: "h23", timeZone: "Europe/Paris" }).format(now));
+  const today = now.toISOString().slice(0, 10);
+  if (hour < 9 || (await getSetting("cron:daily").catch(() => today)) === today) return;
+  await setSetting("cron:daily", today);
+  const r = await dailyJob().catch((err) => ({ error: err.message }));
+  console.log("Tâche quotidienne :", JSON.stringify(r));
+}
+if (!process.env.VERCEL) { setTimeout(dailyTick, 60_000); setInterval(dailyTick, 10 * 60_000); }
 
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
