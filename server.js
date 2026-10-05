@@ -11,7 +11,7 @@ import { tooFast } from "./lib/limits.js";
 import { GOOGLE_ENABLED } from "./lib/google.js";
 import { FACEBOOK_ENABLED } from "./lib/facebook.js";
 import { APPLE_ENABLED } from "./lib/apple.js";
-import { recordHit, ping } from "./lib/analytics.js";
+import { recordHit, ping, onlineOn } from "./lib/analytics.js";
 import { getSigned } from "./lib/session.js";
 import express from "express";
 import QRCode from "qrcode";
@@ -102,6 +102,9 @@ app.post("/api/hit", async (req, res) => {
   if (!(await tooFast(`hit:${req.ip}`, 120, 60_000))) recordHit(req, { path: String(req.body?.path || ""), ref: String(req.body?.ref || ""), lang: req.body?.lang });
   res.status(204).end();
 });
+
+// Nombre de personnes présentes en ce moment sur la page d'un événement (ou son live).
+app.get("/api/public/:slug/here", (req, res) => res.json({ here: onlineOn(String(req.params.slug).slice(0, 120)) }));
 
 app.post("/api/contact", async (req, res) => {
   const clean = (v, n) => String(v || "").trim().slice(0, n);

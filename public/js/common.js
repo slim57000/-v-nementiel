@@ -502,7 +502,7 @@ try {
     navigator.sendBeacon?.("/api/hit", new Blob([body], { type: "application/json" })) || fetch("/api/hit", { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true });
   }
   // Signe de vie dès l'ouverture puis toutes les 30 s tant que la page est visible : compteur « en ligne maintenant ».
-  const alive = () => { if (!document.hidden) fetch("/api/hit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ping: 1, path: location.pathname }), keepalive: true }).catch(() => {}); };
+  const alive = () => { if (!document.hidden) fetch("/api/hit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ping: 1, path: location.pathname + (location.pathname === "/live" ? location.search : "") }), keepalive: true }).catch(() => {}); };
   alive(); setInterval(alive, 30_000); document.addEventListener("visibilitychange", alive);
 } catch { /* statistiques facultatives */ }
 // Tout lien [data-cookies] rouvre le choix.

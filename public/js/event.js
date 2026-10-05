@@ -138,6 +138,7 @@ function showEvent(ev) {
   $("#qa-share").onclick = () => $("#share").click();
   $("#qa-comment").onclick = () => { $("#gb-open").scrollIntoView({ behavior: "smooth", block: "center" }); $("#gb-open").click(); };
   eventReactions(ev);
+  hereBadge(ev);
   $("#copy").onclick = () => copy(url, "Lien copié !");
   $("#page").classList.remove("hidden");
 }
@@ -305,6 +306,25 @@ async function initRsvp(ev) {
 }
 
 // Réactions à l'événement : rangée d'emojis avec compteurs, envol de l'emoji touché.
+// « 🔴 12 personnes sont là en ce moment » : compteur en direct (dès 2 personnes), rafraîchi toutes les 20 s.
+function hereBadge(ev) {
+  const box = document.createElement("div");
+  box.className = "here-badge hidden";
+  $("#ev-react")?.before(box);
+  let last = 0;
+  const tick = async () => {
+    if (document.hidden) return;
+    const { here = 0 } = await api(`/api/public/${encodeURIComponent(ev.slug)}/here`).catch(() => ({}));
+    box.classList.toggle("hidden", here < 2);
+    if (here >= 2) {
+      box.innerHTML = `<span class="here-dot"></span><b>${here}</b><span>personnes sont là en ce moment</span>`;
+      if (here > last && last) { box.classList.remove("here-pop"); void box.offsetWidth; box.classList.add("here-pop"); }
+    }
+    last = here;
+  };
+  setTimeout(tick, 1500); setInterval(tick, 20_000);
+}
+
 function eventReactions(ev) {
   const box = $("#ev-react");
   let counts = ev.reactions || {};

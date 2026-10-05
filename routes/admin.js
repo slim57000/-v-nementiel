@@ -180,7 +180,7 @@ router.get("/online", async (req, res) => {
   const { total, logged, list } = onlineNow(true);
   const users = new Map((await findOrganizersByIds([...new Set(list.filter((v) => v.userId).map((v) => v.userId))]).catch(() => [])).map((u) => [u.id, u]));
   const pages = {};
-  for (const v of list) { const p = v.path.replace(/^\/e\/[^/?#]+.*/, "/e/…"); pages[p] = (pages[p] || 0) + 1; }
+  for (const v of list) { const p = v.path.split("?")[0].replace(/^\/e\/[^/?#]+.*/, "/e/…"); pages[p] = (pages[p] || 0) + 1; }
   res.json({ total, logged, pages: Object.entries(pages).sort((a, b) => b[1] - a[1]).slice(0, 8),
     people: list.sort((a, b) => b.at - a.at).slice(0, 30).map((v) => ({ name: v.userId ? (users.get(v.userId)?.name || String(users.get(v.userId)?.email || "Utilisateur").split("@")[0]) : null, path: v.path, device: v.device, since: v.since })) });
 });

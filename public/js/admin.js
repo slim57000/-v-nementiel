@@ -152,7 +152,7 @@ const until = (ms) => new Date(ms).toLocaleDateString("fr-FR", { day: "numeric",
 const PAGE_NAMES = { "/": "Accueil", "/decouvrir": "Découvrir", "/dashboard": "Mes événements", "/edit": "Création d'événement", "/live": "Regarde un live",
   "/lk": "Regarde un live", "/cameraman": "Filme un live 🎥", "/messages": "Messages", "/amis": "Amis", "/profil": "Profil", "/fil": "Fil", "/connexion": "Connexion",
   "/faire-part": "Faire-part", "/album": "Album", "/admin": "Administration", "/e/…": "Page d'un événement" };
-const pageName = (p) => PAGE_NAMES[p] || PAGE_NAMES[p.replace(/^\/e\/.*/, "/e/…")] || p;
+const pageName = (p) => PAGE_NAMES[p.split("?")[0]] || PAGE_NAMES[p.replace(/^\/e\/.*/, "/e/…")] || p;
 const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? "à l'instant" : m < 60 ? `depuis ${m} min` : `depuis ${Math.floor(m / 60)} h ${m % 60}`; };
 let lastTotal = null;
 async function liveNow() {
