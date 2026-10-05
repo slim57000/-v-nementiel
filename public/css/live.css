@@ -116,6 +116,6 @@
 .live-promo-btn { flex: 0 0 auto; padding: 9px 12px; border-radius: 12px; background: linear-gradient(135deg, #ff2e93, #b23cff); color: #fff; text-decoration: none; font-weight: 700; font-size: .85rem; white-space: nowrap; }
 .replay-zip { padding: 12px 16px 0; }
 /* Plein écran : vrai bouton ✕ au-dessus de la vidéo (l'iframe capte les touchers), sans le bouton Supprimer. */
-.fs-exit { display: none; position: absolute; top: calc(12px + env(safe-area-inset-top)); right: 12px; z-index: 6; width: 42px; height: 42px; border: 0; border-radius: 50%; background: rgba(0,0,0,.6); color: #fff; font-size: 1.1rem; cursor: pointer; }
+.fs-exit { display: none; position: absolute; top: calc(64px + env(safe-area-inset-top)); right: 12px; z-index: 6; width: 42px; height: 42px; border: 0; border-radius: 50%; background: rgba(0,0,0,.6); color: #fff; font-size: 1.1rem; cursor: pointer; }
 .live-immersive .fs-exit { display: grid; place-items: center; }
 .live-immersive .replay-del { display: none; }
