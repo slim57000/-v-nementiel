@@ -1029,3 +1029,37 @@ main { animation: em-fade .3s ease-out; }
 .film-sound { right: 62px; }
 .film-start { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 7; font-size: 1.15rem; padding: 16px 28px; box-shadow: 0 10px 40px rgba(253,26,133,.5); }
 .film:has(.film-start) .film-stage { background: #000 center / cover; }
+
+/* Faire-part : deux grandes cartes explicites au lieu de deux onglets */
+.fp-help { color: var(--muted); font-size: .92rem; margin: -4px 0 10px; }
+.fp-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 16px; }
+.fp-tabs button { display: grid; justify-items: center; gap: 3px; padding: 14px 10px; border-radius: 18px; border: 2px solid var(--border); background: var(--card, #fff); color: var(--text); font: inherit; cursor: pointer; text-align: center; transition: transform .15s, box-shadow .15s; }
+.fp-tabs button b { font-size: .98rem; line-height: 1.2; }
+.fp-tabs button small { color: var(--muted); font-size: .78rem; line-height: 1.3; }
+.fp-tabs .fp-ico { font-size: 1.6rem; line-height: 1; }
+.fp-tabs button.active { border-color: var(--primary); background: var(--primary-light); box-shadow: 0 6px 18px rgba(253,26,133,.18); transform: translateY(-1px); }
+.fp-tabs button.active b { color: var(--primary); }
+
+/* Choix (type, visibilité, style) : plus visibles — contour marqué, ombre, coche sur l'option choisie */
+.choice span { border-width: 2px; box-shadow: 0 2px 8px rgba(30,10,40,.06); transition: transform .12s, box-shadow .15s, border-color .15s; }
+.choice span:active { transform: scale(.97); }
+.choice input:checked + span { box-shadow: 0 6px 18px rgba(253,26,133,.22); }
+.choice input:checked + span::after { content: "✓"; position: absolute; top: -7px; right: -7px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--primary); color: #fff; font-size: .75rem; font-weight: 800; box-shadow: 0 2px 6px rgba(253,26,133,.4); }
+.choice span em { font-style: normal; }
+.choice span small { display: none; }
+/* Visibilité : une option par ligne, avec une phrase d'explication */
+.choices-list { grid-template-columns: 1fr !important; }
+.choices-list .choice span { min-height: 0 !important; flex-direction: row; justify-content: flex-start; text-align: left; gap: 12px; padding: 12px 14px; font-size: .95rem; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 12px; row-gap: 1px; }
+.choices-list .choice span b { grid-row: 1 / 3; font-size: 1.6rem; align-self: center; }
+.choices-list .choice span small { display: block; color: var(--muted); font-weight: 400; font-size: .8rem; }
+
+/* Accueil : onglets Tout / En direct / Fil bien visibles (barre teintée, onglet choisi en dégradé) */
+.home-tabs { padding: 5px; gap: 5px; border-radius: 16px; background: var(--primary-light); border: 1px solid rgba(253,26,133,.18); }
+.home-tabs button { border: 0; background: transparent; color: var(--text); font-size: .95rem; font-weight: 700; padding: 11px 6px; border-radius: 12px; transition: background .15s, color .15s, transform .12s; }
+.home-tabs button:active { transform: scale(.96); }
+.home-tabs button.active { background: linear-gradient(135deg, #fd1a85, #c60bd2); color: #fff; box-shadow: 0 6px 16px rgba(253,26,133,.35); }
+[data-theme="dark"] .home-tabs button.active { color: #fff; }
+/* Cloche et favoris : boutons teintés et ombrés, qu'on repère tout de suite */
+.topbar .bell, .topbar .fav-btn { border: 1.5px solid rgba(253,26,133,.28); background: linear-gradient(145deg, #fff, var(--primary-light)); box-shadow: 0 4px 12px rgba(253,26,133,.16); transition: transform .12s; }
+.topbar .bell:active, .topbar .fav-btn:active { transform: scale(.92); }
+[data-theme="dark"] .topbar .bell, [data-theme="dark"] .topbar .fav-btn { background: var(--card); }

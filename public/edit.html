@@ -54,10 +54,11 @@
 
       <section class="card" id="s-vis">
         <h2>2. Qui peut le voir ?</h2>
-        <div class="choices" style="grid-template-columns:repeat(3,minmax(0,1fr))">
-          <label class="choice" style="margin:0"><input type="radio" name="visibility" value="public" checked><span><b>🔓</b>Tout le monde</span></label>
-          <label class="choice" style="margin:0"><input type="radio" name="visibility" value="unlisted"><span><b>🔗</b>Avec le lien</span></label>
-          <label class="choice" style="margin:0"><input type="radio" name="visibility" value="private"><span><b>🔒</b>Avec un code</span></label>
+        <p class="muted small" style="margin-top:0">Touchez une option : vous pourrez la changer plus tard.</p>
+        <div class="choices choices-list">
+          <label class="choice" style="margin:0"><input type="radio" name="visibility" value="public" checked><span><b>🌍</b><em>Tout le monde</em><small>Visible par tous, dans « Découvrir »</small></span></label>
+          <label class="choice" style="margin:0"><input type="radio" name="visibility" value="unlisted"><span><b>🔗</b><em>Avec le lien</em><small>Seules les personnes à qui vous envoyez le lien</small></span></label>
+          <label class="choice" style="margin:0"><input type="radio" name="visibility" value="private"><span><b>🔒</b><em>Avec un code</em><small>Le lien + un code secret : le plus privé</small></span></label>
         </div>
         <div id="code-info" class="notice hidden">
           Code d'accès : <span class="code" id="access-code"></span>
@@ -74,8 +75,8 @@
 
       <section class="card" id="s-inv">
         <h2>3. Votre faire-part</h2>
-        <p class="muted small" style="margin-top:0">Il est déjà rempli pour vous : choisissez simplement un style.</p>
-        <label>Style</label>
+        <p class="muted small" style="margin-top:0">Il est déjà rempli pour vous : touchez un style pour changer son apparence 👇</p>
+        <label>Choisissez un style</label>
         <div class="choices" id="styles">
           <label class="choice" style="margin:0"><input type="radio" name="style" value="classique" checked><span><b>📜</b>Classique</span></label>
           <label class="choice" style="margin:0"><input type="radio" name="style" value="moderne"><span><b>✨</b>Moderne</span></label>

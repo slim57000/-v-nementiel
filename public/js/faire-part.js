@@ -94,9 +94,10 @@ function render() {
 }
 
 document.querySelector(".fp-tabs").addEventListener("click", (e) => {
-  if (!e.target.dataset.tab) return;
-  tab = e.target.dataset.tab;
-  document.querySelectorAll(".fp-tabs button").forEach((b) => b.classList.toggle("active", b === e.target));
+  const btn = e.target.closest("[data-tab]");
+  if (!btn) return;
+  tab = btn.dataset.tab;
+  document.querySelectorAll(".fp-tabs button").forEach((b) => b.classList.toggle("active", b === btn));
   closeEditor();
   render();
 });
