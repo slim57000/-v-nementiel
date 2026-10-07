@@ -1063,3 +1063,13 @@ main { animation: em-fade .3s ease-out; }
 .topbar .bell, .topbar .fav-btn { border: 1.5px solid rgba(253,26,133,.28); background: linear-gradient(145deg, #fff, var(--primary-light)); box-shadow: 0 4px 12px rgba(253,26,133,.16); transition: transform .12s; }
 .topbar .bell:active, .topbar .fav-btn:active { transform: scale(.92); }
 [data-theme="dark"] .topbar .bell, [data-theme="dark"] .topbar .fav-btn { background: var(--card); }
+/* Styles du faire-part : une couleur par case, assortie au rendu (Classique, Moderne, Élégant, Fleuri) */
+#styles .choice span { border-width: 2px; }
+#styles .choice:nth-child(1) span { background: linear-gradient(160deg, #fffaf0, #f3e3c3); border-color: #d9c08a; color: #7a5a1e; }
+#styles .choice:nth-child(2) span { background: linear-gradient(160deg, #ffe3f1, #ecd9ff); border-color: #e7a6dd; color: #a0127a; }
+#styles .choice:nth-child(3) span { background: linear-gradient(160deg, #2b2440, #1a1527); border-color: #c9a85a; color: #f1d898; }
+#styles .choice:nth-child(4) span { background: linear-gradient(160deg, #fff0f4, #e4f6e4); border-color: #f2a7bd; color: #b23a62; }
+#styles .choice input:checked + span { transform: translateY(-2px) scale(1.04); border-width: 3px; border-color: var(--primary); box-shadow: 0 8px 20px rgba(253,26,133,.3); color: inherit; }
+#styles .choice:nth-child(3) input:checked + span { color: #f1d898; }
+#styles .choice:not(:has(input:checked)) span { opacity: .92; }
+#styles .choice span { overflow: visible; }
