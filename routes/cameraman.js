@@ -1,5 +1,6 @@
 // Espace caméraman : accès par un code dédié, gestion des liens du live et consignes.
 import express, { Router } from "express";
+import { replayRecordedMail, replayReadyMail } from "../lib/confirmations.js";
 import { findEventBySlug, findEventByCameramanCode, saveEvent, getSetting, setSetting, addFriends, addHistory, listBlockIds, clearLimit } from "../lib/store.js";
 import { currentOrganizer } from "./auth.js";
 import { videoUploadTarget, saveLocalVideo, isOwnUpload, HAS_STORAGE, MAX_VIDEO_BYTES } from "../lib/uploads.js";
@@ -77,7 +78,7 @@ router.post("/:slug/go-live", async (req, res) => {
 // Fin du direct : les invités voient ensuite le replay.
 router.post("/:slug/stop-live", async (req, res) => {
   const room = String(req.body?.room || "");
-  if (isLkRoom(req.event, room)) await markLive(room, false);
+  if (isLkRoom(req.event, room)) { await markLive(room, false); setTimeout(() => replayReadyMail(req.event), 20_000); } // derniers morceaux du replay d'abord
   res.json({ ok: true });
 });
 
@@ -102,6 +103,7 @@ router.post("/:slug/replay", async (req, res) => {
   if (list.length >= 200) return res.status(400).json({ error: "Replay trop long." });
   list.push({ room, url, at: Date.now() });
   await setSetting(key, list);
+  if (list.length === 1) replayRecordedMail(req.event);
   if (await isLive(room)) await markLive(room, true); // signe de vie pendant le direct (jamais après l'arrêt)
   res.json({ ok: true, count: list.length });
 });

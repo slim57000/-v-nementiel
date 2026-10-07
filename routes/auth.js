@@ -4,6 +4,14 @@ import { findOrganizerByEmail, findOrganizer, createOrganizer, deleteOrganizer, 
 import { loginCode } from "../lib/codes.js";
 import { setSigned, getSigned } from "../lib/session.js";
 import { codeEmail, resetEmail, magicEmail, EMAIL_ENABLED, lastEmailError, reqLang } from "../lib/email.js";
+import { welcomeMail } from "../lib/confirmations.js";
+
+// Nouveau compte : créé puis mail de bienvenue (en arrière-plan).
+async function newAccount(req, email, code) {
+  const organizer = await createOrganizer(email, code);
+  welcomeMail(email, reqLang(req));
+  return organizer;
+}
 import { setPassword, hasPassword, checkPassword, passwordError } from "../lib/password.js";
 import { GOOGLE_ENABLED, googleAuthUrl, googleIdentity } from "../lib/google.js";
 import { FACEBOOK_ENABLED, facebookAuthUrl, facebookIdentity } from "../lib/facebook.js";
@@ -37,7 +45,7 @@ router.post("/login", async (req, res) => {
     if (!password) return res.status(401).json({ needPassword: true, isNew: true });
     const bad = passwordError(password);
     if (bad) return res.status(400).json({ needPassword: true, isNew: true, error: bad });
-    const created = await createOrganizer(email, loginCode());
+    const created = await newAccount(req, email, loginCode());
     await setPassword(created.id, password);
     logIn(res, created.id);
     return res.json({ created: true });
@@ -168,7 +176,7 @@ router.get("/google/callback", async (req, res) => {
     const who = await googleIdentity(String(req.query.code), callbackUrl(req));
     let organizer = await findOrganizerByEmail(who.email);
     if (!organizer) {
-      organizer = await createOrganizer(who.email, loginCode());
+      organizer = await newAccount(req, who.email, loginCode());
       organizer = await saveOrganizer({ ...organizer, displayName: who.name.slice(0, 40), avatar: who.avatar });
     }
     if (organizer.blocked) return res.redirect("/connexion");
@@ -196,7 +204,7 @@ router.get("/facebook/callback", async (req, res) => {
     const who = await facebookIdentity(String(req.query.code), fbCallbackUrl(req));
     let organizer = await findOrganizerByEmail(who.email);
     if (!organizer) {
-      organizer = await createOrganizer(who.email, loginCode());
+      organizer = await newAccount(req, who.email, loginCode());
       organizer = await saveOrganizer({ ...organizer, displayName: who.name.slice(0, 40), avatar: who.avatar });
     }
     if (organizer.blocked) return res.redirect("/connexion");
@@ -232,7 +240,7 @@ router.get("/apple/finish", async (req, res) => {
     const who = await appleIdentity(String(req.query.code), appleCallbackUrl(req), String(req.query.user || ""));
     let organizer = await findOrganizerByEmail(who.email);
     if (!organizer) {
-      organizer = await createOrganizer(who.email, loginCode());
+      organizer = await newAccount(req, who.email, loginCode());
       if (who.name) organizer = await saveOrganizer({ ...organizer, displayName: who.name.slice(0, 40) });
     }
     if (organizer.blocked) return res.redirect("/connexion");
@@ -263,7 +271,7 @@ router.get("/magic/:token", async (req, res) => {
   await setSetting(key, null).catch(() => {}); // usage unique
   if (!link || link.exp < Date.now()) return res.redirect("/connexion?erreur=lien-expire");
   let organizer = await findOrganizerByEmail(link.email);
-  if (!organizer) organizer = await createOrganizer(link.email, loginCode());
+  if (!organizer) organizer = await newAccount(req, link.email, loginCode());
   if (organizer.blocked) return res.redirect("/connexion");
   logIn(res, organizer.id);
   res.redirect(safeNext(link.next));

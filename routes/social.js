@@ -12,6 +12,7 @@ import {
 } from "../lib/store.js";
 import { guestAuthor } from "../lib/guest.js";
 import { getSetting, setSetting } from "../lib/store.js";
+import { rsvpMail, guestbookMail } from "../lib/confirmations.js";
 import { saveDataUrl, removeUpload, isOwnUpload, isVideoUrl, videoUploadTarget, MAX_VIDEO_BYTES } from "../lib/uploads.js";
 import { hasAccess } from "./public.js";
 import { currentOrganizer } from "./auth.js";
@@ -109,8 +110,10 @@ router.post("/rsvp", notBlocked, async (req, res) => {
   const key = `rsvp:${req.event.id}`;
   const all = (await getSetting(key).catch(() => null)) || {};
   const isNew = !all[req.author];
+  const changed = isNew || all[req.author].status !== status || all[req.author].count !== count;
   all[req.author] = { name, status, count, at: new Date().toISOString() };
   await setSetting(key, all);
+  if (changed) rsvpMail(req.event, name, status, count);
   if (isNew && status !== "no") {
     notify([orgOwner(req.event.organizerId)], { title: `✅ ${name} ${status === "yes" ? "vient" : "viendra peut-être"}`, body: `${req.event.name}${count > 1 ? ` · ${count} personnes` : ""}`, url: `/e/${req.event.slug}` }).catch(() => {});
   }
@@ -287,6 +290,7 @@ router.post("/guestbook", notBlocked, async (req, res) => {
     const photoUrl = req.body?.image ? await saveDataUrl(req.body.image) : await videoFrom(req.body);
     const audioUrl = req.body?.audio ? await saveDataUrl(req.body.audio, "audio") : null;
     const entry = await addGuestbookEntry(req.event.id, { name, text, photoUrl, audioUrl, author: req.author });
+    guestbookMail(req.event, name, text);
     notify([orgOwner(req.event.organizerId)], {
       title: `✍️ Livre d'or — ${req.event.name}`, body: `${name} : ${text || "a partagé un souvenir"}`.slice(0, 140), url: `/e/${req.event.slug}#gb-list`,
     }).catch(() => {});

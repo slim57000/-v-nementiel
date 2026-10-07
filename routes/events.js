@@ -20,6 +20,7 @@ const euros = (v) => Math.max(0, Math.min(1e7, Math.round(Number(String(v ?? "")
 const savePot = (id, body) => (body && ("potRaised" in body || "potGoal" in body) ? setSetting(`pot:${id}`, { raised: euros(body.potRaised), goal: euros(body.potGoal) }) : null);
 const saveProgram = (id, body) => (body && ("program" in body || "practical" in body) ? setSetting(`program:${id}`, cleanProgram(body)) : null);
 import { EMAIL_ENABLED, reqLang } from "../lib/email.js";
+import { eventCreatedMail } from "../lib/confirmations.js";
 import { tooFast } from "../lib/limits.js";
 import { listMessages, listInvites, listEvents, findEvent, createEvent, saveEvent, deleteEvent, listPhotos, listGuestbook, countReports } from "../lib/store.js";
 
@@ -112,6 +113,7 @@ router.post("/", handle(async (req, res) => {
     setUnlisted(event.id, unlisted),
     setShowcase(event.id, req.body.showcase !== false && (unlisted || event.visibility === "private")),
   ].map(capped));
+  eventCreatedMail(req.organizer, event, reqLang(req));
   res.status(201).json(ownerView(withVisibility(event, new Set(unlisted ? [event.id] : []))));
 }));
 
