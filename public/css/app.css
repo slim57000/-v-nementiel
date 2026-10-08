@@ -1132,3 +1132,4 @@ main { animation: em-fade .3s ease-out; }
 .home-nav .hn-discover-big .hn-title span { position: absolute; right: 100%; top: 50%; transform: translateY(-50%); margin-right: 8px; }
 .home-nav a.hn-discover-big small { display: block; width: 100%; text-align: center; }
 .home-nav .hn-discover-big .hn-title { left: .65rem; } /* décalé d'une demi-loupe vers la droite */
+.home-nav .hn-discover-big .hn-title span { transform: translate(.65rem, -50%); } /* loupe rapprochée d'une demi-loupe */
