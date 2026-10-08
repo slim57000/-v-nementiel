@@ -1096,3 +1096,7 @@ main { animation: em-fade .3s ease-out; }
 .home-nav .hn-messages { background: #e9fbef; border-color: #b8ecc8; }
 .home-nav .hn-profile { background: #fff4e0; border-color: #ffd99a; }
 [data-theme="dark"] .home-nav a:not(.hn-create) { background: var(--card); border-color: var(--border); }
+
+/* Cloche, cœur et profil côte à côte en haut à droite */
+.topbar .bell { margin-left: auto; }
+.topbar .bell ~ .fav-btn, .topbar .bell ~ .me-btn { margin-left: 8px; }

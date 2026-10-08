@@ -258,9 +258,18 @@ async function profileMenu() {
   const name = me?.displayName || String(me?.email || "").split("@")[0];
   const initial = String(name || "").trim()[0]?.toUpperCase();
   const av = (cls) => (me?.avatar ? `<span class="me-av ${cls}" style="background-image:url('${esc(me.avatar)}')"></span>` : `<span class="me-av ${cls}">${initial ? esc(initial) : "👤"}</span>`);
-  const paint = () => { btn.innerHTML = `${av("")}${unread() ? `<span class="bell-count">${unread() > 9 ? "9+" : unread()}</span>` : ""}`; };
-  paint();
-  bar.append(btn);
+  const paint = () => { btn.innerHTML = av(""); };
+  // Cloche 🔔 et cœur ❤️ à côté du profil : accès direct aux notifications et aux likes.
+  const bellBtn = Object.assign(document.createElement("button"), { type: "button", className: "bell" });
+  bellBtn.setAttribute("aria-label", "Notifications");
+  const favBtn = Object.assign(document.createElement("button"), { type: "button", className: "fav-btn", textContent: "❤️" });
+  favBtn.setAttribute("aria-label", "Mes likes");
+  const paintBell = () => { const n = unread(); bellBtn.innerHTML = `🔔${n ? `<span class="bell-count">${n > 9 ? "9+" : n}</span>` : ""}`; };
+  const paintAll = () => { paint(); paintBell(); };
+  paintAll();
+  bar.append(bellBtn, favBtn, btn);
+  bellBtn.addEventListener("click", () => { openNotifs(data); data.seen = Date.now(); paintAll(); });
+  favBtn.addEventListener("click", openFavs);
   btn.addEventListener("click", () => {
     const n = unread();
     document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="me-sheet" role="dialog" aria-modal="true">
@@ -276,7 +285,7 @@ async function profileMenu() {
       const act = e.target.closest("[data-me]")?.dataset.me;
       if (e.target === sheet || act === "close") sheet.remove();
       if (act === "likes") { sheet.remove(); openFavs(); }
-      if (act === "notifs") { sheet.remove(); openNotifs(data); data.seen = Date.now(); paint(); }
+      if (act === "notifs") { sheet.remove(); openNotifs(data); data.seen = Date.now(); paintAll(); }
     });
   });
 }
