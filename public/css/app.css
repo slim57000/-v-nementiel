@@ -1087,7 +1087,7 @@ main { animation: em-fade .3s ease-out; }
 .me-row:active { background: var(--primary-light); }
 .me-count { font-style: normal; background: var(--primary); color: #fff; border-radius: 99px; padding: 1px 8px; font-size: .78rem; margin-left: 6px; }
 /* Accueil : raccourcis colorés (anciens éléments du dock) */
-.home-nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 4px 0 16px; }
+.home-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 4px 0 16px; }
 .home-nav a { display: grid; justify-items: center; gap: 4px; padding: 12px 4px; border-radius: 18px; font-size: .85rem; font-weight: 700; text-decoration: none; color: var(--text); border: 1.5px solid transparent; box-shadow: 0 4px 12px rgba(30,10,40,.06); transition: transform .12s; }
 .home-nav a:active { transform: scale(.95); }
 .home-nav a span { font-size: 1.5rem; line-height: 1; }
@@ -1100,3 +1100,4 @@ main { animation: em-fade .3s ease-out; }
 /* Cloche, cœur et profil côte à côte en haut à droite */
 .topbar .bell { margin-left: auto; }
 .topbar .bell ~ .fav-btn, .topbar .bell ~ .me-btn { margin-left: 8px; }
+.home-nav a { grid-auto-flow: column; justify-content: center; align-items: center; gap: 8px; padding: 14px 8px; font-size: 1rem; }

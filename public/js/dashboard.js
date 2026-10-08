@@ -2,12 +2,10 @@
 import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories, liveAttrs, createSheet, syncFavs } from "./common.js";
 import { icon } from "./icons.js";
 
-// Raccourcis (anciens boutons du dock) : Créer, Découvrir, Messages, Profil.
+// Raccourcis (anciens boutons du dock) : Créer, Découvrir. Messages et Profil sont dans le menu 👤 en haut.
 document.querySelector(".stories").insertAdjacentHTML("beforebegin", `<nav class="home-nav" aria-label="Navigation">
   <a href="/edit" id="hn-create" class="hn-create"><span>➕</span>Créer</a>
   <a href="/decouvrir" class="hn-discover"><span>🔍</span>Découvrir</a>
-  <a href="/messages" class="hn-messages"><span>💬</span>Messages</a>
-  <a href="/profil" class="hn-profile"><span>👤</span>Profil</a>
 </nav>`);
 $("#hn-create").addEventListener("click", createSheet);
 
