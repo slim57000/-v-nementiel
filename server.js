@@ -321,6 +321,8 @@ if (!ON_VERCEL) {
   app.use("/uploads", express.static(UPLOAD_DIR, { maxAge: "30d", immutable: true }));
   // Pages HTML : servies avec les versions automatiques des scripts, toujours revalidées.
   app.get(/^\/(?:[\w-]+(?:\.html)?)?$/, (req, res, next) => {
+    // Déjà connecté : la page d'accueil publique mène directement à l'accueil du compte (sauf « /?accueil »).
+    if (req.path === "/" && getSigned(req, "org") && !("accueil" in req.query)) return res.redirect(302, "/dashboard");
     const name = req.path === "/" ? "index" : req.path.slice(1).replace(/\.html$/, "");
     const file = `${PUBLIC_DIR}/${name}.html`;
     if (!existsSync(file)) return next();
