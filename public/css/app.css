@@ -1109,3 +1109,9 @@ main { animation: em-fade .3s ease-out; }
 .home-nav .hn-discover-big b { font-size: 1.2rem; }
 .home-nav .hn-discover-big small { opacity: .9; font-size: .85rem; font-weight: 500; }
 .home-nav a.hn-discover-big { grid-auto-flow: row; justify-items: start; justify-content: stretch; text-align: left; gap: 0 14px; padding: 16px 22px; }
+/* Pastille Découvrir plus compacte */
+.home-nav a.hn-discover-big { padding: 9px 16px; column-gap: 10px; max-width: 300px; margin: 0 auto; box-shadow: 0 5px 14px rgba(99,102,241,.3); }
+.home-nav .hn-discover-big span { font-size: 1.3rem; }
+.home-nav .hn-discover-big b { font-size: 1rem; }
+.home-nav .hn-discover-big small { font-size: .75rem; }
+.home-nav { margin-bottom: 12px; }
