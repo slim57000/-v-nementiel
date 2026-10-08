@@ -1120,3 +1120,5 @@ main { animation: em-fade .3s ease-out; }
 .story.discover-tile { text-align: center; }
 .story.discover-tile .story-img { display: flex !important; align-items: center; justify-content: center; line-height: 1; padding: 0; text-align: center; }
 .story.discover-tile span { display: block; width: 100%; text-align: center; }
+/* Bandeau Découvrir : coins carrés, pleine largeur */
+.home-nav a.hn-discover-big { border-radius: 14px; max-width: none; }
