@@ -275,7 +275,7 @@ async function profileMenu() {
         <div class="me-head">${av("big")}<b>${esc(name || "Mon compte")}</b></div>
         <a class="me-row" href="/profil"><span>👤</span>Mon profil<i>›</i></a>
         <a class="me-row" href="/messages"><span>💬</span>Messages<i>›</i></a>
-        <button type="button" class="me-row" data-me="likes"><span>❤️</span>Mes likes<i>›</i></button>
+        <button type="button" class="me-row" data-me="likes"><span>❤️</span>Mes favoris<i>›</i></button>
         <button class="btn btn-light btn-block" type="button" data-me="close" style="margin-top:10px">Fermer</button>
       </div></div>`);
     const sheet = $("#me-sheet");
@@ -294,7 +294,7 @@ export async function openFavs() {
     <span class="fav-thumb" style="background-image:url('${esc(coverOf(ev))}')"></span>
     <span><b>${esc(ev.name)}</b><small class="muted">${esc(formatDate(ev.date, ev.time))}</small></span></a>`).join("");
   document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="fav-sheet" role="dialog" aria-modal="true">
-    <div class="card"><h2 style="margin-top:0;text-align:center">❤️ Mes likes</h2>
+    <div class="card"><h2 style="margin-top:0;text-align:center">❤️ Mes favoris</h2>
       <div class="notif-list">${rows || '<p class="muted" style="text-align:center">Touchez ♡ sur la page d\'un événement pour le retrouver ici.</p>'}</div>
       <button class="btn btn-light btn-block" type="button" id="fav-close">Fermer</button></div></div>`);
   const sheet = $("#fav-sheet");
