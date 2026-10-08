@@ -1117,3 +1117,6 @@ main { animation: em-fade .3s ease-out; }
 .home-nav { margin-bottom: 12px; }
 /* Carré Découvrir à côté de « + Créer » dans la rangée des stories */
 .story.discover-tile .story-img { background: linear-gradient(135deg, #3b82f6, #8b5cf6) !important; color: #fff; display: grid; place-items: center; font-size: 2rem; border: 0; }
+.story.discover-tile { text-align: center; }
+.story.discover-tile .story-img { display: flex !important; align-items: center; justify-content: center; line-height: 1; padding: 0; text-align: center; }
+.story.discover-tile span { display: block; width: 100%; text-align: center; }
