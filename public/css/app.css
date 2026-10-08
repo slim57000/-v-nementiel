@@ -1127,3 +1127,7 @@ main { animation: em-fade .3s ease-out; }
 .home-nav a.hn-discover-big span { font-size: 1.3rem; line-height: 1; }
 .home-nav a.hn-discover-big { max-width: 280px; margin: 0 auto; }
 .home-nav .hn-discover-big .hn-title { display: flex; align-items: center; justify-content: center; gap: 8px; }
+/* « Découvrir » centré pile sur le sous-titre ; la loupe se place à sa gauche sans décaler le texte */
+.home-nav .hn-discover-big .hn-title { display: block; position: relative; width: fit-content; margin: 0 auto; }
+.home-nav .hn-discover-big .hn-title span { position: absolute; right: 100%; top: 50%; transform: translateY(-50%); margin-right: 8px; }
+.home-nav a.hn-discover-big small { display: block; width: 100%; text-align: center; }
