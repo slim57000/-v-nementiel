@@ -2,11 +2,6 @@
 import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories, liveAttrs, createSheet, syncFavs } from "./common.js";
 import { icon } from "./icons.js";
 
-// Grande pastille « Découvrir » (Créer : rond « + » des stories ; Messages et Profil : menu 👤 en haut).
-document.querySelector(".stories").insertAdjacentHTML("beforebegin", `<nav class="home-nav" aria-label="Navigation">
-  <a href="/decouvrir" class="hn-discover-big"><span>🔍</span><b>Découvrir</b><small>Les événements en direct et à venir</small></a>
-</nav>`);
-
 tabbar("home");
 
 if (new URLSearchParams(location.search).has("saved")) {
@@ -62,6 +57,7 @@ function renderStories() {
   const upcoming = mix([...extra, ...all].sort((a, b) => withStory.has(b.slug) - withStory.has(a.slug)));
   $("#stories").innerHTML = `
     <a class="story new" href="/edit" data-create><div class="story-img">+</div><span>Créer</span></a>
+    <a class="story discover-tile" href="/decouvrir"><div class="story-img">🔍</div><span>Découvrir</span></a>
     ${upcoming.map((ev) => {
       const badge = dayBadge(ev.date);
       const live = isLive(ev);

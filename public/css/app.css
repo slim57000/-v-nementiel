@@ -1115,3 +1115,5 @@ main { animation: em-fade .3s ease-out; }
 .home-nav .hn-discover-big b { font-size: 1rem; }
 .home-nav .hn-discover-big small { font-size: .75rem; }
 .home-nav { margin-bottom: 12px; }
+/* Carré Découvrir à côté de « + Créer » dans la rangée des stories */
+.story.discover-tile .story-img { background: linear-gradient(135deg, #3b82f6, #8b5cf6) !important; color: #fff; display: grid; place-items: center; font-size: 2rem; border: 0; }
