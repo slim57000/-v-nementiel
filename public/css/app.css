@@ -1101,3 +1101,4 @@ main { animation: em-fade .3s ease-out; }
 .topbar .bell { margin-left: auto; }
 .topbar .bell ~ .fav-btn, .topbar .bell ~ .me-btn { margin-left: 8px; }
 .home-nav a { grid-auto-flow: column; justify-content: center; align-items: center; gap: 8px; padding: 14px 8px; font-size: 1rem; }
+.home-nav { max-width: 340px; margin-left: auto; margin-right: auto; }
