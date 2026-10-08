@@ -1,6 +1,7 @@
 // Écran de connexion / inscription : email + mot de passe, connexion sociale, mot de passe oublié (code à 6 chiffres).
 import { api, $, toast } from "./common.js";
 import { BRAND } from "./icons.js";
+import { hasNativeApple, appleNative } from "./native.js";
 
 // Page de retour après connexion (chemin interne uniquement).
 const next = new URLSearchParams(location.search).get("next");
@@ -96,6 +97,7 @@ document.querySelectorAll("[data-social]").forEach((b) => {
   b.addEventListener("click", () => {
     const provider = b.dataset.social.toLowerCase();
     if (provider === "magic") return magicLink();
+    if (provider === "apple" && hasNativeApple()) return appleNative(target, toast);
     if (social.includes(provider)) location.href = `/api/auth/${provider}?next=${encodeURIComponent(target)}`;
     else toast(`Connexion ${b.dataset.social} : bientôt disponible`);
   });

@@ -15,7 +15,7 @@ async function newAccount(req, email, code) {
 import { setPassword, hasPassword, checkPassword, passwordError } from "../lib/password.js";
 import { GOOGLE_ENABLED, googleAuthUrl, googleIdentity } from "../lib/google.js";
 import { FACEBOOK_ENABLED, facebookAuthUrl, facebookIdentity } from "../lib/facebook.js";
-import { APPLE_ENABLED, appleAuthUrl, appleIdentity } from "../lib/apple.js";
+import { APPLE_ENABLED, appleAuthUrl, appleIdentity, appleNativeIdentity } from "../lib/apple.js";
 import { randomBytes, randomInt } from "node:crypto";
 import { tooFast } from "../lib/limits.js";
 import { isPremium } from "../lib/premium.js";
@@ -249,6 +249,30 @@ router.get("/apple/finish", async (req, res) => {
   } catch (err) {
     console.error("Apple :", err.message);
     res.redirect("/connexion?erreur=apple-jeton");
+  }
+});
+
+// Connexion Apple native (application iPhone) : jeton vérifié, compte retrouvé par email ou par l'identifiant Apple
+// (Apple ne donne pas toujours l'email après la 1re connexion : on mémorise l'association « applesub »).
+router.post("/apple/native", async (req, res) => {
+  if (await tooFast(`applenative:${req.ip}`, 20, 600_000)) return res.status(429).json({ error: "Trop de tentatives." });
+  try {
+    const who = await appleNativeIdentity(req.body?.identityToken);
+    const email = who.email || (await getSetting(`applesub:${who.sub}`).catch(() => null)) || "";
+    if (!email) return res.status(400).json({ error: "Apple n'a pas transmis votre email : utilisez le lien par email." });
+    if (who.email) await setSetting(`applesub:${who.sub}`, who.email).catch(() => {});
+    let organizer = await findOrganizerByEmail(email);
+    if (!organizer) {
+      organizer = await newAccount(req, email, loginCode());
+      const name = String(req.body?.name || "").trim().slice(0, 40);
+      if (name) organizer = await saveOrganizer({ ...organizer, displayName: name });
+    }
+    if (organizer.blocked) return res.status(403).json({ error: "Compte suspendu." });
+    logIn(res, organizer.id);
+    res.json({ ok: true, next: safeNext(String(req.body?.next || "")) });
+  } catch (err) {
+    console.error("Apple (app) :", err.message);
+    res.status(401).json({ error: "Connexion Apple refusée. Réessayez ou utilisez le lien par email." });
   }
 });
 

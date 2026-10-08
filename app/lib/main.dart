@@ -2,12 +2,16 @@
 // Affiche la plateforme en ligne (mafeliza.com) : toute mise à jour du site est visible
 // immédiatement, sans republier sur les stores. Fonctions du téléphone : appareil photo et micro
 // (live, stories), bouton retour Android, liens externes (WhatsApp, cagnotte…) ouverts hors de
-// l'application, écran hors connexion.
+// l'application, écran hors connexion, connexion Apple native (iPhone).
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
@@ -79,6 +83,11 @@ class _HomePageState extends State<HomePage> {
       ))
       ..loadRequest(Uri.parse(site));
 
+    // Bouton Apple du site (iPhone) : fenêtre système « Se connecter avec Apple », jeton renvoyé au site.
+    if (Platform.isIOS) {
+      _web.addJavaScriptChannel('MaFelizaApple', onMessageReceived: (_) => _appleSignIn());
+    }
+
     final platform = _web.platform;
     if (platform is AndroidWebViewController) {
       platform.setMediaPlaybackRequiresUserGesture(false);
@@ -102,6 +111,21 @@ class _HomePageState extends State<HomePage> {
         setState(() => _offline = true);
       }
     });
+  }
+
+  Future<void> _appleSignIn() async {
+    try {
+      final c = await SignInWithApple.getAppleIDCredential(
+        scopes: [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName],
+      );
+      final data = jsonEncode({'identityToken': c.identityToken, 'name': c.givenName ?? ''});
+      await _web.runJavaScript('window.mafelizaAppleDone && window.mafelizaAppleDone($data)');
+    } on SignInWithAppleAuthorizationException catch (e) {
+      final msg = e.code == AuthorizationErrorCode.canceled ? 'canceled' : e.message;
+      await _web.runJavaScript('window.mafelizaAppleError && window.mafelizaAppleError(${jsonEncode(msg)})');
+    } catch (e) {
+      await _web.runJavaScript('window.mafelizaAppleError && window.mafelizaAppleError(${jsonEncode(e.toString())})');
+    }
   }
 
   // Bouton retour Android : page précédente du site, sinon fermeture de l'application.

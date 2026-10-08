@@ -16,6 +16,7 @@ dependencies:
   url_launcher: ^6.3.1
   connectivity_plus: ^6.1.0
   file_picker: ^10.3.3
+  sign_in_with_apple: ">=7.0.1 <9.0.0" # 8.x si Flutter ≥ 3.44, sinon 7.x
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.1

@@ -1,6 +1,7 @@
 // Page d'accueil publique (visiteurs non connectés).
 import { api, $, esc, toast, dayBadge, coverOf, liveAttrs } from "./common.js";
 import { icon, BRAND } from "./icons.js";
+import { hasNativeApple, appleNative } from "./native.js";
 
 // Pictogrammes et logos des boutons de connexion.
 document.querySelectorAll("[data-icon]").forEach((el) => { el.innerHTML = icon(el.dataset.icon, 26); });
@@ -22,6 +23,7 @@ fetch("/api/config").then((r) => r.json()).then((c) => { social = c.social || []
 document.querySelectorAll("[data-social]").forEach((b) => b.addEventListener("click", () => {
   const provider = b.dataset.social.toLowerCase();
   if (provider === "magic") { location.href = "/connexion?lien=1"; return; }
+  if (provider === "apple" && hasNativeApple()) { appleNative("/dashboard", toast); return; }
   if (social.includes(provider)) location.href = `/api/auth/${provider}?next=/dashboard`;
   else toast(`Connexion ${b.dataset.social} : bientôt disponible`);
 }));

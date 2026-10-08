@@ -67,3 +67,19 @@ if (isNativeApp) {
   // Vibration légère sur les boutons d'action principaux.
   document.addEventListener("click", (e) => { if (e.target.closest(".btn, [data-react], [data-fav], .tabbar a")) tap(); });
 }
+
+// --- Connexion Apple native (application Flutter iPhone : canal JavaScript « MaFelizaApple ») ---
+// Le bouton Apple du site appelle la fenêtre système d'Apple ; l'app renvoie le jeton à mafelizaAppleDone().
+export const hasNativeApple = () => typeof window.MaFelizaApple?.postMessage === "function";
+export function appleNative(next, onError) {
+  window.mafelizaAppleDone = async (data) => {
+    try {
+      const res = await fetch("/api/auth/apple/native", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...data, next }) });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.error || "Connexion Apple refusée.");
+      location.href = out.next || next || "/dashboard";
+    } catch (err) { onError?.(err.message); }
+  };
+  window.mafelizaAppleError = (msg) => { if (msg !== "canceled") onError?.("Connexion Apple annulée."); };
+  window.MaFelizaApple.postMessage("signin");
+}

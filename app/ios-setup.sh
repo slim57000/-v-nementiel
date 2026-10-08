@@ -6,7 +6,19 @@ set -euo pipefail
 
 # Identifiant de l'app et équipe Apple (signature automatique)
 PBX=ios/Runner.xcodeproj/project.pbxproj
-sed -i '' "s/PRODUCT_BUNDLE_IDENTIFIER = fr\.mafeliza\.mafeliza;/PRODUCT_BUNDLE_IDENTIFIER = ${IOS_BUNDLE_ID}; DEVELOPMENT_TEAM = ${APPLE_TEAM_ID}; CODE_SIGN_STYLE = Automatic;/g" "$PBX"
+sed -i '' "s/PRODUCT_BUNDLE_IDENTIFIER = fr\.mafeliza\.mafeliza;/PRODUCT_BUNDLE_IDENTIFIER = ${IOS_BUNDLE_ID}; DEVELOPMENT_TEAM = ${APPLE_TEAM_ID}; CODE_SIGN_STYLE = Automatic; CODE_SIGN_ENTITLEMENTS = Runner\/Runner.entitlements;/g" "$PBX"
+
+# Autorisation « Sign in with Apple » (doit aussi être cochée sur l'identifiant de l'app chez Apple)
+cat > ios/Runner/Runner.entitlements <<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>com.apple.developer.applesignin</key>
+  <array><string>Default</string></array>
+</dict>
+</plist>
+XML
 
 # Textes des autorisations, nom affiché, pas de chiffrement spécial (évite la question d'export à chaque build)
 PL=ios/Runner/Info.plist
