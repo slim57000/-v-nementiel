@@ -1073,3 +1073,26 @@ main { animation: em-fade .3s ease-out; }
 #styles .choice:nth-child(3) input:checked + span { color: #f1d898; }
 #styles .choice:not(:has(input:checked)) span { opacity: .92; }
 #styles .choice span { overflow: visible; }
+
+/* Bouton profil 👤 en haut à droite (remplace la cloche et le cœur) + menu */
+.topbar .me-btn { position: relative; margin-left: auto; flex: none; width: 44px; height: 44px; padding: 0; border: 2px solid rgba(253,26,133,.35); border-radius: 50%; background: linear-gradient(145deg, #fff, var(--primary-light)); box-shadow: 0 4px 12px rgba(253,26,133,.18); cursor: pointer; }
+.topbar .me-btn:active { transform: scale(.92); }
+.me-av { width: 100%; height: 100%; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(135deg, #fd1a85, #c60bd2) center / cover; color: #fff; font-weight: 800; font-size: 1.05rem; }
+.me-av.big { width: 64px; height: 64px; font-size: 1.6rem; }
+.me-menu { display: grid; gap: 8px; }
+.me-head { display: grid; justify-items: center; gap: 6px; margin-bottom: 6px; font-size: 1.05rem; }
+.me-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; border: 1.5px solid var(--border); border-radius: 16px; background: var(--card, #fff); color: var(--text); font: inherit; font-size: 1.02rem; font-weight: 600; text-decoration: none; text-align: left; cursor: pointer; }
+.me-row span { font-size: 1.35rem; }
+.me-row i { margin-left: auto; font-style: normal; color: var(--muted); font-size: 1.3rem; }
+.me-row:active { background: var(--primary-light); }
+.me-count { font-style: normal; background: var(--primary); color: #fff; border-radius: 99px; padding: 1px 8px; font-size: .78rem; margin-left: 6px; }
+/* Accueil : raccourcis colorés (anciens éléments du dock) */
+.home-nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 4px 0 16px; }
+.home-nav a { display: grid; justify-items: center; gap: 4px; padding: 12px 4px; border-radius: 18px; font-size: .85rem; font-weight: 700; text-decoration: none; color: var(--text); border: 1.5px solid transparent; box-shadow: 0 4px 12px rgba(30,10,40,.06); transition: transform .12s; }
+.home-nav a:active { transform: scale(.95); }
+.home-nav a span { font-size: 1.5rem; line-height: 1; }
+.home-nav .hn-create { background: linear-gradient(135deg, #fd1a85, #c60bd2); color: #fff; box-shadow: 0 6px 16px rgba(253,26,133,.35); }
+.home-nav .hn-discover { background: #e8f2ff; border-color: #bcd8ff; }
+.home-nav .hn-messages { background: #e9fbef; border-color: #b8ecc8; }
+.home-nav .hn-profile { background: #fff4e0; border-color: #ffd99a; }
+[data-theme="dark"] .home-nav a:not(.hn-create) { background: var(--card); border-color: var(--border); }

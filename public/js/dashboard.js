@@ -2,19 +2,14 @@
 import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories, liveAttrs, createSheet, syncFavs } from "./common.js";
 import { icon } from "./icons.js";
 
-// ❤️ en haut : accès rapide aux événements mis en favoris.
-$("#fav-btn").addEventListener("click", async () => {
-  const favs = await api("/api/me/favorites").catch(() => []);
-  const rows = favs.map((ev) => `<a class="notif fav-row" href="${esc(eventUrl(ev.slug))}">
-    <span class="fav-thumb" style="background-image:url('${esc(coverOf(ev))}')"></span>
-    <span><b>${esc(ev.name)}</b><small class="muted">${esc(formatDate(ev.date, ev.time))}</small></span></a>`).join("");
-  document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="fav-sheet" role="dialog" aria-modal="true">
-    <div class="card"><h2 style="margin-top:0;text-align:center">❤️ Mes favoris</h2>
-      <div class="notif-list">${rows || '<p class="muted" style="text-align:center">Touchez ♡ sur la page d\'un événement pour le retrouver ici.</p>'}</div>
-      <button class="btn btn-light btn-block" type="button" id="fav-close">Fermer</button></div></div>`);
-  const sheet = $("#fav-sheet");
-  sheet.addEventListener("click", (e) => { if (e.target === sheet || e.target.id === "fav-close") sheet.remove(); });
-});
+// Raccourcis (anciens boutons du dock) : Créer, Découvrir, Messages, Profil.
+document.querySelector(".stories").insertAdjacentHTML("beforebegin", `<nav class="home-nav" aria-label="Navigation">
+  <a href="/edit" id="hn-create" class="hn-create"><span>➕</span>Créer</a>
+  <a href="/decouvrir" class="hn-discover"><span>🔍</span>Découvrir</a>
+  <a href="/messages" class="hn-messages"><span>💬</span>Messages</a>
+  <a href="/profil" class="hn-profile"><span>👤</span>Profil</a>
+</nav>`);
+$("#hn-create").addEventListener("click", createSheet);
 
 tabbar("home");
 
@@ -304,7 +299,7 @@ document.addEventListener("click", (e) => { if (e.target.closest("[data-create]"
   document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="guide" role="dialog" aria-modal="true"><div class="card guide-card">
     <h2>Bienvenue sur MaFeliza 👋</h2>
     <ol class="guide-steps">
-      <li><b>✨ Créez votre événement</b><span>Touchez le bouton rose « + » en bas : nom, date, lieu. Le faire-part se crée tout seul.</span></li>
+      <li><b>✨ Créez votre événement</b><span>Touchez le bouton rose « ➕ Créer » en haut de l'accueil : nom, date, lieu. Le faire-part se crée tout seul.</span></li>
       <li><b>💌 Partagez-le</b><span>Envoyez le lien à vos proches par WhatsApp, SMS ou email. Plus vous le partagez, plus il y a de monde au rendez-vous !</span></li>
       <li><b>🎁 Ajoutez une cagnotte</b><span>Vos proches, même éloignés, offrent un cadeau en un clic. Plus elle est partagée, plus elle grandit 😄</span></li>
       <li><b>🔴 Le jour J, lancez le live</b><span>Ouvrez votre événement et touchez « Lancer le live » : vos proches vous regardent en direct.</span></li>

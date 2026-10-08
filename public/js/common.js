@@ -194,20 +194,10 @@ export function publicCard(ev) {
 
 // Barre d'onglets du bas (pages connectées). `active` : "home" | "discover" | "messages" | "profile".
 export function tabbar(active) {
-  const tab = (key, href, ico, label) =>
-    `<a href="${href}" class="${active === key ? "active" : ""}"><span class="ico">${icon(ico)}</span>${label}</a>`;
-  document.body.classList.add("has-tabbar");
-  document.body.insertAdjacentHTML("beforeend", `
-    <nav class="tabbar" aria-label="Navigation">
-      ${tab("home", "/dashboard", "home", "Accueil")}
-      ${tab("discover", "/decouvrir", "search", "Découvrir")}
-      <a href="/edit" aria-label="Créer" id="tab-create"><span class="plus">+</span></a>
-      ${tab("messages", "/messages", "chat", "Messages")}
-      ${tab("profile", "/profil", "user", "Profil")}
-    </nav>`);
-  $("#tab-create").addEventListener("click", createSheet);
-  if (!["/dashboard", "/decouvrir", "/messages", "/profil"].includes(location.pathname)) backButton();
-  bell();
+  // Plus de dock en bas : retour en haut à gauche (sauf accueil) et bouton profil 👤 en haut à droite
+  // (Mon profil, Mes likes, Notifications). Les raccourcis de navigation sont sur l'accueil.
+  if (location.pathname !== "/dashboard") backButton();
+  profileMenu();
 }
 
 // Bouton « ‹ » en haut à gauche des pages secondaires : page précédente du site, sinon l'accueil.
@@ -254,34 +244,69 @@ export function createSheet(e) {
   });
 }
 
-// Cloche 🔔 dans la barre du haut : nouveautés du compte (messages, livre d'or, réponses, lives…).
-async function bell() {
+// Bouton profil 👤 en haut à droite : menu avec Mon profil, Mes likes (favoris) et Notifications.
+async function profileMenu() {
   const bar = document.querySelector(".topbar");
-  if (!bar) return;
-  let data;
-  try { data = await api("/api/me/notifications"); } catch { return; } // non connecté
-  const unread = data.items.filter((n) => n.at > data.seen).length;
+  if (!bar || bar.querySelector(".me-btn")) return;
+  let data, me;
+  try { [data, me] = await Promise.all([api("/api/me/notifications"), api("/api/auth/me").catch(() => ({}))]); } catch { return; } // non connecté
+  const unread = () => data.items.filter((n) => n.at > data.seen).length;
   const btn = document.createElement("button");
-  btn.className = "bell";
+  btn.className = "me-btn";
   btn.type = "button";
-  btn.setAttribute("aria-label", "Notifications");
-  btn.innerHTML = `🔔${unread ? `<span class="bell-count">${unread > 9 ? "9+" : unread}</span>` : ""}`;
-  const logo = bar.querySelector(".logo");
-  if (logo) logo.after(btn); else bar.append(btn);
+  btn.setAttribute("aria-label", "Mon compte");
+  const name = me?.displayName || String(me?.email || "").split("@")[0];
+  const initial = String(name || "").trim()[0]?.toUpperCase();
+  const av = (cls) => (me?.avatar ? `<span class="me-av ${cls}" style="background-image:url('${esc(me.avatar)}')"></span>` : `<span class="me-av ${cls}">${initial ? esc(initial) : "👤"}</span>`);
+  const paint = () => { btn.innerHTML = `${av("")}${unread() ? `<span class="bell-count">${unread() > 9 ? "9+" : unread()}</span>` : ""}`; };
+  paint();
+  bar.append(btn);
   btn.addEventListener("click", () => {
-    btn.querySelector(".bell-count")?.remove();
-    api("/api/me/notifications/read", { method: "POST" }).catch(() => {});
-    const when = (t) => new Date(t).toLocaleString(LOCALE, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-    const rows = data.items.map((n) => `<a class="notif ${n.at > data.seen ? "new" : ""}" href="${esc(n.url.startsWith("/") ? n.url : "/dashboard")}">
-      <b>${esc(n.title)}</b>${n.body ? `<span>${esc(n.body)}</span>` : ""}<small class="muted">${when(n.at)}</small></a>`).join("");
-    document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="notif-sheet" role="dialog" aria-modal="true">
-      <div class="card"><h2 style="margin-top:0">Notifications</h2>
-        <div class="notif-list">${rows || '<p class="muted">Aucune notification pour le moment.</p>'}</div>
-        <button class="btn btn-light btn-block" type="button" id="notif-close">Fermer</button></div></div>`);
-    data.seen = Date.now();
-    const sheet = $("#notif-sheet");
-    sheet.addEventListener("click", (e) => { if (e.target === sheet || e.target.id === "notif-close") sheet.remove(); });
+    const n = unread();
+    document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="me-sheet" role="dialog" aria-modal="true">
+      <div class="card me-menu">
+        <div class="me-head">${av("big")}<b>${esc(name || "Mon compte")}</b></div>
+        <a class="me-row" href="/profil"><span>👤</span>Mon profil<i>›</i></a>
+        <button type="button" class="me-row" data-me="likes"><span>❤️</span>Mes likes<i>›</i></button>
+        <button type="button" class="me-row" data-me="notifs"><span>🔔</span>Notifications${n ? `<em class="me-count">${n > 9 ? "9+" : n}</em>` : ""}<i>›</i></button>
+        <button class="btn btn-light btn-block" type="button" data-me="close" style="margin-top:10px">Fermer</button>
+      </div></div>`);
+    const sheet = $("#me-sheet");
+    sheet.addEventListener("click", (e) => {
+      const act = e.target.closest("[data-me]")?.dataset.me;
+      if (e.target === sheet || act === "close") sheet.remove();
+      if (act === "likes") { sheet.remove(); openFavs(); }
+      if (act === "notifs") { sheet.remove(); openNotifs(data); data.seen = Date.now(); paint(); }
+    });
   });
+}
+
+// ❤️ Mes likes : événements mis en favoris.
+export async function openFavs() {
+  const favs = await api("/api/me/favorites").catch(() => []);
+  const rows = favs.map((ev) => `<a class="notif fav-row" href="${esc(eventUrl(ev.slug))}">
+    <span class="fav-thumb" style="background-image:url('${esc(coverOf(ev))}')"></span>
+    <span><b>${esc(ev.name)}</b><small class="muted">${esc(formatDate(ev.date, ev.time))}</small></span></a>`).join("");
+  document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="fav-sheet" role="dialog" aria-modal="true">
+    <div class="card"><h2 style="margin-top:0;text-align:center">❤️ Mes likes</h2>
+      <div class="notif-list">${rows || '<p class="muted" style="text-align:center">Touchez ♡ sur la page d\'un événement pour le retrouver ici.</p>'}</div>
+      <button class="btn btn-light btn-block" type="button" id="fav-close">Fermer</button></div></div>`);
+  const sheet = $("#fav-sheet");
+  sheet.addEventListener("click", (e) => { if (e.target === sheet || e.target.id === "fav-close") sheet.remove(); });
+}
+
+// 🔔 Notifications du compte (messages, livre d'or, réponses, lives…).
+function openNotifs(data) {
+  api("/api/me/notifications/read", { method: "POST" }).catch(() => {});
+  const when = (t) => new Date(t).toLocaleString(LOCALE, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  const rows = data.items.map((n) => `<a class="notif ${n.at > data.seen ? "new" : ""}" href="${esc(n.url.startsWith("/") ? n.url : "/dashboard")}">
+    <b>${esc(n.title)}</b>${n.body ? `<span>${esc(n.body)}</span>` : ""}<small class="muted">${when(n.at)}</small></a>`).join("");
+  document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="notif-sheet" role="dialog" aria-modal="true">
+    <div class="card"><h2 style="margin-top:0">🔔 Notifications</h2>
+      <div class="notif-list">${rows || '<p class="muted">Aucune notification pour le moment.</p>'}</div>
+      <button class="btn btn-light btn-block" type="button" id="notif-close">Fermer</button></div></div>`);
+  const sheet = $("#notif-sheet");
+  sheet.addEventListener("click", (e) => { if (e.target === sheet || e.target.id === "notif-close") sheet.remove(); });
 }
 
 // Redirige vers la connexion en revenant ensuite sur la page courante.
