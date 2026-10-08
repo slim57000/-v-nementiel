@@ -1,5 +1,6 @@
 // « Mes faire-part » : le faire-part de l'événement et l'invitation au live (générée automatiquement),
 // chacun avec QR code, lien, code et boutons de partage.
+import { inviteImage, shareBlob } from "./share-card.js";
 import { api, $, copy, shareSheet, qrUrl, tabbar, goLogin, formatDate, EVENT_TYPES, EN, toast } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 
@@ -89,7 +90,14 @@ function render() {
     ? (EN ? `📺 Watch "${ev.name}" live on MaFeliza!` : `📺 Suivez « ${ev.name} » en direct sur MaFeliza !`)
     : (EN ? `💌 You're invited to "${ev.name}"!${ev.visibility === "private" ? ` Access code: ${ev.accessCode}` : ""}`
       : `💌 Vous êtes invité·e à « ${ev.name} » !${ev.visibility === "private" ? ` Code d'accès : ${ev.accessCode}` : ""}`);
-  $("#share").onclick = () => shareSheet({ title: ev.name, text, url: link });
+  // Image du faire-part préparée à l'avance : au toucher de « Partager », elle part avec le texte et le lien
+  // (WhatsApp affiche le faire-part, le lien en dessous). Sinon, feuille de partage classique.
+  let card = null;
+  inviteImage(ev, invite, style, isLive ? photo : invitePhotoUrl(ev.invite, ev.cover), link).then((b) => { card = b; }).catch(() => {});
+  $("#share").onclick = async () => {
+    if (card && await shareBlob(card, `faire-part-${ev.slug}.png`, text, link)) return;
+    shareSheet({ title: ev.name, text, url: link });
+  };
   $("#copy").onclick = () => copy(link, "Lien copié !");
 }
 

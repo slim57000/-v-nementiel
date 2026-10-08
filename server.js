@@ -253,9 +253,15 @@ app.get("/e/:slug", async (req, res) => {
   const event = await findEventBySlug(req.params.slug);
   const title = event ? event.name : "Événement";
   let image = "";
-  if (event?.visibility === "public" && event.cover) {
-    const url = event.cover.startsWith("/") ? `${req.protocol}://${req.get("host")}${event.cover}` : event.cover;
-    image = `<meta property="og:image" content="${escapeHtml(url)}">`;
+  // Aperçu WhatsApp / SMS : photo du faire-part (ou couverture), y compris pour les événements privés,
+  // puisque le lien n'est envoyé qu'aux invités. Sans photo : visuel du type d'événement.
+  if (event && !event.suspended) {
+    const pic = event.invite?.photo && !["none", "cover"].includes(event.invite.photo) ? event.invite.photo : event.cover;
+    const host = (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+    if (pic) {
+      const url = pic.startsWith("/") ? `${host}${pic}` : pic;
+      image = `<meta property="og:image" content="${escapeHtml(url)}"><meta name="twitter:card" content="summary_large_image">`;
+    }
   }
   const isPublic = event?.visibility === "public" && !event.suspended && !(await listUnlistedIds()).has(event.id);
   const base = (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
