@@ -276,6 +276,7 @@ async function profileMenu() {
       <div class="card me-menu">
         <div class="me-head">${av("big")}<b>${esc(name || "Mon compte")}</b></div>
         <a class="me-row" href="/profil"><span>👤</span>Mon profil<i>›</i></a>
+        <a class="me-row" href="/messages"><span>💬</span>Messages<i>›</i></a>
         <button type="button" class="me-row" data-me="likes"><span>❤️</span>Mes likes<i>›</i></button>
         <button type="button" class="me-row" data-me="notifs"><span>🔔</span>Notifications${n ? `<em class="me-count">${n > 9 ? "9+" : n}</em>` : ""}<i>›</i></button>
         <button class="btn btn-light btn-block" type="button" data-me="close" style="margin-top:10px">Fermer</button>
