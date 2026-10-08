@@ -276,7 +276,6 @@ async function profileMenu() {
         <a class="me-row" href="/profil"><span>👤</span>Mon profil<i>›</i></a>
         <a class="me-row" href="/messages"><span>💬</span>Messages<i>›</i></a>
         <button type="button" class="me-row" data-me="likes"><span>❤️</span>Mes likes<i>›</i></button>
-        <button type="button" class="me-row" data-me="notifs"><span>🔔</span>Notifications${n ? `<em class="me-count">${n > 9 ? "9+" : n}</em>` : ""}<i>›</i></button>
         <button class="btn btn-light btn-block" type="button" data-me="close" style="margin-top:10px">Fermer</button>
       </div></div>`);
     const sheet = $("#me-sheet");
@@ -284,7 +283,6 @@ async function profileMenu() {
       const act = e.target.closest("[data-me]")?.dataset.me;
       if (e.target === sheet || act === "close") sheet.remove();
       if (act === "likes") { sheet.remove(); openFavs(); }
-      if (act === "notifs") { sheet.remove(); openNotifs(data); data.seen = Date.now(); paintAll(); }
     });
   });
 }
