@@ -45,6 +45,9 @@ router.put("/profile", async (req, res) => {
     if (typeof req.body?.avatar === "string" && req.body.avatar.startsWith("data:")) {
       avatar = await saveDataUrl(req.body.avatar);
       await removeUpload(me.avatar);
+    } else if (typeof req.body?.avatar === "string" && /^\/img\/avatars\/[a-z-]+\.svg$/.test(req.body.avatar)) {
+      await removeUpload(me.avatar); // avatar MaFeliza illustré (fichier du site, jamais supprimé)
+      avatar = req.body.avatar;
     } else if (req.body?.avatar === null) {
       await removeUpload(me.avatar);
       avatar = null;
