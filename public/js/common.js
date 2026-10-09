@@ -276,6 +276,7 @@ async function profileMenu() {
         <a class="me-row" href="/profil"><span>👤</span>Mon profil<i>›</i></a>
         <a class="me-row" href="/messages"><span>💬</span>Messages<i>›</i></a>
         <button type="button" class="me-row" data-me="likes"><span>❤️</span>Mes favoris<i>›</i></button>
+        <a class="me-row" href="/profil?reglages"><span>⚙️</span>Réglages<i>›</i></a>
         <a class="me-row" href="/contact"><span>✉️</span>Nous contacter<i>›</i></a>
         <button type="button" class="me-row me-logout" data-me="logout"><span>🚪</span>Se déconnecter<i>›</i></button>
         <button class="btn btn-light btn-block" type="button" data-me="close" style="margin-top:10px">Fermer</button>

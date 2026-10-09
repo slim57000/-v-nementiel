@@ -2,6 +2,8 @@
 import { api, $, esc, toast, tabbar, goLogin, resizeImage, publicCard, viewPhoto, enablePush, pushState } from "./common.js";
 import { lang, setLang, themePref, setTheme, bigText, setBigText } from "./i18n.js";
 
+// « /profil?reglages » : onglet Réglages (mot de passe, notifications, apparence, langue, compte).
+if (new URLSearchParams(location.search).has("reglages")) { document.body.classList.add("settings-mode"); document.title = "Réglages — MaFeliza"; }
 tabbar("profile");
 
 // Apparence (automatique / clair / sombre) et langue.

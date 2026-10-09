@@ -22,7 +22,8 @@
     <a class="logo" href="/dashboard"><img src="/img/logo.png" alt=""><span>MaFel<b>i</b>za</span></a>
   </header>
   <main class="container centered">
-    <section class="profile-head">
+    <h1 class="st-title">⚙️ Réglages</h1>
+    <section class="profile-head pf">
       <label class="avatar-edit" title="Changer la photo">
         <span class="avatar avatar-lg" id="avatar"></span>
         <span class="avatar-cam">📷</span>
@@ -33,15 +34,15 @@
       <button class="btn btn-ghost btn-sm" id="edit-name" style="margin-top:8px">✏️ Modifier mon nom</button>
     </section>
 
-    <div class="stats">
+    <div class="stats pf">
       <a href="/dashboard" style="color:inherit;text-decoration:none"><b id="st-events">0</b><span>Événements</span></a>
       <a href="#p-tabs" id="st-part-link" style="color:inherit;text-decoration:none"><b id="st-part">0</b><span>Participations</span></a>
       <a href="/amis" style="color:inherit;text-decoration:none"><b id="st-friends">0</b><span>Amis</span></a>
     </div>
 
-    <a href="/cameraman" class="btn btn-light btn-block" style="margin-bottom:10px">🎥 Espace caméraman</a>
-    <a id="admin-link" href="/admin" class="btn btn-block hidden" style="margin-bottom:10px">🛠️ Administration</a>
-    <section class="card" id="friends-card">
+    <a href="/cameraman" class="btn btn-light btn-block pf" style="margin-bottom:10px">🎥 Espace caméraman</a>
+    <a id="admin-link" href="/admin" class="btn btn-block hidden pf" style="margin-bottom:10px">🛠️ Administration</a>
+    <section class="card pf" id="friends-card">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
         <h2 style="margin:0;white-space:nowrap">👥 Mes amis</h2>
         <span style="display:flex;gap:6px;flex-shrink:0"><a href="/amis" class="btn btn-light btn-sm" style="white-space:nowrap">Voir tout</a><a href="/messages?add=1" class="btn btn-sm">+</a></span>
@@ -49,17 +50,18 @@
       <div id="friends-list" class="friends-strip"></div>
     </section>
 
-    <a href="/messages" class="btn btn-block" style="margin-bottom:16px">💬 Mes messages</a>
+    <a href="/messages" class="btn btn-block pf" style="margin-bottom:16px">💬 Mes messages</a>
 
-    <div class="segments" id="p-tabs">
+    <div class="segments pf" id="p-tabs">
       <button class="active" data-tab="favorites">Favoris</button>
       <button data-tab="history">Participations</button>
       <button data-tab="gifts">Mes cadeaux</button>
       <button data-tab="videos">Mes vidéos</button>
     </div>
-    <div id="p-list" class="p-list"></div>
+    <div id="p-list" class="p-list pf"></div>
+    <a href="/profil?reglages" class="btn btn-light btn-block pf" style="margin-top:18px">⚙️ Réglages</a>
 
-    <section class="card" style="margin-top:18px">
+    <section class="card st" style="margin-top:18px">
       <label for="pw-new">🔒 Mot de passe</label>
       <p class="muted small" style="margin:0 0 6px" id="pw-hint">Choisissez un mot de passe pour vous connecter depuis n'importe quel appareil.</p>
       <input id="pw-current" type="password" autocomplete="current-password" placeholder="Mot de passe actuel" class="hidden" style="margin-bottom:8px">
@@ -67,7 +69,7 @@
       <button id="pw-save" class="btn btn-light btn-block" style="margin-top:8px">Enregistrer le mot de passe</button>
       <a href="/dashboard" class="btn btn-ghost btn-block" style="margin-top:8px">Voir mes événements</a>
     </section>
-    <section class="card">
+    <section class="card st">
       <label>Notifications</label>
       <p class="muted small" style="margin:0 0 8px">Messages, réponses, rappels et début des lives.</p>
       <button id="push-btn" class="btn btn-light btn-block" style="margin-bottom:14px">🔔 Activer les notifications</button>
@@ -89,14 +91,14 @@
       </div>
     </section>
 
-    <button id="logout" class="btn btn-block logout-btn">🚪 Se déconnecter</button>
+    <button id="logout" class="btn btn-block logout-btn st">🚪 Se déconnecter</button>
 
-    <section class="card" style="margin-top:24px">
+    <section class="card st" style="margin-top:24px">
       <h2 style="font-size:1rem">Mes données</h2>
       <p class="muted small">La suppression de votre compte efface définitivement vos événements, leurs photos, messages et livre d'or.</p>
       <button id="delete-account" class="btn btn-danger btn-block">Supprimer mon compte</button>
     </section>
-    <p class="small muted" style="text-align:center">
+    <p class="small muted st" style="text-align:center">
       <a href="/mentions-legales">Mentions légales</a> · <a href="/cgu">CGU</a> · <a href="/confidentialite">Confidentialité</a> · <a href="/contact">Contact</a> · <a href="#" data-cookies>Cookies</a>
     </p>
   </main>
