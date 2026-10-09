@@ -125,3 +125,5 @@
 .live-immersive .live-stage { height: calc(100dvh - 54px - env(safe-area-inset-top)); margin-top: calc(54px + env(safe-area-inset-top)); }
 /* La cagnotte rejoint la bande du haut, à gauche (ni sur le ✕ ni sur les boutons de la vidéo). */
 .live-immersive .live-pot { position: fixed; top: calc(6px + env(safe-area-inset-top)); left: 12px; right: auto; padding: 4px 10px; font-size: .72rem; line-height: 1.2; z-index: 6; }
+.live-badge.is-soon { background: #8a7f96; }
+#empty small { display: block; opacity: .85; margin-top: 4px; }

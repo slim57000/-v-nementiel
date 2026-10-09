@@ -6,6 +6,8 @@ tabbar("");
 let phoneCams = []; // caméras « téléphone » (live en un clic)
 
 const form = $("#form");
+// Une erreur affichée disparaît dès qu'on modifie le formulaire (plus de « nom obligatoire » périmé).
+form.addEventListener("input", () => { if ($("#error").textContent) $("#error").textContent = ""; });
 const id = new URLSearchParams(location.search).get("id");
 
 // État local des images : URL déjà enregistrée ou nouvelle image (data URL) à envoyer.

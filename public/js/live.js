@@ -162,17 +162,36 @@ async function load() {
   $("#cams-section").classList.toggle("hidden", cameras.length < 2);
   // On ouvre sur l'angle réellement en direct (le caméraman n'est pas forcément le premier de la liste).
   play(Math.max(0, cameras.findIndex((c) => c.live)));
+  // Badge : « LIVE » seulement quand un téléphone diffuse vraiment ; sinon « BIENTÔT » + heure prévue + agenda.
+  const paintBadge = () => {
+    if (state !== "live") return;
+    const on = cameras.some((c) => c.live || !String(c.url).startsWith("lk:"));
+    $(".live-badge").textContent = on ? "LIVE" : "BIENTÔT";
+    $(".live-badge").classList.toggle("is-soon", !on);
+    if (!on && !cameras.length) {
+      $("#empty").innerHTML = `<span style="font-size:2rem">📡</span>Le direct n'a pas encore commencé.
+        ${ev.time ? `<small>Début prévu à ${esc(ev.time.replace(":", "h"))}</small>` : ""}
+        <a class="btn btn-sm" href="/api/public/${encodeURIComponent(ev.slug)}/calendar.ics" style="margin-top:10px">📅 Ajouter à mon agenda</a>`;
+    }
+  };
+  paintBadge();
   // Un caméraman peut démarrer plus tard : on rafraîchit les pastilles sans changer l'angle choisi.
   setInterval(async () => {
     try {
       const fresh = (await api(`/api/public/${encodeURIComponent(slug)}`)).cameras || [];
       if (fresh.length !== cameras.length) return location.reload();
       cameras.forEach((c, i) => { c.live = Boolean(fresh[i]?.live); });
+      paintBadge();
       const watching = Number(document.querySelector(".cam.active")?.dataset.index ?? -1);
       paintCams();
       if (watching >= 0) document.querySelectorAll(".cam")[watching]?.classList.add("active");
     } catch { /* réseau : on réessaie */ }
   }, 45000);
+  // ✕ : retour à la page précédente du site, sinon accueil du compte (connecté) ou page de l'événement.
+  $("#close").href = ev.loggedIn ? "/dashboard" : `/e/${encodeURIComponent(ev.slug)}`;
+  $("#close").addEventListener("click", (e) => {
+    if (document.referrer.startsWith(location.origin) && history.length > 1) { e.preventDefault(); history.back(); }
+  });
   heartbeat();
   poll();
   loadPhotos();

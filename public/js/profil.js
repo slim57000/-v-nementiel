@@ -101,6 +101,7 @@ $("#p-list").addEventListener("click", (e) => {
 });
 
 $("#logout").addEventListener("click", async () => {
+  if (!confirm("Se déconnecter de MaFeliza ?")) return;
   await api("/api/auth/logout", { method: "POST" });
   location.replace("/");
 });
