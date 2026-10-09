@@ -33,7 +33,13 @@
     <p class="muted small" style="text-align:center">Ou par email : <a href="mailto:contact@mafeliza.com">contact@mafeliza.com</a></p>
   </main>
   <script type="module">
-    import { api, $, toast } from "/js/common.js";
+    import { api, $, toast, tabbar } from "/js/common.js";
+    // Connecté : retour, bouton profil, et nom / email préremplis.
+    api("/api/auth/me").then((me) => {
+      tabbar("");
+      if (!$("#c-email").value) $("#c-email").value = me.email || "";
+      if (!$("#c-name").value) $("#c-name").value = me.displayName || "";
+    }).catch(() => {});
     $("#contact").addEventListener("submit", async (e) => {
       e.preventDefault();
       $("#c-error").textContent = "";
