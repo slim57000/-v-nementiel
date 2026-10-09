@@ -277,6 +277,7 @@ async function profileMenu() {
         <a class="me-row" href="/messages"><span>💬</span>Messages<i>›</i></a>
         <button type="button" class="me-row" data-me="likes"><span>❤️</span>Mes favoris<i>›</i></button>
         <a class="me-row" href="/contact"><span>✉️</span>Nous contacter<i>›</i></a>
+        <button type="button" class="me-row me-logout" data-me="logout"><span>🚪</span>Se déconnecter<i>›</i></button>
         <button class="btn btn-light btn-block" type="button" data-me="close" style="margin-top:10px">Fermer</button>
       </div></div>`);
     const sheet = $("#me-sheet");
@@ -284,6 +285,9 @@ async function profileMenu() {
       const act = e.target.closest("[data-me]")?.dataset.me;
       if (e.target === sheet || act === "close") sheet.remove();
       if (act === "likes") { sheet.remove(); openFavs(); }
+      if (act === "logout" && confirm("Se déconnecter de MaFeliza ?")) {
+        api("/api/auth/logout", { method: "POST" }).catch(() => {}).finally(() => location.replace("/"));
+      }
     });
   });
 }
