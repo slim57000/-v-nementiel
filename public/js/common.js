@@ -307,12 +307,42 @@ export async function openFavs() {
   sheet.addEventListener("click", (e) => { if (e.target === sheet || e.target.id === "fav-close") sheet.remove(); });
 }
 
+// Traduction anglaise des notifications (créées en français par le serveur) : appliquée à l'affichage.
+const NOTIF_EN = [
+  [/^(.*) Réaction à votre story$/, "$1 Reaction to your story"],
+  [/^(.*) Réaction à votre événement$/, "$1 Reaction to your event"],
+  [/^✅ (.+) viendra peut-être$/, "✅ $1 might come"],
+  [/^✅ (.+) vient$/, "✅ $1 is coming"],
+  [/^👋 (.+) vous a ajouté en ami$/, "👋 $1 added you as a friend"],
+  [/^💬 (.+) a commenté votre story$/, "💬 $1 commented on your story"],
+  [/^💬 (.+) a répondu$/, "💬 $1 replied"],
+  [/^● Live aujourd'hui : (.+)$/, "● Live today: $1"],
+  [/^● Live demain : (.+)$/, "● Live tomorrow: $1"],
+  [/^📅 (.+), c'est aujourd'hui !$/, "📅 $1 is today!"],
+  [/^📅 (.+), c'est demain !$/, "📅 $1 is tomorrow!"],
+  [/^✍️ Livre d'or — (.+)$/, "✍️ Guestbook — $1"],
+  [/^🎞️ Le replay de « (.+) » est disponible$/, "🎞️ The replay of “$1” is available"],
+  [/^Vous pouvez maintenant vous écrire\.$/, "You can now message each other."],
+  [/^Il a été envoyé à vos invités par email\.$/, "It has been sent to your guests by email."],
+  [/^(.+) a réagi à votre story de « (.+) »$/, "$1 reacted to your story of “$2”"],
+  [/^Quelqu'un a réagi à « (.+) »$/, "Someone reacted to “$1”"],
+  [/^Demain à (.+)$/, "Tomorrow at $1"],
+  [/^Aujourd'hui à (.+)$/, "Today at $1"],
+  [/^(.+) : a partagé un souvenir$/, "$1: shared a memory"],
+  [/^(.+) · (\d+) personnes$/, "$1 · $2 people"],
+];
+const notifText = (t) => {
+  if (lang !== "en" || !t) return t;
+  for (const [re, en] of NOTIF_EN) if (re.test(t)) return t.replace(re, en);
+  return t;
+};
+
 // 🔔 Notifications du compte (messages, livre d'or, réponses, lives…).
 function openNotifs(data) {
   api("/api/me/notifications/read", { method: "POST" }).catch(() => {});
   const when = (t) => new Date(t).toLocaleString(LOCALE, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   const rows = data.items.map((n) => `<a class="notif ${n.at > data.seen ? "new" : ""}" href="${esc(n.url.startsWith("/") ? n.url : "/dashboard")}">
-    <b>${esc(n.title)}</b>${n.body ? `<span>${esc(n.body)}</span>` : ""}<small class="muted">${when(n.at)}</small></a>`).join("");
+    <b>${esc(notifText(n.title))}</b>${n.body ? `<span>${esc(notifText(n.body))}</span>` : ""}<small class="muted">${when(n.at)}</small></a>`).join("");
   document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="notif-sheet" role="dialog" aria-modal="true">
     <div class="card"><h2 style="margin-top:0">🔔 Notifications</h2>
       <div class="notif-list">${rows || '<p class="muted">Aucune notification pour le moment.</p>'}</div>
