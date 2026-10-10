@@ -1,5 +1,6 @@
 // Espace personnel d'un utilisateur connecté : profil, favoris, historique, amis, messages privés, blocages.
 import { Router } from "express";
+import { reqLang } from "../lib/email.js";
 import { randomCode } from "../lib/codes.js";
 import { tooFast } from "../lib/limits.js";
 import { notify, orgOwner } from "../lib/push.js";
@@ -105,7 +106,9 @@ router.get("/feed", async (req, res) => {
 // --- Stories des dernières 24 h de mes événements, participations, favoris et amis (rangée du tableau de bord) ---
 // Cloche : notifications du compte et date de dernière lecture.
 router.get("/notifications", async (req, res) => {
-  const [list, seen] = await Promise.all([getSetting(`notifs:${req.organizer.id}`), getSetting(`notifs-seen:${req.organizer.id}`)]);
+  const [list, seen, lang] = await Promise.all([getSetting(`notifs:${req.organizer.id}`), getSetting(`notifs-seen:${req.organizer.id}`), getSetting(`lang:${req.organizer.id}`).catch(() => null)]);
+  // Langue de la personne (FR/EN), mémorisée pour ses notifications sur le téléphone.
+  if (lang !== reqLang(req)) setSetting(`lang:${req.organizer.id}`, reqLang(req)).catch(() => {});
   res.json({ items: list || [], seen: seen || 0 });
 });
 router.post("/notifications/read", async (req, res) => {

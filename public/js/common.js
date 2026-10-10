@@ -2,6 +2,7 @@
 import { icon } from "./icons.js";
 import { lang, tr } from "./i18n.js"; // langue (FR/EN) et thème (clair/sombre), appliqués au chargement
 import { isNativeApp, nativeShare } from "./native.js";
+import { translateNotif } from "./notif-i18n.js";
 
 // Format des dates selon la langue choisie.
 export const LOCALE = lang === "en" ? "en-GB" : "fr-FR";
@@ -307,35 +308,7 @@ export async function openFavs() {
   sheet.addEventListener("click", (e) => { if (e.target === sheet || e.target.id === "fav-close") sheet.remove(); });
 }
 
-// Traduction anglaise des notifications (créées en français par le serveur) : appliquée à l'affichage.
-const NOTIF_EN = [
-  [/^(.*) Réaction à votre story$/, "$1 Reaction to your story"],
-  [/^(.*) Réaction à votre événement$/, "$1 Reaction to your event"],
-  [/^✅ (.+) viendra peut-être$/, "✅ $1 might come"],
-  [/^✅ (.+) vient$/, "✅ $1 is coming"],
-  [/^👋 (.+) vous a ajouté en ami$/, "👋 $1 added you as a friend"],
-  [/^💬 (.+) a commenté votre story$/, "💬 $1 commented on your story"],
-  [/^💬 (.+) a répondu$/, "💬 $1 replied"],
-  [/^● Live aujourd'hui : (.+)$/, "● Live today: $1"],
-  [/^● Live demain : (.+)$/, "● Live tomorrow: $1"],
-  [/^📅 (.+), c'est aujourd'hui !$/, "📅 $1 is today!"],
-  [/^📅 (.+), c'est demain !$/, "📅 $1 is tomorrow!"],
-  [/^✍️ Livre d'or — (.+)$/, "✍️ Guestbook — $1"],
-  [/^🎞️ Le replay de « (.+) » est disponible$/, "🎞️ The replay of “$1” is available"],
-  [/^Vous pouvez maintenant vous écrire\.$/, "You can now message each other."],
-  [/^Il a été envoyé à vos invités par email\.$/, "It has been sent to your guests by email."],
-  [/^(.+) a réagi à votre story de « (.+) »$/, "$1 reacted to your story of “$2”"],
-  [/^Quelqu'un a réagi à « (.+) »$/, "Someone reacted to “$1”"],
-  [/^Demain à (.+)$/, "Tomorrow at $1"],
-  [/^Aujourd'hui à (.+)$/, "Today at $1"],
-  [/^(.+) : a partagé un souvenir$/, "$1: shared a memory"],
-  [/^(.+) · (\d+) personnes$/, "$1 · $2 people"],
-];
-const notifText = (t) => {
-  if (lang !== "en" || !t) return t;
-  for (const [re, en] of NOTIF_EN) if (re.test(t)) return t.replace(re, en);
-  return t;
-};
+const notifText = (t) => translateNotif(t, lang);
 
 // 🔔 Notifications du compte (messages, livre d'or, réponses, lives…).
 function openNotifs(data) {
