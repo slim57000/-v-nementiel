@@ -1195,3 +1195,4 @@ body.simple-mode { background: linear-gradient(160deg, #fff5fa, #f3e8ff); min-he
 .me-menu .me-head { flex-direction: row; display: flex; justify-content: center; align-items: center; gap: 10px; }
 .me-av.big { width: 40px; height: 40px; font-size: 1.05rem; }
 .me-logout { margin-top: 6px; }
+.me-sec { text-align: center; margin-left: 0; margin-right: 0; }
