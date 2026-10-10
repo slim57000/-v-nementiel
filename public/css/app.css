@@ -1180,3 +1180,10 @@ body.simple-mode { background: linear-gradient(160deg, #fff5fa, #f3e8ff); min-he
 .notif-tip { margin: -6px 0 8px; }
 @media (hover: hover) { .notif-swipe:hover .notif { transform: translateX(-76px); } }
 .notif-swipe.swiping .notif-del, .notif-swipe:hover .notif-del { visibility: visible; }
+/* Menu profil compact : tient dans l'écran (défile si besoin) */
+.me-menu { gap: 6px; max-height: calc(100dvh - 60px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y: auto; }
+.me-menu .me-head { margin-bottom: 2px; gap: 4px; font-size: .98rem; }
+.me-av.big { width: 52px; height: 52px; font-size: 1.3rem; }
+.me-row { padding: 11px 14px; font-size: .97rem; border-radius: 14px; }
+.me-row span { font-size: 1.2rem; }
+.me-menu [data-me="close"] { margin-top: 4px !important; }
