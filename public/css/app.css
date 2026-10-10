@@ -1202,3 +1202,8 @@ body.simple-mode { background: linear-gradient(160deg, #fff5fa, #f3e8ff); min-he
 .me-pen-txt { font-size: .75rem; opacity: .7; }
 .me-menu { position: relative; }
 .me-x { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--bg); color: var(--text); font-size: 1rem; cursor: pointer; z-index: 2; }
+/* Admin : aperçu Google du référencement */
+.seo-preview { display: grid; gap: 2px; margin-top: 8px; padding: 10px 12px; border-radius: 12px; background: #fff; border: 1px solid var(--border); font-family: Arial, sans-serif; text-align: left; }
+.seo-preview small { color: #202124; font-size: .78rem; }
+.seo-preview b { color: #1a0dab; font-size: 1.05rem; font-weight: 400; }
+.seo-preview span { color: #4d5156; font-size: .85rem; line-height: 1.4; }

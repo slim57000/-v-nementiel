@@ -7,6 +7,7 @@ import { isPremium, setPremium, premiumUntil } from "../lib/premium.js";
 import { tooFast } from "../lib/limits.js";
 import { notify, orgOwner, forget } from "../lib/push.js";
 import { analyticsSummary, onlineNow } from "../lib/analytics.js";
+import { SEO_PAGES, loadSeo, saveSeo } from "../lib/seo.js";
 import { sendEmail, EMAIL_ENABLED } from "../lib/email.js";
 import {
   searchEvents, searchOrganizers, findEvent, findOrganizer, saveOrganizer, saveEvent, listEvents,
@@ -255,6 +256,10 @@ router.delete("/contact/:id", async (req, res) => {
 });
 
 // Réglages de la plateforme.
+// Référencement : titre et description Google des pages principales.
+router.get("/seo", async (req, res) => res.json({ pages: SEO_PAGES, seo: await loadSeo() }));
+router.put("/seo", async (req, res) => res.json(await saveSeo(req.body || {})));
+
 router.get("/settings", async (req, res) => {
   res.json({ defaultLivePlatform: (await getSetting("defaultLivePlatform")) || "youtube" });
 });

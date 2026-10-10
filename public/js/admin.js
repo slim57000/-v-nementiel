@@ -86,7 +86,20 @@ const views = {
   },
   async settings() {
     const s = await api("/api/admin/settings");
+    const { pages, seo } = await api("/api/admin/seo").catch(() => ({ pages: {}, seo: {} }));
+    const DEF = { "/": ["MaFeliza — Vos événements, ensemble", "Le premier réseau social dédié à tous vos événements. Partagez l'émotion avant, pendant, après."], "/connexion": ["MaFeliza — Connexion", ""], "/decouvrir": ["Découvrir — MaFeliza", ""] };
+    const seoBlock = Object.entries(pages).map(([path, label]) => `<div class="seo-page" data-path="${esc(path)}">
+      <h3 style="font-size:.95rem;margin:14px 0 6px">${esc(label)} <span class="muted small">mafeliza.com${esc(path === "/" ? "" : path)}</span></h3>
+      <input class="seo-title" maxlength="70" placeholder="${esc(DEF[path]?.[0] || "")}" value="${esc(seo[path]?.title || "")}">
+      <textarea class="seo-desc" rows="2" maxlength="170" placeholder="${esc(DEF[path]?.[1] || "Description (160 caractères max)")}" style="margin-top:6px">${esc(seo[path]?.description || "")}</textarea>
+      <div class="seo-preview"><small>mafeliza.com${esc(path === "/" ? "" : path)}</small><b></b><span></span></div></div>`).join("");
     return `<section class="card">
+      <h2 style="font-size:1rem">🔎 Référencement Google</h2>
+      <p class="muted small">Titre et texte affichés sous MaFeliza dans Google (et dans les aperçus WhatsApp). Laissez vide pour garder le texte par défaut. Google met quelques jours à les prendre en compte.</p>
+      ${seoBlock}
+      <button class="btn btn-block" data-act="seo-save" style="margin-top:12px">💾 Enregistrer le référencement</button>
+      </section>
+      <section class="card">
       <h2 style="font-size:1rem">Plateforme live par défaut</h2>
       <p class="muted small">Proposée aux organisateurs et caméramans lors de l'ajout d'une caméra.</p>
       <div class="segments" id="platform">
@@ -177,10 +190,21 @@ async function refreshLive(manual) {
 }
 setInterval(() => { if (tab === "audience" && !document.hidden) refreshLive(); }, 5000);
 
+// Aperçu « façon Google » du référencement, mis à jour pendant la saisie.
+function seoPreview() {
+  document.querySelectorAll(".seo-page").forEach((el) => {
+    const t = el.querySelector(".seo-title"), d = el.querySelector(".seo-desc");
+    el.querySelector(".seo-preview b").textContent = t.value || t.placeholder;
+    el.querySelector(".seo-preview span").textContent = d.value || d.placeholder || "—";
+  });
+}
+document.addEventListener("input", (e) => { if (e.target.closest(".seo-page")) seoPreview(); });
+
 async function render() {
   $("#q").classList.toggle("hidden", ["reports", "settings", "contact", "audience", "notifs"].includes(tab));
   try {
     $("#content").innerHTML = await views[tab]($("#q").value.trim());
+    seoPreview();
   } catch (err) {
     if (err.status === 401) return goLogin();
     $("#content").innerHTML = `<p class="error">${esc(err.message)}</p>`;
@@ -198,6 +222,12 @@ $("#q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeou
 
 $("#content").addEventListener("click", async (e) => {
   const btn = e.target.closest("[data-act]");
+  if (btn?.dataset.act === "seo-save") {
+    const body = {};
+    document.querySelectorAll(".seo-page").forEach((el) => { body[el.dataset.path] = { title: el.querySelector(".seo-title").value, description: el.querySelector(".seo-desc").value }; });
+    try { await api("/api/admin/seo", { method: "PUT", body }); toast("Référencement enregistré ✔"); } catch (err) { toast(err.message); }
+    return;
+  }
   if (btn?.dataset.act === "refresh-audience") { e.preventDefault(); refreshLive(true); return; }
   if (btn?.dataset.act === "notify") {
     try {

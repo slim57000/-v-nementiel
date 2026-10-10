@@ -13,6 +13,7 @@ import { FACEBOOK_ENABLED } from "./lib/facebook.js";
 import { APPLE_ENABLED } from "./lib/apple.js";
 import { recordHit, ping, onlineOn } from "./lib/analytics.js";
 import { getSigned } from "./lib/session.js";
+import { loadSeo, applySeo } from "./lib/seo.js";
 import express from "express";
 import QRCode from "qrcode";
 import { readFileSync, readdirSync, existsSync, watch } from "node:fs";
@@ -274,6 +275,7 @@ const versionedPage = (file) => pageCache.get(file) ?? pageCache.set(file, versi
 let eventTemplate = versionHtml(readFileSync(new URL("./public/event.html", import.meta.url), "utf8"));
 // Mise à jour du site (git pull) sans redémarrage : pages, scripts et styles modifiés sont rechargés tout seuls.
 // (Le code du serveur lui-même, dans routes/ et lib/, demande toujours un redémarrage.)
+loadSeo().catch(() => {});
 let reloadTimer = null;
 try {
   watch(PUBLIC_DIR, { recursive: true }, () => {
@@ -369,7 +371,7 @@ if (!ON_VERCEL) {
     const name = req.path === "/" ? "index" : req.path.slice(1).replace(/\.html$/, "");
     const file = `${PUBLIC_DIR}/${name}.html`;
     if (!existsSync(file)) return next();
-    res.set("Cache-Control", "no-cache").type("html").send(versionedPage(file));
+    res.set("Cache-Control", "no-cache").type("html").send(applySeo(versionedPage(file), req.path.replace(/\.html$/, "") || "/"));
   });
   app.use(express.static(PUBLIC_DIR, {
     extensions: ["html"],
