@@ -1196,3 +1196,9 @@ body.simple-mode { background: linear-gradient(160deg, #fff5fa, #f3e8ff); min-he
 .me-av.big { width: 40px; height: 40px; font-size: 1.05rem; }
 .me-logout { margin-top: 6px; }
 .me-sec { text-align: center; margin-left: 0; margin-right: 0; }
+/* Menu profil : avatar et pseudo modifiables */
+.me-edit-av, .me-edit-name { border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; position: relative; }
+.me-edit-av .me-pen { position: absolute; right: -6px; bottom: -4px; font-size: .7rem; background: #fff; border-radius: 50%; width: 20px; height: 20px; display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+.me-pen-txt { font-size: .75rem; opacity: .7; }
+.me-menu { position: relative; }
+.me-x { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--bg); color: var(--text); font-size: 1rem; cursor: pointer; z-index: 2; }

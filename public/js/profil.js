@@ -1,5 +1,5 @@
 // Profil : photo, nom, statistiques, amis, favoris, participations, thème, mot de passe.
-import { api, $, esc, toast, tabbar, goLogin, resizeImage, publicCard, viewPhoto, enablePush, pushState } from "./common.js";
+import { pickAvatar, api, $, esc, toast, tabbar, goLogin, resizeImage, publicCard, viewPhoto, enablePush, pushState } from "./common.js";
 import { lang, setLang, themePref, setTheme, bigText, setBigText } from "./i18n.js";
 
 // Page « /reglages » (ou /profil?reglages) : mot de passe, notifications, apparence, langue, compte.
@@ -57,33 +57,10 @@ $("#edit-name").addEventListener("click", async () => {
 });
 
 // Toucher la photo : choisir un avatar MaFeliza (thème des fêtes) ou sa propre photo.
-const AVATARS = ["alliances", "mariee", "marie", "bouquet", "gateau", "champagne", "ballon", "fete", "bebe", "diplome", "colombe", "fleur", "coeur", "papillon", "photo", "etoile"];
-async function setAvatar(avatar, msg) {
-  try {
-    const p = await api("/api/me/profile", { method: "PUT", body: { avatar } });
-    me = { ...me, ...p };
-    paintAvatar(me);
-    toast(msg);
-  } catch (err) { toast(err.message); }
-}
 document.querySelector(".avatar-edit").addEventListener("click", (e) => {
   if (e.target.id === "avatar-file") return;
   e.preventDefault();
-  document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="av-sheet" role="dialog" aria-modal="true">
-    <div class="card"><h2 style="margin-top:0;text-align:center">Choisissez votre avatar</h2>
-      <div class="av-grid">${AVATARS.map((a) => `<button type="button" data-av="/img/avatars/${a}.svg"><img src="/img/avatars/${a}.svg" alt=""></button>`).join("")}</div>
-      <button class="btn btn-block" type="button" data-act="photo" style="margin-top:14px">📷 Utiliser ma photo</button>
-      ${me.avatar ? '<button class="btn btn-light btn-block" type="button" data-act="none" style="margin-top:8px">Retirer la photo</button>' : ""}
-      <button class="btn btn-light btn-block" type="button" data-act="close" style="margin-top:8px">Fermer</button></div></div>`);
-  const sheet = $("#av-sheet");
-  sheet.addEventListener("click", (ev) => {
-    const av = ev.target.closest("[data-av]")?.dataset.av;
-    const act = ev.target.closest("[data-act]")?.dataset.act;
-    if (av) { sheet.remove(); setAvatar(av, "Avatar mis à jour ✨"); }
-    else if (act === "photo") { sheet.remove(); $("#avatar-file").click(); }
-    else if (act === "none") { sheet.remove(); setAvatar(null, "Photo retirée"); }
-    else if (act === "close" || ev.target === sheet) sheet.remove();
-  });
+  pickAvatar(me.avatar, (p) => { me = { ...me, ...p }; paintAvatar(me); });
 });
 
 $("#avatar-file").addEventListener("change", async (e) => {

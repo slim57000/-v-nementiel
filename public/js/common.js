@@ -273,7 +273,8 @@ async function profileMenu() {
     const n = unread();
     document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="me-sheet" role="dialog" aria-modal="true">
       <div class="card me-menu">
-        <div class="me-head">${av("big")}<b>${esc(name || "Mon compte")}</b></div>
+        <button type="button" class="me-x" data-me="close" aria-label="Fermer">✕</button>
+        <div class="me-head"><button type="button" class="me-edit-av" data-me="avatar" aria-label="Changer d'avatar">${av("big")}<span class="me-pen">✏️</span></button><button type="button" class="me-edit-name" data-me="name"><b>${esc(name || "Mon compte")}</b> <span class="me-pen-txt">✏️</span></button></div>
         <p class="me-sec">Mon espace</p>
         <a class="me-row" href="/profil"><span>👤</span>Mon profil<i>›</i></a>
         <button type="button" class="me-row" data-me="likes"><span>❤️</span>Mes favoris<i>›</i></button>
@@ -290,11 +291,49 @@ async function profileMenu() {
       const act = e.target.closest("[data-me]")?.dataset.me;
       if (e.target === sheet || act === "close") sheet.remove();
       if (act === "likes") { sheet.remove(); openFavs(); }
+      if (act === "avatar") { sheet.remove(); pickAvatar(me?.avatar, (p) => { me = { ...me, avatar: p.avatar }; paint(); }); }
+      if (act === "name") { sheet.remove(); editName(name, (p) => { me = { ...me, displayName: p.name }; location.reload(); }); }
       if (act === "logout" && confirm("Se déconnecter de MaFeliza ?")) {
         api("/api/auth/logout", { method: "POST" }).catch(() => {}).finally(() => location.replace("/"));
       }
     });
   });
+}
+
+// Choix de l'avatar : 16 avatars MaFeliza ou sa propre photo. onDone(profil mis à jour).
+export const AVATARS = ["alliances", "mariee", "marie", "bouquet", "gateau", "champagne", "ballon", "fete", "bebe", "diplome", "colombe", "fleur", "coeur", "papillon", "photo", "etoile"];
+export function pickAvatar(current, onDone) {
+  const save = async (avatar, msg) => {
+    try { const p = await api("/api/me/profile", { method: "PUT", body: { avatar } }); toast(msg); onDone?.(p); }
+    catch (err) { toast(err.message); }
+  };
+  document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="av-sheet" role="dialog" aria-modal="true">
+    <div class="card"><h2 style="margin-top:0;text-align:center">Choisissez votre avatar</h2>
+      <div class="av-grid">${AVATARS.map((a) => `<button type="button" data-av="/img/avatars/${a}.svg"><img src="/img/avatars/${a}.svg" alt=""></button>`).join("")}</div>
+      <label class="btn btn-block" style="margin-top:14px">📷 Utiliser ma photo<input type="file" accept="image/*" hidden id="av-file"></label>
+      ${current ? '<button class="btn btn-light btn-block" type="button" data-act="none" style="margin-top:8px">Retirer la photo</button>' : ""}
+      <button class="btn btn-light btn-block" type="button" data-act="close" style="margin-top:8px">Fermer</button></div></div>`);
+  const sheet = $("#av-sheet");
+  sheet.querySelector("#av-file").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    sheet.remove();
+    if (file) save(await resizeImage(file, 400), "Photo de profil mise à jour");
+  });
+  sheet.addEventListener("click", (ev) => {
+    const av = ev.target.closest("[data-av]")?.dataset.av;
+    const act = ev.target.closest("[data-act]")?.dataset.act;
+    if (av) { sheet.remove(); save(av, "Avatar mis à jour ✨"); }
+    else if (act === "none") { sheet.remove(); save(null, "Photo retirée"); }
+    else if (act === "close" || ev.target === sheet) sheet.remove();
+  });
+}
+
+// Changer son pseudo (nom affiché). onDone(profil mis à jour).
+export async function editName(current, onDone) {
+  const name = prompt("Votre pseudo (affiché à vos amis) :", current || "");
+  if (name === null || !name.trim()) return;
+  try { const p = await api("/api/me/profile", { method: "PUT", body: { displayName: name.trim() } }); toast("Pseudo enregistré"); onDone?.(p); }
+  catch (err) { toast(err.message); }
 }
 
 // ❤️ Mes likes : événements mis en favoris.
