@@ -15,7 +15,7 @@ import { recordHit, ping, onlineOn } from "./lib/analytics.js";
 import { getSigned } from "./lib/session.js";
 import express from "express";
 import QRCode from "qrcode";
-import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync, watch } from "node:fs";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import authRoutes, { currentOrganizer } from "./routes/auth.js";
@@ -250,12 +250,17 @@ app.use("/api/me", meRoutes);
 // adresse, si bien qu'aucun téléphone ne garde un ancien fichier en cache (y compris les modules importés,
 // redirigés par une « import map » ajoutée en tête de chaque page).
 const ASSET_VERSIONS = {};
-for (const dir of ["js", "css"]) {
-  for (const f of readdirSync(`${PUBLIC_DIR}/${dir}`).filter((n) => /\.(js|css)$/.test(n))) {
-    ASSET_VERSIONS[`/${dir}/${f}`] = createHash("sha1").update(readFileSync(`${PUBLIC_DIR}/${dir}/${f}`)).digest("hex").slice(0, 10);
+let IMPORT_MAP = "";
+function computeAssets() {
+  for (const k of Object.keys(ASSET_VERSIONS)) delete ASSET_VERSIONS[k];
+  for (const dir of ["js", "css"]) {
+    for (const f of readdirSync(`${PUBLIC_DIR}/${dir}`).filter((n) => /\.(js|css)$/.test(n))) {
+      ASSET_VERSIONS[`/${dir}/${f}`] = createHash("sha1").update(readFileSync(`${PUBLIC_DIR}/${dir}/${f}`)).digest("hex").slice(0, 10);
+    }
   }
+  IMPORT_MAP = `<script type="importmap">${JSON.stringify({ imports: Object.fromEntries(Object.entries(ASSET_VERSIONS).filter(([k]) => k.endsWith(".js")).map(([k, v]) => [k, `${k}?v=${v}`])) })}</script>`;
 }
-const IMPORT_MAP = `<script type="importmap">${JSON.stringify({ imports: Object.fromEntries(Object.entries(ASSET_VERSIONS).filter(([k]) => k.endsWith(".js")).map(([k, v]) => [k, `${k}?v=${v}`])) })}</script>`;
+computeAssets();
 // Nom du site pour Google (sinon il le devine) : « MaFeliza » dans chaque page.
 const SITE_NAME = `<meta property="og:site_name" content="MaFeliza"><meta name="application-name" content="MaFeliza">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"MaFeliza","alternateName":["Ma Feliza","mafeliza.com"],"url":"https://mafeliza.com/"}</script>`;
@@ -266,7 +271,23 @@ export const versionHtml = (html) => html
 const pageCache = new Map();
 const versionedPage = (file) => pageCache.get(file) ?? pageCache.set(file, versionHtml(readFileSync(file, "utf8"))).get(file);
 
-const eventTemplate = versionHtml(readFileSync(new URL("./public/event.html", import.meta.url), "utf8"));
+let eventTemplate = versionHtml(readFileSync(new URL("./public/event.html", import.meta.url), "utf8"));
+// Mise à jour du site (git pull) sans redémarrage : pages, scripts et styles modifiés sont rechargés tout seuls.
+// (Le code du serveur lui-même, dans routes/ et lib/, demande toujours un redémarrage.)
+let reloadTimer = null;
+try {
+  watch(PUBLIC_DIR, { recursive: true }, () => {
+    clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(() => {
+      try {
+        computeAssets();
+        pageCache.clear();
+        eventTemplate = versionHtml(readFileSync(new URL("./public/event.html", import.meta.url), "utf8"));
+        console.log("Pages et styles rechargés (mise à jour détectée).");
+      } catch (err) { console.error("Rechargement :", err.message); }
+    }, 800);
+  });
+} catch { /* surveillance indisponible : un redémarrage reste nécessaire */ }
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 app.get("/e/:slug", async (req, res) => {
