@@ -111,6 +111,13 @@ router.get("/notifications", async (req, res) => {
   if (lang !== reqLang(req)) setSetting(`lang:${req.organizer.id}`, reqLang(req)).catch(() => {});
   res.json({ items: list || [], seen: seen || 0 });
 });
+// Supprimer une notification (repérée par son heure « at ») ou toutes (« all »).
+router.delete("/notifications/:at", async (req, res) => {
+  const key = `notifs:${req.organizer.id}`;
+  const list = (await getSetting(key).catch(() => null)) || [];
+  await setSetting(key, req.params.at === "all" ? [] : list.filter((n) => String(n.at) !== req.params.at));
+  res.json({ ok: true });
+});
 router.post("/notifications/read", async (req, res) => {
   await setSetting(`notifs-seen:${req.organizer.id}`, Date.now());
   res.json({ ok: true });

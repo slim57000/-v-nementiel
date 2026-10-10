@@ -1172,3 +1172,11 @@ body.simple-mode { background: linear-gradient(160deg, #fff5fa, #f3e8ff); min-he
 #selfie-rec { width: 82px; height: 82px; border-radius: 50%; border: 5px solid #fff; background: #e11d48; cursor: pointer; transition: border-radius .2s, transform .2s; }
 .selfie.recording #selfie-rec { border-radius: 22px; transform: scale(.85); }
 .selfie-hint { position: absolute; left: 20px; right: 20px; bottom: calc(140px + env(safe-area-inset-bottom)); text-align: center; font-weight: 700; text-shadow: 0 2px 8px rgba(0,0,0,.6); margin: 0; }
+/* Notifications : glisser pour supprimer */
+.notif-swipe { position: relative; overflow: hidden; border-radius: 14px; transition: opacity .25s, max-height .25s; max-height: 300px; }
+.notif-swipe .notif { position: relative; z-index: 1; display: grid; background: var(--bg); transition: transform .2s; }
+.notif-swipe .notif-del { position: absolute; right: 0; top: 0; bottom: 0; width: 76px; visibility: hidden; border: 0; background: #e11d48; color: #fff; font-size: 1.3rem; cursor: pointer; }
+.notif-swipe.gone { opacity: 0; max-height: 0; }
+.notif-tip { margin: -6px 0 8px; }
+@media (hover: hover) { .notif-swipe:hover .notif { transform: translateX(-76px); } }
+.notif-swipe.swiping .notif-del, .notif-swipe:hover .notif-del { visibility: visible; }

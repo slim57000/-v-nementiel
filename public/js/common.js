@@ -276,6 +276,7 @@ async function profileMenu() {
         <div class="me-head">${av("big")}<b>${esc(name || "Mon compte")}</b></div>
         <a class="me-row" href="/profil"><span>👤</span>Mon profil<i>›</i></a>
         <a class="me-row" href="/messages"><span>💬</span>Messages<i>›</i></a>
+        <a class="me-row" href="/cameraman"><span>🎥</span>Espace caméraman<i>›</i></a>
         <button type="button" class="me-row" data-me="likes"><span>❤️</span>Mes favoris<i>›</i></button>
         <a class="me-row" href="/reglages"><span>⚙️</span>Réglages<i>›</i></a>
         <a class="me-row" href="/contact"><span>✉️</span>Nous contacter<i>›</i></a>
@@ -314,14 +315,54 @@ const notifText = (t) => translateNotif(t, lang);
 function openNotifs(data) {
   api("/api/me/notifications/read", { method: "POST" }).catch(() => {});
   const when = (t) => new Date(t).toLocaleString(LOCALE, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-  const rows = data.items.map((n) => `<a class="notif ${n.at > data.seen ? "new" : ""}" href="${esc(n.url.startsWith("/") ? n.url : "/dashboard")}">
-    <b>${esc(notifText(n.title))}</b>${n.body ? `<span>${esc(notifText(n.body))}</span>` : ""}<small class="muted">${when(n.at)}</small></a>`).join("");
+  const row = (n) => `<div class="notif-swipe" data-at="${n.at}"><button type="button" class="notif-del" aria-label="Supprimer">🗑</button>
+    <a class="notif ${n.at > data.seen ? "new" : ""}" href="${esc(n.url.startsWith("/") ? n.url : "/dashboard")}">
+    <b>${esc(notifText(n.title))}</b>${n.body ? `<span>${esc(notifText(n.body))}</span>` : ""}<small class="muted">${when(n.at)}</small></a></div>`;
+  const empty = '<p class="muted">Aucune notification pour le moment.</p>';
   document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="notif-sheet" role="dialog" aria-modal="true">
     <div class="card"><h2 style="margin-top:0">🔔 Notifications</h2>
-      <div class="notif-list">${rows || '<p class="muted">Aucune notification pour le moment.</p>'}</div>
+      <p class="muted small notif-tip" ${data.items.length ? "" : "hidden"}>Glissez une notification vers la gauche pour la supprimer.</p>
+      <div class="notif-list">${data.items.map(row).join("") || empty}</div>
+      <button class="btn btn-ghost btn-block" type="button" id="notif-clear" ${data.items.length ? "" : "hidden"}>Tout effacer</button>
       <button class="btn btn-light btn-block" type="button" id="notif-close">Fermer</button></div></div>`);
   const sheet = $("#notif-sheet");
-  sheet.addEventListener("click", (e) => { if (e.target === sheet || e.target.id === "notif-close") sheet.remove(); });
+  const remove = async (el) => {
+    const at = el.dataset.at;
+    el.classList.add("gone");
+    setTimeout(() => { el.remove(); if (!sheet.querySelector(".notif-swipe")) sheet.querySelector(".notif-list").innerHTML = empty; }, 250);
+    data.items = data.items.filter((n) => String(n.at) !== at);
+    api(`/api/me/notifications/${encodeURIComponent(at)}`, { method: "DELETE" }).catch(() => {});
+  };
+  sheet.addEventListener("click", async (e) => {
+    if (e.target === sheet || e.target.id === "notif-close") return sheet.remove();
+    if (e.target.closest(".notif-del")) return remove(e.target.closest(".notif-swipe"));
+    if (e.target.id === "notif-clear" && confirm("Effacer toutes les notifications ?")) {
+      data.items = [];
+      sheet.querySelector(".notif-list").innerHTML = empty;
+      e.target.hidden = true;
+      api("/api/me/notifications/all", { method: "DELETE" }).catch(() => {});
+    }
+  });
+  // Glisser vers la gauche : révèle 🗑 (au-delà de la moitié, suppression directe).
+  sheet.querySelectorAll(".notif-swipe").forEach((el) => {
+    const a = el.querySelector(".notif");
+    let x0 = null, dx = 0, moved = false;
+    el.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; dx = 0; moved = false; a.style.transition = "none"; el.classList.add("swiping"); }, { passive: true });
+    el.addEventListener("touchmove", (e) => {
+      if (x0 === null) return;
+      dx = Math.min(0, e.touches[0].clientX - x0);
+      if (dx < -8) moved = true;
+      a.style.transform = `translateX(${dx}px)`;
+    }, { passive: true });
+    el.addEventListener("touchend", () => {
+      a.style.transition = "";
+      if (dx < -el.offsetWidth / 2) return remove(el);
+      a.style.transform = dx < -40 ? "translateX(-76px)" : "";
+      if (dx >= -40) el.classList.remove("swiping");
+      x0 = null;
+    });
+    a.addEventListener("click", (e) => { if (moved) { e.preventDefault(); moved = false; } });
+  });
 }
 
 // Redirige vers la connexion en revenant ensuite sur la page courante.
