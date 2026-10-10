@@ -1,6 +1,8 @@
 // Traduction anglaise des notifications (créées en français) — partagée par le site (cloche)
 // et par le serveur (notifications du téléphone, selon la langue de chaque personne).
 export const NOTIF_EN = [
+  [/^⏰ « (.+) » commence dans 1 heure$/, "⏰ “$1” starts in 1 hour"],
+  [/^Le live démarre à (\d+)h(\d+) : installez-vous !$/, "The live starts at $1:$2. Get ready!"],
   [/^(.*) Réaction à votre story$/, "$1 Reaction to your story"],
   [/^(.*) Réaction à votre événement$/, "$1 Reaction to your event"],
   [/^✅ (.+) viendra peut-être$/, "✅ $1 might come"],

@@ -1143,3 +1143,21 @@ main { animation: em-fade .3s ease-out; }
 /* Profil / Réglages : une même page, deux onglets */
 body:not(.settings-mode) .st, body:not(.settings-mode) .st-title, body.settings-mode .pf { display: none !important; }
 .st-title { text-align: center; margin: 6px 0 16px; }
+/* Mode simple (grands-parents) : très gros textes, un seul bouton */
+body.simple-mode { background: linear-gradient(160deg, #fff5fa, #f3e8ff); min-height: 100dvh; }
+.simple { max-width: 520px; margin: 0 auto; padding: 32px 20px calc(40px + env(safe-area-inset-bottom)); text-align: center; display: grid; gap: 14px; justify-items: center; }
+.simple-logo { width: 72px; }
+.simple-kicker { font-size: 1.4rem; font-weight: 800; color: #c20f68; margin: 6px 0 0; }
+.simple h1 { font-size: 2.3rem; line-height: 1.15; margin: 0; color: #2a1830; }
+.simple-when { font-size: 1.35rem; margin: 0; color: #4a3a50; }
+.simple-btn { display: block; width: 100%; padding: 26px 16px; border: 0; border-radius: 28px; background: linear-gradient(135deg, #fd1a85, #c60bd2); color: #fff; font: inherit; font-size: 1.8rem; font-weight: 800; text-decoration: none; box-shadow: 0 12px 30px rgba(253,26,133,.4); margin-top: 10px; cursor: pointer; }
+.simple-btn.small { font-size: 1.3rem; padding: 18px; margin: 0; }
+.simple-btn.is-live { animation: simple-pulse 1.4s infinite; }
+@keyframes simple-pulse { 50% { transform: scale(1.04); box-shadow: 0 16px 40px rgba(253,26,133,.6); } }
+.simple-hint { font-size: 1.2rem; color: #4a3a50; margin: 4px 0 0; }
+.simple-code { display: grid; gap: 10px; width: 100%; }
+.simple-code input { font-size: 1.6rem; text-align: center; padding: 18px; border-radius: 20px; }
+.simple-more { font-size: 1.1rem; color: #c20f68; margin-top: 18px; }
+[data-theme="dark"] body.simple-mode { background: #17121c; }
+[data-theme="dark"] .simple h1 { color: #fff; }
+[data-theme="dark"] .simple-when, [data-theme="dark"] .simple-hint { color: #ddd; }

@@ -3,7 +3,7 @@ import { vapidKey, notify, orgOwner } from "./lib/push.js";
 import { saveNativeToken } from "./lib/native-push.js";
 import { guestAuthor } from "./lib/guest.js";
 import { savePushSub, listFollowerIds, deletePushSub } from "./lib/store.js";
-import { remindInvites, sendReplay } from "./lib/invites.js";
+import { remindInvites, sendReplay, liveSoonInvites } from "./lib/invites.js";
 import { REALTIME } from "./lib/realtime.js";
 import { isPremium } from "./lib/premium.js";
 import { reportError } from "./lib/monitor.js";
@@ -216,6 +216,26 @@ async function dailyTick() {
   console.log("Tâche quotidienne :", JSON.stringify(r));
 }
 if (!process.env.VERCEL) { setTimeout(dailyTick, 60_000); setInterval(dailyTick, 10 * 60_000); }
+
+// Toutes les 5 min : rappel « Ça commence bientôt ! » environ 1 h avant chaque live du jour (une seule fois par événement).
+async function liveSoonTick() {
+  const now = new Date();
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(now).map((p) => [p.type, p.value]));
+  const today = `${parts.year}-${parts.month}-${parts.day}`, nowMin = Number(parts.hour) * 60 + Number(parts.minute);
+  for (const event of await listEventsOnDate(today).catch(() => [])) {
+    if (event.suspended || !event.cameras?.length || !/^\d{2}:\d{2}$/.test(event.time || "")) continue;
+    const [h, m] = event.time.split(":").map(Number), left = h * 60 + m - nowMin;
+    if (left < 45 || left > 65) continue;
+    if (await getSetting(`livesoon:${event.id}`).catch(() => true)) continue;
+    await setSetting(`livesoon:${event.id}`, new Date().toISOString());
+    const followers = await listFollowerIds(event.id).catch(() => []);
+    await notify([event.organizerId, ...followers].map(orgOwner), {
+      title: `⏰ « ${event.name} » commence dans 1 heure`, body: `Le live démarre à ${event.time.replace(":", "h")} : installez-vous !`, url: `/simple?e=${event.slug}`,
+    }).catch(() => 0);
+    await liveSoonInvites(event).catch(() => 0);
+  }
+}
+if (!process.env.VERCEL) setInterval(() => liveSoonTick().catch((err) => console.error("Rappel live :", err.message)), 5 * 60_000);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);

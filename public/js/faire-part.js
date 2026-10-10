@@ -99,6 +99,9 @@ function render() {
     shareSheet({ title: ev.name, text, url: link });
   };
   $("#copy").onclick = () => copy(link, "Lien copié !");
+  // Mode simple : une page avec un seul gros bouton « Regarder le live » (idéal pour les grands-parents).
+  const simple = `${location.origin}/simple?e=${encodeURIComponent(ev.slug)}${ev.visibility === "private" ? `&code=${ev.accessCode}` : ""}`;
+  $("#simple-link").onclick = () => shareSheet({ title: ev.name, text: EN ? `👵 Watch "${ev.name}" live in one tap:` : `👵 Regardez « ${ev.name} » en direct, en un seul geste :`, url: simple });
 }
 
 document.querySelector(".fp-tabs").addEventListener("click", (e) => {
