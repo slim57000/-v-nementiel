@@ -324,7 +324,7 @@ function openNotifs(data) {
       <p class="muted small notif-tip" ${data.items.length ? "" : "hidden"}>Glissez une notification vers la gauche pour la supprimer.</p>
       <div class="notif-list">${data.items.map(row).join("") || empty}</div>
       <button class="btn btn-ghost btn-block" type="button" id="notif-clear" ${data.items.length ? "" : "hidden"}>Tout effacer</button>
-      <button class="btn btn-light btn-block" type="button" id="notif-close">Fermer</button></div></div>`);
+      <button class="btn btn-light btn-block" type="button" id="notif-close" style="margin-top:10px">Fermer</button></div></div>`);
   const sheet = $("#notif-sheet");
   const remove = async (el) => {
     const at = el.dataset.at;

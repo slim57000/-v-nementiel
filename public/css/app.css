@@ -1187,3 +1187,4 @@ body.simple-mode { background: linear-gradient(160deg, #fff5fa, #f3e8ff); min-he
 .me-row { padding: 11px 14px; font-size: .97rem; border-radius: 14px; }
 .me-row span { font-size: 1.2rem; }
 .me-menu [data-me="close"] { margin-top: 4px !important; }
+#notif-clear { margin-bottom: 0; }
