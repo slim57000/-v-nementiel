@@ -153,6 +153,46 @@ export function initGuestbook(ev) {
     e.target.value = "";
   });
 
+  // 🎥 Message vidéo : caméra frontale, compte à rebours, arrêt automatique à 15 s.
+  $("#gb-selfie").addEventListener("click", async () => {
+    if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) return toast("Vidéo non disponible sur ce navigateur : utilisez « 🎬 Vidéo ».");
+    let stream;
+    try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 720 }, height: { ideal: 1280 } }, audio: true }); }
+    catch { return toast("Caméra refusée : autorisez-la pour vous filmer."); }
+    document.body.insertAdjacentHTML("beforeend", `<div class="selfie" id="selfie" role="dialog" aria-modal="true">
+      <video id="selfie-cam" autoplay muted playsinline></video>
+      <div class="selfie-top"><span id="selfie-count">15</span></div>
+      <div class="selfie-bar"><button type="button" id="selfie-close">✕</button><button type="button" id="selfie-rec" aria-label="Enregistrer"></button><span></span></div>
+      <p class="selfie-hint" id="selfie-hint">Un petit mot pour les mariés ? Touchez le bouton rouge 💛</p></div>`);
+    const root = $("#selfie");
+    $("#selfie-cam").srcObject = stream;
+    let rec = null, tick = null;
+    const close = () => { clearInterval(tick); stream.getTracks().forEach((t) => t.stop()); root.remove(); };
+    $("#selfie-close").onclick = () => { if (rec?.state === "recording") { rec.onstop = null; rec.stop(); } close(); };
+    $("#selfie-rec").onclick = () => {
+      if (rec?.state === "recording") return rec.stop();
+      const mimeType = ["video/mp4", "video/webm;codecs=vp8,opus", "video/webm"].find((t) => MediaRecorder.isTypeSupported(t));
+      rec = new MediaRecorder(stream, mimeType ? { mimeType, videoBitsPerSecond: 1_500_000 } : undefined);
+      const chunks = [];
+      rec.ondataavailable = (ev) => ev.data.size && chunks.push(ev.data);
+      rec.onstop = () => {
+        const type = rec.mimeType || "video/webm";
+        const file = new File(chunks, `message.${type.includes("mp4") ? "mp4" : "webm"}`, { type });
+        close();
+        draft.videoFile = file; draft.image = null;
+        $("#gb-photo-preview").classList.add("hidden");
+        $("#gb-video-preview").src = URL.createObjectURL(file);
+        $("#gb-video-preview").classList.remove("hidden");
+        toast("Vidéo prête ✔ Ajoutez un mot puis publiez");
+      };
+      rec.start(500);
+      root.classList.add("recording");
+      $("#selfie-hint").textContent = "Enregistrement… touchez à nouveau pour arrêter";
+      let left = 15;
+      tick = setInterval(() => { left--; $("#selfie-count").textContent = left; if (left <= 0) rec.stop(); }, 1000);
+    };
+  });
+
   // Enregistrement vocal (MediaRecorder), arrêt automatique à 60 s.
   let recorder = null;
   let timer = null;
