@@ -1188,3 +1188,10 @@ body.simple-mode { background: linear-gradient(160deg, #fff5fa, #f3e8ff); min-he
 .me-row span { font-size: 1.2rem; }
 .me-menu [data-me="close"] { margin-top: 4px !important; }
 #notif-clear { margin-bottom: 0; }
+.me-sec { margin: 8px 4px 0; font-size: .74rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.me-logout { margin-top: 8px; }
+.me-sec { margin: 4px 4px -2px; font-size: .7rem; }
+.me-row { padding: 9px 14px; }
+.me-menu .me-head { flex-direction: row; display: flex; justify-content: center; align-items: center; gap: 10px; }
+.me-av.big { width: 40px; height: 40px; font-size: 1.05rem; }
+.me-logout { margin-top: 6px; }
