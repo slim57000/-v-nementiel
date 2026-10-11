@@ -282,6 +282,7 @@ async function profileMenu() {
         <a class="me-row" href="/cameraman"><span>🎥</span>Espace caméraman<i>›</i></a>
         <p class="me-sec">Paramètres et aide</p>
         <a class="me-row" href="/reglages"><span>⚙️</span>Réglages<i>›</i></a>
+        ${me?.isAdmin ? '<a class="me-row" href="/admin"><span>🛠️</span>Administration<i>›</i></a>' : ""}
         <a class="me-row" href="/contact"><span>✉️</span>Nous contacter<i>›</i></a>
         <button type="button" class="me-row me-logout" data-me="logout"><span>🚪</span>Se déconnecter<i>›</i></button>
         <button class="btn btn-light btn-block" type="button" data-me="close" style="margin-top:10px">Fermer</button>
