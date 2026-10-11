@@ -4,6 +4,7 @@ backButton();
 
 let tab = "events";
 let timer;
+let pendingOnly = false; // onglet Événements filtré sur ceux qui attendent une validation
 
 const row = (main, sub, actions) => `
   <div class="admin-row"><div class="admin-main">${main}<div class="muted small">${sub}</div></div><div class="admin-actions">${actions}</div></div>`;
@@ -12,14 +13,17 @@ const me = await api("/api/auth/me").catch(() => ({}));
 
 const views = {
   async events(q) {
-    const list = await api(`/api/admin/events?q=${encodeURIComponent(q)}`);
-    return list.map((e) => row(
-      `<b>${esc(e.name)}</b> ${e.suspended ? '<span class="badge private">Suspendu</span>' : ""} ${e.reports ? `<span class="report-badge">⚠️ ${e.reports}</span>` : ""}`,
+    const list = await api(`/api/admin/events?q=${encodeURIComponent(q)}${pendingOnly ? "&pending=1" : ""}`);
+    const head = pendingOnly ? `<p class="muted small" style="text-align:center">⏳ ${list.length} événement(s) en attente de validation · <button class="btn btn-ghost btn-sm" data-act="all-events">Tout voir</button></p>` : "";
+    return head + (list.map((e) => row(
+      `<b>${esc(e.name)}</b> ${e.pending ? '<span class="badge">⏳ En attente</span>' : ""} ${e.suspended ? '<span class="badge private">Suspendu</span>' : ""} ${e.reports ? `<span class="report-badge">⚠️ ${e.reports}</span>` : ""}`,
       `${EVENT_TYPES[e.type]?.label || e.type} · ${esc(formatDate(e.date, "00:00").split(" à")[0])} · ${esc(e.location)} · ${esc(e.organizer)} · ${e.visibility === "private" ? "🔒" : "🔓"}`,
       `<a class="btn btn-light btn-sm" href="/e/${esc(e.slug)}" target="_blank">Voir</a>
+       ${e.pending ? `<button class="btn btn-sm" data-act="approve" data-id="${e.id}" data-on="true">✅ Valider</button>
+       <button class="btn btn-ghost btn-sm" data-act="approve" data-id="${e.id}" data-on="false">✋ Refuser</button>` : ""}
        <button class="btn btn-ghost btn-sm" data-act="suspend" data-id="${e.id}" data-on="${!e.suspended}">${e.suspended ? "Réactiver" : "Suspendre"}</button>
        <button class="btn btn-danger btn-sm" data-act="delete-event" data-id="${e.id}">Supprimer</button>`,
-    )).join("") || "<p class='muted'>Aucun événement.</p>";
+    )).join("") || "<p class='muted'>Aucun événement.</p>");
   },
   async organizers(q) {
     const list = await api(`/api/admin/organizers?q=${encodeURIComponent(q)}`);
@@ -94,6 +98,21 @@ const views = {
       <textarea class="seo-desc" rows="2" maxlength="170" placeholder="${esc(DEF[path]?.[1] || "Description (160 caractères max)")}" style="margin-top:6px">${esc(seo[path]?.description || "")}</textarea>
       <div class="seo-preview"><small>mafeliza.com${esc(path === "/" ? "" : path)}</small><b></b><span></span></div></div>`).join("");
     return `<section class="card">
+      <h2 style="font-size:1rem">✅ Validation des événements</h2>
+      <p class="muted small">Automatique : chaque nouvel événement apparaît tout de suite dans Découvrir. Manuelle : il attend votre validation (son lien marche quand même pour les invités).</p>
+      <div class="segments" id="moderation">
+        <button data-mod="auto" class="${s.moderation === "auto" ? "active" : ""}">⚡ Automatique</button>
+        <button data-mod="manual" class="${s.moderation === "manual" ? "active" : ""}">✋ Manuelle</button>
+      </div>
+      ${s.moderation === "manual" ? `<button class="btn btn-light btn-block" data-act="show-pending" style="margin-top:10px">⏳ Événements en attente (${s.pending})</button>` : ""}
+      </section>
+      <section class="card">
+      <h2 style="font-size:1rem">🩺 Bilan santé</h2>
+      <p class="muted small">Disque, mémoire, base de données, stockage et live : pour voir venir les limites.</p>
+      <button class="btn btn-light btn-block" data-act="health">🩺 Lancer le bilan</button>
+      <pre id="health-result" class="apple-result hidden"></pre>
+      </section>
+      <section class="card">
       <h2 style="font-size:1rem">🍎 Connexion Apple</h2>
       <p class="muted small">Vérifie les réglages du serveur et demande à Apple s'ils sont acceptés.</p>
       <button class="btn btn-light btn-block" data-act="apple-check">🍎 Tester la connexion Apple</button>
@@ -220,6 +239,7 @@ async function render() {
 $("#tabs").addEventListener("click", (e) => {
   if (!e.target.dataset.tab) return;
   tab = e.target.dataset.tab;
+  pendingOnly = false;
   document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("active", b === e.target));
   $("#q").value = "";
   render();
@@ -228,6 +248,34 @@ $("#q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeou
 
 $("#content").addEventListener("click", async (e) => {
   const btn = e.target.closest("[data-act]");
+  if (btn?.dataset.act === "health") {
+    const out = $("#health-result");
+    out.classList.remove("hidden"); out.textContent = "Bilan en cours…";
+    try {
+      const h = await api("/api/admin/health");
+      const warn = (bad) => (bad ? "⚠️" : "✅");
+      const d = h.disk;
+      out.textContent = [
+        d ? `${warn(d.free < 5)} Disque : ${d.free} Go libres sur ${d.total} Go` : "Disque : —",
+        `${warn(h.memory.free < 0.3)} Mémoire : ${h.memory.free} Go libres sur ${h.memory.total} Go (site : ${h.memory.app} Mo)`,
+        `${warn(h.load > h.cpus)} Charge : ${h.load.toFixed(2)} pour ${h.cpus} processeur(s)`,
+        `${warn(h.database !== "Supabase")} Base : ${h.database}`,
+        `${warn(h.storage !== "Supabase Storage")} Photos et vidéos : ${h.storage}`,
+        `${warn(h.live !== "LiveKit Cloud")} Live : ${h.live}`,
+        `👥 Connectés en ce moment : ${h.online}`,
+        `⏱ Serveur démarré il y a ${h.uptime} h`,
+        "", "⚠️ = à surveiller quand le nombre d'utilisateurs augmente.",
+      ].join("\n");
+    } catch (err) { out.textContent = err.message; }
+    return;
+  }
+  if (btn?.dataset.act === "show-pending" || btn?.dataset.act === "all-events") {
+    pendingOnly = btn.dataset.act === "show-pending";
+    tab = "events";
+    document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === "events"));
+    $("#q").value = "";
+    return render();
+  }
   if (btn?.dataset.act === "apple-check") {
     const out = $("#apple-result");
     out.classList.remove("hidden"); out.textContent = "Test en cours…";
@@ -272,7 +320,7 @@ $("#content").addEventListener("click", async (e) => {
     await api(`/api/admin/contact/${btn.dataset.id}`, { method: "DELETE" }).catch(() => {});
     stats(); return render();
   }
-  const { act, id, on, p, demo } = e.target.dataset;
+  const { act, id, on, p, demo, mod } = e.target.dataset;
   try {
     if (demo) {
       if (demo === "del" && !confirm("Supprimer tous les événements de démonstration ?")) return;
@@ -299,6 +347,15 @@ $("#content").addEventListener("click", async (e) => {
     if (p) {
       await api("/api/admin/settings", { method: "PUT", body: { defaultLivePlatform: p } });
       toast("Réglage enregistré");
+    }
+    if (mod) {
+      if (mod === "auto" && !confirm("Repasser en automatique publie tous les événements en attente. Continuer ?")) return;
+      await api("/api/admin/moderation", { method: "PUT", body: { mode: mod } });
+      toast(mod === "manual" ? "Validation manuelle activée ✋" : "Validation automatique ⚡");
+    }
+    if (act === "approve") {
+      await api(`/api/admin/events/${id}/approve`, { method: "POST", body: { approved: on === "true" } });
+      toast(on === "true" ? "Événement publié ✔" : "Événement gardé hors de Découvrir");
     }
     if (act === "suspend") await api(`/api/admin/events/${id}/suspend`, { method: "POST", body: { suspended: on === "true" } });
     if (act === "delete-event") {
@@ -334,7 +391,7 @@ $("#content").addEventListener("click", async (e) => {
       await api(`/api/admin/organizers/${id}/block`, { method: "POST", body: { blocked: on === "true" } });
     }
     if (act === "close-report") await api(`/api/admin/reports/${id}`, { method: "DELETE" });
-    if (act || p) render();
+    if (act || p || mod) render();
   } catch (err) { toast(err.message); }
 });
 

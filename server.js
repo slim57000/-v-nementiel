@@ -26,7 +26,7 @@ import socialRoutes from "./routes/social.js";
 import cameramanRoutes from "./routes/cameraman.js";
 import adminRoutes from "./routes/admin.js";
 import meRoutes from "./routes/me.js";
-import { getSetting, setSetting, listEventsOnDate, findOrganizer, listPublicUpcoming, listUnlistedIds } from "./lib/store.js";
+import { getSetting, setSetting, listEventsOnDate, findOrganizer, listPublicUpcoming, listUnlistedIds, listPendingIds } from "./lib/store.js";
 import { EMAIL_ENABLED, sendEmail } from "./lib/email.js";
 import { eventLang } from "./lib/invites.js";
 import { UPLOAD_DIR } from "./lib/uploads.js";
@@ -306,7 +306,7 @@ app.get("/e/:slug", async (req, res) => {
       image = `<meta property="og:image" content="${escapeHtml(url)}"><meta name="twitter:card" content="summary_large_image">`;
     }
   }
-  const isPublic = event?.visibility === "public" && !event.suspended && !(await listUnlistedIds()).has(event.id);
+  const isPublic = event?.visibility === "public" && !event.suspended && !(await listUnlistedIds()).has(event.id) && !(await listPendingIds()).has(event.id);
   const base = (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
   const desc = isPublic
     ? `${event.name} — ${event.date.split("-").reverse().join("/")} à ${event.time}, ${event.location}. Suivez l'événement en direct sur MaFeliza.`

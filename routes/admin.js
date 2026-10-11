@@ -13,7 +13,12 @@ import { sendEmail, EMAIL_ENABLED } from "../lib/email.js";
 import {
   searchEvents, searchOrganizers, findEvent, findOrganizer, saveOrganizer, saveEvent, listEvents,
   listReports, deleteReport, countReports, getSetting, setSetting, findOrganizersByIds,
+  moderationMode, listPendingIds, setPending, setUnlisted, findEventsByIds,
 } from "../lib/store.js";
+import { statfs } from "node:fs/promises";
+import os from "node:os";
+import { USE_SUPABASE, STORAGE_BUCKET } from "../lib/config.js";
+import { UPLOAD_DIR } from "../lib/uploads.js";
 
 const router = Router();
 
@@ -47,13 +52,14 @@ const superOnly = (req, res, next) => (isSuperAdmin(req.admin) ? next()
 
 // Événements : recherche (nom, lien, lieu), avec email de l'organisateur et signalements.
 router.get("/events", async (req, res) => {
-  const events = await searchEvents(String(req.query.q || ""));
+  const pending = await listPendingIds();
+  const events = req.query.pending ? (await findEventsByIds([...pending])).filter(Boolean) : await searchEvents(String(req.query.q || ""));
   const emails = new Map();
   res.json(await Promise.all(events.map(async (e) => {
     if (!emails.has(e.organizerId)) emails.set(e.organizerId, (await findOrganizer(e.organizerId))?.email || "?");
     return {
       id: e.id, slug: e.slug, name: e.name, type: e.type, date: e.date, location: e.location,
-      visibility: e.visibility, suspended: Boolean(e.suspended), organizer: emails.get(e.organizerId),
+      visibility: e.visibility, suspended: Boolean(e.suspended), pending: pending.has(e.id), organizer: emails.get(e.organizerId),
       reports: await countReports(e.id),
     };
   })));
@@ -98,6 +104,18 @@ router.post("/events/:id/suspend", async (req, res) => {
   const event = await findEvent(Number(req.params.id));
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
   await saveEvent({ ...event, suspended: Boolean(req.body?.suspended) });
+  res.json({ ok: true });
+});
+
+// Validation manuelle : « Valider » publie l'événement dans Découvrir ; « Refuser » le garde non répertorié
+// (son lien marche toujours pour les invités ; « Suspendre » reste là pour les abus).
+router.post("/events/:id/approve", async (req, res) => {
+  const event = await findEvent(Number(req.params.id));
+  if (!event) return res.status(404).json({ error: "Événement introuvable." });
+  const ok = req.body?.approved !== false;
+  await setPending(event.id, false);
+  if (!ok) await setUnlisted(event.id, true);
+  else notify([orgOwner(event.organizerId)], { title: `✅ « ${event.name} » est publié`, body: "Votre événement apparaît maintenant dans Découvrir.", url: `/e/${event.slug}` }).catch(() => {});
   res.json({ ok: true });
 });
 
@@ -267,7 +285,30 @@ router.get("/seo", async (req, res) => res.json({ pages: SEO_PAGES, seo: await l
 router.put("/seo", async (req, res) => res.json(await saveSeo(req.body || {})));
 
 router.get("/settings", async (req, res) => {
-  res.json({ defaultLivePlatform: (await getSetting("defaultLivePlatform")) || "youtube" });
+  res.json({ defaultLivePlatform: (await getSetting("defaultLivePlatform")) || "youtube", moderation: await moderationMode(), pending: (await listPendingIds()).size });
+});
+
+// Validation des événements : automatique ou manuelle. Repasser en automatique valide tout ce qui attendait.
+router.put("/moderation", async (req, res) => {
+  const mode = req.body?.mode === "manual" ? "manual" : "auto";
+  await setSetting("moderation", mode);
+  if (mode === "auto") await setSetting("pending", []);
+  res.json({ mode });
+});
+
+// Bilan santé du serveur : disque, mémoire, base, stockage, live, visiteurs en ce moment.
+router.get("/health", async (req, res) => {
+  const gb = (n) => Math.round((n / 1e9) * 10) / 10;
+  const disk = await statfs(USE_SUPABASE ? "." : UPLOAD_DIR).then((s) => ({ free: gb(s.bavail * s.bsize), total: gb(s.blocks * s.bsize) })).catch(() => null);
+  const lk = process.env.LIVEKIT_URL || "";
+  res.json({
+    disk, memory: { free: gb(os.freemem()), total: gb(os.totalmem()), app: Math.round(process.memoryUsage().rss / 1e6) },
+    load: os.loadavg()[0], cpus: os.cpus().length, uptime: Math.round(process.uptime() / 3600),
+    database: USE_SUPABASE ? "Supabase" : "SQLite (local)",
+    storage: USE_SUPABASE && STORAGE_BUCKET ? "Supabase Storage" : "Disque du serveur",
+    live: !lk ? "Non configuré" : /livekit\.cloud/.test(lk) ? "LiveKit Cloud" : "LiveKit (serveur perso)",
+    online: onlineNow().total,
+  });
 });
 
 router.put("/settings", async (req, res) => {

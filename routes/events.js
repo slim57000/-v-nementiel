@@ -6,7 +6,7 @@ import { randomCode, slugify } from "../lib/codes.js";
 import { saveDataUrl, removeUpload, isOwnUpload } from "../lib/uploads.js";
 import { sendInvites, sendReplay } from "../lib/invites.js";
 import { isPremium, getStats } from "../lib/premium.js";
-import { getSetting, setSetting, setUnlisted, listUnlistedIds, withVisibility, setShowcase, listShowcaseIds } from "../lib/store.js";
+import { getSetting, setSetting, setUnlisted, moderationMode, setPending, listUnlistedIds, withVisibility, setShowcase, listShowcaseIds } from "../lib/store.js";
 
 // Programme de la journée (12 étapes max) et infos pratiques, stockés à part de l'événement.
 const cleanProgram = (body) => ({
@@ -111,6 +111,7 @@ router.post("/", handle(async (req, res) => {
     saveProgram(event.id, req.body), savePot(event.id, req.body),
     setSetting(`evlang:${event.id}`, reqLang(req)), // langue des emails de l'événement
     setUnlisted(event.id, unlisted),
+    moderationMode().then((m) => m === "manual" && setPending(event.id, true)),
     setShowcase(event.id, req.body.showcase !== false && (unlisted || event.visibility === "private")),
   ].map(capped));
   eventCreatedMail(req.organizer, event, reqLang(req));
