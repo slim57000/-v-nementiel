@@ -8,6 +8,7 @@ import { tooFast } from "../lib/limits.js";
 import { notify, orgOwner, forget } from "../lib/push.js";
 import { analyticsSummary, onlineNow } from "../lib/analytics.js";
 import { SEO_PAGES, loadSeo, saveSeo } from "../lib/seo.js";
+import { appleSelfTest } from "../lib/apple.js";
 import { sendEmail, EMAIL_ENABLED } from "../lib/email.js";
 import {
   searchEvents, searchOrganizers, findEvent, findOrganizer, saveOrganizer, saveEvent, listEvents,
@@ -257,6 +258,11 @@ router.delete("/contact/:id", async (req, res) => {
 
 // Réglages de la plateforme.
 // Référencement : titre et description Google des pages principales.
+// Diagnostic de la connexion Apple.
+router.get("/apple-check", async (req, res) => {
+  const base = (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+  res.json(await appleSelfTest(`${base}/api/auth/apple/callback`));
+});
 router.get("/seo", async (req, res) => res.json({ pages: SEO_PAGES, seo: await loadSeo() }));
 router.put("/seo", async (req, res) => res.json(await saveSeo(req.body || {})));
 

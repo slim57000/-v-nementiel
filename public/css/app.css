@@ -1207,3 +1207,4 @@ body.simple-mode { background: linear-gradient(160deg, #fff5fa, #f3e8ff); min-he
 .seo-preview small { color: #202124; font-size: .78rem; }
 .seo-preview b { color: #1a0dab; font-size: 1.05rem; font-weight: 400; }
 .seo-preview span { color: #4d5156; font-size: .85rem; line-height: 1.4; }
+.apple-result { white-space: pre-wrap; font-size: .8rem; background: var(--bg); padding: 10px; border-radius: 10px; margin-top: 8px; text-align: left; }

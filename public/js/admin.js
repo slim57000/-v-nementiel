@@ -94,6 +94,12 @@ const views = {
       <textarea class="seo-desc" rows="2" maxlength="170" placeholder="${esc(DEF[path]?.[1] || "Description (160 caractères max)")}" style="margin-top:6px">${esc(seo[path]?.description || "")}</textarea>
       <div class="seo-preview"><small>mafeliza.com${esc(path === "/" ? "" : path)}</small><b></b><span></span></div></div>`).join("");
     return `<section class="card">
+      <h2 style="font-size:1rem">🍎 Connexion Apple</h2>
+      <p class="muted small">Vérifie les réglages du serveur et demande à Apple s'ils sont acceptés.</p>
+      <button class="btn btn-light btn-block" data-act="apple-check">🍎 Tester la connexion Apple</button>
+      <pre id="apple-result" class="apple-result hidden"></pre>
+      </section>
+      <section class="card">
       <h2 style="font-size:1rem">🔎 Référencement Google</h2>
       <p class="muted small">Titre et texte affichés sous MaFeliza dans Google (et dans les aperçus WhatsApp). Laissez vide pour garder le texte par défaut. Google met quelques jours à les prendre en compte.</p>
       ${seoBlock}
@@ -222,6 +228,15 @@ $("#q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeou
 
 $("#content").addEventListener("click", async (e) => {
   const btn = e.target.closest("[data-act]");
+  if (btn?.dataset.act === "apple-check") {
+    const out = $("#apple-result");
+    out.classList.remove("hidden"); out.textContent = "Test en cours…";
+    try {
+      const r = await api("/api/admin/apple-check");
+      out.textContent = `${r.verdict}\n\nServices ID : ${r.clientId || "— manquant"}\nTeam ID : ${r.teamId || "— manquant"}\nKey ID : ${r.keyId || "— manquant"}\nClé .p8 lue : ${r.keyLoaded ? "oui" : "NON"}\nRéponse d'Apple : ${r.apple || "—"}\nReturn URL attendue : ${r.redirectUri}`;
+    } catch (err) { out.textContent = err.message; }
+    return;
+  }
   if (btn?.dataset.act === "seo-save") {
     const body = {};
     document.querySelectorAll(".seo-page").forEach((el) => { body[el.dataset.path] = { title: el.querySelector(".seo-title").value, description: el.querySelector(".seo-desc").value }; });
