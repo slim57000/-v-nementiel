@@ -14,6 +14,7 @@ import { APPLE_ENABLED } from "./lib/apple.js";
 import { recordHit, ping, onlineOn } from "./lib/analytics.js";
 import { getSigned } from "./lib/session.js";
 import { loadSeo, applySeo } from "./lib/seo.js";
+import { LANDINGS, renderLanding, landingLinks } from "./lib/landings.js";
 import express from "express";
 import QRCode from "qrcode";
 import { readFileSync, readdirSync, existsSync, watch } from "node:fs";
@@ -263,13 +264,23 @@ function computeAssets() {
 }
 computeAssets();
 // Nom du site pour Google (sinon il le devine) : « MaFeliza » dans chaque page.
+// + fiche « Organisation » (logo affiché par Google) et « Application web ».
 const SITE_NAME = `<meta property="og:site_name" content="MaFeliza"><meta name="application-name" content="MaFeliza">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"MaFeliza","alternateName":["Ma Feliza","mafeliza.com"],"url":"https://mafeliza.com/"}</script>`;
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"WebSite","name":"MaFeliza","alternateName":["Ma Feliza","mafeliza.com"],"url":"https://mafeliza.com/","inLanguage":["fr-FR","en"]},
+{"@context":"https://schema.org","@type":"Organization","name":"MaFeliza","url":"https://mafeliza.com/","logo":"https://mafeliza.com/img/icon-512.png"},
+{"@context":"https://schema.org","@type":"WebApplication","name":"MaFeliza","url":"https://mafeliza.com/","applicationCategory":"LifestyleApplication","operatingSystem":"Web, iOS, Android","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"description":"Faire-part en ligne, mariage en direct, livre d'or et album photo partagé pour tous vos événements."}]</script>`;
 export const versionHtml = (html) => html
   .replace(/<\/head>/i, (m) => (html.includes("og:site_name") ? m : `${SITE_NAME}\n${m}`))
   .replace(/((?:src|href)=")(\/(?:js|css)\/[\w.-]+\.(?:js|css))(?:\?v=[\w]+)?"/g, (m, a, path) => (ASSET_VERSIONS[path] ? `${a}${path}?v=${ASSET_VERSIONS[path]}"` : m))
   .replace(/<script/i, `${IMPORT_MAP}<script`);
 const pageCache = new Map();
+const SITE_URL = (process.env.PUBLIC_URL || "https://mafeliza.com").replace(/\/$/, "");
+const INDEXABLE = new Set(["/", "/decouvrir", "/connexion", "/contact", "/mentions-legales", "/cgu", "/confidentialite"]);
+// Lien canonique + og:url, image de partage en adresse complète, et liens vers les pages Google en bas de l'accueil.
+const withCanonical = (html, path) => (!INDEXABLE.has(path) || html.includes('rel="canonical"') ? html : html
+  .replace(/<\/head>/i, `<link rel="canonical" href="${SITE_URL}${path === "/" ? "/" : path}"><meta property="og:url" content="${SITE_URL}${path === "/" ? "/" : path}">\n</head>`)
+  .replace(/(<meta property="og:image" content=")\//, `$1${SITE_URL}/`)
+  .replace("<!--GUIDES-->", `<span class="footer-guides">${landingLinks()}</span>`));
 const versionedPage = (file) => pageCache.get(file) ?? pageCache.set(file, versionHtml(readFileSync(file, "utf8"))).get(file);
 
 let eventTemplate = versionHtml(readFileSync(new URL("./public/event.html", import.meta.url), "utf8"));
@@ -333,7 +344,7 @@ app.get("/e/:slug", async (req, res) => {
 app.get("/sitemap.xml", async (req, res) => {
   const base = (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
   const events = await listPublicUpcoming(50).catch(() => []);
-  const urls = ["/", "/decouvrir", "/connexion", "/mentions-legales", "/cgu", "/confidentialite"].map((p) => `<url><loc>${base}${p}</loc></url>`)
+  const urls = ["/", "/decouvrir", ...Object.keys(LANDINGS).map((s) => `/${s}`), "/contact", "/connexion", "/mentions-legales", "/cgu", "/confidentialite"].map((p) => `<url><loc>${base}${p}</loc></url>`)
     .concat(events.map((e) => `<url><loc>${base}/e/${encodeURIComponent(e.slug)}</loc><lastmod>${String(e.updatedAt || e.createdAt || "").slice(0, 10) || e.date}</lastmod></url>`));
   res.type("application/xml").set("Cache-Control", "public, max-age=3600")
     .send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.join("")}</urlset>`);
@@ -365,13 +376,24 @@ if (!ON_VERCEL) {
   // Pages HTML : servies avec les versions automatiques des scripts, toujours revalidées.
   // Page Réglages : même page que le profil, affichée en mode « réglages ».
   app.get("/reglages", (req, res) => res.set("Cache-Control", "no-cache").type("html").send(versionedPage(`${PUBLIC_DIR}/profil.html`)));
+  // Pages Google (mariage en direct, faire-part en ligne…), rendues côté serveur.
+  app.get("/:landing", (req, res, next) => {
+    const slug = req.params.landing;
+    if (!Object.hasOwn(LANDINGS, slug)) return next();
+    const key = `landing:${slug}`;
+    if (!pageCache.has(key)) pageCache.set(key, versionHtml(renderLanding(slug, SITE_URL)));
+    res.set("Cache-Control", "no-cache").type("html").send(applySeo(pageCache.get(key), `/${slug}`));
+  });
   app.get(/^\/(?:[\w-]+(?:\.html)?)?$/, (req, res, next) => {
     // Déjà connecté : la page d'accueil publique mène directement à l'accueil du compte (sauf « /?accueil »).
     if (req.path === "/" && getSigned(req, "org") && !("accueil" in req.query)) return res.redirect(302, "/dashboard");
     const name = req.path === "/" ? "index" : req.path.slice(1).replace(/\.html$/, "");
     const file = `${PUBLIC_DIR}/${name}.html`;
     if (!existsSync(file)) return next();
-    res.set("Cache-Control", "no-cache").type("html").send(applySeo(versionedPage(file), req.path.replace(/\.html$/, "") || "/"));
+    const path = req.path.replace(/\.html$/, "") || "/";
+    // Pages publiques : adresse officielle (canonique) ; pages de compte : jamais dans Google.
+    if (!INDEXABLE.has(path)) res.set("X-Robots-Tag", "noindex");
+    res.set("Cache-Control", "no-cache").type("html").send(applySeo(withCanonical(versionedPage(file), path), path));
   });
   app.use(express.static(PUBLIC_DIR, {
     extensions: ["html"],

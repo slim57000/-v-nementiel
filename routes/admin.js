@@ -8,6 +8,7 @@ import { tooFast } from "../lib/limits.js";
 import { notify, orgOwner, forget } from "../lib/push.js";
 import { analyticsSummary, onlineNow } from "../lib/analytics.js";
 import { SEO_PAGES, loadSeo, saveSeo } from "../lib/seo.js";
+import { LANDINGS } from "../lib/landings.js";
 import { appleSelfTest } from "../lib/apple.js";
 import { sendEmail, EMAIL_ENABLED } from "../lib/email.js";
 import {
@@ -281,7 +282,8 @@ router.get("/apple-check", async (req, res) => {
   const base = (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
   res.json(await appleSelfTest(`${base}/api/auth/apple/callback`));
 });
-router.get("/seo", async (req, res) => res.json({ pages: SEO_PAGES, seo: await loadSeo() }));
+router.get("/seo", async (req, res) => res.json({ pages: SEO_PAGES, seo: await loadSeo(),
+  defaults: Object.fromEntries(Object.entries(LANDINGS).map(([slug, p]) => [`/${slug}`, [p.title, p.description]])) }));
 router.put("/seo", async (req, res) => res.json(await saveSeo(req.body || {})));
 
 router.get("/settings", async (req, res) => {

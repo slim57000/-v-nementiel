@@ -479,7 +479,8 @@ Object.assign(EN, {"🔍 Rechercher : nom, ville, type…": "🔍 Search: name, 
 
 Object.assign(EN, {"🎁 Créer ma cagnotte":"🎁 Create my money pot","Choisissez le service de cagnotte. Une fois la cagnotte créée,":"Choose the money pot service. Once the pot is created,","copiez son lien":"copy its link","puis touchez":"then tap",": il sera ajouté à votre événement.":": it will be added to your event.","Copiez le lien de votre cagnotte puis touchez « 📋 Coller ».":"Copy your money pot link then tap “📋 Paste”."});
 
-export const lang = read(LANG_KEY) || (navigator.language?.startsWith("en") ? "en" : "fr");
+// Pages Google (data-lang="fr" sur <html>) : toujours en français, comme le texte rendu par le serveur.
+export const lang = document.documentElement.dataset.lang || read(LANG_KEY) || (navigator.language?.startsWith("en") ? "en" : "fr");
 // Le serveur lit la langue (emails dans la langue de l'utilisateur).
 try { document.cookie = `em-lang=${lang}; path=/; max-age=31536000; SameSite=Lax`; } catch { /* cookies bloqués */ }
 export const t = (fr) => (lang === "en" && EN[fr]) || fr;

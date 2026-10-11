@@ -90,8 +90,8 @@ const views = {
   },
   async settings() {
     const s = await api("/api/admin/settings");
-    const { pages, seo } = await api("/api/admin/seo").catch(() => ({ pages: {}, seo: {} }));
-    const DEF = { "/": ["MaFeliza — Vos événements, ensemble", "Le premier réseau social dédié à tous vos événements. Partagez l'émotion avant, pendant, après."], "/connexion": ["MaFeliza — Connexion", ""], "/decouvrir": ["Découvrir — MaFeliza", ""] };
+    const { pages, seo, defaults } = await api("/api/admin/seo").catch(() => ({ pages: {}, seo: {} }));
+    const DEF = { "/": ["MaFeliza — Vos événements, ensemble", "Le premier réseau social dédié à tous vos événements. Partagez l'émotion avant, pendant, après."], "/connexion": ["MaFeliza — Connexion", ""], "/decouvrir": ["Découvrir — MaFeliza", ""], ...defaults };
     const seoBlock = Object.entries(pages).map(([path, label]) => `<div class="seo-page" data-path="${esc(path)}">
       <h3 style="font-size:.95rem;margin:14px 0 6px">${esc(label)} <span class="muted small">mafeliza.com${esc(path === "/" ? "" : path)}</span></h3>
       <input class="seo-title" maxlength="70" placeholder="${esc(DEF[path]?.[0] || "")}" value="${esc(seo[path]?.title || "")}">
@@ -122,6 +122,10 @@ const views = {
       <h2 style="font-size:1rem">🔎 Référencement Google</h2>
       <p class="muted small">Titre et texte affichés sous MaFeliza dans Google (et dans les aperçus WhatsApp). Laissez vide pour garder le texte par défaut. Google met quelques jours à les prendre en compte.</p>
       ${seoBlock}
+      <h3 style="font-size:.95rem;margin:16px 0 6px">Validation Google Search Console / Bing</h3>
+      <p class="muted small">Collez le code (ou la balise &lt;meta&gt; entière) donné par Search Console → « Balise HTML ». Ensuite, ajoutez le plan du site : <b>https://mafeliza.com/sitemap.xml</b></p>
+      <input id="verify-google" placeholder="Code Google" value="${esc(seo._verify?.google || "")}">
+      <input id="verify-bing" placeholder="Code Bing (facultatif)" value="${esc(seo._verify?.bing || "")}" style="margin-top:6px">
       <button class="btn btn-block" data-act="seo-save" style="margin-top:12px">💾 Enregistrer le référencement</button>
       </section>
       <section class="card">
@@ -288,6 +292,7 @@ $("#content").addEventListener("click", async (e) => {
   if (btn?.dataset.act === "seo-save") {
     const body = {};
     document.querySelectorAll(".seo-page").forEach((el) => { body[el.dataset.path] = { title: el.querySelector(".seo-title").value, description: el.querySelector(".seo-desc").value }; });
+    body._verify = { google: $("#verify-google").value, bing: $("#verify-bing").value };
     try { await api("/api/admin/seo", { method: "PUT", body }); toast("Référencement enregistré ✔"); } catch (err) { toast(err.message); }
     return;
   }
