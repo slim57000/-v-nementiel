@@ -1,7 +1,7 @@
 // Espace caméraman : accès par un code dédié, gestion des liens du live et consignes.
 import express, { Router } from "express";
 import { replayRecordedMail, replayReadyMail } from "../lib/confirmations.js";
-import { findEventBySlug, findEventByCameramanCode, saveEvent, getSetting, setSetting, addFriends, addHistory, listBlockIds, clearLimit } from "../lib/store.js";
+import { findEventBySlug, findEventByCameramanCode, saveEvent, getSetting, setSetting, addHistory, clearLimit } from "../lib/store.js";
 import { currentOrganizer } from "./auth.js";
 import { videoUploadTarget, saveLocalVideo, isOwnUpload, HAS_STORAGE, MAX_VIDEO_BYTES } from "../lib/uploads.js";
 import { parseCameras } from "../lib/events.js";
@@ -15,14 +15,10 @@ const fingerprint = (event) => codeFingerprint(`cam:${event.cameramanCode}`);
 // Anti-bruteforce partagé entre toutes les instances : 10 codes erronés par IP toutes les 15 minutes.
 const tooManyTries = (req) => tooFast(`trycam:${req.ip}`, 10, 15 * 60 * 1000);
 
-// Caméraman connecté : devient ami de l'organisateur et l'événement compte dans ses participations.
-// Appelé à chaque ouverture de l'espace, pas seulement à la saisie du code : le caméraman saisit
-// souvent son code avant de se connecter (ou crée son compte ensuite) et n'aurait jamais l'ami sinon.
+// Caméraman connecté : l'événement compte dans ses participations (pas d'ajout automatique en ami).
 async function linkCameraman(req, event) {
   const me = await currentOrganizer(req).catch(() => null);
   if (!me || me.id === event.organizerId) return;
-  const [mine, theirs] = await Promise.all([listBlockIds(me.id), listBlockIds(event.organizerId)]).catch(() => [[], []]);
-  if (!mine.includes(event.organizerId) && !theirs.includes(me.id)) await addFriends(me.id, event.organizerId).catch(() => {});
   await addHistory(me.id, event.id).catch(() => {});
 }
 

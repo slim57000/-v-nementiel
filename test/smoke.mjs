@@ -76,7 +76,7 @@ const cam = device();
 assert.equal((await cam("/api/cameraman/login", { method: "POST", body: { code: ev.data.cameramanCode } })).status, 200); ok("espace caméraman ouvert sans compte");
 await cam("/api/auth/login", { method: "POST", body: { email: `cam${Date.now()}@example.com`, password: "motdepasse123" } });
 assert.equal((await cam(`/api/cameraman/${slug}`)).status, 200); ok("espace caméraman avec le compte");
-assert.equal((await cam("/api/me/friends")).data.length, 1, "le caméraman devient ami de l'organisateur");
+assert.equal((await cam("/api/me/friends")).data.length, 0, "pas d'ajout automatique en ami");
 assert.equal((await cam("/api/me/history")).data.length, 1, "l'événement compte dans ses participations");
 ok("ajout automatique à la liste d'amis malgré une connexion tardive");
 

@@ -4,7 +4,7 @@ import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers, rollDemoDates } from "../lib/demo.js";
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
-import { listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory, addFriends, listBlockIds, listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
+import { listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory,  listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
 import { currentOrganizer, isAdmin } from "./auth.js";
 import { camerasWithLive } from "../lib/livekit.js";
@@ -77,12 +77,8 @@ router.get("/:slug", async (req, res) => {
   const me = await currentOrganizer(req);
   const isOwner = me?.id === event.organizerId;
   if (me && !isOwner) {
-    // Participation mémorisée ; entrer dans un événement privé (code / QR) rend ami avec l'organisateur.
+    // Participation mémorisée (plus d'ajout automatique en ami : l'amitié se demande depuis le profil).
     await addHistory(me.id, event.id);
-    if (event.visibility === "private") {
-      const [mine, theirs] = await Promise.all([listBlockIds(me.id), listBlockIds(event.organizerId)]);
-      if (!mine.includes(event.organizerId) && !theirs.includes(me.id)) await addFriends(me.id, event.organizerId);
-    }
   }
   if (!isOwner) await bumpViews(event.id);
   const premium = await isPremium(event.organizerId);
@@ -100,14 +96,6 @@ router.get("/:slug", async (req, res) => {
 // Anti-bruteforce partagé (base de données) : 10 essais par IP (et événement) toutes les 15 minutes.
 const tooManyTries = (key) => tooFast(`try:${key}`, 10, 15 * 60 * 1000);
 
-// Saisir le code d'invitation d'un événement = devenir ami avec son organisateur (si connecté, sauf blocage).
-async function befriendOrganizer(req, event) {
-  const me = await currentOrganizer(req).catch(() => null);
-  if (!me || me.id === event.organizerId) return;
-  const [mine, theirs] = await Promise.all([listBlockIds(me.id), listBlockIds(event.organizerId)]);
-  if (!mine.includes(event.organizerId) && !theirs.includes(me.id)) await addFriends(me.id, event.organizerId);
-}
-
 // « J'ai reçu une invitation » : le code seul suffit à retrouver l'événement.
 router.post("/join", async (req, res) => {
   const key = `${req.ip}:join`;
@@ -119,7 +107,6 @@ router.post("/join", async (req, res) => {
   }
   await clearLimit(`try:${key}`).catch(() => {});
   setSigned(res, `ev${event.id}`, codeFingerprint(event.accessCode));
-  await befriendOrganizer(req, event).catch(() => {});
   res.json({ slug: event.slug });
 });
 
@@ -162,7 +149,6 @@ router.post("/:slug/unlock", async (req, res) => {
   }
   await clearLimit(`try:${key}`).catch(() => {});
   setSigned(res, `ev${event.id}`, codeFingerprint(event.accessCode));
-  await befriendOrganizer(req, event).catch(() => {});
   res.json({ ok: true });
 });
 
