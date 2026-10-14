@@ -172,6 +172,7 @@ async function load() {
     const on = cameras.some((c) => c.live || !String(c.url).startsWith("lk:"));
     $(".live-badge").textContent = on ? "LIVE" : "BIENTÔT";
     $(".live-badge").classList.toggle("is-soon", !on);
+    if (on) $(".live-badge").classList.remove("is-replay");
     if (!on && !cameras.length) {
       $("#empty").innerHTML = `<span style="font-size:2rem">📡</span>Le direct n'a pas encore commencé.
         ${ev.time ? `<small>Début prévu à ${esc(ev.time.replace(":", "h"))}</small>` : ""}
