@@ -71,7 +71,7 @@ router.get("/feed", async (req, res) => {
 });
 
 router.post("/messages", notBlocked, async (req, res) => {
-  const name = clean(req.body?.name, 30);
+  const name = await authorName(req);
   const text = clean(req.body?.text, 200);
   if (!name || !text) return res.status(400).json({ error: "Prénom et message obligatoires." });
   if (await tooFast(`${req.ip}:msg`, 5, 10_000)) return res.status(429).json({ error: "Doucement ! Attendez quelques secondes." });
@@ -84,7 +84,7 @@ router.post("/reactions", notBlocked, async (req, res) => {
   const emoji = String(req.body?.emoji || "");
   if (!REACTIONS.includes(emoji)) return res.status(400).json({ error: "Réaction inconnue." });
   if (await tooFast(`${req.ip}:reaction`, 10, 10_000)) return res.status(429).json({ error: "Trop de réactions d'un coup." });
-  const msg = await addMessage(req.event.id, { kind: "reaction", name: clean(req.body?.name, 30) || "Invité", text: emoji, author: req.author });
+  const msg = await addMessage(req.event.id, { kind: "reaction", name: (await authorName(req)) || "Invité", text: emoji, author: req.author });
   await ping(eventTopic(req.event.slug));
   res.status(201).json(msg);
 });
@@ -103,7 +103,7 @@ router.get("/rsvp", async (req, res) => {
 });
 router.post("/rsvp", notBlocked, async (req, res) => {
   const status = String(req.body?.status || "");
-  const name = clean(req.body?.name, 30);
+  const name = await authorName(req);
   if (!RSVP.includes(status) || !name) return res.status(400).json({ error: "Réponse invalide." });
   if (await tooFast(`${req.ip}:rsvp`, 10, 60_000)) return res.status(429).json({ error: "Doucement !" });
   const count = status === "no" ? 0 : Math.min(Math.max(Number(req.body?.count) || 1, 1), 10);
@@ -175,6 +175,11 @@ router.post("/stories/:id/react", async (req, res) => {
 });
 
 // Commentaires des stories : visibles par tous ceux qui voient la story ; l'organisateur peut en retirer.
+// Nom affiché : pseudo du compte si connecté (jamais un ancien prénom mémorisé sur l'appareil), sinon le prénom saisi.
+async function authorName(req) {
+  const me = await currentOrganizer(req).catch(() => null);
+  return clean(me?.displayName || me?.email?.split("@")[0] || req.body?.name, 30);
+}
 async function storyOf(req) {
   const photo = await findPhoto(Number(req.params.id) || req.params.id);
   return photo?.story && photo.eventId === req.event.id ? photo : null;
@@ -222,7 +227,7 @@ router.post("/event-react", async (req, res) => {
 });
 
 router.post("/photos", notBlocked, async (req, res) => {
-  const name = clean(req.body?.name, 30);
+  const name = await authorName(req);
   if (!name) return res.status(400).json({ error: "Prénom obligatoire." });
   if (await tooFast(`${req.ip}:photo`, 20, 3_600_000)) return res.status(429).json({ error: "Limite de photos atteinte, réessayez plus tard." });
   // Stories : réservées au créateur de l'événement.
@@ -278,7 +283,7 @@ router.get("/guestbook", async (req, res) => {
 });
 
 router.post("/guestbook", notBlocked, async (req, res) => {
-  const name = clean(req.body?.name, 30);
+  const name = await authorName(req);
   const text = String(req.body?.text ?? "").trim().slice(0, 1000);
   if (!name) return res.status(400).json({ error: "Prénom obligatoire." });
   if (!text && !req.body?.image && !req.body?.audio && !req.body?.video && !req.body?.videoUrl) {
@@ -315,7 +320,7 @@ router.post("/guestbook/:id/like", async (req, res) => {
 
 // Réponse à un message du livre d'or (50 max par message).
 router.post("/guestbook/:id/replies", notBlocked, async (req, res) => {
-  const name = clean(req.body?.name, 30);
+  const name = await authorName(req);
   const text = String(req.body?.text ?? "").trim().slice(0, 500);
   if (!name || !text) return res.status(400).json({ error: "Écrivez votre réponse." });
   if (await tooFast(`${req.ip}:reply`, 5, 60_000)) return res.status(429).json({ error: "Doucement ! Attendez quelques secondes." });
