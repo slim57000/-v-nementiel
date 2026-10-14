@@ -134,17 +134,29 @@ document.addEventListener("click", async (e) => {
   } catch (err) { if (err.status === 401) goLogin(); else toast(err.message); }
 }, true);
 
-// Sans photo choisie : fond MaFeliza (dégradé) avec l'emoji du type d'événement, jamais une photo de banque d'images.
+// Sans photo choisie : visuel MaFeliza (dégradé aux couleurs du type, motifs doux, grand emoji), jamais une photo de banque d'images.
+const COVER_TONES = {
+  mariage: ["#f9d9c5", "#e8a0b4", "#b06ab3"], anniversaire: ["#ffd36e", "#fe7320", "#fd1a85"], bapteme: ["#cfe8ff", "#9cc9f5", "#7b8fe0"],
+  communion: ["#fff3d6", "#f1c27d", "#c98b5b"], fiancailles: ["#ffd1dc", "#fd5c9a", "#c2185b"], "baby-shower": ["#ffe0ec", "#c9e4ff", "#a5b8ff"],
+  diplome: ["#d7e3ff", "#5b7cfa", "#2b2f8a"], retraite: ["#d4f5e9", "#48c9b0", "#1f8a8a"], inauguration: ["#ffe7c2", "#ff9a5a", "#e8137a"],
+};
 const placeholders = {};
-export const placeholderCover = (type) => (placeholders[type] ||= `data:image/svg+xml,${encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">`
-  + `<stop offset="0" stop-color="#fe7320"/><stop offset=".5" stop-color="#fd1a85"/><stop offset="1" stop-color="#8a1de9"/></linearGradient></defs>`
-  + `<rect width="800" height="500" fill="url(#g)"/><text x="400" y="250" font-size="150" text-anchor="middle" dominant-baseline="central">${EVENT_TYPES[type]?.icon || "🎉"}</text></svg>`,
-)}`);
-// Événement sans photo : une belle photo d'illustration selon son type (plutôt qu'un simple dégradé).
-const TYPE_PHOTOS = { mariage: "mariage-porte", anniversaire: "anniversaire-bougies", bapteme: "bebe", communion: "communion-priere", fiancailles: "alliances",
-  "baby-shower": "baby-shower-f", diplome: "diplome-lancer", retraite: "anniversaire-f", inauguration: "inauguration-f", autre: "live-mariage-5" };
-export const coverOf = (ev) => ev.cover || (TYPE_PHOTOS[ev.type] ? `/img/demo/${TYPE_PHOTOS[ev.type]}.jpg` : placeholderCover(ev.type));
+export const placeholderCover = (type) => {
+  if (placeholders[type]) return placeholders[type];
+  const [a, b, c] = COVER_TONES[type] || ["#fe7320", "#fd1a85", "#8a1de9"];
+  const icon = EVENT_TYPES[type]?.icon || "🎉";
+  const dots = [[90, 80, 46], [700, 70, 70], [740, 420, 40], [60, 430, 64], [610, 250, 18], [180, 300, 14], [330, 90, 10], [520, 450, 12]]
+    .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" opacity=".16"/>`).join("");
+  return (placeholders[type] = `data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">`
+    + `<stop offset="0" stop-color="${a}"/><stop offset=".55" stop-color="${b}"/><stop offset="1" stop-color="${c}"/></linearGradient>`
+    + `<radialGradient id="h" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>`
+    + `<rect width="800" height="500" fill="url(#g)"/>${dots}<circle cx="400" cy="250" r="190" fill="url(#h)"/>`
+    + `<circle cx="400" cy="250" r="118" fill="#fff" opacity=".28"/><text x="400" y="258" font-size="130" text-anchor="middle" dominant-baseline="central">${icon}</text></svg>`,
+  )}`);
+};
+// Événement sans photo : le visuel MaFeliza de son type (et non une photo d'inconnus).
+export const coverOf = (ev) => ev.cover || placeholderCover(ev.type);
 // Transforme un lien YouTube / Twitch en adresse de lecteur intégrable (null si non reconnu).
 export function embedUrl(url, slug = new URLSearchParams(location.search).get("e")) {
   // Caméra « téléphone » (LiveKit) : lecteur MaFeliza.
