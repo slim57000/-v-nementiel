@@ -135,6 +135,18 @@ $("#stories").addEventListener("click", (e) => {
   openStories(g.items, { title: g.name });
 });
 
+// Événements filmés supprimés, suspendus ou déplacés dans le passé : retirés du rappel (et de la mémoire du téléphone).
+async function pruneCams(list) {
+  const gone = [];
+  await Promise.all(list.map(async (x) => {
+    const ev = await api(`/api/public/${encodeURIComponent(x.slug)}`).catch((err) => (err.status === 404 ? null : undefined));
+    if (ev === null || (ev?.date && ev.date < today)) gone.push(x.slug);
+  }));
+  if (!gone.length) return;
+  try { localStorage.setItem("em-cam", JSON.stringify(JSON.parse(localStorage.getItem("em-cam") || "[]").filter((x) => !gone.includes(x.slug)))); } catch { /* ignoré */ }
+  document.querySelectorAll(".cam-reminder").forEach((a) => { if (gone.includes(a.dataset.slug)) a.remove(); });
+}
+
 // Rappel « Espace caméraman » : événements à venir pour lesquels ce téléphone filme.
 function camReminder() {
   let list = [];
@@ -142,9 +154,12 @@ function camReminder() {
   // Mes propres événements : celui du jour, sinon le prochain (l'organisateur filme souvent lui-même).
   const own = events.filter((e) => e.date >= today && e.cameramanCode).sort((a, b) => a.date.localeCompare(b.date));
   const mineToShow = own.filter((e) => e.date === today);
-  if (!mineToShow.length && own[0]) mineToShow.push(own[0]);
+  // Sinon le prochain, seulement s'il a lieu dans la semaine (pas de rappel des semaines à l'avance).
+  const inWeek = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
+  if (!mineToShow.length && own[0] && own[0].date <= inWeek) mineToShow.push(own[0]);
   list = [...mineToShow.map((e) => ({ slug: e.slug, name: e.name, date: e.date, code: e.cameramanCode })), ...list.filter((x) => !mineToShow.some((e) => e.slug === x.slug))];
-  return list.map((x) => `<a class="cam-reminder" href="/cameraman?${x.code ? `code=${encodeURIComponent(x.code)}` : `e=${encodeURIComponent(x.slug)}`}">
+  setTimeout(() => pruneCams(list.filter((x) => !mineToShow.some((e) => e.slug === x.slug))), 0);
+  return list.map((x) => `<a class="cam-reminder" data-slug="${esc(x.slug)}" href="/cameraman?${x.code ? `code=${encodeURIComponent(x.code)}` : `e=${encodeURIComponent(x.slug)}`}">
     <span>🎥</span><div><b>Espace caméraman</b><small>${esc(x.name)}${x.date === today ? " · c'est aujourd'hui !" : ""}</small></div><em>Ouvrir ›</em></a>`).join("");
 }
 
