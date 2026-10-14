@@ -411,10 +411,17 @@ function openNotifs(data) {
 export const goLogin = () => location.replace(`/connexion?next=${encodeURIComponent(location.pathname + location.search)}`);
 
 // Prénom de l'invité (chat, réactions, photos) : demandé une fois puis mémorisé sur l'appareil.
-export function guestName() {
+// Connecté : toujours le pseudo du compte (et non un prénom saisi autrefois sur l'appareil).
+export async function guestName() {
+  const me = await api("/api/auth/me").catch(() => null);
+  const account = (me?.displayName || String(me?.email || "").split("@")[0]).trim().slice(0, 30);
+  if (account) {
+    try { localStorage.setItem("em-name", account); } catch { /* ignoré */ }
+    return account;
+  }
   let saved = "";
   try { saved = localStorage.getItem("em-name") || ""; } catch { /* stockage indisponible */ }
-  if (saved) return Promise.resolve(saved);
+  if (saved) return saved;
   return new Promise((resolve) => {
     document.body.insertAdjacentHTML("beforeend", `
       <div class="sheet" id="name-sheet" role="dialog" aria-modal="true">
