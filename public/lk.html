@@ -81,6 +81,7 @@
       tag.classList.remove("hidden");
       video.controls = true;
       video.muted = false;
+      parent.postMessage({ type: "mf-replay" }, location.origin);
       const load = () => { video.src = parts[i]; tag.textContent = parts.length > 1 ? `▶ Replay · partie ${i + 1}/${parts.length}` : "▶ Replay"; notifySize(); };
       video.addEventListener("ended", () => {
         if (++i < parts.length) { load(); video.play().catch(() => {}); }

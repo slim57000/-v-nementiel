@@ -12,7 +12,10 @@ const stage = $("#stage");
 // Le lecteur annonce les dimensions réelles de son flux : la scène prend le format du direct,
 // ce qui supprime les bandes noires (un téléphone filme en portrait, une scène 16/9 laisse du vide).
 addEventListener("message", (e) => {
-  if (e.source !== $("#stage iframe")?.contentWindow || e.data?.type !== "mf-size") return;
+  if (e.source !== $("#stage iframe")?.contentWindow) return;
+  // Le lecteur passe un replay (live terminé, même le jour J) : badge « REPLAY » au lieu de « BIENTÔT ».
+  if (e.data?.type === "mf-replay") { const b = $(".live-badge"); b.textContent = "REPLAY"; b.classList.remove("is-soon"); b.classList.add("is-replay"); return; }
+  if (e.data?.type !== "mf-size") return;
   const { w, h } = e.data;
   if (w > 0 && h > 0) stage.style.aspectRatio = `${w} / ${h}`;
 });
@@ -165,6 +168,7 @@ async function load() {
   // Badge : « LIVE » seulement quand un téléphone diffuse vraiment ; sinon « BIENTÔT » + heure prévue + agenda.
   const paintBadge = () => {
     if (state !== "live") return;
+    if ($(".live-badge").classList.contains("is-replay") && !cameras.some((c) => c.live)) return;
     const on = cameras.some((c) => c.live || !String(c.url).startsWith("lk:"));
     $(".live-badge").textContent = on ? "LIVE" : "BIENTÔT";
     $(".live-badge").classList.toggle("is-soon", !on);
