@@ -4,7 +4,7 @@ import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers, rollDemoDates } from "../lib/demo.js";
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
-import { listPendingIds, listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory,  listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
+import { listPendingIds, listShowcaseIds, listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory,  listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
 import { currentOrganizer, isAdmin } from "./auth.js";
 import { camerasWithLive } from "../lib/livekit.js";
@@ -44,16 +44,16 @@ router.get("/", async (req, res) => {
     return res.status(500).json({ error: `base de données (${err.message}). Relancez supabase/schema.sql.` });
   }
   const today = new Date().toISOString().slice(0, 10);
-  // Événements privés et non répertoriés affichés à tous (cadenas ; le code reste requis pour entrer).
+  // Non répertoriés : jamais dans Découvrir (accessibles seulement par leur lien).
+  // Privés : seulement si l'organisateur a choisi de les afficher (cadenas ; le code reste requis pour entrer).
   const hidden = await listUnlistedIds();
-  // Privés (requête dédiée) + non répertoriés (publics en base, masqués de la liste publique).
-  const [priv, unl] = await Promise.all([listAllUpcoming(50).catch(() => []), findEventsByIds([...hidden]).catch(() => [])]);
+  const [priv, showcase] = await Promise.all([listAllUpcoming(50).catch(() => []), listShowcaseIds()]);
   const pending = await listPendingIds();
-  const shown = [...priv, ...unl.filter((e) => e && !e.suspended && e.date >= today)]
+  const shown = priv.filter((e) => e && !e.suspended && e.date >= today && e.visibility === "private" && showcase.has(e.id))
     .filter((e) => !pending.has(e.id))
     .filter((e, i, arr) => !events.some((x) => x.id === e.id) && arr.findIndex((x) => x.id === e.id) === i)
     .map((e) => withVisibility(e, hidden));
-  // Privés / non répertoriés en tête (sinon noyés parmi les nombreux événements démo), puis par date.
+  // Privés en tête (sinon noyés parmi les nombreux événements démo), puis par date.
   events = [...shown, ...events].sort((a, b) => (shown.includes(b) - shown.includes(a)) || `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
   res.json(await Promise.all(events.map(async (e) => {
     const { invite, inviteStyle, description, ...card } = publicView(e);
