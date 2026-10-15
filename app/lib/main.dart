@@ -69,12 +69,23 @@ class _HomePageState extends State<HomePage> {
       ..setNavigationDelegate(NavigationDelegate(
         onPageStarted: (_) => setState(() => _loading = true),
         onPageFinished: (_) => setState(() => _loading = false),
+        // Écran « Pas de connexion » seulement pour une vraie coupure réseau de la page principale.
+        // (Une image, une vidéo intégrée ou un lien annulé qui échoue ne doit jamais bloquer l'app.)
         onWebResourceError: (e) {
-          if (e.isForMainFrame ?? true) setState(() => _offline = true);
+          if (e.isForMainFrame != true) return;
+          if (e.errorType == WebResourceErrorType.webContentProcessTerminated) { _web.reload(); return; }
+          const iosNetwork = {-1001, -1003, -1004, -1005, -1009, -1018, -1020};
+          final network = iosNetwork.contains(e.errorCode) || const {
+            WebResourceErrorType.hostLookup, WebResourceErrorType.connect, WebResourceErrorType.timeout,
+          }.contains(e.errorType);
+          if (network) setState(() => _offline = true);
         },
         // Liens hors MaFeliza (WhatsApp, SMS, email, cagnotte, Maps…) : ouverts dans l'appli concernée.
+        // Les cadres intégrés à la page (lecteur vidéo, YouTube…) se chargent normalement dans la page.
         onNavigationRequest: (req) {
+          if (!req.isMainFrame) return NavigationDecision.navigate;
           final uri = Uri.parse(req.url);
+          if (uri.scheme == 'about' || uri.scheme == 'blob' || uri.scheme == 'data') return NavigationDecision.navigate;
           final internal = uri.host.endsWith('mafeliza.com') || uri.host.endsWith('livekit.cloud') || uri.host.endsWith('supabase.co');
           if ((uri.scheme == 'http' || uri.scheme == 'https') && internal) return NavigationDecision.navigate;
           launchUrl(uri, mode: LaunchMode.externalApplication);
