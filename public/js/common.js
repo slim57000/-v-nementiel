@@ -196,6 +196,12 @@ export function thumbnailUrl(url, { live = false } = {}) {
 export const isLiveNow = (ev) => ev.date === new Date().toISOString().slice(0, 10) && ev.cameras?.length > 0;
 
 export function publicCard(ev) {
+  // Événement « avec le lien » : visible mais fermé (pas de lien dévoilé).
+  if (!ev.slug) return `<a class="pub-card" href="#" data-invite-only ${liveAttrs(ev)}>
+    <span class="tag">${esc(dayBadge(ev.date))} · 🔗</span>
+    <b>${esc(ev.name)}</b>
+    <span>${EVENT_TYPES[ev.type]?.icon || "🎉"} Accès avec le lien d'invitation</span>
+  </a>`;
   const live = ev.date === new Date().toISOString().slice(0, 10); // jour J : la miniature ouvre le live
   return `<a class="pub-card" href="${live ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`}" ${liveAttrs(ev)}>
     <span class="tag">${live ? "▶ Voir le live" : esc(dayBadge(ev.date))}${ev.visibility === "private" ? " · 🔒" : ev.visibility === "unlisted" ? " · 🔗" : ""}</span>
@@ -912,6 +918,11 @@ document.addEventListener("pointerout", (e) => {
 document.addEventListener("click", (e) => {
   if (suppressClick && e.target.closest?.("[data-live-preview]")) { e.preventDefault(); suppressClick = false; }
 }, true);
+document.addEventListener("click", (e) => {
+  if (!e.target.closest?.("[data-invite-only]")) return;
+  e.preventDefault();
+  toast("🔗 Événement sur invitation : ouvrez le lien reçu par SMS ou WhatsApp.");
+});
 document.addEventListener("contextmenu", (e) => { if (e.target.closest?.("[data-live-preview]")) e.preventDefault(); });
 
 // Cagnotte DANS le site : fenêtre plein écran avec la page Leetchi / Lydia… quand le service l'accepte,

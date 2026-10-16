@@ -33,6 +33,7 @@ async function load() {
     return toast(err.message);
   }
   // Événements privés / non répertoriés d'abord : sinon noyés parmi les nombreux événements publics (démo).
+  discover = discover.filter((e) => e.slug); // « avec le lien » : seulement dans Découvrir (fermés)
   discover.sort((a, b) => (a.visibility === "public") - (b.visibility === "public"));
   render();
 }

@@ -73,6 +73,10 @@ api("/api/public?limit=10").catch(() => []).then((events) => {
   // Les directs du jour d'abord, puis les événements privés (rien ne transparaît), puis le reste.
   const built = events.map((e) => {
     // Événement privé : sa photo, mais ni nom ni lieu. Le clic mène à l'écran « entrez votre code ».
+    if (!e.slug) return { live: false, html: liveCard({
+      href: "#", image: coverOf(e), tag: "🔗 Sur invitation", live: false,
+      name: "Événement sur invitation", location: "Accès avec le lien reçu",
+    }).replace("<a ", "<a data-invite-only ") };
     if (e.visibility === "private") return { live: false, html: liveCard({
       href: `/e/${encodeURIComponent(e.slug)}`, image: coverOf(e), tag: "🔒 Sur invitation", live: false,
       name: "Événement privé", location: "Accès par code",

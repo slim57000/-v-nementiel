@@ -60,7 +60,11 @@ router.get("/", async (req, res) => {
     // Privé : la carte montre la photo et la date (badge « J-10 » juste), mais ni le nom, ni le lieu,
     // ni les caméras. Le clic mène à l'écran « entrez votre code » : l'accès passe par le code.
     if (e.visibility === "private") return { ...card, name: "Événement privé", time: "", location: "", cameras: [], viewers: 0 };
-    if (e.visibility === "unlisted") card.visibility = "unlisted";
+    // Non répertorié : affiché comme un privé, et sans son lien (seul le lien reçu par SMS / WhatsApp y donne accès).
+    if (e.visibility === "unlisted") {
+      const { slug, ...rest } = card;
+      return { ...rest, slug: null, visibility: "unlisted", name: "Événement sur invitation", time: "", location: "", cameras: [], viewers: 0 };
+    }
     // Spectateurs en cours pour les directs du jour.
     const viewers = e.date === today && card.cameras.length ? await countViewers(e.id).catch(() => 0) : 0;
     return { ...card, viewers };
