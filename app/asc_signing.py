@@ -38,10 +38,11 @@ def setup():
     if cert.get("error") == 409:
         # Limite Apple atteinte : l'ancien certificat de distribution (inutilisable ici, sans sa clé privée)
         # est révoqué. Les apps déjà publiées ne sont pas affectées.
-        for t in ("DISTRIBUTION", "IOS_DISTRIBUTION"):
-            for old in api("GET", f"/certificates?filter[certificateType]={t}&limit=50")["data"]:
-                print(f"Révocation de l'ancien certificat : {old['attributes'].get('name')} ({old['id']})")
-                api("DELETE", f"/certificates/{old['id']}")
+        # Seul le plus ancien est révoqué : le plus récent signe peut-être un build encore en vérification chez Apple.
+        olds = [c for t in ("DISTRIBUTION", "IOS_DISTRIBUTION") for c in api("GET", f"/certificates?filter[certificateType]={t}&limit=50")["data"]]
+        for old in sorted(olds, key=lambda c: c["attributes"].get("expirationDate") or "")[:max(1, len(olds) - 1)]:
+            print(f"Révocation de l'ancien certificat : {old['attributes'].get('name')} ({old['id']})")
+            api("DELETE", f"/certificates/{old['id']}")
         cert = api("POST", "/certificates", body)
     cert = cert["data"]
     open(f"{TMP}/dist.cer", "wb").write(base64.b64decode(cert["attributes"]["certificateContent"]))
@@ -50,7 +51,10 @@ def setup():
     bundle = next((b for b in found if b["attributes"]["identifier"] == BUNDLE), None)
     if not bundle:
         bundle = api("POST", "/bundleIds", {"data": {"type": "bundleIds", "attributes": {"identifier": BUNDLE, "name": "MaFeliza", "platform": "IOS"}}})["data"]
-    # 3. Profil App Store lié à ce certificat
+    # 3. Profil App Store lié à ce certificat (les profils CI des envois précédents sont supprimés)
+    for old in api("GET", "/profiles?filter[name]=MaFeliza%20CI&limit=50")["data"]:
+        if old["attributes"].get("name", "").startswith("MaFeliza CI "):
+            api("DELETE", f"/profiles/{old['id']}", allow=(404, 409))
     name = f"MaFeliza CI {uuid.uuid4().hex[:8]}"
     prof = api("POST", "/profiles", {"data": {"type": "profiles", "attributes": {"name": name, "profileType": "IOS_APP_STORE"},
         "relationships": {"bundleId": {"data": {"type": "bundleIds", "id": bundle["id"]}},
@@ -90,9 +94,9 @@ def setup():
 def cleanup():
     if not os.path.exists(STATE):
         return
-    st = json.load(open(STATE))
-    api("DELETE", f"/profiles/{st['profile']}")
-    api("DELETE", f"/certificates/{st['cert']}")  # n'affecte pas les builds déjà envoyés
-    print("Certificat et profil temporaires supprimés.")
+    # On ne révoque PLUS le certificat ici : Apple vérifie la signature après l'envoi (ITMS-90035
+    # « Invalid Signature » si le certificat est déjà révoqué). Il n'est remplacé qu'au prochain envoi,
+    # quand la limite Apple est atteinte. Seuls les anciens profils CI sont supprimés.
+    print("Certificat conservé (vérification Apple en cours).")
 
 {"setup": setup, "cleanup": cleanup}[sys.argv[1]]()
