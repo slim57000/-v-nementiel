@@ -4,7 +4,7 @@ import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers, rollDemoDates } from "../lib/demo.js";
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
-import { listPendingIds, listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory,  listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
+import { listHistoryIds, listPendingIds, listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory,  listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
 import { currentOrganizer, isAdmin } from "./auth.js";
 import { camerasWithLive } from "../lib/livekit.js";
@@ -55,13 +55,17 @@ router.get("/", async (req, res) => {
     .map((e) => withVisibility(e, hidden));
   // Privés / non répertoriés en tête (sinon noyés parmi les nombreux événements démo), puis par date.
   events = [...shown, ...events].sort((a, b) => (shown.includes(b) - shown.includes(a)) || `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
+  // Qui a déjà accès aux événements « avec le lien » (organisateur, ou lien déjà ouvert) : carte en clair.
+  const viewer = await currentOrganizer(req).catch(() => null);
+  const opened = new Set(viewer ? (await listHistoryIds(viewer.id).catch(() => [])).map(Number) : []);
   res.json(await Promise.all(events.map(async (e) => {
     const { invite, inviteStyle, description, ...card } = publicView(e);
     // Privé : la carte montre la photo et la date (badge « J-10 » juste), mais ni le nom, ni le lieu,
     // ni les caméras. Le clic mène à l'écran « entrez votre code » : l'accès passe par le code.
     if (e.visibility === "private") return { ...card, name: "Événement privé", time: "", location: "", cameras: [], viewers: 0 };
     // Non répertorié : affiché comme un privé, et sans son lien (seul le lien reçu par SMS / WhatsApp y donne accès).
-    if (e.visibility === "unlisted") {
+    if (e.visibility === "unlisted" && (String(e.organizerId) === String(viewer?.id) || opened.has(Number(e.id)))) card.visibility = "unlisted";
+    else if (e.visibility === "unlisted") {
       const { slug, ...rest } = card;
       return { ...rest, slug: null, visibility: "unlisted", name: "Événement sur invitation", time: "", location: "", cameras: [], viewers: 0 };
     }

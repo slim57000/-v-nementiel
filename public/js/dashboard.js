@@ -33,7 +33,6 @@ async function load() {
     return toast(err.message);
   }
   // Événements privés / non répertoriés d'abord : sinon noyés parmi les nombreux événements publics (démo).
-  discover = discover.filter((e) => e.slug); // « avec le lien » : seulement dans Découvrir (fermés)
   discover.sort((a, b) => (a.visibility === "public") - (b.visibility === "public"));
   render();
 }
@@ -58,7 +57,7 @@ function renderStories() {
   // Événements avec des stories récentes en premier (rond coloré), puis les autres.
   const withStory = new Set(stories.map((g) => g.slug));
   const guest = joined.filter((e) => e.date >= today && !mine.has(e.slug));
-  const all = [...events.filter((e) => e.date >= today), ...guest, ...discover.filter((e) => !mine.has(e.slug) && !guest.some((g) => g.slug === e.slug)).slice(0, 12)];
+  const all = [...events.filter((e) => e.date >= today), ...guest, ...discover.filter((e) => e.slug && !mine.has(e.slug) && !guest.some((g) => g.slug === e.slug)).slice(0, 12)];
   const extra = stories.filter((g) => !all.some((e) => e.slug === g.slug)).map((g) => ({ ...g }));
   const upcoming = mix([...extra, ...all].sort((a, b) => withStory.has(b.slug) - withStory.has(a.slug)));
   $("#stories").innerHTML = `
