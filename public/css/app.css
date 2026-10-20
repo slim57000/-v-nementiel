@@ -1229,3 +1229,7 @@ body.simple-mode { background: linear-gradient(160deg, #fff5fa, #f3e8ff); min-he
 /* Barre Partager de l'événement : cachée pendant la lecture (défilement vers le bas), revient en remontant. */
 #page .share-bar { transition: transform .25s ease, opacity .25s ease; }
 #page .share-bar.is-hidden { transform: translateY(calc(100% + 40px + env(safe-area-inset-bottom))); opacity: 0; pointer-events: none; }
+
+/* « Chargement… » n'apparaît que si l'attente dépasse 1 s (sinon la page s'affiche directement, sans animation). */
+#loading { opacity: 0; animation: em-late-show .2s 1s forwards; }
+@keyframes em-late-show { to { opacity: 1; } }

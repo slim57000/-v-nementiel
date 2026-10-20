@@ -23,7 +23,7 @@ import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import authRoutes, { currentOrganizer } from "./routes/auth.js";
 import eventRoutes from "./routes/events.js";
-import publicRoutes from "./routes/public.js";
+import publicRoutes, { eventPayload } from "./routes/public.js";
 import socialRoutes from "./routes/social.js";
 import cameramanRoutes from "./routes/cameraman.js";
 import adminRoutes from "./routes/admin.js";
@@ -273,7 +273,9 @@ const SITE_NAME = `<meta property="og:site_name" content="MaFeliza"><meta name="
 export const versionHtml = (html) => html
   .replace(/<\/head>/i, (m) => (html.includes("og:site_name") ? m : `${SITE_NAME}\n${m}`))
   .replace(/((?:src|href)=")(\/(?:js|css)\/[\w.-]+\.(?:js|css))(?:\?v=[\w]+)?"/g, (m, a, path) => (ASSET_VERSIONS[path] ? `${a}${path}?v=${ASSET_VERSIONS[path]}"` : m))
-  .replace(/<script/i, `${IMPORT_MAP}<script`);
+  // Table des versions tout en haut (juste après l'encodage) : placée après un préchargement ou un script,
+  // le navigateur l'ignore et retélécharge chaque script sans version.
+  .replace(/<meta charset[^>]*>|<script/i, (m) => (m.startsWith("<meta") ? `${m}\n${IMPORT_MAP}` : `${IMPORT_MAP}${m}`));
 const pageCache = new Map();
 const gz = new Map(); // scripts et styles compressés (gzip), vidés à chaque mise à jour du site
 const SITE_URL = (process.env.PUBLIC_URL || "https://mafeliza.com").replace(/\/$/, "");
@@ -340,7 +342,14 @@ app.get("/e/:slug", async (req, res) => {
     ${isPublic ? `<link rel="canonical" href="${escapeHtml(`${base}/e/${event.slug}`)}">` : '<meta name="robots" content="noindex">'}
     <meta property="og:title" content="${escapeHtml(title)}">
     <meta property="og:description" content="${escapeHtml(desc)}">${image}${jsonLd}`;
-  res.status(event ? 200 : 404).type("html").send(eventTemplate.replace("<!--META-->", meta));
+  // Contenu de l'événement intégré à la page : affichage immédiat, sans attendre une 2e requête.
+  // (Lien « ?code=… » : la page déverrouille d'abord, puis charge normalement.)
+  let data = "";
+  if (event && !("code" in req.query) && !/bot|crawl|spider|facebookexternalhit|whatsapp|preview|slack|telegram/i.test(req.get("user-agent") || "")) {
+    const payload = await eventPayload(req, req.params.slug).catch(() => null);
+    if (payload) data = `<script>window.__evdata=${JSON.stringify(payload).replace(/</g, "\\u003c")}</script>`;
+  }
+  res.status(event ? 200 : 404).set("Cache-Control", "no-store").type("html").send(eventTemplate.replace("<!--META-->", meta + data));
 });
 
 // Plan du site pour Google : pages publiques et événements publics à venir.
