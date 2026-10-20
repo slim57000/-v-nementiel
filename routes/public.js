@@ -86,21 +86,22 @@ router.get("/:slug", async (req, res) => {
   }
   const me = await currentOrganizer(req);
   const isOwner = me?.id === event.organizerId;
-  if (me && !isOwner) {
-    // Participation mémorisée (plus d'ajout automatique en ami : l'amitié se demande depuis le profil).
-    await addHistory(me.id, event.id);
-  }
-  if (!isOwner) await bumpViews(event.id);
-  const premium = await isPremium(event.organizerId);
-  const [program, replayDeleted, replayHidden, pot, reactions] = await Promise.all([
+  // Écritures sans attendre (la page s'affiche tout de suite) : participation mémorisée, compteur de vues.
+  if (me && !isOwner) addHistory(me.id, event.id).catch(() => {});
+  if (!isOwner) bumpViews(event.id).catch(() => {});
+  // Lectures en parallèle plutôt qu'à la suite (chaque aller-retour vers la base compte).
+  const [premium, program, replayDeleted, replayHidden, pot, reactions, unlisted, cameras] = await Promise.all([
+    isPremium(event.organizerId),
     getSetting(`program:${event.id}`).catch(() => null),
     getSetting(`replayoff:${event.id}`).catch(() => null),
     getSetting(`replayhide:${event.id}`).catch(() => null),
     event.cagnotteUrl ? getSetting(`pot:${event.id}`).catch(() => null) : null,
     getSetting(`evreact:${event.id}`).catch(() => null),
+    listUnlistedIds(),
+    camerasWithLive(event.cameras),
   ]);
-  const view = publicView(withVisibility(event, await listUnlistedIds()));
-  res.json({ locked: false, isOwner, loggedIn: Boolean(me), ...view, cameras: await camerasWithLive(view.cameras), id: event.id, premium, replayDays: replayDays(premium), replayDeleted: Boolean(replayDeleted), replayOnline: !replayHidden, program: program || null, pot: pot || null, reactions: reactions || {} });
+  const view = publicView(withVisibility(event, unlisted));
+  res.json({ locked: false, isOwner, loggedIn: Boolean(me), ...view, cameras, id: event.id, premium, replayDays: replayDays(premium), replayDeleted: Boolean(replayDeleted), replayOnline: !replayHidden, program: program || null, pot: pot || null, reactions: reactions || {} });
 });
 
 // Anti-bruteforce partagé (base de données) : 10 essais par IP (et événement) toutes les 15 minutes.
