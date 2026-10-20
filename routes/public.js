@@ -4,7 +4,7 @@ import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers, rollDemoDates } from "../lib/demo.js";
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
-import { listHistoryIds, listPendingIds, listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory,  listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
+import { dataVersion, listHistoryIds, listPendingIds, listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory,  listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
 import { currentOrganizer, isAdmin } from "./auth.js";
 import { camerasWithLive } from "../lib/livekit.js";
@@ -27,36 +27,45 @@ async function ownerOrFriend(req, event) {
 }
 
 // Événements publics à venir : cartes de la page d'accueil et de « Découvrir ».
-router.get("/", async (req, res) => {
-  let events;
-  try {
-    const limit = Math.min(Number(req.query.limit) || 12, 50);
+// La liste (identique pour tous) est gardée 15 s en mémoire ; seule la mise en forme dépend de la personne.
+const listCache = new Map();
+async function upcomingList(limit) {
+  const c = listCache.get(limit);
+  if (c && c.version === dataVersion && Date.now() - c.at < 15_000) return c.list;
+  const version = dataVersion;
+  let events = await listPublicUpcoming(limit);
+  if (!events.length && await autoSeedDemo()) events = await listPublicUpcoming(limit);
+  else if (events.some(outdatedDemo)) {
+    await upgradeDemoCovers().catch((err) => console.error("Photos démo :", err.message));
     events = await listPublicUpcoming(limit);
-    if (!events.length && await autoSeedDemo()) events = await listPublicUpcoming(limit);
-    else if (events.some(outdatedDemo)) {
-      await upgradeDemoCovers().catch((err) => console.error("Photos démo :", err.message));
-      events = await listPublicUpcoming(limit);
-    }
-    if (events.length && await varyDemoCovers().catch(() => false)) events = await listPublicUpcoming(limit);
-    if (await rollDemoDates().catch(() => false)) events = await listPublicUpcoming(limit);
-  } catch (err) {
-    console.error("Événements publics :", err.message);
-    return res.status(500).json({ error: `base de données (${err.message}). Relancez supabase/schema.sql.` });
   }
+  if (events.length && await varyDemoCovers().catch(() => false)) events = await listPublicUpcoming(limit);
+  if (await rollDemoDates().catch(() => false)) events = await listPublicUpcoming(limit);
   const today = new Date().toISOString().slice(0, 10);
-  // Événements privés et non répertoriés affichés à tous (cadenas ; le code reste requis pour entrer).
+  // Privés (requête dédiée) + non répertoriés (publics en base, masqués de la liste publique), lus en parallèle.
   const hidden = await listUnlistedIds();
-  // Privés (requête dédiée) + non répertoriés (publics en base, masqués de la liste publique).
-  const [priv, unl] = await Promise.all([listAllUpcoming(50).catch(() => []), findEventsByIds([...hidden]).catch(() => [])]);
-  const pending = await listPendingIds();
+  const [priv, unl, pending] = await Promise.all([listAllUpcoming(50).catch(() => []), findEventsByIds([...hidden]).catch(() => []), listPendingIds()]);
   const shown = [...priv, ...unl.filter((e) => e && !e.suspended && e.date >= today)]
     .filter((e) => !pending.has(e.id))
     .filter((e, i, arr) => !events.some((x) => x.id === e.id) && arr.findIndex((x) => x.id === e.id) === i)
     .map((e) => withVisibility(e, hidden));
   // Privés / non répertoriés en tête (sinon noyés parmi les nombreux événements démo), puis par date.
-  events = [...shown, ...events].sort((a, b) => (shown.includes(b) - shown.includes(a)) || `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
+  const list = [...shown, ...events].sort((a, b) => (shown.includes(b) - shown.includes(a)) || `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
+  listCache.set(limit, { at: Date.now(), version, list });
+  return list;
+}
+router.get("/", async (req, res) => {
+  const today = new Date().toISOString().slice(0, 10);
+  const limit = Math.min(Number(req.query.limit) || 12, 50);
+  // Liste et personne connectée lues en même temps.
+  let events, viewer;
+  try {
+    [events, viewer] = await Promise.all([upcomingList(limit), currentOrganizer(req).catch(() => null)]);
+  } catch (err) {
+    console.error("Événements publics :", err.message);
+    return res.status(500).json({ error: `base de données (${err.message}). Relancez supabase/schema.sql.` });
+  }
   // Qui a déjà accès aux événements « avec le lien » (organisateur, ou lien déjà ouvert) : carte en clair.
-  const viewer = await currentOrganizer(req).catch(() => null);
   const opened = new Set(viewer ? (await listHistoryIds(viewer.id).catch(() => [])).map(Number) : []);
   res.json(await Promise.all(events.map(async (e) => {
     const { invite, inviteStyle, description, ...card } = publicView(e);
