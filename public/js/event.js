@@ -360,3 +360,16 @@ function eventReactions(ev) {
     catch (err) { toast(err.message); }
   };
 }
+
+// Barre « Partager » : masquée quand on descend pour lire le faire-part, réaffichée en remontant ou en bas de page.
+{
+  let lastY = scrollY;
+  addEventListener("scroll", () => {
+    const bar = document.querySelector("#page .share-bar");
+    if (!bar) return;
+    const y = scrollY, atEnd = innerHeight + y >= document.documentElement.scrollHeight - 80;
+    if (Math.abs(y - lastY) < 8 && !atEnd) return;
+    bar.classList.toggle("is-hidden", y > lastY && y > 120 && !atEnd);
+    lastY = y;
+  }, { passive: true });
+}

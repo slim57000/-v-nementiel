@@ -1225,3 +1225,7 @@ body.simple-mode { background: linear-gradient(160deg, #fff5fa, #f3e8ff); min-he
 .lp-faq p { margin-top: 6px; }
 .lp-more { font-size: .9rem; text-align: center; margin: 18px 0 0; line-height: 1.8; }
 .footer-guides { display: block; margin-top: 14px; line-height: 1.8; }
+
+/* Barre Partager de l'événement : cachée pendant la lecture (défilement vers le bas), revient en remontant. */
+#page .share-bar { transition: transform .25s ease, opacity .25s ease; }
+#page .share-bar.is-hidden { transform: translateY(calc(100% + 40px + env(safe-area-inset-bottom))); opacity: 0; pointer-events: none; }
