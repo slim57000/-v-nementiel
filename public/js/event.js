@@ -21,7 +21,13 @@ async function load() {
 
   let ev;
   try {
-    ev = await api(`/api/public/${slug}`);
+    const pre = window.__evp; window.__evp = null;
+    ev = pre ? await pre.then(async (r) => {
+      if (r.ok) return r.json();
+      const err = new Error((await r.json().catch(() => ({}))).error || "Chargement impossible");
+      err.status = r.status;
+      throw err;
+    }) : await api(`/api/public/${slug}`);
   } catch (err) {
     // Événement supprimé ou lien erroné : on renvoie vers le site plutôt que de laisser une page vide.
     if (err.status === 404) return location.replace(`/introuvable`);

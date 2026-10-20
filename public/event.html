@@ -9,6 +9,11 @@
   <link rel="modulepreload" href="/js/common.js">
   <link rel="modulepreload" href="/js/icons.js">
   <link rel="modulepreload" href="/js/i18n.js">
+  <link rel="modulepreload" href="/js/event.js">
+  <link rel="modulepreload" href="/js/invitation.js">
+  <link rel="modulepreload" href="/js/guestbook.js">
+  <!-- L'événement est demandé tout de suite, pendant que les scripts se téléchargent. -->
+  <script>if (!/[?&]code=/.test(location.search)) window.__evp = fetch("/api/public/" + location.pathname.split("/").pop(), { credentials: "same-origin" });</script>
   <link rel="stylesheet" href="/css/app.css?v=123">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">

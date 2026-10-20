@@ -18,6 +18,7 @@ import { LANDINGS, renderLanding, landingLinks } from "./lib/landings.js";
 import express from "express";
 import QRCode from "qrcode";
 import { readFileSync, readdirSync, existsSync, watch } from "node:fs";
+import { gzipSync } from "node:zlib";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import authRoutes, { currentOrganizer } from "./routes/auth.js";
@@ -274,6 +275,7 @@ export const versionHtml = (html) => html
   .replace(/((?:src|href)=")(\/(?:js|css)\/[\w.-]+\.(?:js|css))(?:\?v=[\w]+)?"/g, (m, a, path) => (ASSET_VERSIONS[path] ? `${a}${path}?v=${ASSET_VERSIONS[path]}"` : m))
   .replace(/<script/i, `${IMPORT_MAP}<script`);
 const pageCache = new Map();
+const gz = new Map(); // scripts et styles compressés (gzip), vidés à chaque mise à jour du site
 const SITE_URL = (process.env.PUBLIC_URL || "https://mafeliza.com").replace(/\/$/, "");
 const INDEXABLE = new Set(["/", "/decouvrir", "/connexion", "/contact", "/mentions-legales", "/cgu", "/confidentialite"]);
 // Lien canonique + og:url, image de partage en adresse complète, et liens vers les pages Google en bas de l'accueil.
@@ -295,6 +297,7 @@ try {
       try {
         computeAssets();
         pageCache.clear();
+        gz.clear();
         eventTemplate = versionHtml(readFileSync(new URL("./public/event.html", import.meta.url), "utf8"));
         console.log("Pages et styles rechargés (mise à jour détectée).");
       } catch (err) { console.error("Rechargement :", err.message); }
@@ -394,6 +397,23 @@ if (!ON_VERCEL) {
     // Pages publiques : adresse officielle (canonique) ; pages de compte : jamais dans Google.
     if (!INDEXABLE.has(path)) res.set("X-Robots-Tag", "noindex");
     res.set("Cache-Control", "no-cache").type("html").send(applySeo(withCanonical(versionedPage(file), path), path));
+  });
+  // Scripts et styles compressés (gzip, ~4 fois plus légers sur mobile), gardés en mémoire après la 1re fois.
+  app.get(/^\/(js|css)\/[\w.-]+\.(js|css)$/, (req, res, next) => {
+    if (!/\bgzip\b/.test(req.get("accept-encoding") || "")) return next();
+    const file = `${PUBLIC_DIR}${req.path}`;
+    let body = gz.get(file);
+    if (!body) {
+      if (!existsSync(file)) return next();
+      body = gzipSync(readFileSync(file), { level: 9 });
+      gz.set(file, body);
+    }
+    const versioned = "v" in req.query;
+    res.set({
+      "Content-Encoding": "gzip", Vary: "Accept-Encoding",
+      "Content-Type": req.path.endsWith(".css") ? "text/css; charset=utf-8" : "text/javascript; charset=utf-8",
+      "Cache-Control": versioned ? "public, max-age=31536000, immutable" : "public, max-age=0, must-revalidate",
+    }).send(body);
   });
   app.use(express.static(PUBLIC_DIR, {
     extensions: ["html"],
