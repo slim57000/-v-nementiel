@@ -128,8 +128,13 @@ router.get("/stories", async (req, res) => {
   const [mine, historyIds, favIds, friendIds] = await Promise.all([
     listEvents(me.id), listHistoryIds(me.id), listFavoriteIds(me.id).catch(() => []), listFriendIds(me.id).catch(() => []),
   ]);
-  const joined = (await findEventsByIds([...historyIds, ...favIds]).catch(() => [])).filter(accessFilter(req));
-  const friends = (await Promise.all(friendIds.slice(0, 20).map((id) => listEvents(id).catch(() => [])))).flat().filter((e) => e.visibility === "public");
+  // Événements suivis et événements publics des amis : lus en même temps.
+  const [joinedAll, friendLists] = await Promise.all([
+    findEventsByIds([...historyIds, ...favIds]).catch(() => []),
+    Promise.all(friendIds.slice(0, 20).map((id) => listEvents(id).catch(() => []))),
+  ]);
+  const joined = joinedAll.filter(accessFilter(req));
+  const friends = friendLists.flat().filter((e) => e.visibility === "public");
   const events = visibleEvents([...mine, ...joined, ...friends]).filter((e, i, arr) => arr.findIndex((x) => x.id === e.id) === i).slice(0, 40);
   const byId = new Map(events.map((e) => [e.id, e]));
   const day = Date.now() - 24 * 3600 * 1000;
@@ -140,7 +145,7 @@ router.get("/stories", async (req, res) => {
     if (!groups.has(e.id)) groups.set(e.id, { slug: e.slug, name: e.name, cover: e.cover, type: e.type, date: e.date, cameras: e.cameras || [], isOwner: e.organizerId === me.id, items: [] });
     groups.get(e.id).items.push({ id: p.id, name: p.name, url: p.url, caption: p.caption, createdAt: p.createdAt, author: p.author, slug: e.slug });
   }
-  for (const g of groups.values()) g.items = await withReactions(g.items);
+  await Promise.all([...groups.values()].map(async (g) => { g.items = await withReactions(g.items); }));
   res.json([...groups.values()]);
 });
 

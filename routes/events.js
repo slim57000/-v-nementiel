@@ -63,12 +63,11 @@ const handle = (fn) => async (req, res) => {
 };
 
 router.get("/", handle(async (req, res) => {
-  const events = await listEvents(req.organizer.id);
+  const [events, hidden] = await Promise.all([listEvents(req.organizer.id), listUnlistedIds()]);
   // Événements créés avant l'espace caméraman : on leur attribue un code.
   for (const event of events.filter((e) => !e.cameramanCode)) {
     Object.assign(event, await saveEvent({ ...event, cameramanCode: randomCode() }));
   }
-  const hidden = await listUnlistedIds();
   res.json(await Promise.all(events.map(async (e) => ({ ...ownerView(withVisibility(e, hidden)), reports: await countReports(e.id) }))));
 }));
 
