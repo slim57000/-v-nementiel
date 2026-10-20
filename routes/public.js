@@ -79,12 +79,20 @@ router.get("/", async (req, res) => {
 // Vérification d'une adresse de cagnotte quelconque (création d'une cagnotte depuis le site).
 router.get("/pot-check", async (req, res) => res.json({ embeddable: await embeddable(String(req.query.url || "")) }));
 router.get("/:slug", async (req, res) => {
+  // Mesure des étapes (en-tête Server-Timing, visible avec curl -D-) pour repérer une lenteur.
+  const t0 = Date.now(), marks = [];
+  const mark = (n) => marks.push(`${n};dur=${Date.now() - t0}`);
+  const origJson = res.json.bind(res);
+  res.json = (body) => { mark("total"); res.set("Server-Timing", marks.join(", ")); return origJson(body); };
   const event = await findEventBySlug(req.params.slug);
+  mark("event");
   if (!event || event.suspended) return res.status(404).json({ error: "Événement introuvable." });
   if (!(await hasAccess(req, event))) {
     return res.json({ locked: true, name: event.name, type: event.type, visibility: "private" });
   }
+  mark("access");
   const me = await currentOrganizer(req);
+  mark("me");
   const isOwner = me?.id === event.organizerId;
   // Écritures sans attendre (la page s'affiche tout de suite) : participation mémorisée, compteur de vues.
   if (me && !isOwner) addHistory(me.id, event.id).catch(() => {});
@@ -100,6 +108,7 @@ router.get("/:slug", async (req, res) => {
     listUnlistedIds(),
     camerasWithLive(event.cameras),
   ]);
+  mark("data");
   const view = publicView(withVisibility(event, unlisted));
   res.json({ locked: false, isOwner, loggedIn: Boolean(me), ...view, cameras, id: event.id, premium, replayDays: replayDays(premium), replayDeleted: Boolean(replayDeleted), replayOnline: !replayHidden, program: program || null, pot: pot || null, reactions: reactions || {} });
 });
