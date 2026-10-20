@@ -31,7 +31,17 @@ async function ownerOrFriend(req, event) {
 const listCache = new Map();
 async function upcomingList(limit) {
   const c = listCache.get(limit);
-  if (c && c.version === dataVersion && Date.now() - c.at < 15_000) return c.list;
+  if (c && c.version === dataVersion) {
+    // Liste un peu ancienne : renvoyée tout de suite, et recalculée en arrière-plan pour le visiteur suivant.
+    if (Date.now() - c.at >= 15_000 && !c.refreshing) {
+      c.refreshing = true;
+      buildList(limit).catch(() => { c.refreshing = false; });
+    }
+    return c.list;
+  }
+  return buildList(limit);
+}
+async function buildList(limit) {
   const version = dataVersion;
   let events = await listPublicUpcoming(limit);
   if (!events.length && await autoSeedDemo()) events = await listPublicUpcoming(limit);
