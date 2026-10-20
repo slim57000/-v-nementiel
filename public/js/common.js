@@ -313,6 +313,7 @@ async function profileMenu() {
       if (act === "avatar") { sheet.remove(); pickAvatar(me?.avatar, (p) => { me = { ...me, avatar: p.avatar }; paint(); }); }
       if (act === "name") { sheet.remove(); editName(name, (p) => { me = { ...me, displayName: p.name }; location.reload(); }); }
       if (act === "logout" && confirm("Se déconnecter de MaFeliza ?")) {
+        try { localStorage.removeItem("em-dash"); } catch { /* ignoré */ }
         api("/api/auth/logout", { method: "POST" }).catch(() => {}).finally(() => location.replace("/"));
       }
     });

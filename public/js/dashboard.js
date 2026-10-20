@@ -34,6 +34,7 @@ async function load() {
   }
   // Événements privés / non répertoriés d'abord : sinon noyés parmi les nombreux événements publics (démo).
   discover.sort((a, b) => (a.visibility === "public") - (b.visibility === "public"));
+  try { localStorage.setItem(DASH_KEY, JSON.stringify({ events, discover: discover.slice(0, 30), stories, joined, myId })); } catch { /* plein ou indisponible */ }
   render();
 }
 
@@ -237,6 +238,17 @@ $("#list").addEventListener("click", async (e) => {
     }
   }
 });
+
+// Affichage instantané : la dernière version vue sur ce téléphone, puis mise à jour dès que le serveur répond.
+const DASH_KEY = "em-dash";
+try {
+  const saved = JSON.parse(localStorage.getItem(DASH_KEY) || "null");
+  if (saved?.events) { ({ events, discover, stories, joined, myId } = saved); render(); }
+  else {
+    $("#stories").innerHTML = '<div class="story skel"></div>'.repeat(5);
+    $("#list").innerHTML = '<div class="skel skel-card"></div>'.repeat(2);
+  }
+} catch { /* stockage indisponible */ }
 
 load();
 
