@@ -399,7 +399,10 @@ if (!ON_VERCEL) {
     extensions: ["html"],
     // Photos et bibliothèques : gardées en cache ; CSS versionnée (?v=) : cache long.
     setHeaders: (res, file) => {
-      if (/[\\/](img|vendor)[\\/]/.test(file)) res.set("Cache-Control", "public, max-age=604800");
+      // Scripts et styles appelés avec leur version (?v=…, ajoutée automatiquement) : le contenu ne change jamais
+      // pour une version donnée → gardés 1 an, sans revérification (beaucoup plus rapide sur mobile).
+      if (/[?&]v=/.test(res.req?.originalUrl || "") && /\.(js|css)$/.test(file)) res.set("Cache-Control", "public, max-age=31536000, immutable");
+      else if (/[\\/](img|vendor)[\\/]/.test(file)) res.set("Cache-Control", "public, max-age=604800");
       // Scripts : toujours revalidés, pour que les téléphones prennent la dernière version.
       else if (/[\\/]js[\\/]/.test(file)) res.set("Cache-Control", "public, max-age=0, must-revalidate");
     },
