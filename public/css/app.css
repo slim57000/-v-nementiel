@@ -1400,3 +1400,9 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .hx-stores { display:flex; align-items:center; justify-content:center; gap:8px; margin:10px 16px 0; padding:8px 12px; border-radius:12px; font-size:.8rem; color:#fff; background:linear-gradient(90deg, rgba(255,45,149,.22), rgba(168,85,247,.22)); border:1px solid rgba(255,255,255,.18); backdrop-filter: blur(10px); text-align:center; }
 .hx-stores b { font-weight:800; }
 .hx-store-ic { display:inline-flex; gap:5px; align-items:center; flex:none; }
+
+/* Badges stores façon officiels */
+.hx-stores { background:none; border:0; backdrop-filter:none; padding:0; gap:10px; margin:12px 16px 0; }
+.hx-badge { position:relative; display:inline-flex; align-items:center; gap:8px; padding:6px 14px 6px 10px; border-radius:10px; background:#000; border:1px solid rgba(255,255,255,.35); color:#fff; text-align:left; line-height:1.05; }
+.hx-badge small { display:block; font-size:.62rem; font-weight:500; opacity:.85; }
+.hx-badge b { display:block; font-size:1.05rem; font-weight:700; letter-spacing:-.01em; font-family:-apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif; }
