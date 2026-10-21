@@ -118,7 +118,7 @@ export function dayBadge(date) {
   const today = new Date(new Date().toDateString());
   const days = Math.round((new Date(`${date}T00:00`) - today) / 86400000);
   const up = (x) => x.charAt(0).toUpperCase() + x.slice(1);
-  if (days > 0) return lang === "fr" ? `J-${days}` : lang === "en" || !RTF ? `D-${days}` : RTF.format(days, "day");
+  if (days > 0) return lang === "fr" ? `J-${days}` : !RTF ? `D-${days}` : RTF.format(days, "day");
   return days === 0 ? up(t("Aujourd'hui")) : t("Passé");
 }
 
