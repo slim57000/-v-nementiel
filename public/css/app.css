@@ -1422,3 +1422,30 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .hx-after { padding-top: 18px; padding-bottom: 8px; }
 .hx-text .hx-trust-top { margin: 0 0 16px; }
 .hx-text .hx-trust-top { max-width: none; justify-content: center; margin: 0 auto 16px; }
+
+/* ===== Accueil connecté : redesign ===== */
+.hd-top { margin: 4px 0 14px; }
+.hd-hello h1 { margin: 0; font-size: 1.6rem; font-weight: 800; letter-spacing: -.02em; }
+.hd-hello p { margin: 2px 0 12px; color: var(--muted); font-size: .9rem; }
+.hd-search { display: flex; align-items: center; gap: 10px; padding: 13px 16px; border-radius: 14px; background: var(--card); border: 1px solid var(--border); color: var(--muted); text-decoration: none; font-size: .92rem; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+.hd-search:active { transform: scale(.98); }
+/* Stories en ronds façon Instagram */
+.stories .story { width: 74px; }
+.stories .story-img { width: 66px; height: 66px; margin: 0 auto; border-radius: 50%; border: 0; box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px rgba(150,150,170,.35); }
+.stories .story-img.has-story, .stories .story-img.live { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px #fd1a85; }
+.stories .story-img.live { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px #ef4444; }
+.stories .story.new .story-img { background: linear-gradient(135deg, #fd1a85, #c60bd2); font-size: 1.8rem; font-weight: 300; display: grid; place-items: center; box-shadow: 0 6px 16px rgba(253,26,133,.35); }
+.stories .story-badge { bottom: -2px; font-size: .58rem; padding: 2px 6px; border-radius: 999px; background: #111; border: 1.5px solid var(--bg); white-space: nowrap; }
+.stories .story-badge.today { background: #ef4444; }
+.stories .story > span { display: block; margin-top: 8px; font-size: .72rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stories .story-vis { font-size: .62rem; font-weight: 700; margin-top: 1px; color: var(--muted); }
+.stories .story-vis.private { color: #f59e0b; }
+.stories .story-vis.unlisted { color: #818cf8; }
+/* Onglets plus fins */
+.hd-tabs { padding: 4px; gap: 4px; border-radius: 999px; background: var(--card); border: 1px solid var(--border); margin: 6px 0 4px; }
+.hd-tabs button { padding: 9px 6px; font-size: .88rem; border-radius: 999px; }
+.hd-tabs button.active { box-shadow: 0 4px 12px rgba(253,26,133,.3); }
+.container .section-title h2 { text-transform: none; letter-spacing: -.01em; font-size: 1.15rem; }
+.stories .story-img { overflow: visible; }
+.stories .story-badge { bottom: -7px; }
+.p-grid .pub-card h3, .pub-card .pc-name { font-size: 1rem; line-height: 1.2; }

@@ -3,9 +3,10 @@ import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, t
 import { icon } from "./icons.js";
 
 // Bandeau « Découvrir » au-dessus des stories (Créer : carré « + » ; Messages et Profil : menu 👤 en haut).
-document.querySelector(".stories").insertAdjacentHTML("beforebegin", `<nav class="home-nav" aria-label="Navigation">
-  <a href="/decouvrir" class="hn-discover-big"><div class="hn-title"><span>🔍</span><b>Découvrir</b></div><small>Les événements en direct et à venir</small></a>
-</nav>`);
+document.querySelector(".stories").insertAdjacentHTML("beforebegin", `<div class="hd-top">
+  <div class="hd-hello"><h1>Bonjour 👋</h1><p>Vos événements et ceux de vos proches</p></div>
+  <a href="/decouvrir" class="hd-search"><span aria-hidden="true">🔍</span><span>Rechercher un événement, une ville…</span></a>
+</div>`);
 
 tabbar("home");
 
@@ -51,7 +52,7 @@ function mixRest(list) {
   return out;
 }
 
-const VIS = { private: ["🔒 Privé", "private"], unlisted: ["🔗 Non répertorié", "unlisted"], public: ["🔓 Public", ""] };
+const VIS = { private: ["Privé", "private"], unlisted: ["Non répertorié", "unlisted"], public: ["Public", ""] };
 
 function renderStories() {
   const mine = new Set(events.map((e) => e.slug));
@@ -68,7 +69,7 @@ function renderStories() {
       const live = isLive(ev);
       return `<a class="story" href="${live ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`}">
         <div class="story-img ${live ? "live" : ""} ${withStory.has(ev.slug) ? "has-story" : ""}" data-story="${withStory.has(ev.slug) ? esc(ev.slug) : ""}" ${liveAttrs(ev)}>
-          <span class="story-badge ${live || badge === "Aujourd'hui" ? "today" : ""}">${live ? "▶ Voir le live" : badge}</span>
+          <span class="story-badge ${live || badge === "Aujourd'hui" ? "today" : ""}">${live ? "● En direct" : badge}</span>
           </div>
         <span>${esc(ev.name)}</span>
         ${ev.visibility ? `<small class="story-vis ${(VIS[ev.visibility] || VIS.public)[1]}">${(VIS[ev.visibility] || VIS.public)[0]}</small>` : ""}</a>`;
