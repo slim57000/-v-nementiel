@@ -1332,3 +1332,5 @@ body.simple-mode { background: linear-gradient(160deg, #fff5fa, #f3e8ff); min-he
 .hp-trust { margin: 12px 0 0; }
 .hx-live, .hx-viewers { white-space: nowrap; font-size: .55rem; padding: 3px 7px; }
 .hx-ui { top: 9px; left: 7px; right: 7px; }
+/* Liens vers les pages Google (en français uniquement) : masqués pour les visiteurs d'une autre langue. */
+html[lang]:not([lang="fr"]) .footer-guides { display: none; }
