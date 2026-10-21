@@ -9,7 +9,7 @@
   <link rel="modulepreload" href="/js/common.js">
   <link rel="modulepreload" href="/js/icons.js">
   <link rel="modulepreload" href="/js/i18n.js">
-  <link rel="preload" as="image" href="/img/maquette/collage.webp?v=19" type="image/webp">
+  <link rel="preload" as="image" href="/img/home/hero-live-mariage.webp" type="image/webp">
   <link rel="stylesheet" href="/css/app.css?v=123">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
@@ -25,14 +25,25 @@
 </head>
 <body>
   <main class="container home" style="max-width:480px">
-    <picture><source data-dark srcset="/img/maquette/collage-dark.webp?v=2" type="image/webp" media="(prefers-color-scheme: dark)"><source srcset="/img/maquette/collage.webp?v=19" type="image/webp"><img class="hero-collage" src="/img/maquette/collage.jpg?v=19" alt="Mariage, baptême, anniversaire, remise de diplôme : tous vos moments" fetchpriority="high" width="1200" height="700"></picture>
+    <section class="hx" aria-label="MaFeliza">
+      <div class="hx-slides" aria-hidden="true">
+        <img src="/img/home/hero-live-mariage.webp" alt="" fetchpriority="high">
+        <img src="/img/home/hero-bebe-2.webp" alt="" loading="lazy">
+        <img src="/img/home/hero-anniversaire-bougies.webp" alt="" loading="lazy">
+        <img src="/img/home/hero-diplome-lancer.webp" alt="" loading="lazy">
+      </div>
+      <div class="hx-shade"></div>
+      <div class="hx-brand"><img src="/img/logo.png" alt="" width="34" height="34"><span>MaFel<b>i</b>za</span></div>
+      <div class="hx-live"><i></i>EN DIRECT <span>· 👁 128</span></div>
+      <div class="hx-float hx-msg">« Vous êtes magnifiques 💛 »<small>Mamie Jeanne · livre d'or</small></div>
+      <div class="hx-float hx-react">❤️ 🎉 😍 <b>+48</b></div>
+      <div class="hx-text">
+        <h1>Vos plus beaux moments,<br><span>partagés avec tous ceux que vous aimez.</span></h1>
+        <p>Faire-part, live, photos et souvenirs : le premier réseau social dédié à vos événements.</p>
+      </div>
+    </section>
 
-    <p style="text-align:center;margin:0">
-      <span class="logo logo-lg"><img src="/img/logo.png" alt=""><span>MaFel<b>i</b>za</span></span>
-    </p>
-
-    <p class="slogan">Le premier réseau social<br>dédié à tous vos événements.<br><b>Partagez l'émotion avant, pendant, après.</b></p>
-
+    <div class="hx-card">
     <a id="create" href="/connexion?next=/edit" class="btn btn-block">Créer mon événement gratuitement</a>
     <button id="invited" class="btn btn-ghost btn-block" style="margin-top:10px;color:var(--text)">J'ai reçu une invitation</button>
 
@@ -43,6 +54,13 @@
       <button data-social="Magic" aria-label="Recevoir un lien de connexion par email"></button>
     </div>
     <p class="muted small" style="text-align:center">Déjà inscrit ? <a href="/connexion">Se connecter</a></p>
+    </div>
+
+    <div class="hx-types" aria-label="Pour tous vos événements">
+      <div class="hx-track">
+        <span><img src="/img/home/type-mariage.webp" alt="" loading="lazy" width="56" height="56">Mariage</span><span><img src="/img/home/type-bapteme.webp" alt="" loading="lazy" width="56" height="56">Baptême</span><span><img src="/img/home/type-anniversaire.webp" alt="" loading="lazy" width="56" height="56">Anniversaire</span><span><img src="/img/home/type-diplome.webp" alt="" loading="lazy" width="56" height="56">Diplôme</span><span><img src="/img/home/type-fiancailles.webp" alt="" loading="lazy" width="56" height="56">Fiançailles</span><span><img src="/img/home/type-baby-shower.webp" alt="" loading="lazy" width="56" height="56">Baby shower</span><span><img src="/img/home/type-communion.webp" alt="" loading="lazy" width="56" height="56">Communion</span><span><img src="/img/home/type-inauguration.webp" alt="" loading="lazy" width="56" height="56">Inauguration</span><span><img src="/img/home/type-mariage.webp" alt="" loading="lazy" width="56" height="56">Mariage</span><span><img src="/img/home/type-bapteme.webp" alt="" loading="lazy" width="56" height="56">Baptême</span><span><img src="/img/home/type-anniversaire.webp" alt="" loading="lazy" width="56" height="56">Anniversaire</span><span><img src="/img/home/type-diplome.webp" alt="" loading="lazy" width="56" height="56">Diplôme</span><span><img src="/img/home/type-fiancailles.webp" alt="" loading="lazy" width="56" height="56">Fiançailles</span><span><img src="/img/home/type-baby-shower.webp" alt="" loading="lazy" width="56" height="56">Baby shower</span><span><img src="/img/home/type-communion.webp" alt="" loading="lazy" width="56" height="56">Communion</span><span><img src="/img/home/type-inauguration.webp" alt="" loading="lazy" width="56" height="56">Inauguration</span>
+      </div>
+    </div>
 
     <div class="hp-trust"><span>✓ Gratuit</span><span>✓ Sans application</span><span>✓ Simple pour les grands-parents</span></div>
 
