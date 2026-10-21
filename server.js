@@ -17,7 +17,7 @@ import { loadSeo, applySeo } from "./lib/seo.js";
 import { LANDINGS, renderLanding, landingLinks } from "./lib/landings.js";
 import express from "express";
 import QRCode from "qrcode";
-import { readFileSync, readdirSync, existsSync, watch } from "node:fs";
+import { readFileSync, readdirSync, existsSync, watch, statSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
@@ -292,17 +292,29 @@ let eventTemplate = versionHtml(readFileSync(new URL("./public/event.html", impo
 // (Le code du serveur lui-même, dans routes/ et lib/, demande toujours un redémarrage.)
 loadSeo().catch(() => {});
 let reloadTimer = null;
+function reloadPublic() {
+  try {
+    computeAssets();
+    pageCache.clear();
+    gz.clear();
+    eventTemplate = versionHtml(readFileSync(new URL("./public/event.html", import.meta.url), "utf8"));
+    console.log("Pages et styles rechargés (mise à jour détectée).");
+  } catch (err) { console.error("Rechargement :", err.message); }
+}
+// Filet de sécurité : la surveillance des fichiers rate parfois des modifications (git, éditeurs) ;
+// toutes les 3 s, on compare dates et tailles des pages, scripts et styles, et on recharge si besoin.
+const publicSignature = () => ["", "/js", "/css"].flatMap((d) => readdirSync(PUBLIC_DIR + d)
+  .filter((n) => /\.(html|js|css)$/.test(n)).map((n) => { const st = statSync(`${PUBLIC_DIR}${d}/${n}`); return `${d}/${n}:${st.mtimeMs}:${st.size}`; })).join("|");
+let lastSignature = publicSignature();
+setInterval(() => {
+  try { const sig = publicSignature(); if (sig !== lastSignature) { lastSignature = sig; reloadPublic(); } } catch { /* ignoré */ }
+}, 3000).unref?.();
 try {
   watch(PUBLIC_DIR, { recursive: true }, () => {
     clearTimeout(reloadTimer);
     reloadTimer = setTimeout(() => {
-      try {
-        computeAssets();
-        pageCache.clear();
-        gz.clear();
-        eventTemplate = versionHtml(readFileSync(new URL("./public/event.html", import.meta.url), "utf8"));
-        console.log("Pages et styles rechargés (mise à jour détectée).");
-      } catch (err) { console.error("Rechargement :", err.message); }
+      lastSignature = publicSignature();
+      reloadPublic();
     }, 800);
   });
 } catch { /* surveillance indisponible : un redémarrage reste nécessaire */ }

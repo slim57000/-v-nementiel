@@ -26,9 +26,19 @@
 <body>
   <main class="container home" style="max-width:480px">
     <section class="hx" aria-label="MaFeliza">
-      <img class="hx-bg" src="/img/home/bg-live.webp" alt="" aria-hidden="true">
-      <div class="hx-shade"></div>
-      <div class="hx-brand"><img src="/img/logo.png" alt="" width="34" height="34"><span>MaFel<b>i</b>za</span></div>
+      <div class="hx-blobs" aria-hidden="true"><i></i><i></i><i></i></div>
+      <nav class="hx-nav"><span class="hx-brand"><img src="/img/logo.png" alt="" width="30" height="30"><span>MaFel<b>i</b>za</span></span>
+        <a class="hx-login" href="/connexion">Se connecter</a></nav>
+      <div class="hx-text">
+        <p class="hx-pill"><span>Nouveau</span>Le live depuis votre téléphone</p>
+        <h1>Vos événements <b class="hx-nw"><i class="hx-dot" aria-hidden="true"></i><span>en direct</span></b>, pour ceux qui ne peuvent pas venir.</h1>
+        <p class="hx-sub">Faire-part, live, photos et souvenirs : tout au même endroit.</p>
+        <div class="hx-ctas">
+          <a id="create" href="/connexion?next=/edit" class="btn hx-cta">Créer mon événement gratuitement</a>
+          <button id="invited" class="btn hx-cta-2">J'ai reçu une invitation</button>
+        </div>
+        <p class="hx-trust"><span>✓ Gratuit</span><span>✓ Sans application</span><span>✓ 15 langues</span></p>
+      </div>
       <div class="hx-stage">
         <div class="hx-phone" aria-hidden="true">
           <div class="hx-slides">
@@ -50,23 +60,14 @@
         <div class="hx-float hx-world">🌍 Suivi depuis 12 pays</div>
         <div class="hx-float hx-replay">🎬 Replay envoyé à tous</div>
       </div>
-      <div class="hx-text">
-        <h1>Vos événements <i class="hx-dot" aria-hidden="true"></i><span>en direct,</span><br>pour tous ceux qui ne peuvent pas venir.</h1>
-        <p>Faire-part, live depuis un simple téléphone, photos et souvenirs : tout au même endroit.</p>
-      </div>
     </section>
-
     <div class="hx-card">
-    <a id="create" href="/connexion?next=/edit" class="btn btn-block">Créer mon événement gratuitement</a>
-    <button id="invited" class="btn btn-ghost btn-block" style="margin-top:10px;color:var(--text)">J'ai reçu une invitation</button>
-
     <p class="divider">ou continuer avec</p>
     <div class="socials">
       <button data-social="Apple" aria-label="Continuer avec Apple"></button>
       <button data-social="Google" aria-label="Continuer avec Google"></button>
       <button data-social="Magic" aria-label="Recevoir un lien de connexion par email"></button>
     </div>
-    <p class="muted small" style="text-align:center">Déjà inscrit ? <a href="/connexion">Se connecter</a></p>
     </div>
 
     <div class="hx-types" aria-label="Pour tous vos événements">
@@ -75,7 +76,6 @@
       </div>
     </div>
 
-    <div class="hp-trust"><span>✓ Gratuit</span><span>✓ Sans application</span><span>✓ Simple pour les grands-parents</span></div>
 
   </main>
   <footer class="site-footer">

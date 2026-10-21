@@ -1349,3 +1349,41 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 @keyframes hx-shine { to { background-position: 300% 0; } }
 @keyframes hx-dot { 0% { box-shadow: 0 0 0 0 rgba(255,45,85,.7); } 70% { box-shadow: 0 0 0 .45em rgba(255,45,85,0); } 100% { box-shadow: 0 0 0 0 rgba(255,45,85,0); } }
 @media (prefers-reduced-motion: reduce) { .hx-text h1 span, .hx-text h1 .hx-dot { animation: none; } }
+
+/* ===== Accueil « startup » : fond animé, barre du haut, titre, boutons, téléphone en direct ===== */
+.hx { padding: calc(14px + env(safe-area-inset-top)) 0 70px; background: #0d0814; text-align: center; }
+.hx-bg, .hx-shade { display: none; }
+.hx-blobs { position: absolute; inset: 0; z-index: -1; overflow: hidden; }
+.hx-blobs i { position: absolute; width: 70vw; max-width: 420px; aspect-ratio: 1; border-radius: 50%; filter: blur(60px); opacity: .55; animation: hx-blob 14s ease-in-out infinite alternate; }
+.hx-blobs i:nth-child(1) { background: #fd1a85; top: -12%; left: -20%; }
+.hx-blobs i:nth-child(2) { background: #8a1de9; top: 30%; right: -25%; animation-delay: -5s; }
+.hx-blobs i:nth-child(3) { background: #fe7320; bottom: -15%; left: 10%; opacity: .35; animation-delay: -9s; }
+@keyframes hx-blob { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(12%, 8%) scale(1.15); } 100% { transform: translate(-8%, 14%) scale(.95); } }
+.hx-nav { display: flex; align-items: center; justify-content: space-between; padding: 0 64px 0 18px; height: 44px; }
+.hx-nav .hx-brand { position: static; font-size: 1.2rem; }
+.hx-nav .hx-brand img { width: 30px; height: 30px; }
+.hx-login { color: #fff; font-weight: 700; font-size: .85rem; text-decoration: none; padding: 7px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.08); backdrop-filter: blur(10px); }
+.hx-text { padding: 26px 20px 0; }
+.hx-pill { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 14px; padding: 5px 12px 5px 5px; border-radius: 999px; font-size: .78rem; font-weight: 600; color: rgba(255,255,255,.9); background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); }
+.hx-pill span { padding: 3px 9px; border-radius: 999px; font-weight: 800; color: #fff; background: linear-gradient(90deg, #fd1a85, #8a1de9); }
+.hx-text h1 { font-size: clamp(1.75rem, 8.2vw, 2.6rem); line-height: 1.08; letter-spacing: -.03em; margin: 0 0 12px; }
+.hx-sub { margin: 0 auto 20px; font-size: 1rem; line-height: 1.45; color: rgba(255,255,255,.78); max-width: 30ch; }
+.hx-ctas { display: grid; gap: 10px; max-width: 360px; margin: 0 auto; }
+.hx-cta { padding: 15px 18px; font-size: 1rem; border-radius: 16px; box-shadow: 0 12px 30px rgba(253,26,133,.45); }
+.hx-cta-2 { padding: 14px 18px; border-radius: 16px; color: #fff !important; background: rgba(255,255,255,.08) !important; border: 1px solid rgba(255,255,255,.25) !important; backdrop-filter: blur(10px); }
+.hx-trust { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 14px; margin: 16px 0 0; font-size: .8rem; font-weight: 600; color: rgba(255,255,255,.72); }
+.hx-stage { margin-top: 34px; }
+.hx-phone { width: 172px; box-shadow: 0 30px 70px rgba(0,0,0,.6), 0 0 90px rgba(253,26,133,.4); }
+.hx-phone::after { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, rgba(255,255,255,.18), transparent 35%); pointer-events: none; }
+.hx-world { top: 12%; } .hx-replay { bottom: 10%; }
+.hx-card { margin: -34px 6px 0; padding: 14px 14px 8px; }
+.hx-card .divider { margin: 0 0 8px; }
+.hx-pill { white-space: nowrap; font-size: .74rem; }
+.hx-text .hx-sub { margin: 0 auto 22px; }
+.hx-text .hx-trust { margin-top: 18px; }
+.hx-text h1 { margin-bottom: 14px; }
+.hx-card { padding-bottom: 14px; }
+.hx-nw { white-space: nowrap; font-weight: inherit; }
+.hx-pill { font-size: .72rem; margin-bottom: 18px; padding-right: 14px; max-width: 100%; box-sizing: border-box; }
+.hx-text { padding-top: 30px; }
+.hx-text .hx-pill { max-width: none; margin: 0 auto 18px; font-size: .72rem; color: rgba(255,255,255,.9); line-height: 1.2; }
