@@ -1476,3 +1476,8 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .up-row .card-fav { top: 50%; transform: translateY(-50%); width: 34px; height: 34px; font-size: 1rem; }
 .up-row .card-fav { background: transparent; box-shadow: none; border: 1px solid var(--border); color: #fd1a85; }
 .up-row .card-fav.on { border-color: rgba(253,26,133,.4); }
+/* Feuilles du bas : jamais plus hautes que l'écran (le contenu défile à l'intérieur). */
+.sheet .card { max-height: calc(100dvh - 16px - env(safe-area-inset-top)); overflow-y: auto; overscroll-behavior: contain; }
+#notif-sheet .card { display: flex; flex-direction: column; overflow: hidden; }
+#notif-sheet .notif-list { flex: 1 1 auto; min-height: 0; max-height: none; }
+#notif-sheet .card > h2, #notif-sheet .card > p, #notif-sheet .card > button { flex: none; }
