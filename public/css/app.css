@@ -1395,3 +1395,8 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 /* « Se connecter » : décalé vers la droite (près du bouton thème) et plus compact, pour ne pas toucher le logo. */
 .hx-nav { padding-right: 56px; gap: 10px; }
 .hx-login { margin-left: auto; font-size: .78rem; padding: 6px 12px; }
+
+/* Bandeau « Bientôt sur les stores » */
+.hx-stores { display:flex; align-items:center; justify-content:center; gap:8px; margin:10px 16px 0; padding:8px 12px; border-radius:12px; font-size:.8rem; color:#fff; background:linear-gradient(90deg, rgba(255,45,149,.22), rgba(168,85,247,.22)); border:1px solid rgba(255,255,255,.18); backdrop-filter: blur(10px); text-align:center; }
+.hx-stores b { font-weight:800; }
+.hx-store-ic { display:inline-flex; gap:5px; align-items:center; flex:none; }
