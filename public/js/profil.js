@@ -1,5 +1,5 @@
 // Profil : photo, nom, statistiques, amis, favoris, participations, thème, mot de passe.
-import { pickAvatar, api, $, esc, toast, tabbar, goLogin, resizeImage, publicCard, viewPhoto, enablePush, pushState } from "./common.js";
+import { pickAvatar, deleteAccount, confirmSheet, api, $, esc, toast, tabbar, goLogin, resizeImage, publicCard, viewPhoto, enablePush, pushState } from "./common.js";
 import { lang, setLang, themePref, setTheme, bigText, setBigText } from "./i18n.js";
 
 // Page « /reglages » (ou /profil?reglages) : mot de passe, notifications, apparence, langue, compte.
@@ -110,22 +110,13 @@ $("#p-list").addEventListener("click", (e) => {
 });
 
 $("#logout").addEventListener("click", async () => {
-  if (!confirm("Se déconnecter de MaFeliza ?")) return;
+  if (!(await confirmSheet("Se déconnecter de MaFeliza ?", { ok: "🚪 Se déconnecter" }))) return;
   try { localStorage.removeItem("em-dash"); } catch { /* ignoré */ }
   await api("/api/auth/logout", { method: "POST" });
   location.replace("/");
 });
 
-$("#delete-account").addEventListener("click", async () => {
-  const answer = prompt("Cette action est définitive. Tapez SUPPRIMER pour confirmer.");
-  if (answer?.trim().toUpperCase() !== "SUPPRIMER") return;
-  try {
-    await api("/api/auth/me", { method: "DELETE" });
-    location.replace("/?compte-supprime");
-  } catch (err) {
-    alert(err.message);
-  }
-});
+$("#delete-account").addEventListener("click", () => deleteAccount());
 
 // Notifications push de cet appareil.
 const paintPush = () => { if (pushState() === "granted") { $("#push-btn").textContent = "🔔 Notifications activées ✔"; } };

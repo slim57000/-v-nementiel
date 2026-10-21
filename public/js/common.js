@@ -230,6 +230,36 @@ export function backButton(fallback = "/dashboard") {
 }
 
 // « + » du menu : choisir entre une story (sur un de ses événements) et un nouvel événement.
+// Fenêtre de confirmation intégrée à la page (les fenêtres confirm()/prompt() du système ne s'affichent pas
+// dans toutes les applications). Renvoie true si la personne confirme.
+export function confirmSheet(message, { ok = "Confirmer", danger = false, title = "" } = {}) {
+  return new Promise((resolve) => {
+    document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="confirm-sheet" role="dialog" aria-modal="true"><div class="card">
+      ${title ? `<h2 style="margin-top:0">${esc(title)}</h2>` : ""}<p>${esc(message)}</p>
+      <button type="button" class="btn btn-block ${danger ? "btn-danger" : ""}" data-c="1">${esc(ok)}</button>
+      <button type="button" class="btn btn-light btn-block" data-c="0" style="margin-top:8px">Annuler</button></div></div>`);
+    const s = document.getElementById("confirm-sheet");
+    s.addEventListener("click", (e) => {
+      const c = e.target.closest("[data-c]")?.dataset.c;
+      if (e.target !== s && c === undefined) return;
+      s.remove();
+      resolve(c === "1");
+    });
+  });
+}
+
+// Suppression définitive du compte (exigée par Apple / Google) : depuis le menu du profil et les Réglages.
+export async function deleteAccount() {
+  const ok = await confirmSheet("Votre compte, vos événements, leurs photos, vidéos, messages et livre d'or seront effacés définitivement. Cette action est irréversible.",
+    { title: "Supprimer mon compte ?", ok: "🗑️ Supprimer définitivement", danger: true });
+  if (!ok) return;
+  try {
+    await api("/api/auth/me", { method: "DELETE" });
+    try { localStorage.removeItem("em-dash"); } catch { /* ignoré */ }
+    location.replace("/?compte-supprime");
+  } catch (err) { toast(err.message); }
+}
+
 export function createSheet(e) {
   e.preventDefault();
   const events = api("/api/events").catch(() => null); // chargé tout de suite : le choix de fichier doit suivre un appui
@@ -303,6 +333,7 @@ async function profileMenu() {
         ${me?.isAdmin ? '<a class="me-row" href="/admin"><span>🛠️</span>Administration<i>›</i></a>' : ""}
         <a class="me-row" href="/contact"><span>✉️</span>Nous contacter<i>›</i></a>
         <button type="button" class="me-row me-logout" data-me="logout"><span>🚪</span>Se déconnecter<i>›</i></button>
+        <button type="button" class="me-row me-logout" data-me="delete"><span>🗑️</span>Supprimer mon compte<i>›</i></button>
         <button class="btn btn-light btn-block" type="button" data-me="close" style="margin-top:10px">Fermer</button>
       </div></div>`);
     const sheet = $("#me-sheet");
@@ -312,9 +343,14 @@ async function profileMenu() {
       if (act === "likes") { sheet.remove(); openFavs(); }
       if (act === "avatar") { sheet.remove(); pickAvatar(me?.avatar, (p) => { me = { ...me, avatar: p.avatar }; paint(); }); }
       if (act === "name") { sheet.remove(); editName(name, (p) => { me = { ...me, displayName: p.name }; location.reload(); }); }
-      if (act === "logout" && confirm("Se déconnecter de MaFeliza ?")) {
-        try { localStorage.removeItem("em-dash"); } catch { /* ignoré */ }
-        api("/api/auth/logout", { method: "POST" }).catch(() => {}).finally(() => location.replace("/"));
+      if (act === "delete") { sheet.remove(); deleteAccount(); }
+      if (act === "logout") {
+        sheet.remove();
+        confirmSheet("Se déconnecter de MaFeliza ?", { ok: "🚪 Se déconnecter" }).then((yes) => {
+          if (!yes) return;
+          try { localStorage.removeItem("em-dash"); } catch { /* ignoré */ }
+          api("/api/auth/logout", { method: "POST" }).catch(() => {}).finally(() => location.replace("/"));
+        });
       }
     });
   });

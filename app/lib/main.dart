@@ -94,6 +94,16 @@ class _HomePageState extends State<HomePage> {
       ))
       ..loadRequest(Uri.parse(site));
 
+    // Fenêtres alert / confirm / prompt du site : affichées en fenêtres natives (sinon WKWebView les ignore
+    // et les boutons qui demandent une confirmation ne font rien).
+    _web.setOnJavaScriptAlertDialog((req) => _dialog(req.message, cancel: false));
+    _web.setOnJavaScriptConfirmDialog((req) => _dialog(req.message));
+    _web.setOnJavaScriptTextInputDialog((req) async {
+      final field = TextEditingController(text: req.defaultText ?? '');
+      final ok = await _dialog(req.message, input: field);
+      return ok ? field.text : '';
+    });
+
     // Bouton Apple du site (iPhone) : fenêtre système « Se connecter avec Apple », jeton renvoyé au site.
     if (Platform.isIOS) {
       _web.addJavaScriptChannel('MaFelizaApple', onMessageReceived: (_) => _appleSignIn());
@@ -147,6 +157,25 @@ class _HomePageState extends State<HomePage> {
     } else {
       SystemNavigator.pop();
     }
+  }
+
+  Future<bool> _dialog(String message, {bool cancel = true, TextEditingController? input}) async {
+    if (!mounted) return false;
+    final ok = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(message),
+          if (input != null) TextField(controller: input, autofocus: true),
+        ]),
+        actions: [
+          if (cancel) TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), style: FilledButton.styleFrom(backgroundColor: pink), child: const Text('OK')),
+        ],
+      ),
+    );
+    return ok ?? false;
   }
 
   @override
