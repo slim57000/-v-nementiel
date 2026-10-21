@@ -5,8 +5,8 @@ import { isNativeApp, nativeShare } from "./native.js";
 import { translateNotif } from "./notif-i18n.js";
 
 // Format des dates selon la langue choisie.
-export const LOCALE = lang === "en" ? "en-GB" : "fr-FR";
-export const EN = lang === "en";
+export const LOCALE = lang === "fr" ? "fr-FR" : lang === "en" ? "en-GB" : lang; // dates dans la langue choisie
+export const EN = lang !== "fr"; // textes écrits en deux versions : l'anglais sert à toutes les langues étrangères
 
 export const EVENT_TYPES = {
   mariage: { label: "Mariage", icon: "💍" },
@@ -109,7 +109,7 @@ export function resizeImage(file, maxSize = 1280) {
 export function dayBadge(date) {
   const today = new Date(new Date().toDateString());
   const days = Math.round((new Date(`${date}T00:00`) - today) / 86400000);
-  return days > 0 ? (lang === "en" ? `D-${days}` : `J-${days}`) : days === 0 ? (lang === "en" ? "Today" : "Aujourd'hui") : (lang === "en" ? "Past" : "Passé");
+  return days > 0 ? (lang !== "fr" ? `D-${days}` : `J-${days}`) : days === 0 ? (lang !== "fr" ? "Today" : "Aujourd'hui") : (lang !== "fr" ? "Past" : "Passé");
 }
 
 // Vignette d'un événement public (accueil, Découvrir).
@@ -829,7 +829,7 @@ export function openStories(items, { start = 0, title = "", onDelete, slug = "" 
     i = n;
     const it = items[i];
     bars.forEach((b, k) => { b.style.transition = "none"; b.style.width = k < i ? "100%" : "0%"; });
-    root.querySelector(".sv-who").innerHTML = `<b>${esc(it.name)}</b> <span>${title ? `${esc(title)} · ` : ""}${lang === "en" ? `${agoShort(it.createdAt)} ago` : `il y a ${agoShort(it.createdAt)}`}</span>`;
+    root.querySelector(".sv-who").innerHTML = `<b>${esc(it.name)}</b> <span>${title ? `${esc(title)} · ` : ""}${lang !== "fr" ? `${agoShort(it.createdAt)} ago` : `il y a ${agoShort(it.createdAt)}`}</span>`;
     root.querySelector(".sv-caption").textContent = it.caption || "";
     paintReactions(it);
     const media = root.querySelector(".sv-media");
@@ -856,7 +856,7 @@ export function openStories(items, { start = 0, title = "", onDelete, slug = "" 
   const panel = root.querySelector(".sv-comments");
   const paintComments = (it) => {
     panel.querySelector(".sv-com-list").innerHTML = (it.comments || []).map((c) => `<p><b>${esc(c.name)}</b> ${esc(c.text)}${onDelete ? ` <button type="button" data-del-com="${esc(c.id)}" aria-label="Retirer">✕</button>` : ""}</p>`).join("")
-      || `<p class="muted">${lang === "en" ? "No comments yet. Be the first!" : "Aucun commentaire. Soyez le premier !"}</p>`;
+      || `<p class="muted">${lang !== "fr" ? "No comments yet. Be the first!" : "Aucun commentaire. Soyez le premier !"}</p>`;
     panel.querySelector(".sv-com-list").scrollTop = 1e6;
   };
   root.querySelector(".sv-com-btn").addEventListener("click", () => {

@@ -10,11 +10,9 @@ tabbar("profile");
 function paintPrefs() {
   document.querySelectorAll("[data-big]").forEach((b) => b.classList.toggle("active", (b.dataset.big === "1") === bigText()));
   document.querySelectorAll("[data-theme-pref]").forEach((b) => b.classList.toggle("active", b.dataset.themePref === themePref()));
-  document.querySelectorAll("[data-lang]").forEach((b) => b.classList.toggle("active", b.dataset.lang === lang));
 }
 $("#theme").addEventListener("click", (e) => { if (e.target.dataset.themePref) { setTheme(e.target.dataset.themePref); paintPrefs(); } });
 $("#textsize").addEventListener("click", (e) => { if (e.target.dataset.big) { setBigText(e.target.dataset.big === "1"); paintPrefs(); } });
-$("#lang").addEventListener("click", (e) => { if (e.target.dataset.lang && e.target.dataset.lang !== lang) setLang(e.target.dataset.lang); });
 paintPrefs();
 
 function paintAvatar(p) {

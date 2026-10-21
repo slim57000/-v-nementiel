@@ -1,4 +1,4 @@
-// Langue (français / anglais) et thème (clair / sombre / automatique).
+// Langue (15 langues, détectée automatiquement d'après le téléphone) et thème (clair / sombre / automatique).
 // La traduction se fait à partir des textes français de l'interface : chaque texte ou attribut
 // dont la valeur exacte figure dans le dictionnaire est remplacé, y compris le contenu ajouté
 // dynamiquement (observateur de mutations). Les pages légales restent en français.
@@ -49,7 +49,7 @@ const EN = {
   "✍️ Écrire dans le livre d'or": "✍️ Write in the guestbook", "Tous": "All",
   "🟢 En ligne maintenant": "🟢 Online now", "Personnes sur le site": "People on the site", "Utilisateurs connectés": "Logged-in users", "Visiteurs non connectés": "Guests (not logged in)", "Actualiser": "Refresh", "Actifs sur les 2 dernières minutes · mis à jour toutes les 5 s": "Active in the last 2 minutes · updated every 5 s", "En direct sur MaFeliza": "Live on MaFeliza", "↻ Actualiser": "↻ Refresh", "personnes sur le site en ce moment": "people on the site right now", "personne sur le site en ce moment": "person on the site right now", "Où sont-ils ?": "Where are they?", "Qui est là ?": "Who's here?", "Visiteur": "Visitor", "Mis à jour ✔": "Updated ✔", "personnes sont là en ce moment": "people are here right now", "Mon compte": "My account", "Vos plus beaux moments,": "Your most beautiful moments,", "partagés avec tous ceux que vous aimez.": "shared with everyone you love.",
   "Faire-part, live, photos et souvenirs : le premier réseau social dédié à vos événements.": "Invitations, live, photos and memories: the first social network for your events.",
-  "« Vous êtes magnifiques 💛 »": "“You look wonderful 💛”", "Mamie Jeanne · livre d'or": "Grandma Jeanne · guestbook", "EN DIRECT ": "LIVE ",
+  "« Vous êtes magnifiques 💛 »": "“You look wonderful 💛”", "Mamie Jeanne · livre d'or": "Grandma Jeanne · guestbook", "EN DIRECT": "LIVE",
   "Mariage": "Wedding", "Baptême": "Christening", "Anniversaire": "Birthday", "Diplôme": "Graduation", "Fiançailles": "Engagement", "Communion": "Communion", "Inauguration": "Opening", "✓ Gratuit": "✓ Free", "✓ Sans application": "✓ No app needed", "✓ Simple pour les grands-parents": "✓ Easy for grandparents",
   "Tout votre événement,": "Your whole event,", "au même endroit": "in one place", "Faire-part": "Invitation", "Élégant, prêt à envoyer sur WhatsApp": "Elegant, ready to send on WhatsApp",
   "Live": "Live", "Les proches éloignés vivent le moment": "Loved ones far away share the moment", "Album partagé": "Shared album", "Toutes les photos des invités": "All your guests' photos",
@@ -160,6 +160,10 @@ const EN = {
 };
 
 const LANG_KEY = "em-lang";
+// Langues proposées (nom affiché dans sa propre langue). L'anglais sert de secours pour un texte non traduit.
+export const LANGS = { fr: "🇫🇷 Français", en: "🇬🇧 English", de: "🇩🇪 Deutsch", es: "🇪🇸 Español", tr: "🇹🇷 Türkçe", ar: "🇸🇦 العربية",
+  pt: "🇵🇹 Português", it: "🇮🇹 Italiano", pl: "🇵🇱 Polski", ro: "🇷🇴 Română", nl: "🇳🇱 Nederlands", ru: "🇷🇺 Русский", uk: "🇺🇦 Українська",
+  zh: "🇨🇳 中文", hi: "🇮🇳 हिन्दी" };
 const THEME_KEY = "em-theme";
 const read = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
 const write = (k, v) => { try { localStorage.setItem(k, v); } catch { /* ignoré */ } };
@@ -491,10 +495,22 @@ Object.assign(EN, {"🔍 Rechercher : nom, ville, type…": "🔍 Search: name, 
 Object.assign(EN, {"🎁 Créer ma cagnotte":"🎁 Create my money pot","Choisissez le service de cagnotte. Une fois la cagnotte créée,":"Choose the money pot service. Once the pot is created,","copiez son lien":"copy its link","puis touchez":"then tap",": il sera ajouté à votre événement.":": it will be added to your event.","Copiez le lien de votre cagnotte puis touchez « 📋 Coller ».":"Copy your money pot link then tap “📋 Paste”."});
 
 // Pages Google (data-lang="fr" sur <html>) : toujours en français, comme le texte rendu par le serveur.
-export const lang = document.documentElement.dataset.lang || read(LANG_KEY) || (navigator.language?.startsWith("en") ? "en" : "fr");
+// Détection : choix mémorisé, sinon la première langue du téléphone que le site connaît, sinon l'anglais.
+function detectLang() {
+  for (const l of navigator.languages?.length ? navigator.languages : [navigator.language]) {
+    const code = String(l || "").toLowerCase().split("-")[0];
+    if (LANGS[code]) return code;
+  }
+  return "en";
+}
+const saved = read(LANG_KEY);
+export const lang = document.documentElement.dataset.lang || (LANGS[saved] ? saved : detectLang());
+// Dictionnaire de la langue : anglais, ou fichier i18n-xx.js (complété par l'anglais pour les textes manquants).
+const DICT = lang === "fr" ? {} : lang === "en" ? EN
+  : { ...EN, ...((await import(`./i18n-${lang}.js`).catch(() => ({}))).default || {}) };
 // Le serveur lit la langue (emails dans la langue de l'utilisateur).
 try { document.cookie = `em-lang=${lang}; path=/; max-age=31536000; SameSite=Lax`; } catch { /* cookies bloqués */ }
-export const t = (fr) => (lang === "en" && EN[fr]) || fr;
+export const t = (fr) => (lang !== "fr" && DICT[fr]) || fr;
 // Traduction d'une phrase complète : exacte si possible, sinon morceau par morceau.
 // Noms d'événements courants (« Mariage de Awa & Samuel », « Les 30 ans de Léo »…) : traduits par motif.
 const NAME_RULES = [
@@ -506,9 +522,10 @@ const NAME_RULES = [
 Object.assign(EN, {"Ils se disent oui": "They're saying yes", "Joyeux anniversaire": "Happy birthday", "Un jour béni": "A blessed day", "Première communion": "First communion", "Ils se fiancent": "They're getting engaged", "Bébé arrive !": "Baby is coming!", "Félicitations !": "Congratulations!", "Bonne retraite !": "Happy retirement!", "Grande ouverture": "Grand opening", "Nous avons la joie de vous convier à notre mariage.": "We are delighted to invite you to our wedding.", "Venez fêter cette belle année avec nous !": "Come and celebrate this wonderful year with us!", "Nous serons heureux de vous accueillir pour le baptême.": "We will be happy to welcome you to the baptism.", "Partagez avec nous ce moment de foi.": "Share this moment of faith with us.", "Nous célébrons nos fiançailles.": "We are celebrating our engagement.", "Une douce fête pour accueillir bébé.": "A sweet party to welcome baby.", "Célébrons ensemble cette réussite.": "Let's celebrate this success together.", "Une nouvelle vie commence.": "A new life begins.", "Découvrez notre nouvel espace.": "Discover our new space.", "Une soirée inoubliable vous attend.": "An unforgettable evening awaits you.", "Nous avons la joie de vous convier à notre mariage, suivi d'un dîner et d'une soirée dansante.": "We are delighted to invite you to our wedding, followed by dinner and a dance party.", "Une belle soirée entre amis.": "A lovely evening with friends."});
 
 export function tr(text) {
-  if (lang !== "en" || !text) return text;
+  if (lang === "fr" || !text) return text;
   const s = String(text);
-  if (EN[s.trim()]) return s.replace(s.trim(), EN[s.trim()]);
+  if (DICT[s.trim()]) return s.replace(s.trim(), DICT[s.trim()]);
+  if (lang !== "en") return s; // motifs et morceaux de phrases : anglais seulement
   for (const [re, en] of NAME_RULES) if (re.test(s.trim())) return s.replace(s.trim(), s.trim().replace(re, en));
   let out = s;
   for (const [fr, en] of FRAG) if (out.includes(fr)) out = out.split(fr).join(en);
@@ -517,25 +534,26 @@ export function tr(text) {
 
 // Traduit un nœud et ses descendants (textes et attributs usuels).
 function translate(root) {
-  if (lang !== "en") return;
+  if (lang === "fr") return;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   for (let n = walker.nextNode(); n; n = walker.nextNode()) {
     const key = n.nodeValue.trim();
-    if (key && EN[key]) n.nodeValue = n.nodeValue.replace(key, EN[key]);
+    if (key && DICT[key]) n.nodeValue = n.nodeValue.replace(key, DICT[key]);
     else if (key) { const v = tr(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; }
   }
   const els = root.querySelectorAll ? [...(root.matches?.("[placeholder],[aria-label],[title]") ? [root] : []), ...root.querySelectorAll("[placeholder],[aria-label],[title]")] : [];
   for (const el of els) {
     for (const attr of ["placeholder", "aria-label", "title"]) {
       const v = el.getAttribute(attr);
-      const t = v && (EN[v.trim()] || tr(v));
+      const t = v && (DICT[v.trim()] || tr(v));
       if (t && t !== v) el.setAttribute(attr, t);
     }
   }
 }
 
-if (lang === "en") {
-  document.documentElement.lang = "en";
+if (lang !== "fr") {
+  document.documentElement.lang = lang;
+  if (lang === "ar") document.documentElement.dir = "rtl"; // arabe : lecture de droite à gauche
   // Pages rédigées dans les deux langues (pages légales) : on affiche la version anglaise.
   const swap = () => {
     document.querySelectorAll("[data-fr]").forEach((el) => { el.hidden = true; });
@@ -557,7 +575,7 @@ if (lang === "en") {
       // Textes d'aide modifiés après coup (placeholder, aria-label, title) : traduits eux aussi.
       for (const m of muts) if (m.type === "attributes" && m.target.nodeType === 1) {
         const v = m.target.getAttribute(m.attributeName);
-        const t = v && (EN[v.trim()] || tr(v));
+        const t = v && (DICT[v.trim()] || tr(v));
         if (t && t !== v) m.target.setAttribute(m.attributeName, t);
       }
     }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["placeholder", "aria-label", "title"] });
@@ -586,16 +604,13 @@ function applyTheme() {
 applyTheme();
 matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", applyTheme);
 
-// Liens « FR · EN » (pied de page) : [data-setlang].
-document.addEventListener("click", (e) => {
-  const el = e.target.closest?.("[data-setlang]");
-  if (!el) return;
-  e.preventDefault();
-  if (el.dataset.setlang !== lang) setLang(el.dataset.setlang);
+// Choix de la langue : menus [data-langselect] (pied de page, Réglages), remplis ici avec les 15 langues.
+const fillLangSelects = () => document.querySelectorAll("select[data-langselect]").forEach((sel) => {
+  if (sel.options.length) return;
+  sel.innerHTML = Object.entries(LANGS).map(([code, name]) => `<option value="${code}"${code === lang ? " selected" : ""}>${name}</option>`).join("");
+  sel.addEventListener("change", () => setLang(sel.value));
 });
-addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(`[data-setlang="${lang}"]`).forEach((a) => { a.style.fontWeight = "800"; a.style.color = "var(--primary)"; });
-});
+document.readyState === "loading" ? addEventListener("DOMContentLoaded", fillLangSelects) : fillLangSelects();
 
 export function setTheme(value) {
   write(THEME_KEY, value);

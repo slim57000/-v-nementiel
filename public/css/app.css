@@ -1300,3 +1300,8 @@ body.simple-mode { background: linear-gradient(160deg, #fff5fa, #f3e8ff); min-he
 @keyframes hx-marquee { to { transform: translateX(-50%); } }
 @media (prefers-reduced-motion: reduce) { .hx-slides img, .hx-float, .hx-track, .hx-live i { animation: none !important; } .hx-slides img:first-child { opacity: 1; } }
 @media (min-width: 520px) { .hx { margin: 0 0 0; border-radius: 34px; } .hx-types { margin-inline: 0; } }
+
+/* Choix de la langue (15 langues). */
+.lang-select { width: auto; display: inline-block; padding: 4px 26px 4px 8px; font-size: .85rem; border-radius: 10px; background-color: var(--card); color: var(--text); border: 1px solid var(--border); }
+.lang-select-big { width: 100%; padding: 12px 14px; font-size: 1rem; }
+[dir="rtl"] .hx-text, [dir="rtl"] .hx-brand { direction: rtl; }

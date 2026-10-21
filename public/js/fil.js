@@ -1,5 +1,5 @@
 import { lang } from "./i18n.js";
-const t = (fr, en) => (lang === "en" ? en : fr); // textes avec nombres (non traduisibles par le dictionnaire)
+const t = (fr, en) => (lang !== "fr" ? en : fr); // textes avec nombres (non traduisibles par le dictionnaire)
 // Fil d'actualité façon Instagram : nouveaux événements, photos/vidéos des invités, messages du livre d'or.
 import { api, $, esc, toast, tabbar, goLogin, coverOf, isLiveNow, dayBadge, isVideo, viewPhoto, EVENT_TYPES, LOCALE, shareSheet, liveState } from "./common.js";
 
