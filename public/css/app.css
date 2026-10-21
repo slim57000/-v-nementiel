@@ -1412,3 +1412,10 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .hx-badge svg { flex: none; width: 20px; height: 20px; }
 .hx-badge b { font-size: clamp(.8rem, 3.6vw, 1rem); }
 .hx-badge small { font-size: clamp(.55rem, 2.4vw, .62rem); }
+/* Agencement resserré : téléphone remonté */
+.hx-text { padding-top: 16px; }
+.hx-text .hx-pill { margin-bottom: 12px; }
+.hx-text h1 { margin-bottom: 8px; }
+.hx-text .hx-trust { margin-top: 12px; }
+.hx-stage { margin-top: 10px; }
+.hx-text .hx-trust { flex-wrap: nowrap; gap: 10px; font-size: .74rem; white-space: nowrap; }
