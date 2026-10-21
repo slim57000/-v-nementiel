@@ -1334,3 +1334,9 @@ body.simple-mode { background: linear-gradient(160deg, #fff5fa, #f3e8ff); min-he
 .hx-ui { top: 9px; left: 7px; right: 7px; }
 /* Liens vers les pages Google (en français uniquement) : masqués pour les visiteurs d'une autre langue. */
 html[lang]:not([lang="fr"]) .footer-guides { display: none; }
+
+/* Accueil : séparation nette entre le contenu et le pied de page (trait dégradé + fond légèrement teinté). */
+main.home + .site-footer { position: relative; margin-top: 30px; padding-top: 30px; border-radius: 28px 28px 0 0;
+  background: color-mix(in srgb, var(--card) 70%, transparent); border-top: 1px solid var(--border); }
+main.home + .site-footer::before { content: ""; position: absolute; top: -1px; left: 50%; transform: translateX(-50%); width: 120px; height: 3px; border-radius: 3px;
+  background: linear-gradient(90deg, #fe7320, #fd1a85 50%, #8a1de9); }
