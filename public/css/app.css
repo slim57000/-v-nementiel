@@ -1419,3 +1419,4 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .hx-text .hx-trust { margin-top: 12px; }
 .hx-stage { margin-top: 10px; }
 .hx-text .hx-trust { flex-wrap: nowrap; gap: 10px; font-size: .74rem; white-space: nowrap; }
+.hx-after { padding-top: 18px; padding-bottom: 8px; }
