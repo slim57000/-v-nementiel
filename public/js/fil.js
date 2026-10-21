@@ -1,15 +1,13 @@
-import { lang } from "./i18n.js";
-const t = (fr, en) => (lang !== "fr" ? en : fr); // textes avec nombres (non traduisibles par le dictionnaire)
+import { t as tr } from "./i18n.js";
 // Fil d'actualité façon Instagram : nouveaux événements, photos/vidéos des invités, messages du livre d'or.
-import { api, $, esc, toast, tabbar, goLogin, coverOf, isLiveNow, dayBadge, isVideo, viewPhoto, EVENT_TYPES, LOCALE, shareSheet, liveState } from "./common.js";
+import { api, $, esc, toast, tabbar, goLogin, coverOf, isLiveNow, dayBadge, relAgo, isVideo, viewPhoto, EVENT_TYPES, LOCALE, shareSheet, liveState } from "./common.js";
 
 tabbar("home");
 
 const ago = (iso) => {
   const s = (Date.now() - new Date(iso)) / 1000;
   if (!(s >= 0)) return "";
-  if (s < 3600) return t(`il y a ${Math.max(1, Math.round(s / 60))} min`, `${Math.max(1, Math.round(s / 60))} min ago`);
-  if (s < 86400) return t(`il y a ${Math.round(s / 3600)} h`, `${Math.round(s / 3600)} h ago`);
+  if (s < 86400) return relAgo(iso);
   return new Date(iso).toLocaleDateString(LOCALE, { day: "numeric", month: "long" });
 };
 const eventLink = (ev) => (ev.date === new Date().toISOString().slice(0, 10) ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${encodeURIComponent(ev.slug)}`);
@@ -23,7 +21,7 @@ function post(it, i) {
     ? (isVideo(it.url) ? `<video src="${esc(it.url)}#t=0.1" controls playsinline preload="metadata"></video>` : `<img src="${esc(it.url)}" alt="" loading="lazy" data-view="${i}">`)
     : it.kind === "event" ? `<a href="${eventLink(ev)}"><img src="${esc(coverOf(ev))}" alt="" loading="lazy"></a>` : "";
   const title = it.kind === "event"
-    ? `${isLiveNow(ev) ? t("● En direct", "● Live") : t("Nouvel événement", "New event")} · ${esc(dayBadge(ev.date))}`
+    ? `${isLiveNow(ev) ? tr("● En direct") : tr("Nouvel événement")} · ${esc(dayBadge(ev.date))}`
     : it.kind === "photo" ? `<b>${esc(it.name)}</b> a partagé ${isVideo(it.url) ? "une vidéo" : "une photo"}`
     : `<b>${esc(it.name)}</b> a écrit dans le livre d'or`;
   return `<article class="feed-post">

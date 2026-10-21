@@ -1,12 +1,19 @@
 // Utilitaires partagés par toutes les pages.
 import { icon } from "./icons.js";
-import { lang, tr } from "./i18n.js"; // langue (FR/EN) et thème (clair/sombre), appliqués au chargement
+import { lang, tr, t } from "./i18n.js"; // langue (FR/EN) et thème (clair/sombre), appliqués au chargement
 import { isNativeApp, nativeShare } from "./native.js";
 import { translateNotif } from "./notif-i18n.js";
 
 // Format des dates selon la langue choisie.
 export const LOCALE = lang === "fr" ? "fr-FR" : lang === "en" ? "en-GB" : lang; // dates dans la langue choisie
-export const EN = lang !== "fr"; // textes écrits en deux versions : l'anglais sert à toutes les langues étrangères
+export const EN = lang !== "fr";
+// « il y a 5 min », « 5 min ago », « 5分钟前 »… dans la langue choisie.
+const RTF = (() => { try { return new Intl.RelativeTimeFormat(lang, { numeric: "auto", style: "short" }); } catch { return null; } })();
+export function relAgo(iso) {
+  const m = Math.max(1, Math.round((Date.now() - new Date(iso)) / 60000));
+  if (lang === "fr" || !RTF) return m < 60 ? `il y a ${m} min` : `il y a ${Math.round(m / 60)} h`;
+  return m < 60 ? RTF.format(-m, "minute") : RTF.format(-Math.round(m / 60), "hour");
+} // textes écrits en deux versions : l'anglais sert à toutes les langues étrangères
 
 export const EVENT_TYPES = {
   mariage: { label: "Mariage", icon: "💍" },
@@ -79,9 +86,10 @@ export const eventUrl = (slug) => `${location.origin}/e/${slug}`;
 export function formatDate(date, time) {
   const d = new Date(`${date}T${time || "12:00"}`);
   const day = d.toLocaleDateString(LOCALE, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-  const cap = EN ? day : `${day.charAt(0).toUpperCase()}${day.slice(1)}`;
+  const cap = lang === "en" ? day : `${day.charAt(0).toUpperCase()}${day.slice(1)}`;
   if (!time) return cap; // date seule (sans heure)
-  return EN ? `${cap} at ${time}` : `${cap} à ${time.replace(":", "h")}`;
+  if (lang === "fr") return `${cap} à ${time.replace(":", "h")}`;
+  return lang === "en" ? `${cap} at ${time}` : `${cap} · ${time}`;
 }
 
 // Redimensionne une photo côté navigateur (photos de téléphone souvent > 5 Mo) et renvoie une data URL JPEG.
@@ -109,7 +117,9 @@ export function resizeImage(file, maxSize = 1280) {
 export function dayBadge(date) {
   const today = new Date(new Date().toDateString());
   const days = Math.round((new Date(`${date}T00:00`) - today) / 86400000);
-  return days > 0 ? (lang !== "fr" ? `D-${days}` : `J-${days}`) : days === 0 ? (lang !== "fr" ? "Today" : "Aujourd'hui") : (lang !== "fr" ? "Past" : "Passé");
+  const up = (x) => x.charAt(0).toUpperCase() + x.slice(1);
+  if (days > 0) return lang === "fr" ? `J-${days}` : lang === "en" || !RTF ? `D-${days}` : RTF.format(days, "day");
+  return days === 0 ? up(t("Aujourd'hui")) : t("Passé");
 }
 
 // Vignette d'un événement public (accueil, Découvrir).
@@ -797,10 +807,6 @@ export async function onRealtime(topic, onPing) {
 
 // --- Lecteur de stories plein écran (façon Instagram) ---
 // items : [{ url, name, caption, createdAt }] ; appui à droite = suivante, à gauche = précédente ; 5 s par photo.
-const agoShort = (iso) => {
-  const m = Math.max(1, Math.round((Date.now() - new Date(iso)) / 60000));
-  return m < 60 ? `${m} min` : `${Math.round(m / 60)} h`;
-};
 export function openStories(items, { start = 0, title = "", onDelete, slug = "" } = {}) {
   if (!items.length) return;
   document.getElementById("story-viewer")?.remove();
@@ -829,7 +835,7 @@ export function openStories(items, { start = 0, title = "", onDelete, slug = "" 
     i = n;
     const it = items[i];
     bars.forEach((b, k) => { b.style.transition = "none"; b.style.width = k < i ? "100%" : "0%"; });
-    root.querySelector(".sv-who").innerHTML = `<b>${esc(it.name)}</b> <span>${title ? `${esc(title)} · ` : ""}${lang !== "fr" ? `${agoShort(it.createdAt)} ago` : `il y a ${agoShort(it.createdAt)}`}</span>`;
+    root.querySelector(".sv-who").innerHTML = `<b>${esc(it.name)}</b> <span>${title ? `${esc(title)} · ` : ""}${relAgo(it.createdAt)}</span>`;
     root.querySelector(".sv-caption").textContent = it.caption || "";
     paintReactions(it);
     const media = root.querySelector(".sv-media");
@@ -856,7 +862,7 @@ export function openStories(items, { start = 0, title = "", onDelete, slug = "" 
   const panel = root.querySelector(".sv-comments");
   const paintComments = (it) => {
     panel.querySelector(".sv-com-list").innerHTML = (it.comments || []).map((c) => `<p><b>${esc(c.name)}</b> ${esc(c.text)}${onDelete ? ` <button type="button" data-del-com="${esc(c.id)}" aria-label="Retirer">✕</button>` : ""}</p>`).join("")
-      || `<p class="muted">${lang !== "fr" ? "No comments yet. Be the first!" : "Aucun commentaire. Soyez le premier !"}</p>`;
+      || `<p class="muted">${t("Aucun commentaire. Soyez le premier !")}</p>`;
     panel.querySelector(".sv-com-list").scrollTop = 1e6;
   };
   root.querySelector(".sv-com-btn").addEventListener("click", () => {
