@@ -1392,3 +1392,6 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .hp-mini { display: flex; justify-content: center; gap: 10px; margin-bottom: 14px; }
 .hp-mini span { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 84px; padding: 10px 8px; border-radius: 16px; font-size: .78rem; font-weight: 700; color: #fff; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25); }
 .hp-mini i { font-style: normal; font-size: 1.3rem; }
+/* « Se connecter » : décalé vers la droite (près du bouton thème) et plus compact, pour ne pas toucher le logo. */
+.hx-nav { padding-right: 56px; gap: 10px; }
+.hx-login { margin-left: auto; font-size: .78rem; padding: 6px 12px; }
