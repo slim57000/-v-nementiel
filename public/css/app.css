@@ -1340,3 +1340,12 @@ main.home + .site-footer { position: relative; margin-top: 30px; padding-top: 30
   background: color-mix(in srgb, var(--card) 70%, transparent); border-top: 1px solid var(--border); }
 main.home + .site-footer::before { content: ""; position: absolute; top: -1px; left: 50%; transform: translateX(-50%); width: 120px; height: 3px; border-radius: 3px;
   background: linear-gradient(90deg, #fe7320, #fd1a85 50%, #8a1de9); }
+
+/* « en direct » du titre : dégradé qui défile + point rouge qui pulse, comme un vrai live. */
+.hx-text h1 span { background: linear-gradient(90deg, #ffb26b, #ff5fa8, #c99bff, #ff5fa8, #ffb26b); background-size: 300% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent; animation: hx-shine 4s linear infinite; position: relative; }
+.hx-text h1 .hx-dot { display: inline-block; width: .38em; height: .38em; margin: 0 .22em .12em 0; border-radius: 50%;
+  background: #ff2d55; box-shadow: 0 0 0 0 rgba(255,45,85,.7); vertical-align: middle; animation: hx-dot 1.6s ease-out infinite; }
+@keyframes hx-shine { to { background-position: 300% 0; } }
+@keyframes hx-dot { 0% { box-shadow: 0 0 0 0 rgba(255,45,85,.7); } 70% { box-shadow: 0 0 0 .45em rgba(255,45,85,0); } 100% { box-shadow: 0 0 0 0 rgba(255,45,85,0); } }
+@media (prefers-reduced-motion: reduce) { .hx-text h1 span, .hx-text h1 .hx-dot { animation: none; } }
