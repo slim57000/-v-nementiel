@@ -69,7 +69,7 @@ function liveCard({ href, image, tag, live, name, location, viewers, ev }) {
   </a>`;
 }
 
-api("/api/public?limit=10").catch(() => []).then((events) => {
+if ($("#upcoming-list")) api("/api/public?limit=10").catch(() => []).then((events) => {
   // Les directs du jour d'abord, puis les événements privés (rien ne transparaît), puis le reste.
   const built = events.map((e) => {
     // Événement privé : sa photo, mais ni nom ni lieu. Le clic mène à l'écran « entrez votre code ».
