@@ -9,7 +9,7 @@
   <link rel="modulepreload" href="/js/common.js">
   <link rel="modulepreload" href="/js/icons.js">
   <link rel="modulepreload" href="/js/i18n.js">
-  <link rel="preload" as="image" href="/img/home/hero-live-mariage.webp" type="image/webp">
+  <link rel="preload" as="image" href="/img/home/live-ceremonie.webp" type="image/webp">
   <link rel="stylesheet" href="/css/app.css?v=123">
   <link rel="icon" href="/img/logo.png" type="image/png">
   <link rel="manifest" href="/manifest.webmanifest">
@@ -26,20 +26,33 @@
 <body>
   <main class="container home" style="max-width:480px">
     <section class="hx" aria-label="MaFeliza">
-      <div class="hx-slides" aria-hidden="true">
-        <img src="/img/home/hero-live-mariage.webp" alt="" fetchpriority="high">
-        <img src="/img/home/hero-bebe-2.webp" alt="" loading="lazy">
-        <img src="/img/home/hero-anniversaire-bougies.webp" alt="" loading="lazy">
-        <img src="/img/home/hero-diplome-lancer.webp" alt="" loading="lazy">
-      </div>
+      <img class="hx-bg" src="/img/home/bg-live.webp" alt="" aria-hidden="true">
       <div class="hx-shade"></div>
       <div class="hx-brand"><img src="/img/logo.png" alt="" width="34" height="34"><span>MaFel<b>i</b>za</span></div>
-      <div class="hx-live"><i></i>EN DIRECT <span>· 👁 128</span></div>
-      <div class="hx-float hx-msg">« Vous êtes magnifiques 💛 »<small>Mamie Jeanne · livre d'or</small></div>
-      <div class="hx-float hx-react">❤️ 🎉 😍 <b>+48</b></div>
+      <div class="hx-stage">
+        <div class="hx-phone" aria-hidden="true">
+          <div class="hx-slides">
+            <img src="/img/home/live-ceremonie.webp" alt="" fetchpriority="high">
+            <img src="/img/home/live-fete.webp" alt="" loading="lazy">
+            <img src="/img/home/live-inauguration.webp" alt="" loading="lazy">
+            <img src="/img/home/live-diplome.webp" alt="" loading="lazy">
+          </div>
+          <div class="hx-ui">
+            <div class="hx-live"><i></i>EN DIRECT</div><div class="hx-viewers">👁 128</div>
+          </div>
+          <div class="hx-chat">
+            <p><b>Mamie Jeanne</b> Magnifiques 💛</p>
+            <p><b>Paul · Montréal</b> On vous voit !</p>
+            <p><b>Awa</b> Félicitations 🎉</p>
+          </div>
+          <div class="hx-hearts"><i>❤️</i><i>💖</i><i>🎉</i><i>❤️</i><i>😍</i></div>
+        </div>
+        <div class="hx-float hx-world">🌍 Suivi depuis 12 pays</div>
+        <div class="hx-float hx-replay">🎬 Replay envoyé à tous</div>
+      </div>
       <div class="hx-text">
-        <h1>Vos plus beaux moments,<br><span>partagés avec tous ceux que vous aimez.</span></h1>
-        <p>Faire-part, live, photos et souvenirs : le premier réseau social dédié à vos événements.</p>
+        <h1>Vos événements <span>en direct,</span><br>pour tous ceux qui ne peuvent pas venir.</h1>
+        <p>Faire-part, live depuis un simple téléphone, photos et souvenirs : tout au même endroit.</p>
       </div>
     </section>
 
