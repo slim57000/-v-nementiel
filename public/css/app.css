@@ -1481,3 +1481,4 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 #notif-sheet .card { display: flex; flex-direction: column; overflow: hidden; }
 #notif-sheet .notif-list { flex: 1 1 auto; min-height: 0; max-height: none; }
 #notif-sheet .card > h2, #notif-sheet .card > p, #notif-sheet .card > button { flex: none; }
+#feed-wrap { margin-top: 12px; }

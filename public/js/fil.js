@@ -2,7 +2,7 @@ import { t as tr } from "./i18n.js";
 // Fil d'actualité façon Instagram : nouveaux événements, photos/vidéos des invités, messages du livre d'or.
 import { api, $, esc, toast, tabbar, goLogin, coverOf, isLiveNow, dayBadge, relAgo, isVideo, viewPhoto, EVENT_TYPES, LOCALE, shareSheet, liveState } from "./common.js";
 
-tabbar("home");
+if (location.pathname === "/fil") tabbar("home"); // sur l'accueil, le fil est un onglet (menu déjà en place)
 
 const ago = (iso) => {
   const s = (Date.now() - new Date(iso)) / 1000;

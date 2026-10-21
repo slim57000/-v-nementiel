@@ -175,7 +175,7 @@ function render() {
   // Grille : mes événements à venir, ceux où je suis invité, puis les événements publics des autres.
   const guest = joined.filter((e) => e.date >= today && !mine.has(e.slug) && keep(e));
   const others = mix([...events.filter((e) => e.date >= today && keep(e)), ...guest, ...discover.filter((e) => !mine.has(e.slug) && !guest.some((g) => g.slug === e.slug) && keep(e))]);
-  $("#empty").classList.toggle("hidden", shown.length > 0 || others.length > 0);
+  $("#empty").classList.toggle("hidden", shown.length > 0 || others.length > 0 || !$("#feed-wrap").classList.contains("hidden"));
   $("#empty-text").innerHTML = events.length
     ? "Aucun événement dans cette catégorie."
     : "Vous n'avez pas encore d'événement.<br>Créez le premier en quelques minutes !";
@@ -210,9 +210,13 @@ function upRow(ev) {
 
 document.querySelector(".segments").addEventListener("click", (e) => {
   if (!e.target.dataset.filter) return;
-  if (e.target.dataset.filter === "feed") { location.href = "/fil"; return; }
-  filter = e.target.dataset.filter;
+  const feed = e.target.dataset.filter === "feed";
   document.querySelectorAll(".segments button").forEach((b) => b.classList.toggle("active", b === e.target));
+  // Fil : onglet de l'accueil (chargé une seule fois), sans changer de page.
+  $("#feed-wrap").classList.toggle("hidden", !feed);
+  $("#list").classList.toggle("hidden", feed);
+  if (feed) { $("#empty").classList.add("hidden"); import("./fil.js"); return; }
+  filter = e.target.dataset.filter;
   render();
 });
 
