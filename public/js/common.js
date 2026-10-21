@@ -89,7 +89,9 @@ export function formatDate(date, time) {
   const cap = lang === "en" ? day : `${day.charAt(0).toUpperCase()}${day.slice(1)}`;
   if (!time) return cap; // date seule (sans heure)
   if (lang === "fr") return `${cap} à ${time.replace(":", "h")}`;
-  return lang === "en" ? `${cap} at ${time}` : `${cap} · ${time}`;
+  if (lang === "en") return `${cap} at ${time}`;
+  const full = d.toLocaleString(LOCALE, { weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  return `${full.charAt(0).toUpperCase()}${full.slice(1)}`; // « 16 जनवरी 2027 को 15:00 », « 2027年1月16日星期六 15:00 »…
 }
 
 // Redimensionne une photo côté navigateur (photos de téléphone souvent > 5 Mo) et renvoie une data URL JPEG.
