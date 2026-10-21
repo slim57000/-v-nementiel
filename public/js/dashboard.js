@@ -1,5 +1,6 @@
 // Accueil connecté : ronds des stories, onglets Pour vous / En direct / À venir, cartes des événements.
-import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories, liveAttrs, createSheet, syncFavs } from "./common.js";
+import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories, liveAttrs, createSheet, syncFavs, LOCALE } from "./common.js";
+import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 
 // Bandeau « Découvrir » au-dessus des stories (Créer : carré « + » ; Messages et Profil : menu 👤 en haut).
@@ -180,9 +181,31 @@ function render() {
     : "Vous n'avez pas encore d'événement.<br>Créez le premier en quelques minutes !";
   $("#list").innerHTML = camReminder() + shown.map(card).join("") + (others.length
     ? `<div class="section-title"><h2>Événements à venir</h2><a href="/decouvrir" class="see-all">Voir tout</a></div>
-       <div class="p-grid">${others.map(publicCard).join("")}</div>`
+       ${((up) => `${upFeatured(up[0])}<div class="up-list">${up.slice(1).map(upRow).join("")}</div>`)([...others].sort((a, b) => `${a.date}${a.time || ""}`.localeCompare(`${b.date}${b.time || ""}`)))}`
     : "");
   syncFavs();
+}
+
+// « Événements à venir » : le prochain en grande carte, puis une liste façon agenda.
+const upHref = (ev) => (!ev.slug ? "#" : ev.date === new Date().toISOString().slice(0, 10) ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`);
+const upLock = (ev) => (ev.visibility === "private" ? " 🔒" : ev.visibility === "unlisted" || !ev.slug ? " 🔗" : "");
+const upDate = (ev) => { const d = new Date(`${ev.date}T12:00`); return { day: d.getDate(), mon: d.toLocaleDateString(LOCALE, { month: "short" }).replace(".", "") }; };
+const upWhere = (ev) => { const ty = EVENT_TYPES[ev.type] || EVENT_TYPES.autre || { icon: "🎉", label: "" }; return `${ty.icon} ${esc(ev.slug && ev.location ? ev.location : t(ty.label))}`; };
+const upFav = (ev) => (ev.slug ? `<button type="button" class="card-fav" data-fav="${esc(ev.slug)}" aria-label="Ajouter aux favoris">♡</button>` : "");
+function upFeatured(ev) {
+  const { day, mon } = upDate(ev);
+  return `<a class="up-feat" href="${upHref(ev)}" ${ev.slug ? "" : "data-invite-only"} ${liveAttrs(ev)}>
+    <span class="up-cal"><b>${day}</b><small>${esc(mon)}</small></span>${upFav(ev)}
+    <div class="up-feat-txt"><span class="up-count">${esc(dayBadge(ev.date))}${upLock(ev)}</span><h3>${esc(ev.name)}</h3><p>${upWhere(ev)}</p></div>
+  </a>`;
+}
+function upRow(ev) {
+  const { day, mon } = upDate(ev);
+  return `<a class="up-row" href="${upHref(ev)}" ${ev.slug ? "" : "data-invite-only"}>
+    <span class="up-thumb" ${liveAttrs(ev)}></span>
+    <span class="up-cal sm"><b>${day}</b><small>${esc(mon)}</small></span>
+    <span class="up-info"><b>${esc(ev.name)}</b><small>${upWhere(ev)}</small><em>${esc(dayBadge(ev.date))}${upLock(ev)}</em></span>${upFav(ev)}
+  </a>`;
 }
 
 document.querySelector(".segments").addEventListener("click", (e) => {

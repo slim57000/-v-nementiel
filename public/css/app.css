@@ -1450,3 +1450,29 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .stories .story-badge { bottom: -7px; }
 .p-grid .pub-card h3, .pub-card .pc-name { font-size: 1rem; line-height: 1.2; }
 .hd-hello { text-align: center; }
+
+/* ===== Événements à venir : grande carte + liste agenda ===== */
+.up-feat { position: relative; display: block; height: 220px; border-radius: 22px; overflow: hidden; margin-bottom: 14px; color: #fff; text-decoration: none; background-color: #222; background-size: cover; background-position: center; box-shadow: 0 10px 28px rgba(0,0,0,.25); }
+.up-feat::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,.8)); pointer-events: none; }
+.up-feat-txt { position: absolute; left: 16px; right: 16px; bottom: 14px; z-index: 1; }
+.up-feat h3 { margin: 6px 0 2px; font-size: 1.3rem; line-height: 1.15; font-weight: 800; letter-spacing: -.01em; }
+.up-feat p { margin: 0; font-size: .85rem; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.up-count { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 800; background: linear-gradient(135deg, #fd1a85, #c60bd2); }
+.up-cal { position: absolute; top: 12px; left: 12px; z-index: 1; width: 48px; padding: 5px 0 4px; border-radius: 12px; background: rgba(255,255,255,.95); color: #111; text-align: center; line-height: 1; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+.up-cal b { display: block; font-size: 1.2rem; font-weight: 800; }
+.up-cal small { display: block; margin-top: 2px; font-size: .62rem; font-weight: 700; text-transform: uppercase; color: #fd1a85; }
+.up-feat .card-fav, .up-row .card-fav { position: absolute; top: 12px; right: 12px; z-index: 1; }
+.up-list { display: grid; gap: 10px; }
+.up-row { position: relative; display: flex; align-items: center; gap: 12px; padding: 10px 48px 10px 10px; border-radius: 18px; background: var(--card); border: 1px solid var(--border); color: var(--text); text-decoration: none; }
+.up-row:active { transform: scale(.985); }
+.up-thumb { flex: none; width: 64px; height: 64px; border-radius: 14px; background-color: #333; background-size: cover; background-position: center; }
+.up-row .up-cal.sm { position: absolute; top: 6px; left: 6px; width: 30px; padding: 3px 0 2px; border-radius: 8px; }
+.up-row .up-cal.sm b { font-size: .8rem; }
+.up-row .up-cal.sm small { font-size: .45rem; margin-top: 1px; }
+.up-info { min-width: 0; display: grid; gap: 2px; }
+.up-info b { font-size: .95rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.up-info small { font-size: .78rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.up-info em { font-style: normal; font-size: .72rem; font-weight: 800; color: #fd1a85; }
+.up-row .card-fav { top: 50%; transform: translateY(-50%); width: 34px; height: 34px; font-size: 1rem; }
+.up-row .card-fav { background: transparent; box-shadow: none; border: 1px solid var(--border); color: #fd1a85; }
+.up-row .card-fav.on { border-color: rgba(253,26,133,.4); }
