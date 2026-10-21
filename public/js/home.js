@@ -8,7 +8,7 @@ document.querySelectorAll("[data-icon]").forEach((el) => { el.innerHTML = icon(e
 document.querySelectorAll("[data-social]").forEach((b) => { b.innerHTML = BRAND[b.dataset.social.toLowerCase()]; });
 
 // Déjà connecté : « Créer mon événement » mène directement au formulaire.
-api("/api/auth/me").then(() => { $("#create").href = "/edit"; }).catch(() => {});
+api("/api/auth/me").then(() => { document.querySelectorAll("#create, [data-create-link]").forEach((a) => { a.href = "/edit"; }); }).catch(() => {});
 
 // Dans l'application iOS / Android, les connexions sociales sont masquées :
 // Apple refuse les boutons non fonctionnels et Google la connexion dans une vue intégrée.
