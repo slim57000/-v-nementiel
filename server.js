@@ -24,6 +24,7 @@ import { fileURLToPath } from "node:url";
 import authRoutes, { currentOrganizer } from "./routes/auth.js";
 import eventRoutes from "./routes/events.js";
 import publicRoutes, { eventPayload } from "./routes/public.js";
+import { translateMiddleware, translateNames, reqLangFull } from "./lib/translate.js";
 import socialRoutes from "./routes/social.js";
 import cameramanRoutes from "./routes/cameraman.js";
 import adminRoutes from "./routes/admin.js";
@@ -242,6 +243,7 @@ if (!process.env.VERCEL) setInterval(() => liveSoonTick().catch((err) => console
 
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
+app.use(["/api/public", "/api/me"], translateMiddleware);
 app.use("/api/public", publicRoutes);
 app.use("/api/public/:slug", socialRoutes);
 app.use("/api/cameraman", cameramanRoutes);
@@ -358,7 +360,7 @@ app.get("/e/:slug", async (req, res) => {
   // (Lien « ?code=… » : la page déverrouille d'abord, puis charge normalement.)
   let data = "";
   if (event && !("code" in req.query) && !/bot|crawl|spider|facebookexternalhit|whatsapp|preview|slack|telegram/i.test(req.get("user-agent") || "")) {
-    const payload = await eventPayload(req, req.params.slug).catch(() => null);
+    const payload = await eventPayload(req, req.params.slug).then((p) => translateNames(p, reqLangFull(req))).catch(() => null);
     if (payload) data = `<script>window.__evdata=${JSON.stringify(payload).replace(/</g, "\\u003c")}</script>`;
   }
   res.status(event ? 200 : 404).set("Cache-Control", "no-store").type("html").send(eventTemplate.replace("<!--META-->", meta + data));
