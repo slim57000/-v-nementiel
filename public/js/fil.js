@@ -12,10 +12,10 @@ const ago = (iso) => {
 };
 const eventLink = (ev) => (ev.date === new Date().toISOString().slice(0, 10) ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${encodeURIComponent(ev.slug)}`);
 
-let items = [];
+export let items = [];
 const liked = new Set((() => { try { return JSON.parse(localStorage.getItem("em-likes") || "[]"); } catch { return []; } })());
 
-function post(it, i) {
+export function post(it, i) {
   const ev = it.event;
   const media = it.url
     ? (isVideo(it.url) ? `<video src="${esc(it.url)}#t=0.1" controls playsinline preload="metadata"></video>` : `<img src="${esc(it.url)}" alt="" loading="lazy" data-view="${i}">`)
@@ -41,15 +41,16 @@ function post(it, i) {
   </article>`;
 }
 
-try {
-  items = await api("/api/me/feed");
+// Chargé une fois ; l'accueil s'en sert aussi pour mêler le fil aux événements (onglet « Tout »).
+export const feedLoaded = api("/api/me/feed").then((r) => { items = r; return r; });
+feedLoaded.then(() => {
+  if (!$("#feed")) return;
   $("#feed").innerHTML = items.map(post).join("");
   $("#feed-empty").classList.toggle("hidden", items.length > 0);
-} catch (err) {
-  if (err.status === 401) goLogin(); else toast(err.message);
-}
+}).catch((err) => { if (err.status === 401) goLogin(); else toast(err.message); });
 
-$("#feed").addEventListener("click", async (e) => {
+document.addEventListener("click", async (e) => {
+  if (!e.target.closest(".feed-post")) return;
   const v = e.target.dataset.view;
   if (v !== undefined) viewPhoto({ url: items[v].url, name: items[v].name });
   // Republier : partage du moment (photo, message ou événement) vers WhatsApp, SMS, Instagram…

@@ -181,9 +181,20 @@ function render() {
     : "Vous n'avez pas encore d'événement.<br>Créez le premier en quelques minutes !";
   $("#list").innerHTML = camReminder() + shown.map(card).join("") + (others.length
     ? `<div class="section-title"><h2>Événements à venir</h2><a href="/decouvrir" class="see-all">Voir tout</a></div>
-       ${((up) => `${upFeatured(up[0])}<div class="up-list">${up.slice(1).map(upRow).join("")}</div>`)([...others].sort((a, b) => `${a.date}${a.time || ""}`.localeCompare(`${b.date}${b.time || ""}`)))}`
+       ${((up) => `${upFeatured(up[0])}<div class="up-list">${mixFeed(up.slice(1).map(upRow), new Set(up.map((e) => e.slug)))}</div>`)([...others].sort((a, b) => `${a.date}${a.time || ""}`.localeCompare(`${b.date}${b.time || ""}`)))}`
     : "");
   syncFavs();
+}
+
+// Onglet « Tout » : publications du fil (photos, messages, nouveaux événements) glissées entre les événements (1 tous les 2).
+let feedMod = null;
+function mixFeed(rows, listed = new Set()) {
+  if (filter !== "all") return rows.join("");
+  if (!feedMod) { import("./fil.js").then((m) => m.feedLoaded.then(() => { if (!feedMod) { feedMod = m; render(); } })).catch(() => {}); return rows.join(""); }
+  const posts = feedMod.items.map((it, i) => [it, i]).filter(([it]) => it.kind !== "event" || !listed.has(it.event?.slug)) // pas deux fois le même événement.map(([it, i]) => feedMod.post(it, i));
+  const out = [];
+  rows.forEach((r, k) => { out.push(r); if (k % 2 === 1 && posts.length) out.push(posts.shift()); });
+  return out.concat(posts).join("");
 }
 
 // « Événements à venir » : le prochain en grande carte, puis une liste façon agenda.
