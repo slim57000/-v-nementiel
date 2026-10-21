@@ -1449,3 +1449,4 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .stories .story-img { overflow: visible; }
 .stories .story-badge { bottom: -7px; }
 .p-grid .pub-card h3, .pub-card .pc-name { font-size: 1rem; line-height: 1.2; }
+.hd-hello { text-align: center; }
