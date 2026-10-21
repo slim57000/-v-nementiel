@@ -1318,3 +1318,17 @@ body.simple-mode { background: linear-gradient(160deg, #fff5fa, #f3e8ff); min-he
 .lang-select { width: auto; display: inline-block; padding: 4px 26px 4px 8px; font-size: .85rem; border-radius: 10px; background-color: var(--card); color: var(--text); border: 1px solid var(--border); }
 .lang-select-big { width: 100%; padding: 12px 14px; font-size: 1rem; }
 [dir="rtl"] .hx-text, [dir="rtl"] .hx-brand { direction: rtl; }
+
+/* Accueil compact : tout tient presque sur un écran. */
+.hx { padding: calc(56px + env(safe-area-inset-top)) 0 54px; }
+.hx-phone { width: 158px; border-radius: 28px; border-width: 5px; }
+.hx-world { top: 18%; } .hx-replay { bottom: 12%; }
+.hx-text { padding-top: 16px; }
+.hx-text h1 { font-size: clamp(1.35rem, 6vw, 1.8rem); margin-bottom: 6px; }
+.hx-text p { font-size: .86rem; }
+.hx-card { margin-top: -40px; padding: 14px 14px 8px; }
+.hx-card .divider { margin: 10px 0 6px; }
+.hx-types { margin-top: 16px; }
+.hp-trust { margin: 12px 0 0; }
+.hx-live, .hx-viewers { white-space: nowrap; font-size: .55rem; padding: 3px 7px; }
+.hx-ui { top: 9px; left: 7px; right: 7px; }
