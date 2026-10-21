@@ -1406,3 +1406,9 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .hx-badge { position:relative; display:inline-flex; align-items:center; gap:8px; padding:6px 14px 6px 10px; border-radius:10px; background:#000; border:1px solid rgba(255,255,255,.35); color:#fff; text-align:left; line-height:1.05; }
 .hx-badge small { display:block; font-size:.62rem; font-weight:500; opacity:.85; }
 .hx-badge b { display:block; font-size:1.05rem; font-weight:700; letter-spacing:-.01em; font-family:-apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif; }
+/* Badges stores : toujours sur une ligne */
+.hx-stores { flex-wrap: nowrap; gap: 8px; }
+.hx-badge { flex: 0 1 auto; min-width: 0; white-space: nowrap; padding: 5px 10px 5px 8px; gap: 6px; }
+.hx-badge svg { flex: none; width: 20px; height: 20px; }
+.hx-badge b { font-size: clamp(.8rem, 3.6vw, 1rem); }
+.hx-badge small { font-size: clamp(.55rem, 2.4vw, .62rem); }
