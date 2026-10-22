@@ -28,6 +28,7 @@
       <input id="q" type="search" placeholder="🔍 Rechercher : nom, ville, type…" aria-label="Rechercher un événement" autocomplete="off">
     </div>
     <div class="chips" id="chips" role="tablist"></div>
+    <p class="muted small code-lbl">🔑 Vous avez reçu un code d'invitation ?</p>
     <form id="code-form" class="code-find">
       <input id="code" maxlength="6" autocapitalize="characters" autocomplete="off" placeholder="Code d'invitation" aria-label="Code d'invitation">
       <button class="btn btn-sm" type="submit">Accéder</button>
@@ -82,8 +83,17 @@
       try {
         const { slug } = await api("/api/public/join", { method: "POST", body: { code: $("#code").value } });
         location.href = `/e/${encodeURIComponent(slug)}`;
-      } catch (err) { $("#code-error").textContent = err.message; }
+      } catch (err) {
+        // Pas un code : on le cherche comme un nom ou une ville (« London », « Mariage »…).
+        $("#q").value = $("#code").value;
+        show();
+        if ($("#list").children.length) { $("#code").value = ""; $("#q").scrollIntoView({ behavior: "smooth", block: "center" }); }
+        else $("#code-error").textContent = err.message;
+      }
     });
+    // Recherche lancée depuis l'accueil (?q=…) : champ prérempli.
+    const q0 = new URLSearchParams(location.search).get("q");
+    if (q0 !== null) { $("#q").value = q0; if (!q0) $("#q").focus(); }
     show();
   </script>
 </body>

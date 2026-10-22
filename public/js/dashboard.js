@@ -5,7 +5,7 @@ import { icon } from "./icons.js";
 
 // Bandeau « Découvrir » au-dessus des stories (Créer : carré « + » ; Messages et Profil : menu 👤 en haut).
 document.querySelector(".stories").insertAdjacentHTML("beforebegin", `<div class="hd-top">
-  <a href="/decouvrir" class="hd-search"><span aria-hidden="true">🔍</span><span>Rechercher un événement, une ville…</span></a>
+  <form class="hd-search" action="/decouvrir" role="search"><span aria-hidden="true">🔍</span><input name="q" type="search" enterkeyhint="search" placeholder="Rechercher un événement, une ville…" aria-label="Rechercher un événement"></form>
 </div>`);
 
 tabbar("home");
