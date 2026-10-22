@@ -1,5 +1,6 @@
 // Rendu du faire-part selon le style choisi (classique, élégant, fleuri, moderne).
-import { esc, formatDate, EN } from "./common.js";
+import { esc, formatDate } from "./common.js";
+import { lang, t } from "./i18n.js";
 
 // Textes préenregistrés par type d'événement : [accroche, texte]. Le premier est proposé par défaut (le texte « en petit comité / en direct » est réservé au faire-part du live, et proposé en dernier).
 export const TEMPLATES = {
@@ -101,7 +102,13 @@ export const TEMPLATES_EN = {
   autre: [["An intimate celebration", "We are delighted to announce our event, which will take place in an intimate setting. Because you matter to us and we want to share this moment despite the distance, we invite you to watch it live!"], ["You're invited", "We would be delighted to have you with us for this special occasion."], ["Save the date", "Mark your calendar! We look forward to celebrating with you."], ["Together, even from afar", "We would be happy to share this moment with you. Wherever you are, watch it live and send us your messages."]],
 };
 
-export const templatesFor = (type) => (EN ? TEMPLATES_EN[type] || TEMPLATES_EN.autre : TEMPLATES[type] || TEMPLATES.autre);
+// Français et anglais : textes écrits à la main ; autres langues : textes français traduits (dictionnaire).
+export const templatesFor = (type) => {
+  const fr = TEMPLATES[type] || TEMPLATES.autre;
+  if (lang === "fr") return fr;
+  if (lang === "en") return TEMPLATES_EN[type] || TEMPLATES_EN.autre;
+  return fr.map(([k, txt]) => [t(k), t(txt)]);
+};
 
 export function defaultInvite(event) {
   const [kicker, text] = templatesFor(event.type)[0];
