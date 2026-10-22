@@ -111,9 +111,9 @@ assert.equal(Math.max(0, seen.findIndex((c) => c.live)), 1, "le lecteur ouvre su
 assert.ok(!seen.find((c) => c.url === `lk:${a.room}`)?.live, "une caméra arrêtée n'est pas annoncée en direct");
 ok("live multicaméra : angle en direct identifiable");
 
-// Un événement privé n'apparaît jamais en clair sur l'accueil (accessible par code seulement).
+// Un événement privé : nom affiché sur l'accueil, mais ni l'adresse ni les caméras (accès par code seulement).
 const listing = (await api("/api/public?limit=50")).data.find((e) => e.slug === slug);
-assert.equal(listing.name, "Événement privé"); assert.equal(listing.location, ""); // la photo et la date restent visibles (choix produit)
+assert.notEqual(listing.name, "Événement privé"); assert.equal(listing.location, ""); assert.deepEqual(listing.cameras, []); // la photo et la date restent visibles (choix produit)
 assert.equal(listing.cameras.length, 0); assert.equal(listing.time, "");
 ok("événement privé masqué sur l'accueil public");
 
