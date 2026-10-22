@@ -72,7 +72,7 @@ function renderStories() {
         <div class="story-img ${live ? "live" : ""} ${withStory.has(ev.slug) ? "has-story" : ""}" data-story="${withStory.has(ev.slug) ? esc(ev.slug) : ""}" ${liveAttrs(ev)}>
           <span class="story-badge ${live || badge === "Aujourd'hui" ? "today" : ""}">${live ? "● En direct" : badge}</span>
           </div>
-        <span>${esc(ev.name)}</span>
+        <span>${esc(evTitle(ev))}</span>
         ${ev.visibility ? `<small class="story-vis ${(VIS[ev.visibility] || VIS.public)[1]}">${(VIS[ev.visibility] || VIS.public)[0]}</small>` : ""}</a>`;
     }).join("")}`;
 }
@@ -186,6 +186,11 @@ function render() {
   syncFavs();
 }
 
+// Événement masqué (privé / sur invitation) : on affiche son type (« Mariage ») plutôt qu'« Événement privé ».
+const MASKED = new Set(["Événement privé", "Événement sur invitation"]);
+const isMasked = (ev) => MASKED.has(ev.name);
+const evTitle = (ev) => (isMasked(ev) ? t((EVENT_TYPES[ev.type] || EVENT_TYPES.autre || { label: ev.name }).label) : ev.name);
+
 // Onglet « Tout » : publications du fil (photos, messages, nouveaux événements) glissées entre les événements (1 tous les 2).
 let feedMod = null;
 function mixFeed(rows, listed = new Set()) {
@@ -202,13 +207,14 @@ function mixFeed(rows, listed = new Set()) {
 const upHref = (ev) => (!ev.slug ? "#" : ev.date === new Date().toISOString().slice(0, 10) ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`);
 const upLock = (ev) => (ev.visibility === "private" ? " 🔒" : ev.visibility === "unlisted" || !ev.slug ? " 🔗" : "");
 const upDate = (ev) => { const d = new Date(`${ev.date}T12:00`); return { day: d.getDate(), mon: d.toLocaleDateString(LOCALE, { month: "short" }).replace(".", "") }; };
-const upWhere = (ev) => { const ty = EVENT_TYPES[ev.type] || EVENT_TYPES.autre || { icon: "🎉", label: "" }; return `${ty.icon} ${esc(ev.slug && ev.location ? ev.location : t(ty.label))}`; };
+const upWhere = (ev) => { const ty = EVENT_TYPES[ev.type] || EVENT_TYPES.autre || { icon: "🎉", label: "" }; if (isMasked(ev)) return `${ty.icon} ${esc(t(ev.visibility === "private" ? "Privé" : "Sur invitation"))}`;
+  return `${ty.icon} ${esc(ev.slug && ev.location ? ev.location : t(ty.label))}`; };
 const upFav = (ev) => (ev.slug ? `<button type="button" class="card-fav" data-fav="${esc(ev.slug)}" aria-label="Ajouter aux favoris">♡</button>` : "");
 function upFeatured(ev) {
   const { day, mon } = upDate(ev);
   return `<a class="up-feat" href="${upHref(ev)}" ${ev.slug ? "" : "data-invite-only"} ${liveAttrs(ev)}>
     <span class="up-cal"><b>${day}</b><small>${esc(mon)}</small></span>${upFav(ev)}
-    <div class="up-feat-txt"><span class="up-count">${esc(dayBadge(ev.date))}${upLock(ev)}</span><h3>${esc(ev.name)}</h3><p>${upWhere(ev)}</p></div>
+    <div class="up-feat-txt"><span class="up-count">${esc(dayBadge(ev.date))}${upLock(ev)}</span><h3>${esc(evTitle(ev))}</h3><p>${upWhere(ev)}</p></div>
   </a>`;
 }
 function upRow(ev) {
@@ -216,7 +222,7 @@ function upRow(ev) {
   return `<a class="up-row" href="${upHref(ev)}" ${ev.slug ? "" : "data-invite-only"}>
     <span class="up-thumb" ${liveAttrs(ev)}></span>
     <span class="up-cal sm"><b>${day}</b><small>${esc(mon)}</small></span>
-    <span class="up-info"><b>${esc(ev.name)}</b><small>${upWhere(ev)}</small><em>${esc(dayBadge(ev.date))}${upLock(ev)}</em></span>${upFav(ev)}
+    <span class="up-info"><b>${esc(evTitle(ev))}</b><small>${upWhere(ev)}</small><em>${esc(dayBadge(ev.date))}${upLock(ev)}</em></span>${upFav(ev)}
   </a>`;
 }
 
