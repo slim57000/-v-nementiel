@@ -67,12 +67,10 @@
       // Signature discrète + écran de fin (sauf organisateur Premium).
       if (brand) {
         document.getElementById("brand").classList.remove("hidden");
-        if (/em-lang=en/.test(document.cookie) || (!/em-lang=/.test(document.cookie) && navigator.language?.startsWith("en"))) {
-          document.querySelector("#endcard h2").textContent = "This moment was shared with MaFeliza 💛";
-          document.querySelector("#endcard p").textContent = "Invitations, live, photos and memories of your loved ones, in one place.";
-          document.querySelector("#endcard a").textContent = "✨ Create yours";
-          document.getElementById("again").textContent = "↺ Watch again";
-        }
+        // Écran de fin dans la langue du visiteur (dictionnaire du site).
+        import("/js/i18n.js").then(({ tr }) => {
+          for (const sel of ["#endcard h2", "#endcard p", "#endcard a", "#again"]) { const el = document.querySelector(sel); if (el) el.textContent = tr(el.textContent.trim()); }
+        }).catch(() => {});
         document.getElementById("again").onclick = () => { document.getElementById("endcard").classList.add("hidden"); i = 0; load(); video.play().catch(() => {}); };
       }
       live = true;
