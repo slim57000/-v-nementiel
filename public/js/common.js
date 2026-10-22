@@ -209,17 +209,22 @@ export const isLiveNow = (ev) => ev.date === new Date().toISOString().slice(0, 1
 
 export function publicCard(ev) {
   // Événement « avec le lien » : visible mais fermé (pas de lien dévoilé).
+  // Carte masquée : nom (pseudo) de l'organisateur, sinon le type ; en dessous « 💍 Mariage · Privé ».
+  const ty = EVENT_TYPES[ev.type] || EVENT_TYPES.autre || { icon: "🎉", label: "" };
+  const masked = ev.name === "Événement privé" || ev.name === "Événement sur invitation";
+  const title = masked ? ev.host || t(ty.label) : ev.name;
+  const sub = masked ? `${ty.icon} ${ev.host ? `${esc(t(ty.label))} · ` : ""}${esc(t(ev.visibility === "private" ? "Privé" : "Sur invitation"))}` : `${ty.icon} ${esc(ev.location)}`;
   if (!ev.slug) return `<a class="pub-card" href="#" data-invite-only ${liveAttrs(ev)}>
     <span class="tag">${esc(dayBadge(ev.date))} · 🔗</span>
-    <b>${esc(ev.name)}</b>
-    <span>${EVENT_TYPES[ev.type]?.icon || "🎉"} Accès avec le lien d'invitation</span>
+    <b>${esc(title)}</b>
+    <span>${sub}</span>
   </a>`;
   const live = ev.date === new Date().toISOString().slice(0, 10); // jour J : la miniature ouvre le live
   return `<a class="pub-card" href="${live ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`}" ${liveAttrs(ev)}>
     <span class="tag">${live ? "▶ Voir le live" : esc(dayBadge(ev.date))}${ev.visibility === "private" ? " · 🔒" : ev.visibility === "unlisted" ? " · 🔗" : ""}</span>
     <button type="button" class="card-fav" data-fav="${esc(ev.slug)}" aria-label="Ajouter aux favoris">♡</button>
-    <b>${esc(ev.name)}</b>
-    <span>${EVENT_TYPES[ev.type].icon} ${esc(ev.location)}</span>
+    <b>${esc(title)}</b>
+    <span>${sub}</span>
   </a>`;
 }
 

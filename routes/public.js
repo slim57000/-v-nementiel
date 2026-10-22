@@ -4,7 +4,7 @@ import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers, rollDemoDates } from "../lib/demo.js";
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
-import { dataVersion, listHistoryIds, listPendingIds, listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory,  listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
+import { findOrganizer, dataVersion, listHistoryIds, listPendingIds, listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory,  listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
 import { currentOrganizer, isAdmin } from "./auth.js";
 import { camerasWithLive } from "../lib/livekit.js";
@@ -81,12 +81,14 @@ router.get("/", async (req, res) => {
     const { invite, inviteStyle, description, ...card } = publicView(e);
     // Privé : la carte montre la photo et la date (badge « J-10 » juste), mais ni le nom, ni le lieu,
     // ni les caméras. Le clic mène à l'écran « entrez votre code » : l'accès passe par le code.
-    if (e.visibility === "private") return { ...card, name: "Événement privé", time: "", location: "", cameras: [], viewers: 0 };
+    // Nom public (pseudo) de l'organisateur : la carte masquée affiche « Événement de Julie » (jamais l'email).
+    const host = e.visibility === "public" ? undefined : (await findOrganizer(e.organizerId).catch(() => null))?.displayName?.trim() || null;
+    if (e.visibility === "private") return { ...card, name: "Événement privé", host, time: "", location: "", cameras: [], viewers: 0 };
     // Non répertorié : affiché comme un privé, et sans son lien (seul le lien reçu par SMS / WhatsApp y donne accès).
     if (e.visibility === "unlisted" && (String(e.organizerId) === String(viewer?.id) || opened.has(Number(e.id)))) card.visibility = "unlisted";
     else if (e.visibility === "unlisted") {
       const { slug, ...rest } = card;
-      return { ...rest, slug: null, visibility: "unlisted", name: "Événement sur invitation", time: "", location: "", cameras: [], viewers: 0 };
+      return { ...rest, slug: null, visibility: "unlisted", name: "Événement sur invitation", host, time: "", location: "", cameras: [], viewers: 0 };
     }
     // Spectateurs en cours pour les directs du jour.
     const viewers = e.date === today && card.cameras.length ? await countViewers(e.id).catch(() => 0) : 0;
