@@ -22,8 +22,8 @@ export function post(it, i) {
     : it.kind === "event" ? `<a href="${eventLink(ev)}"><img src="${esc(coverOf(ev))}" alt="" loading="lazy"></a>` : "";
   const title = it.kind === "event"
     ? `${isLiveNow(ev) ? tr("● En direct") : tr("Nouvel événement")} · ${esc(dayBadge(ev.date))}`
-    : it.kind === "photo" ? `<b>${esc(it.name)}</b> a partagé ${isVideo(it.url) ? "une vidéo" : "une photo"}`
-    : `<b>${esc(it.name)}</b> a écrit dans le livre d'or`;
+    : it.kind === "photo" ? `<b>${esc(it.name)}</b> ${tr(isVideo(it.url) ? "a partagé une vidéo" : "a partagé une photo")}`
+    : `<b>${esc(it.name)}</b> ${tr("a écrit dans le livre d'or")}`;
   return `<article class="feed-post">
     <header><a href="${eventLink(ev)}" class="feed-ev" style="background-image:url('${esc(coverOf(ev))}')" aria-label="${esc(ev.name)}"></a>
       <div><a href="${eventLink(ev)}"><b>${esc(ev.name)}</b></a><span class="muted small">${title} · ${ago(it.at)}</span></div></header>
@@ -35,7 +35,7 @@ export function post(it, i) {
         <a class="btn btn-ghost btn-sm" href="/e/${encodeURIComponent(ev.slug)}#gb-list">💬 ${it.replies || "Répondre"}</a>` : ""}
       ${it.kind === "event" ? `<a class="btn btn-sm" href="${eventLink(ev)}">${isLiveNow(ev) ? "● Rejoindre le live" : "Voir l'événement"}</a>` : ""}
       ${ev.cameras?.length && liveState(ev) === "replay" ? `<a class="btn btn-sm" href="/live?e=${encodeURIComponent(ev.slug)}">▶ Revoir le live</a>` : ""}
-      <button type="button" class="btn btn-ghost btn-sm" data-share="${i}">↗ Partager</button>
+      <button type="button" class="btn btn-ghost btn-sm" data-share="${i}">↗ ${tr("Partager")}</button>
       ${ev.cagnotteUrl ? `<a class="btn btn-light btn-sm" href="${esc(ev.cagnotteUrl)}" target="_blank" rel="noopener">🎁 Cagnotte</a>` : ""}
     </footer>
   </article>`;
