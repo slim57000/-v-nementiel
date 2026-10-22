@@ -206,8 +206,10 @@ function mixFeed(rows, listed = new Set()) {
 const upHref = (ev) => (!ev.slug ? "#" : ev.date === new Date().toISOString().slice(0, 10) ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`);
 const upLock = (ev) => (ev.visibility === "private" ? " 🔒" : ev.visibility === "unlisted" || !ev.slug ? " 🔗" : "");
 const upDate = (ev) => { const d = new Date(`${ev.date}T12:00`); return { day: d.getDate(), mon: d.toLocaleDateString(LOCALE, { month: "short" }).replace(".", "") }; };
-const upWhere = (ev) => { const ty = EVENT_TYPES[ev.type] || EVENT_TYPES.autre || { icon: "🎉", label: "" }; if (isMasked(ev)) return `${ty.icon} ${ev.host ? `${esc(t(ty.label))} · ` : ""}${esc(t(ev.visibility === "private" ? "Privé" : "Sur invitation"))}`;
-  return `${ty.icon} ${esc(ev.slug && ev.location ? ev.location : t(ty.label))}`; };
+const upWhere = (ev) => { const ty = EVENT_TYPES[ev.type] || EVENT_TYPES.autre || { icon: "🎉", label: "" }; // Toujours « ville · visibilité » (privé : ville seule, jamais l'adresse).
+  const where = ev.city || (isMasked(ev) ? "" : ev.location);
+  const vis = t(ev.visibility === "private" ? "Privé" : ev.visibility === "unlisted" || isMasked(ev) ? "Sur invitation" : "Public");
+  return `${ty.icon} ${where ? `${esc(where)} · ` : ""}${esc(vis)}`; };
 const upFav = (ev) => (ev.slug ? `<button type="button" class="card-fav" data-fav="${esc(ev.slug)}" aria-label="Ajouter aux favoris">♡</button>` : "");
 function upFeatured(ev) {
   const { day, mon } = upDate(ev);

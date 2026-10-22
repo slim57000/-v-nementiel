@@ -64,6 +64,7 @@ async function buildList(limit) {
   listCache.set(limit, { at: Date.now(), version, list });
   return list;
 }
+const COUNTRIES = /^(france|belgique|belgium|suisse|switzerland|uk|united kingdom|england|ireland|deutschland|germany|österreich|austria|españa|spain|italia|italy|portugal|nederland|netherlands|usa|united states|canada|maroc|morocco|algérie|algeria|tunisie|tunisia|sénégal|senegal|türkiye|turkey)$/i;
 router.get("/", async (req, res) => {
   const today = new Date().toISOString().slice(0, 10);
   const limit = Math.min(Number(req.query.limit) || 12, 50);
@@ -82,17 +83,19 @@ router.get("/", async (req, res) => {
     // Privé : la carte montre la photo et la date (badge « J-10 » juste), mais ni le nom, ni le lieu,
     // ni les caméras. Le clic mène à l'écran « entrez votre code » : l'accès passe par le code.
     // Nom public (pseudo) de l'organisateur : la carte masquée affiche « Événement de Julie » (jamais l'email).
+    // Ville seule (dernier morceau de l'adresse, sans code postal) : jamais l'adresse exacte d'un événement masqué.
+    const city = String(e.location || "").split(",").map((x) => x.trim()).filter((x) => x && !COUNTRIES.test(x)).pop()?.replace(/\b[A-Z]{0,2}\d[\dA-Z -]*\b/g, "").replace(/\s+/g, " ").trim() || null;
     const host = e.visibility === "public" ? undefined : (await findOrganizer(e.organizerId).catch(() => null))?.displayName?.trim() || null;
-    if (e.visibility === "private") return { ...card, name: "Événement privé", host, time: "", location: "", cameras: [], viewers: 0 };
+    if (e.visibility === "private") return { ...card, name: "Événement privé", host, city, time: "", location: "", cameras: [], viewers: 0 };
     // Non répertorié : affiché comme un privé, et sans son lien (seul le lien reçu par SMS / WhatsApp y donne accès).
     if (e.visibility === "unlisted" && (String(e.organizerId) === String(viewer?.id) || opened.has(Number(e.id)))) card.visibility = "unlisted";
     else if (e.visibility === "unlisted") {
       const { slug, ...rest } = card;
-      return { ...rest, slug: null, visibility: "unlisted", name: "Événement sur invitation", host, time: "", location: "", cameras: [], viewers: 0 };
+      return { ...rest, slug: null, visibility: "unlisted", name: "Événement sur invitation", host, city, time: "", location: "", cameras: [], viewers: 0 };
     }
     // Spectateurs en cours pour les directs du jour.
     const viewers = e.date === today && card.cameras.length ? await countViewers(e.id).catch(() => 0) : 0;
-    return { ...card, viewers };
+    return { ...card, city, viewers };
   })));
 });
 

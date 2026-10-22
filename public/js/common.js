@@ -213,7 +213,9 @@ export function publicCard(ev) {
   const ty = EVENT_TYPES[ev.type] || EVENT_TYPES.autre || { icon: "🎉", label: "" };
   const masked = ev.name === "Événement privé" || ev.name === "Événement sur invitation";
   const title = masked ? ev.host || t(ty.label) : ev.name;
-  const sub = masked ? `${ty.icon} ${ev.host ? `${esc(t(ty.label))} · ` : ""}${esc(t(ev.visibility === "private" ? "Privé" : "Sur invitation"))}` : `${ty.icon} ${esc(ev.location)}`;
+  const where = ev.city || (masked ? "" : ev.location);
+  const vis = t(ev.visibility === "private" ? "Privé" : ev.visibility === "unlisted" || masked ? "Sur invitation" : "Public");
+  const sub = `${ty.icon} ${where ? `${esc(where)} · ` : ""}${esc(vis)}`; // toujours « ville · visibilité »
   if (!ev.slug) return `<a class="pub-card" href="#" data-invite-only ${liveAttrs(ev)}>
     <span class="tag">${esc(dayBadge(ev.date))} · 🔗</span>
     <b>${esc(title)}</b>
