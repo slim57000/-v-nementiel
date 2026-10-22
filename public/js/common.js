@@ -212,7 +212,7 @@ export function publicCard(ev) {
   // Carte masquée : nom (pseudo) de l'organisateur, sinon le type ; en dessous « 💍 Mariage · Privé ».
   const ty = EVENT_TYPES[ev.type] || EVENT_TYPES.autre || { icon: "🎉", label: "" };
   const masked = ev.name === "Événement privé" || ev.name === "Événement sur invitation";
-  const title = t(ty.label) || ev.name; // le type d'événement, jamais des prénoms
+  const title = masked ? ev.host || t(ty.label) : ev.name;
   const where = ev.city || (masked ? "" : ev.location);
   const vis = t(ev.visibility === "private" ? "Privé" : ev.visibility === "unlisted" || masked ? "Sur invitation" : "Public");
   const sub = `${ty.icon} ${where ? `${esc(where)} · ` : ""}${esc(vis)}`; // toujours « ville · visibilité »
