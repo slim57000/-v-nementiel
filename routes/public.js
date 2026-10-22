@@ -80,15 +80,15 @@ router.get("/", async (req, res) => {
   const opened = new Set(viewer ? (await listHistoryIds(viewer.id).catch(() => [])).map(Number) : []);
   res.json(await Promise.all(events.map(async (e) => {
     const { invite, inviteStyle, description, ...card } = publicView(e);
-    // Privé : la carte montre la photo, la date et le nom (« Mariage de Léa & Tom »), mais ni l'adresse
+    // Privé : la carte montre la photo, la date, le type et la ville, mais ni le nom, ni l'adresse
     // (ville seule), ni les caméras. Le clic mène à l'écran « entrez votre code » : l'accès passe par le code.
     const city = String(e.location || "").split(",").map((x) => x.trim()).filter((x) => x && !COUNTRIES.test(x)).pop()?.replace(/\b[A-Z]{0,2}\d[\dA-Z -]*\b/g, "").replace(/\s+/g, " ").trim() || null;
-    if (e.visibility === "private") return { ...card, city, time: "", location: "", cameras: [], viewers: 0 };
+    if (e.visibility === "private") return { ...card, name: "Événement privé", city, time: "", location: "", cameras: [], viewers: 0 };
     // Non répertorié : affiché comme un privé, et sans son lien (seul le lien reçu par SMS / WhatsApp y donne accès).
     if (e.visibility === "unlisted" && (String(e.organizerId) === String(viewer?.id) || opened.has(Number(e.id)))) card.visibility = "unlisted";
     else if (e.visibility === "unlisted") {
       const { slug, ...rest } = card;
-      return { ...rest, slug: null, visibility: "unlisted", city, time: "", location: "", cameras: [], viewers: 0 };
+      return { ...rest, slug: null, visibility: "unlisted", name: "Événement sur invitation", city, time: "", location: "", cameras: [], viewers: 0 };
     }
     // Spectateurs en cours pour les directs du jour.
     const viewers = e.date === today && card.cameras.length ? await countViewers(e.id).catch(() => 0) : 0;

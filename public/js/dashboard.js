@@ -188,7 +188,8 @@ function render() {
 // Événement masqué (privé / sur invitation) : on affiche son type (« Mariage ») plutôt qu'« Événement privé ».
 const MASKED = new Set(["Événement privé", "Événement sur invitation"]);
 const isMasked = (ev) => MASKED.has(ev.name);
-const evTitle = (ev) => (isMasked(ev) ? ev.host || t((EVENT_TYPES[ev.type] || EVENT_TYPES.autre || { label: ev.name }).label) : ev.name);
+// Titre des cartes : le type d'événement (« Mariage », « Anniversaire »), jamais des prénoms.
+const evTitle = (ev) => t((EVENT_TYPES[ev.type] || EVENT_TYPES.autre || { label: ev.name }).label);
 
 // Onglet « Tout » : publications du fil (photos, messages, nouveaux événements) glissées entre les événements (1 tous les 2).
 let feedMod = null;
