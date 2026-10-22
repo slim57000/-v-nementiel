@@ -155,9 +155,9 @@ async function dailyJob() {
     if (!event.cameras?.length) continue;
     const organizer = await findOrganizer(event.organizerId);
     if (!organizer) continue;
-    const en = (await eventLang(event)) === "en";
+    const L = await eventLang(event), en = L !== "fr";
     const ok = await sendEmail(en ? {
-      to: organizer.email, lang: "en",
+      to: organizer.email, lang: L,
       subject: `The replay of “${event.name}” expires in 2 days`,
       title: "Remember to save your replay",
       body: `<p>The replay of <b>${event.name.replace(/</g, "&lt;")}</b> will no longer be offered to guests in 2 days.</p>
