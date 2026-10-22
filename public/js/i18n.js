@@ -528,6 +528,9 @@ export function tr(text) {
   const s = String(text);
   if (DICT[s.trim()]) return s.replace(s.trim(), DICT[s.trim()]);
   // « Code d'accès : » : même texte que « Code d'accès », suivi de deux-points (pleine chasse en chinois).
+  // « ↗ Partager », « 📤 Partager » : symbole devant un texte connu → symbole + traduction.
+  const pre = /^([^\p{L}\p{N}]+)(\p{L}.*)$/u.exec(s.trim());
+  if (pre && DICT[pre[2]]) return s.replace(s.trim(), pre[1] + DICT[pre[2]]);
   const colon = /^(.+?)\s*:$/.exec(s.trim());
   if (colon && DICT[colon[1]]) return s.replace(s.trim(), `${DICT[colon[1]]}${lang === "zh" ? "：" : ":"}`);
   if (lang !== "en") return s; // motifs et morceaux de phrases : anglais seulement
