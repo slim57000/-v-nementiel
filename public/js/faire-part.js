@@ -5,9 +5,6 @@ import { api, $, copy, shareSheet, qrUrl, tabbar, goLogin, formatDate, EVENT_TYP
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 import { lang, tr } from "./i18n.js";
 
-// Langues autres que français / anglais : textes anglais traduits une fois au chargement (L = traduction connue).
-const TRM = new Map();
-const L = (s) => TRM.get(s) || s;
 
 tabbar("home");
 const id = new URLSearchParams(location.search).get("id");
@@ -17,7 +14,8 @@ function liveInvite(ev) {
   if (EN) {
     return {
       kicker: lang === "en" ? "Live invitation" : tr("Invitation au live"), title: ev.name,
-      text: L(`We are delighted to announce our celebration, held in an intimate setting on ${formatDate(ev.date)}.\n\nBecause you matter to us and we want to share this moment despite the distance, we invite you to follow our ceremony live!\n\nWebsite link or QR code below${ev.time ? `: the broadcast starts at ${ev.time}` : ""}.`),
+      // Textes écrits pour chaque langue (dictionnaire), avec la date et l'heure de l'événement.
+      text: `${tr("live.p1").replace("{date}", ["en", "de"].includes(lang) ? formatDate(ev.date) : formatDate(ev.date).toLowerCase())}\n\n${tr("live.p2")}\n\n${ev.time ? tr("live.p3t").replace("{time}", ev.time) : tr("live.p3")}`,
     };
   }
   const what = { mariage: "notre mariage", bapteme: "le baptême", communion: "la communion", fiancailles: "nos fiançailles",
@@ -35,8 +33,7 @@ function liveInvite(ev) {
 function liveTexts(ev) {
   const when = formatDate(ev.date, ev.time);
   if (EN) return [liveInvite(ev).text,
-    L(`Can't make it? Watch it live from your phone on ${when}.\n\nMessages, reactions and photos: share this moment with us!`),
-    L(`Save the date: ${when}.\n\nWherever you are, join us live from your phone, tablet or computer. Send your messages and reactions: we will see them in real time ❤️`)];
+    tr("live.alt1").replace("{when}", ["en", "de"].includes(lang) ? when : when.toLowerCase()), tr("live.alt2").replace("{when}", ["en", "de"].includes(lang) ? when : when.toLowerCase())];
   const what = { mariage: "notre mariage", bapteme: "le baptême", communion: "la communion", fiancailles: "nos fiançailles",
     anniversaire: "l'anniversaire", "baby-shower": "la baby shower", diplome: "la remise de diplôme",
     retraite: "le départ en retraite", inauguration: "l'inauguration" }[ev.type] || "l'événement";
@@ -158,13 +155,6 @@ try {
   document.title = `Faire-part — ${ev.name}`;
   $("#edit").href = `/edit?id=${ev.id}`;
   if (!EVENT_TYPES[ev.type]) throw new Error();
-  if (lang !== "fr" && lang !== "en") {
-    // Textes anglais de l'invitation au live → langue du visiteur (traduction gardée par le serveur).
-    TRM.clear();
-    const src = liveTexts(ev);
-    const { texts } = await api("/api/public/translate", { method: "POST", body: { lang, texts: src } }).catch(() => ({ texts: src }));
-    src.forEach((t, i) => TRM.set(t, texts[i] || t));
-  }
   render();
   if (new URLSearchParams(location.search).has("new")) {
     history.replaceState(null, "", `/faire-part?id=${ev.id}`);
