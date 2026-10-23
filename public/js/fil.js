@@ -1,6 +1,6 @@
 import { t as tr } from "./i18n.js";
 // Fil d'actualité façon Instagram : nouveaux événements, photos/vidéos des invités, messages du livre d'or.
-import { api, $, esc, toast, tabbar, goLogin, coverOf, isLiveNow, dayBadge, relAgo, isVideo, viewPhoto, EVENT_TYPES, LOCALE, shareSheet, liveState } from "./common.js";
+import { api, $, esc, toast, tabbar, goLogin, coverOf, isLiveNow, dayBadge, relAgo, isVideo, viewPhoto, EVENT_TYPES, LOCALE, shareSheet, liveState, syncFavs } from "./common.js";
 
 if (location.pathname === "/fil") tabbar("home"); // sur l'accueil, le fil est un onglet (menu déjà en place)
 
@@ -26,7 +26,8 @@ export function post(it, i) {
     : `<b>${esc(it.name)}</b> ${tr("a écrit dans le livre d'or")}`;
   return `<article class="feed-post">
     <header><a href="${eventLink(ev)}" class="feed-ev" style="background-image:url('${esc(coverOf(ev))}')" aria-label="${esc(ev.name)}"></a>
-      <div><a href="${eventLink(ev)}"><b>${esc(ev.name)}</b></a><span class="muted small">${title} · ${ago(it.at)}</span></div></header>
+      <div><a href="${eventLink(ev)}"><b>${esc(ev.name)}</b></a><span class="muted small">${title} · ${ago(it.at)}</span></div>
+      ${ev.slug ? `<button type="button" class="card-fav feed-fav" data-fav="${esc(ev.slug)}" aria-label="Ajouter aux favoris">♡</button>` : ""}</header>
     ${media}
     ${it.text ? `<p>${esc(it.text)}</p>` : ""}
     ${it.audio ? `<audio controls preload="none" src="${esc(it.audio)}"></audio>` : ""}
@@ -46,6 +47,7 @@ export const feedLoaded = api("/api/me/feed").then((r) => { items = r; return r;
 feedLoaded.then(() => {
   if (!$("#feed")) return;
   $("#feed").innerHTML = items.map(post).join("");
+  syncFavs(); // cœurs déjà mis en favori
   $("#feed-empty").classList.toggle("hidden", items.length > 0);
 }).catch((err) => { if (err.status === 401) goLogin(); else toast(err.message); });
 

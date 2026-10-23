@@ -1484,3 +1484,5 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 #feed-wrap { margin-top: 12px; }
 .hd-search input { flex: 1; min-width: 0; border: 0; background: transparent; padding: 0; margin: 0; color: var(--text); font-size: 16px; outline: none; box-shadow: none; }
 .code-lbl { margin: 14px 0 6px; }
+.feed-post header .feed-fav { position: static; margin-left: auto; flex: none; width: 36px; height: 36px; font-size: 1rem; transform: none; }
+.feed-post header > div { flex: 1; }

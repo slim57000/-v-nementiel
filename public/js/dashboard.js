@@ -201,7 +201,7 @@ const evTitle = (ev) => (isMasked(ev) ? ev.host || t((EVENT_TYPES[ev.type] || EV
 let feedMod = null;
 function mixFeed(rows, listed = new Set()) {
   if (filter !== "all") return rows.join("");
-  if (!feedMod) { import("./fil.js").then((m) => m.feedLoaded.then(() => { if (!feedMod) { feedMod = m; render(); } })).catch(() => {}); return rows.join(""); }
+  if (!feedMod) { import("./fil.js").then((m) => m.feedLoaded.then(() => { if (!feedMod) { feedMod = m; render(); syncFavs(); } })).catch(() => {}); return rows.join(""); }
   // Pas deux fois le même événement (déjà dans la liste).
   const posts = feedMod.items.map((it, i) => [it, i]).filter(([it]) => it.kind !== "event" || !listed.has(it.event?.slug)).map(([it, i]) => feedMod.post(it, i));
   const out = [];
