@@ -180,7 +180,7 @@ function render() {
     : "Vous n'avez pas encore d'événement.<br>Créez le premier en quelques minutes !";
   $("#list").innerHTML = camReminder() + shown.map(card).join("") + (others.length
     ? `<div class="section-title"><h2>Événements à venir</h2><a href="/decouvrir" class="see-all">Voir tout</a></div>
-       ${((up) => `${upFeatured(up[0])}<div class="up-list">${mixFeed(up.slice(1).map(upRow), new Set(up.map((e) => e.slug)))}</div>`)([...others].sort((a, b) => `${a.date}${a.time || ""}`.localeCompare(`${b.date}${b.time || ""}`)))}`
+       ${((up) => `${upFeatured(up[0])}<div class="up-list">${mixFeed(up.slice(1).map(upRow), new Set(up.map((e) => e.slug)))}</div>`)(alternate(others))}`
     : "");
   syncFavs();
 }
@@ -200,6 +200,14 @@ function mixFeed(rows, listed = new Set()) {
   const out = [];
   rows.forEach((r, k) => { out.push(r); if (k % 2 === 1 && posts.length) out.push(posts.shift()); });
   return out.concat(posts).join("");
+}
+
+// Publics et privés en alternance, chacun par date (la grande carte : le prochain public s'il y en a un).
+function alternate(list) {
+  const byDate = (a, b) => `${a.date}${a.time || ""}`.localeCompare(`${b.date}${b.time || ""}`);
+  const pub = list.filter((e) => e.visibility === "public" || !e.visibility).sort(byDate), other = list.filter((e) => e.visibility && e.visibility !== "public").sort(byDate), out = [];
+  while (pub.length || other.length) { if (pub.length) out.push(pub.shift()); if (other.length) out.push(other.shift()); }
+  return out;
 }
 
 // « Événements à venir » : le prochain en grande carte, puis une liste façon agenda.

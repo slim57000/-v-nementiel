@@ -59,8 +59,10 @@ async function buildList(limit) {
     .filter((e) => !pending.has(e.id))
     .filter((e, i, arr) => !events.some((x) => x.id === e.id) && arr.findIndex((x) => x.id === e.id) === i)
     .map((e) => withVisibility(e, hidden));
-  // Tous mêlés par date (publics, privés, sur invitation) : jamais une liste faite que de privés.
-  const list = [...shown, ...events].sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
+  // Publics et privés en alternance (chacun par date) : jamais une liste faite que de privés.
+  const byDate = (a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`);
+  const pub = [...events].sort(byDate), other = [...shown].sort(byDate), list = [];
+  while (pub.length || other.length) { if (pub.length) list.push(pub.shift()); if (other.length) list.push(other.shift()); }
   listCache.set(limit, { at: Date.now(), version, list });
   return list;
 }
