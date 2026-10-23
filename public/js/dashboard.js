@@ -59,9 +59,13 @@ function renderStories() {
   // Événements avec des stories récentes en premier (rond coloré), puis les autres.
   const withStory = new Set(stories.map((g) => g.slug));
   const guest = joined.filter((e) => e.date >= today && !mine.has(e.slug));
-  const all = [...events.filter((e) => e.date >= today), ...guest, ...discover.filter((e) => e.slug && !mine.has(e.slug) && !guest.some((g) => g.slug === e.slug)).slice(0, 12)];
+  const all = [...events.filter((e) => e.date >= today), ...guest, ...discover.filter((e) => e.slug && !mine.has(e.slug) && !guest.some((g) => g.slug === e.slug)).slice(0, 20)];
   const extra = stories.filter((g) => !all.some((e) => e.slug === g.slug)).map((g) => ({ ...g }));
-  const upcoming = mix([...extra, ...all].sort((a, b) => withStory.has(b.slug) - withStory.has(a.slug)));
+  // Ronds : en direct, puis stories récentes, puis les événements publics (par date), les privés ensuite.
+  const byDate = (a, b) => `${a.date}${a.time || ""}`.localeCompare(`${b.date}${b.time || ""}`);
+  const isPriv = (e) => e.visibility && e.visibility !== "public";
+  const upcoming = [...extra, ...all].filter((e, i, arr) => arr.findIndex((x) => x.slug === e.slug) === i)
+    .sort((a, b) => isLive(b) - isLive(a) || withStory.has(b.slug) - withStory.has(a.slug) || isPriv(a) - isPriv(b) || byDate(a, b));
   $("#stories").innerHTML = `
     <a class="story new" href="/edit" data-create><div class="story-img">+</div><span>Créer</span></a>
     ${upcoming.map((ev) => {
