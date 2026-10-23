@@ -33,8 +33,7 @@ async function load() {
     if (err.status === 401) return goLogin();
     return toast(err.message);
   }
-  // Événements privés / non répertoriés d'abord : sinon noyés parmi les nombreux événements publics (démo).
-  discover.sort((a, b) => (a.visibility === "public") - (b.visibility === "public"));
+  // Ordre du serveur conservé : publics et privés en alternance.
   try { localStorage.setItem(DASH_KEY, JSON.stringify({ events, discover: discover.slice(0, 30), stories, joined, myId })); } catch { /* plein ou indisponible */ }
   render();
 }
