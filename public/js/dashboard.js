@@ -61,11 +61,14 @@ function renderStories() {
   const guest = joined.filter((e) => e.date >= today && !mine.has(e.slug));
   const all = [...events.filter((e) => e.date >= today), ...guest, ...discover.filter((e) => e.slug && !mine.has(e.slug) && !guest.some((g) => g.slug === e.slug)).slice(0, 20)];
   const extra = stories.filter((g) => !all.some((e) => e.slug === g.slug)).map((g) => ({ ...g }));
-  // Ronds : en direct, puis stories récentes, puis les événements publics (par date), les privés ensuite.
   const byDate = (a, b) => `${a.date}${a.time || ""}`.localeCompare(`${b.date}${b.time || ""}`);
   const isPriv = (e) => e.visibility && e.visibility !== "public";
-  const upcoming = [...extra, ...all].filter((e, i, arr) => arr.findIndex((x) => x.slug === e.slug) === i)
-    .sort((a, b) => isLive(b) - isLive(a) || withStory.has(b.slug) - withStory.has(a.slug) || isPriv(a) - isPriv(b) || byDate(a, b));
+  const order = (a, b) => withStory.has(b.slug) - withStory.has(a.slug) || byDate(a, b);
+  const rest = [...extra, ...all].filter((e, i, arr) => e.slug && arr.findIndex((x) => x.slug === e.slug) === i);
+  const pub = rest.filter((e) => !isLive(e) && !isPriv(e)).sort(order), priv = rest.filter((e) => !isLive(e) && isPriv(e)).sort(order);
+  // En direct d'abord, puis un public, un privé, un public… (les publics ne sont jamais repoussés au bout).
+  const upcoming = rest.filter(isLive);
+  while (pub.length || priv.length) { if (pub.length) upcoming.push(pub.shift()); if (priv.length) upcoming.push(priv.shift()); }
   $("#stories").innerHTML = `
     <a class="story new" href="/edit" data-create><div class="story-img">+</div><span>Créer</span></a>
     ${upcoming.map((ev) => {
@@ -78,6 +81,7 @@ function renderStories() {
         <span>${esc(evTitle(ev))}</span>
         ${ev.visibility ? `<small class="story-vis ${(VIS[ev.visibility] || VIS.public)[1]}">${(VIS[ev.visibility] || VIS.public)[0]}</small>` : ""}</a>`;
     }).join("")}`;
+  $("#stories").scrollLeft = 0; // toujours affichés depuis le début (Safari peut garder l'ancienne position)
 }
 
 function card(ev) {
