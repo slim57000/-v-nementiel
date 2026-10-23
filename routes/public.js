@@ -90,7 +90,7 @@ router.get("/", async (req, res) => {
     if (e.visibility === "unlisted" && (String(e.organizerId) === String(viewer?.id) || opened.has(Number(e.id)))) card.visibility = "unlisted";
     else if (e.visibility === "unlisted") {
       const { slug, ...rest } = card;
-      return { ...rest, slug: null, visibility: "unlisted", city, time: "", location: "", cameras: [], viewers: 0 };
+      return { ...rest, slug: null, ref: String(e.id), visibility: "unlisted", city, time: "", location: "", cameras: [], viewers: 0 };
     }
     // Spectateurs en cours pour les directs du jour.
     const viewers = e.date === today && card.cameras.length ? await countViewers(e.id).catch(() => 0) : 0;

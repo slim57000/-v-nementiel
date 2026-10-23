@@ -129,7 +129,7 @@ export function dayBadge(date) {
 // ❤️ sur les cartes d'événements : ajout / retrait des favoris en un geste (connexion demandée si besoin).
 let favSlugs = null;
 export async function syncFavs() {
-  try { favSlugs ||= new Set((await api("/api/me/favorites")).map((e) => e.slug)); } catch { favSlugs = new Set(); }
+  try { favSlugs ||= new Set((await api("/api/me/favorites")).map((e) => e.slug || e.ref)); } catch { favSlugs = new Set(); }
   document.querySelectorAll("[data-fav]").forEach((b) => { const on = favSlugs.has(b.dataset.fav); b.textContent = on ? "❤️" : "♡"; b.classList.toggle("on", on); });
 }
 document.addEventListener("click", async (e) => {
@@ -218,6 +218,7 @@ export function publicCard(ev) {
   const sub = `${ty.icon} ${where ? `${esc(where)} · ` : ""}${esc(vis)}`; // toujours « ville · visibilité »
   if (!ev.slug) return `<a class="pub-card" href="#" data-invite-only ${liveAttrs(ev)}>
     <span class="tag">${esc(dayBadge(ev.date))} · 🔗</span>
+    ${ev.ref ? `<button type="button" class="card-fav" data-fav="${esc(ev.ref)}" aria-label="Ajouter aux favoris">♡</button>` : ""}
     <b>${esc(title)}</b>
     <span>${sub}</span>
   </a>`;
@@ -414,7 +415,7 @@ export async function editName(current, onDone) {
 // ❤️ Mes likes : événements mis en favoris.
 export async function openFavs() {
   const favs = await api("/api/me/favorites").catch(() => []);
-  const rows = favs.map((ev) => `<a class="notif fav-row" href="${esc(eventUrl(ev.slug))}">
+  const rows = favs.map((ev) => `<a class="notif fav-row" href="${ev.slug ? esc(eventUrl(ev.slug)) : "#"}" ${ev.slug ? "" : "data-invite-only"}>
     <span class="fav-thumb" style="background-image:url('${esc(coverOf(ev))}')"></span>
     <span><b>${esc(ev.name)}</b><small class="muted">${esc(formatDate(ev.date, ev.time))}</small></span></a>`).join("");
   document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="fav-sheet" role="dialog" aria-modal="true">

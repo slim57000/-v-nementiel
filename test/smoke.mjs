@@ -117,12 +117,16 @@ assert.notEqual(listing.name, "Événement privé"); assert.equal(listing.locati
 assert.equal(listing.cameras.length, 0); assert.equal(listing.time, "");
 ok("événement privé masqué sur l'accueil public");
 
-// Sécurité : on ne peut pas s'abonner (favori) à un événement privé que l'on n'a pas ouvert.
-// Avant, un identifiant numérique suffisait à faire remonter photos et livre d'or dans le fil.
+// Sécurité : un favori sur un événement privé non ouvert ne fait rien remonter (fil, adresse, caméras).
 const spy = await device();
 await spy("/api/auth/login", { method: "POST", body: { email: `spy${Date.now()}@example.com`, password: "motdepasse123" } });
-assert.equal((await spy(`/api/me/favorites/${ev.data.id}`, { method: "POST" })).status, 403, "favori refusé sans accès");
-assert.deepEqual((await spy("/api/me/favorites")).data, [], "aucun favori fuite vers le compte attaquant");
+// Favori permis (cœur sur les cartes « sur invitation »), mais il ne dévoile rien : ni lien, ni adresse, ni contenu dans le fil.
+assert.equal((await spy(`/api/me/favorites/${ev.data.id}`, { method: "POST" })).status, 200, "favori permis sans accès");
+const spyFav = (await spy("/api/me/favorites")).data.find((e) => e.id === ev.data.id);
+assert.equal(spyFav.location, "", "favori sans accès : adresse masquée");
+assert.ok(!(await spy("/api/me/feed")).data.some((it) => it.event?.slug === ev.data.slug), "favori sans accès : rien dans le fil");
+assert.deepEqual(spyFav.cameras, [], "favori sans accès : pas de caméras");
+assert.ok(!spyFav.invite && !spyFav.description, "favori sans accès : ni faire-part ni description");
 const owner = await device();
 await owner("/api/auth/login", { method: "POST", body: { email: ORG_EMAIL, password: "motdepasse123" } });
 assert.equal((await owner(`/api/me/favorites/${ev.data.id}`, { method: "POST" })).status, 200, "l'organisateur peut mettre son événement en favori");

@@ -83,7 +83,7 @@ router.get("/feed", async (req, res) => {
   ]);
   // Même filtre que pour les favoris : le fil remonte photos et livre d'or, donc un événement privé
   // non ouvert n'a rien à y faire, même s'il traîne dans les favoris.
-  const joined = (await findEventsByIds([...historyIds, ...favIds]).catch(() => [])).filter(accessFilter(req));
+  const joined = await withAccess(req, await findEventsByIds([...historyIds, ...favIds]).catch(() => []));
   const friends = (await Promise.all(friendIds.slice(0, 20).map((id) => listEvents(id).catch(() => [])))).flat()
     .filter((e) => e.visibility === "public");
   const pub = await listPublicUpcoming(20).catch(() => []);
@@ -133,7 +133,7 @@ router.get("/stories", async (req, res) => {
     findEventsByIds([...historyIds, ...favIds]).catch(() => []),
     Promise.all(friendIds.slice(0, 20).map((id) => listEvents(id).catch(() => []))),
   ]);
-  const joined = joinedAll.filter(accessFilter(req));
+  const joined = await withAccess(req, joinedAll);
   const friends = friendLists.flat().filter((e) => e.visibility === "public");
   const events = visibleEvents([...mine, ...joined, ...friends]).filter((e, i, arr) => arr.findIndex((x) => x.id === e.id) === i).slice(0, 40);
   const byId = new Map(events.map((e) => [e.id, e]));
@@ -158,22 +158,24 @@ async function invitedEvents(meId) {
   return visibleEvents(list).filter((e) => withVisibility(e, hidden).visibility !== "public");
 }
 
-// Filtre d'accès, mémoïsé par requête : sans lui, un favori posé sur un événement privé
-// (ids numériques consécutifs) suffirait à faire remonter ses photos et son livre d'or dans le fil.
-const accessFilter = (req) => {
-  const cache = new Map();
-  return (event) => {
-    if (!event || cache.has(event.id)) return cache.get(event.id) || false;
-    const ok = hasAccess(req, event);
-    cache.set(event.id, ok);
-    return ok;
-  };
-};
+// Filtre d'accès : sans lui, un favori posé sur un événement privé (ids numériques consécutifs)
+// suffirait à faire remonter ses photos et son livre d'or dans le fil.
+// hasAccess est asynchrone : on attend chaque réponse (une promesse non attendue vaut toujours « oui »).
+async function withAccess(req, list) {
+  const ok = await Promise.all(list.map((e) => (e ? hasAccess(req, e).catch(() => false) : false)));
+  return list.filter((_, i) => ok[i]);
+}
 
 router.get("/favorites", async (req, res) => {
-  const allowed = accessFilter(req);
-  const list = (await findEventsByIds(await listFavoriteIds(req.organizer.id))).filter((e) => allowed(e));
-  res.json(visibleEvents(list).map(card));
+  const [list, hidden] = await Promise.all([findEventsByIds(await listFavoriteIds(req.organizer.id)), listUnlistedIds()]);
+  const allowed = new Set((await withAccess(req, list)).map((e) => e.id));
+  res.json(visibleEvents(list).map((e) => {
+    if (allowed.has(e.id)) return card(e);
+    // Sans accès : carte masquée (pas d'adresse ; « sur invitation » : pas de lien, seulement une référence).
+    const { location, cameras, invite, inviteStyle, description, cagnotteUrl, ...rest } = publicView(e);
+    const unlisted = hidden.has(e.id) || e.visibility === "unlisted";
+    return { ...rest, id: e.id, ref: String(e.id), slug: unlisted ? null : rest.slug, visibility: unlisted ? "unlisted" : e.visibility, location: "", cameras: [] };
+  }));
 });
 // Favori par identifiant ou par adresse (slug) de l'événement : l'accès est vérifié, sinon
 // n'importe quel compte pourrait découvrir les événements privés des autres par leur id numérique.
@@ -181,7 +183,8 @@ const eventByRef = (ref) => (/^\d+$/.test(ref) ? findEvent(Number(ref)) : findEv
 router.post("/favorites/:eventId", async (req, res) => {
   const event = await eventByRef(req.params.eventId);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
-  if (!(await hasAccess(req, event))) return res.status(403).json({ error: "Accès réservé aux invités." });
+  if (event.suspended) return res.status(404).json({ error: "Événement introuvable." });
+  // Privé / sur invitation sans accès : le favori est permis, il ne dévoile ni le lien ni le contenu.
   await addFavorite(req.organizer.id, event.id);
   res.json({ favorite: true });
 });

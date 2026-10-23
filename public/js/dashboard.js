@@ -225,7 +225,7 @@ const upWhere = (ev) => { const ty = EVENT_TYPES[ev.type] || EVENT_TYPES.autre |
   const where = ev.city || (isMasked(ev) ? "" : ev.location);
   const vis = t(ev.visibility === "private" ? "Privé" : ev.visibility === "unlisted" || isMasked(ev) ? "Sur invitation" : "Public");
   return `${ty.icon} ${where ? `${esc(where)} · ` : ""}${esc(vis)}`; };
-const upFav = (ev) => (ev.slug ? `<button type="button" class="card-fav" data-fav="${esc(ev.slug)}" aria-label="Ajouter aux favoris">♡</button>` : "");
+const upFav = (ev) => (ev.slug || ev.ref ? `<button type="button" class="card-fav" data-fav="${esc(ev.slug || ev.ref)}" aria-label="Ajouter aux favoris">♡</button>` : "");
 function upFeatured(ev) {
   const { day, mon } = upDate(ev);
   return `<a class="up-feat" href="${upHref(ev)}" ${ev.slug ? "" : "data-invite-only"} ${liveAttrs(ev)}>
