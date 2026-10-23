@@ -1,6 +1,7 @@
 // Image du faire-part (PNG 1080×1350) pour le partager sur WhatsApp, SMS… avec le lien en dessous.
 // Dessinée sur un canvas aux couleurs du style choisi : titre, photo ronde, texte, date, lieu, lien et QR code.
-import { formatDate, qrUrl, EN } from "./common.js";
+import { formatDate, qrUrl } from "./common.js";
+import { tr } from "./i18n.js";
 
 const THEMES = {
   classique: { bg: ["#fffaf0", "#f6ead2"], ink: "#3a2e1e", accent: "#a8823a", serif: true },
@@ -85,7 +86,7 @@ export async function inviteImage(ev, invite, style, photoUrl, link) {
   ctx.fillStyle = "rgba(255,255,255,.9)";
   ctx.beginPath(); ctx.roundRect?.(80, by, W - 160, 130, 26); ctx.fill();
   ctx.fillStyle = "#c20f68"; ctx.textAlign = "left"; ctx.font = "700 34px -apple-system, Arial, sans-serif";
-  ctx.fillText(EN ? "Open the link below the image 👇" : "Ouvrez le lien sous l'image 👇", 110, by + 55);
+  ctx.fillText(tr("Ouvrez le lien sous l'image 👇"), 110, by + 55);
   ctx.fillStyle = "#555"; ctx.font = "400 28px -apple-system, Arial, sans-serif";
   ctx.fillText(link.replace(/^https?:\/\//, "").replace(/\?.*$/, "").slice(0, 38), 110, by + 98);
   if (qr) ctx.drawImage(qr, W - 80 - 120, by + 5, 120, 120);

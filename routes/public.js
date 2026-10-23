@@ -1,5 +1,6 @@
 // API /api/public : pages vues par les invités (événement, code d'accès, réponses, livre d'or, Découvrir).
 import { tooFast } from "../lib/limits.js";
+import { translateTexts } from "../lib/translate.js";
 import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers, rollDemoDates } from "../lib/demo.js";
 import { Router } from "express";
@@ -138,6 +139,14 @@ router.get("/:slug", async (req, res) => {
 const tooManyTries = (key) => tooFast(`try:${key}`, 10, 15 * 60 * 1000);
 
 // « J'ai reçu une invitation » : le code seul suffit à retrouver l'événement.
+// Traduction de textes générés par le site (invitation au live…) dans la langue du visiteur.
+router.post("/translate", async (req, res) => {
+  const lang = /^[a-z]{2}$/.test(req.body?.lang) ? req.body.lang : "fr";
+  const texts = (Array.isArray(req.body?.texts) ? req.body.texts : []).slice(0, 20).map((t) => String(t).slice(0, 2000));
+  if (lang === "fr" || !texts.length || tooFast(`tr:${req.ip}`, 60, 60 * 1000)) return res.json({ texts });
+  res.json({ texts: await translateTexts(texts, lang) });
+});
+
 router.post("/join", async (req, res) => {
   const key = `${req.ip}:join`;
   if (await tooManyTries(key)) return res.status(429).json({ error: "Trop d'essais, réessayez dans 15 minutes." });

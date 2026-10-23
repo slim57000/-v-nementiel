@@ -3,6 +3,11 @@
 import { inviteImage, shareBlob } from "./share-card.js";
 import { api, $, copy, shareSheet, qrUrl, tabbar, goLogin, formatDate, EVENT_TYPES, EN, toast } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
+import { lang, tr } from "./i18n.js";
+
+// Langues autres que français / anglais : textes anglais traduits une fois au chargement (L = traduction connue).
+const TRM = new Map();
+const L = (s) => TRM.get(s) || s;
 
 tabbar("home");
 const id = new URLSearchParams(location.search).get("id");
@@ -11,8 +16,8 @@ const id = new URLSearchParams(location.search).get("id");
 function liveInvite(ev) {
   if (EN) {
     return {
-      kicker: "Live invitation", title: ev.name,
-      text: `We are delighted to announce our celebration, held in an intimate setting on ${formatDate(ev.date)}.\n\nBecause you matter to us and we want to share this moment despite the distance, we invite you to follow our ceremony live!\n\nWebsite link or QR code below${ev.time ? `: the broadcast starts at ${ev.time}` : ""}.`,
+      kicker: lang === "en" ? "Live invitation" : tr("Invitation au live"), title: ev.name,
+      text: L(`We are delighted to announce our celebration, held in an intimate setting on ${formatDate(ev.date)}.\n\nBecause you matter to us and we want to share this moment despite the distance, we invite you to follow our ceremony live!\n\nWebsite link or QR code below${ev.time ? `: the broadcast starts at ${ev.time}` : ""}.`),
     };
   }
   const what = { mariage: "notre mariage", bapteme: "le baptême", communion: "la communion", fiancailles: "nos fiançailles",
@@ -30,8 +35,8 @@ function liveInvite(ev) {
 function liveTexts(ev) {
   const when = formatDate(ev.date, ev.time);
   if (EN) return [liveInvite(ev).text,
-    `Can't make it? Watch it live from your phone on ${when}.\n\nMessages, reactions and photos: share this moment with us!`,
-    `Save the date: ${when}.\n\nWherever you are, join us live from your phone, tablet or computer. Send your messages and reactions: we will see them in real time ❤️`];
+    L(`Can't make it? Watch it live from your phone on ${when}.\n\nMessages, reactions and photos: share this moment with us!`),
+    L(`Save the date: ${when}.\n\nWherever you are, join us live from your phone, tablet or computer. Send your messages and reactions: we will see them in real time ❤️`)];
   const what = { mariage: "notre mariage", bapteme: "le baptême", communion: "la communion", fiancailles: "nos fiançailles",
     anniversaire: "l'anniversaire", "baby-shower": "la baby shower", diplome: "la remise de diplôme",
     retraite: "le départ en retraite", inauguration: "l'inauguration" }[ev.type] || "l'événement";
@@ -87,9 +92,8 @@ function render() {
   $("#qr-code-line").classList.toggle("hidden", ev.visibility !== "private");
 
   const text = isLive
-    ? (EN ? `📺 Watch "${ev.name}" live on MaFeliza!` : `📺 Suivez « ${ev.name} » en direct sur MaFeliza !`)
-    : (EN ? `💌 You're invited to "${ev.name}"!${ev.visibility === "private" ? ` Access code: ${ev.accessCode}` : ""}`
-      : `💌 Vous êtes invité·e à « ${ev.name} » !${ev.visibility === "private" ? ` Code d'accès : ${ev.accessCode}` : ""}`);
+    ? tr("📺 Suivez « {name} » en direct sur MaFeliza !").replace("{name}", ev.name)
+    : tr("💌 Vous êtes invité·e à « {name} » !").replace("{name}", ev.name) + (ev.visibility === "private" ? ` ${tr("Code d'accès :")} ${ev.accessCode}` : "");
   // Image du faire-part préparée à l'avance : au toucher de « Partager », elle part avec le texte et le lien
   // (WhatsApp affiche le faire-part, le lien en dessous). Sinon, feuille de partage classique.
   let card = null;
@@ -101,7 +105,7 @@ function render() {
   $("#copy").onclick = () => copy(link, "Lien copié !");
   // Mode simple : une page avec un seul gros bouton « Regarder le live » (idéal pour les grands-parents).
   const simple = `${location.origin}/simple?e=${encodeURIComponent(ev.slug)}${ev.visibility === "private" ? `&code=${ev.accessCode}` : ""}`;
-  $("#simple-link").onclick = () => shareSheet({ title: ev.name, text: EN ? `👵 Watch "${ev.name}" live in one tap:` : `👵 Regardez « ${ev.name} » en direct, en un seul geste :`, url: simple });
+  $("#simple-link").onclick = () => shareSheet({ title: ev.name, text: tr("👵 Regardez « {name} » en direct, en un seul geste :").replace("{name}", ev.name), url: simple });
 }
 
 document.querySelector(".fp-tabs").addEventListener("click", (e) => {
@@ -144,7 +148,7 @@ form.addEventListener("submit", async (e) => {
     ev = await api(`/api/events/${encodeURIComponent(ev.id)}/invite-text`, { method: "PATCH", body });
     closeEditor();
     render();
-    toast(EN ? "Text saved" : "Texte enregistré ✓");
+    toast(tr("Texte enregistré ✓"));
   } catch (err) { toast(err.message); }
 });
 $("#print").addEventListener("click", () => print());
@@ -154,6 +158,13 @@ try {
   document.title = `Faire-part — ${ev.name}`;
   $("#edit").href = `/edit?id=${ev.id}`;
   if (!EVENT_TYPES[ev.type]) throw new Error();
+  if (lang !== "fr" && lang !== "en") {
+    // Textes anglais de l'invitation au live → langue du visiteur (traduction gardée par le serveur).
+    TRM.clear();
+    const src = liveTexts(ev);
+    const { texts } = await api("/api/public/translate", { method: "POST", body: { lang, texts: src } }).catch(() => ({ texts: src }));
+    src.forEach((t, i) => TRM.set(t, texts[i] || t));
+  }
   render();
   if (new URLSearchParams(location.search).has("new")) {
     history.replaceState(null, "", `/faire-part?id=${ev.id}`);

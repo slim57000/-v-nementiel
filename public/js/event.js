@@ -1,6 +1,7 @@
 // Page publique d'un événement : faire-part, compte à rebours, stories, réponses, livre d'or, cagnotte.
 import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, EN, guestName, LOCALE, placeholderCover, tabbar, createSheet, openPot } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
+import { t as tr } from "./i18n.js";
 import { initGuestbook } from "./guestbook.js";
 
 const slug = decodeURIComponent(location.pathname.split("/").pop());
@@ -324,7 +325,7 @@ async function filmCard(ev) {
   card.type = "button";
   card.className = "film-card";
   card.innerHTML = `<span class="film-card-bg" style="background-image:url('${esc(scenes.find((s) => s.kind === "photo")?.url || "")}')"></span>
-    <span class="film-card-txt"><b>${EN ? "✨ Relive the event" : "✨ Revivez l'événement"}</b><small>${EN ? `The memory film · ${count} photos and videos` : `Le film souvenir · ${count} photos et vidéos`}</small></span><span class="film-card-play">▶</span>`;
+    <span class="film-card-txt"><b>${tr("✨ Revivez l'événement")}</b><small>${tr("Le film souvenir")} · ${count} 📷🎬</small></span><span class="film-card-play">▶</span>`;
   card.onclick = () => playFilm(ev, scenes);
   $("#ev-react")?.before(card);
   if (new URLSearchParams(location.search).get("film")) playFilm(ev, scenes);

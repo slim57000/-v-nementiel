@@ -1,10 +1,10 @@
 // ✨ « Revivez l'événement » : film souvenir de 30 à 60 s monté automatiquement dans le navigateur,
 // avec les photos et vidéos des invités, quelques mots du livre d'or et une musique douce générée (sans droits).
-import { api, esc, formatDate, coverOf, isVideo, isHidden, shareSheet, EN } from "./common.js";
+import { api, esc, formatDate, coverOf, isVideo, isHidden, shareSheet } from "./common.js";
+import { tr } from "./i18n.js";
 
-const T = EN
-  ? { thanks: "Thank you for sharing this moment 💛", made: "Made with MaFeliza", create: "✨ Create yours", replay: "↺ Watch again", share: "Share", play: "▶ Play the film", close: "Close" }
-  : { thanks: "Merci d'avoir partagé ce moment 💛", made: "Fait avec MaFeliza", create: "✨ Créez le vôtre", replay: "↺ Revoir", share: "Partager", play: "▶ Lancer le film", close: "Fermer" };
+// Textes du film dans la langue du visiteur (dictionnaire du site).
+const T = { thanks: tr("Merci d'avoir partagé ce moment 💛"), made: tr("Fait avec MaFeliza"), create: tr("✨ Créez le vôtre"), replay: tr("↺ Revoir"), share: tr("Partager"), play: tr("▶ Lancer le film"), close: tr("Fermer") };
 
 // Médias et messages de l'événement : de quoi faire un film ?
 export async function filmScenes(ev) {
