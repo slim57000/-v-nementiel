@@ -625,7 +625,7 @@ const readAsDataUrl = (file) => new Promise((resolve, reject) => {
 export async function uploadVideo(slug, file) {
   const duration = await videoDuration(file);
   if (duration > MAX_VIDEO_SECONDS + 0.5) throw new Error(`Vidéo trop longue (${MAX_VIDEO_SECONDS} secondes maximum).`);
-  const type = file.type || "video/mp4";
+  const type = (file.type || "video/mp4").split(";")[0].trim(); // sans « ;codecs=… » (iPhone)
   const target = await api(`/api/public/${encodeURIComponent(slug)}/upload-url`, { method: "POST", body: { type, size: file.size } });
   if (target.mode === "direct") {
     const res = await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": type }, body: file });

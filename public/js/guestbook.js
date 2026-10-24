@@ -176,7 +176,8 @@ export function initGuestbook(ev) {
       const chunks = [];
       rec.ondataavailable = (ev) => ev.data.size && chunks.push(ev.data);
       rec.onstop = () => {
-        const type = rec.mimeType || "video/webm";
+        // iPhone : « video/mp4;codecs=avc1,mp4a.40.2 » → on ne garde que « video/mp4 » (format accepté au stockage).
+        const type = (rec.mimeType || "video/webm").split(";")[0].trim();
         const file = new File(chunks, `message.${type.includes("mp4") ? "mp4" : "webm"}`, { type });
         close();
         draft.videoFile = file; draft.image = null;
