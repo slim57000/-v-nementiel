@@ -1017,3 +1017,24 @@ export async function openPot(slug, url) {
   const box = document.getElementById("pot-frame");
   box.querySelector(".pot-frame-close").addEventListener("click", () => box.remove());
 }
+
+// « ✨ Inspirations » : YouTube Shorts de fêtes (intégration officielle), dans la langue du visiteur.
+// Section masquée tant qu'il n'y a aucune vidéo (pas de clé YouTube, quota…).
+export function loadInspirations(section, row) {
+  if (!section || !row) return;
+  api("/api/public/inspirations").then((list) => {
+    if (!list?.length) return;
+    row.innerHTML = list.map((v) => `<button type="button" class="insp-card" data-yt="${esc(v.id)}" aria-label="${esc(v.title)}">
+      <img src="${esc(v.thumb)}" alt="" loading="lazy"><span class="insp-play">▶</span><small>${esc(v.channel)}</small></button>`).join("");
+    section.classList.remove("hidden");
+  }).catch(() => {});
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest?.("[data-yt]");
+  if (!b) return;
+  document.body.insertAdjacentHTML("beforeend", `<div class="sheet insp-sheet" id="insp-sheet" role="dialog" aria-modal="true"><div class="card">
+    <iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(b.dataset.yt)}?autoplay=1&playsinline=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="YouTube"></iframe>
+    <button class="btn btn-light btn-block" type="button" id="insp-close">${esc(tr("Fermer"))}</button></div></div>`);
+  const sheet = document.getElementById("insp-sheet");
+  sheet.addEventListener("click", (ev) => { if (ev.target === sheet || ev.target.id === "insp-close") sheet.remove(); });
+});

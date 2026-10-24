@@ -1,5 +1,5 @@
 // Accueil connecté : ronds des stories, onglets Pour vous / En direct / À venir, cartes des événements.
-import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories, liveAttrs, createSheet, syncFavs, LOCALE } from "./common.js";
+import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories, liveAttrs, createSheet, syncFavs, LOCALE, loadInspirations } from "./common.js";
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 
@@ -9,6 +9,7 @@ document.querySelector(".stories").insertAdjacentHTML("beforebegin", `<div class
 </div>`);
 
 tabbar("home");
+loadInspirations($("#insp"), $("#insp-row"));
 
 if (new URLSearchParams(location.search).has("saved")) {
   toast("Événement enregistré ✔");
