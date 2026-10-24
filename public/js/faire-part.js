@@ -47,7 +47,9 @@ let liveTextIdx = 0;
 // Invitation au live : texte personnalisé par l'organisateur, sinon le texte proposé.
 const liveCard = (ev) => {
   const auto = liveInvite(ev);
-  return ev.invite?.liveText ? { ...auto, text: ev.invite.liveText } : auto;
+  // Ancien texte proposé en anglais (enregistré tel quel) : remplacé par le texte dans la langue du visiteur.
+  const oldAuto = /^(We are delighted to announce our celebration|Can't make it\? Watch it live|Save the date: )/.test(ev.invite?.liveText || "") && lang !== "en";
+  return ev.invite?.liveText && !oldAuto ? { ...auto, text: ev.invite.liveText } : auto;
 };
 
 let ev;
