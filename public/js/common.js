@@ -1038,14 +1038,14 @@ const likedReels = () => { try { return new Set(JSON.parse(localStorage.getItem(
 // Une seule vidéo chargée à la fois ; glisser vers le haut / la gauche = suivante, le bas / la droite = précédente.
 function openVideoReels(list, start) {
   document.body.insertAdjacentHTML("beforeend", `<div class="reels-viewer" id="reels-viewer" role="dialog" aria-modal="true">
-    ${list.map((v, i) => `<section class="reel" data-i="${i}"><video playsinline muted loop preload="none" poster="${esc(v.thumb || "")}"></video>
+    ${list.map((v, i) => `<section class="reel ${v.portrait === false ? "landscape" : ""}" data-i="${i}"><video playsinline muted loop preload="none" poster="${esc(v.thumb || "")}"></video>
       <div class="reel-side">
         <button type="button" class="reel-act" data-like="${esc(v.id)}"><span>${likedReels().has(v.id) ? "❤️" : "🤍"}</span><small>${v.likes || ""}</small></button>
         <button type="button" class="reel-act" data-rshare="${i}"><span>↗</span><small>${esc(tr("Partager"))}</small></button>
         ${v.event?.slug ? `<a class="reel-act" href="/e/${esc(v.event.slug)}"><span>🎉</span><small>${esc(tr("Événement"))}</small></a>` : ""}
         ${v.event?.cagnotteUrl ? `<a class="reel-act" href="${esc(v.event.cagnotteUrl)}" target="_blank" rel="noopener"><span>💝</span><small>${esc(tr("Cagnotte"))}</small></a>` : ""}
       </div>
-      <div class="reel-info">${v.member ? `<b>${esc(v.title)}</b>` : ""}<small>${v.credit ? `<a href="${esc(v.credit)}" target="_blank" rel="noopener">🎥 ${esc(v.channel)} · Pexels</a>` : `👤 ${esc(v.channel)}`}</small></div></section>`).join("")}
+      <div class="reel-info">${v.member ? `<b>${esc(v.title)}</b>` : ""}<small>${v.credit ? `<a href="${esc(v.credit)}" target="_blank" rel="noopener">🎥 ${esc(v.channel)} · ${esc(v.source || "Pexels")}</a>` : `👤 ${esc(v.channel)}`}</small></div></section>`).join("")}
     <button type="button" class="reels-btn reels-close" aria-label="${esc(tr("Fermer"))}">✕</button>
     <button type="button" class="reels-btn reels-sound" aria-label="Son">${reelsSound ? "🔊" : "🔇"}</button>
     <div class="reels-hint">↑</div></div>`);
