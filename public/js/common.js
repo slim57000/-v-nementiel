@@ -1033,6 +1033,62 @@ export function loadInspirations(section, row, showEmpty = false) {
     section.classList.remove("hidden");
   }).catch(() => {});
 }
+// Réels en fichiers vidéo (Pexels) : <video> natif, son coupé au départ, lecture automatique fiable sur iPhone.
+// Une seule vidéo chargée à la fois ; glisser vers le haut / la gauche = suivante, le bas / la droite = précédente.
+function openVideoReels(list, start) {
+  document.body.insertAdjacentHTML("beforeend", `<div class="reels-viewer" id="reels-viewer" role="dialog" aria-modal="true">
+    ${list.map((v, i) => `<section class="reel" data-i="${i}"><video playsinline muted loop preload="none" poster="${esc(v.thumb || "")}"></video>
+      ${v.credit ? `<a class="reel-credit" href="${esc(v.credit)}" target="_blank" rel="noopener">🎥 ${esc(v.channel)} · Pexels</a>` : ""}</section>`).join("")}
+    <button type="button" class="reels-btn reels-close" aria-label="${esc(tr("Fermer"))}">✕</button>
+    <button type="button" class="reels-btn reels-sound" aria-label="Son">${reelsSound ? "🔊" : "🔇"}</button>
+    <div class="reels-hint">↑</div></div>`);
+  const v = document.getElementById("reels-viewer");
+  document.body.style.overflow = "hidden";
+  const vids = [...v.querySelectorAll("video")];
+  let current = -1;
+  const show = (i) => {
+    if (i === current) return;
+    current = i;
+    vids.forEach((el, k) => {
+      if (k === i) {
+        if (!el.getAttribute("src")) el.src = list[k].src;
+        el.muted = !reelsSound;
+        el.play().catch(() => { el.muted = true; el.play().catch(() => {}); });
+      } else if (Math.abs(k - i) > 1 && el.getAttribute("src")) { el.pause(); el.removeAttribute("src"); el.load(); }
+      else el.pause();
+    });
+    // Vidéo suivante préparée à l'avance.
+    const next = vids[i + 1];
+    if (next && !next.getAttribute("src")) { next.preload = "auto"; next.src = list[i + 1].src; }
+  };
+  const io = new IntersectionObserver((entries) => entries.forEach((en) => { if (en.isIntersecting) show(Number(en.target.dataset.i)); }), { root: v, threshold: 0.6 });
+  v.querySelectorAll(".reel").forEach((sec) => io.observe(sec));
+  v.scrollTop = start * v.clientHeight;
+  show(start);
+  const close = () => { io.disconnect(); vids.forEach((el) => { el.pause(); el.removeAttribute("src"); }); v.remove(); document.body.style.overflow = ""; };
+  v.querySelector(".reels-close").onclick = close;
+  v.querySelector(".reels-sound").onclick = (ev) => {
+    reelsSound = !reelsSound;
+    ev.currentTarget.textContent = reelsSound ? "🔊" : "🔇";
+    vids[current].muted = !reelsSound;
+    vids[current].play().catch(() => {});
+  };
+  let tx = 0, ty = 0;
+  v.addEventListener("touchstart", (ev) => { tx = ev.touches[0].clientX; ty = ev.touches[0].clientY; }, { passive: true });
+  v.addEventListener("touchend", (ev) => {
+    const dx = ev.changedTouches[0].clientX - tx, dy = ev.changedTouches[0].clientY - ty;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const to = Math.min(list.length - 1, Math.max(0, current + (dx < 0 ? 1 : -1)));
+    v.scrollTo({ top: to * v.clientHeight, behavior: "smooth" });
+  }, { passive: true });
+  // Toucher la vidéo : pause / lecture.
+  v.addEventListener("click", (ev) => {
+    if (!ev.target.closest(".reel") || ev.target.closest("a")) return;
+    const el = vids[current];
+    if (el.paused) el.play().catch(() => {}); else el.pause();
+  });
+}
+
 // Lecteur de réels plein écran : un seul lecteur YouTube (API officielle) posé par-dessus des diapositives ;
 // glisser change de vidéo dans ce même lecteur (loadVideoById), ce que Safari iPhone laisse démarrer seul.
 // Son coupé au départ (règle des navigateurs) : 🔇 → 🔊 le remet pour toutes les vidéos suivantes.
@@ -1050,6 +1106,7 @@ document.addEventListener("click", async (e) => {
   const list = b.parentElement?._reels || [...(b.parentElement?.querySelectorAll("[data-yt]") || [b])].map((c) => ({ id: c.dataset.yt, thumb: c.querySelector("img")?.src || "" }));
   const start = Math.max(0, list.findIndex((x) => x.id === b.dataset.yt));
   document.getElementById("reels-viewer")?.remove();
+  if (list[start]?.src) return openVideoReels(list, start); // vidéos Pexels : lecteur vidéo natif
   document.body.insertAdjacentHTML("beforeend", `<div class="reels-viewer" id="reels-viewer" role="dialog" aria-modal="true">
     ${list.map((v, i) => `<section class="reel" data-i="${i}" style="background-image:url('${esc(v.thumb || "")}')"></section>`).join("")}
     <div class="reels-player"><div id="reels-yt"></div></div>

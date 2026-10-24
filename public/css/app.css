@@ -1526,3 +1526,7 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .reels-player { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; pointer-events: none; }
 .reels-player iframe, .reels-player > div { width: 100%; height: 100%; max-width: calc(100dvh * 9 / 16); border: 0; }
 .reels-viewer { touch-action: pan-y; }
+
+.reel video { width: 100%; height: 100%; max-width: calc(100dvh * 9 / 16); object-fit: cover; background: #000; }
+.reel { position: relative; }
+.reel-credit { position: absolute; left: 14px; bottom: calc(18px + env(safe-area-inset-bottom)); color: #fff; font-size: .75rem; font-weight: 600; opacity: .85; text-decoration: none; text-shadow: 0 1px 3px rgba(0,0,0,.7); }
