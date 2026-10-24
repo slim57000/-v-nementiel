@@ -1,6 +1,7 @@
 // API /api/public : pages vues par les invités (événement, code d'accès, réponses, livre d'or, Découvrir).
 import { tooFast } from "../lib/limits.js";
-import { translateTexts } from "../lib/translate.js";
+import { translateTexts, reqLangFull } from "../lib/translate.js";
+import { inspirations } from "../lib/inspirations.js";
 import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers, rollDemoDates } from "../lib/demo.js";
 import { Router } from "express";
@@ -101,6 +102,11 @@ router.get("/", async (req, res) => {
 
 // Événement privé non déverrouillé : on ne renvoie que le strict minimum pour l'écran cadenas.
 // Vérification d'une adresse de cagnotte quelconque (création d'une cagnotte depuis le site).
+// Inspirations : YouTube Shorts de fêtes dans la langue du visiteur (vide sans clé YOUTUBE_API_KEY).
+router.get("/inspirations", async (req, res) => {
+  res.set("Cache-Control", "private, max-age=1800"); // dépend de la langue (cookie)
+  res.json(await inspirations(reqLangFull(req)));
+});
 router.get("/pot-check", async (req, res) => res.json({ embeddable: await embeddable(String(req.query.url || "")) }));
 // Contenu d'un événement pour la page publique : utilisé par l'API et intégré directement dans la page /e/…
 // (affichage instantané, sans écran « Chargement… »). null = introuvable.

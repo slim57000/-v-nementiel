@@ -91,3 +91,20 @@ if ($("#upcoming-list")) api("/api/public?limit=10").catch(() => []).then((event
   EXAMPLES.slice(0, Math.max(0, 3 - cards.length)).forEach((ex) => cards.push(liveCard({ ...ex, href: "/decouvrir", tag: "Exemple" })));
   $("#upcoming-list").innerHTML = cards.join("");
 });
+
+// Inspirations : YouTube Shorts de fêtes (intégration officielle YouTube), dans la langue du visiteur.
+api("/api/public/inspirations").then((list) => {
+  if (!list?.length) return;
+  $("#insp-row").innerHTML = list.map((v) => `<button type="button" class="insp-card" data-yt="${esc(v.id)}" aria-label="${esc(v.title)}">
+    <img src="${esc(v.thumb)}" alt="" loading="lazy"><span class="insp-play">▶</span><small>${esc(v.channel)}</small></button>`).join("");
+  $("#insp").classList.remove("hidden");
+}).catch(() => {});
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-yt]");
+  if (!b) return;
+  document.body.insertAdjacentHTML("beforeend", `<div class="sheet insp-sheet" id="insp-sheet" role="dialog" aria-modal="true"><div class="card">
+    <iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(b.dataset.yt)}?autoplay=1&playsinline=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="YouTube"></iframe>
+    <button class="btn btn-light btn-block" type="button" id="insp-close">Fermer</button></div></div>`);
+  const sheet = $("#insp-sheet");
+  sheet.addEventListener("click", (ev) => { if (ev.target === sheet || ev.target.id === "insp-close") sheet.remove(); });
+});

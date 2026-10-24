@@ -1486,3 +1486,16 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .code-lbl { margin: 14px 0 6px; }
 .feed-post header .feed-fav { position: static; margin-left: auto; flex: none; width: 36px; height: 36px; font-size: 1rem; transform: none; }
 .feed-post header > div { flex: 1; }
+
+/* Inspirations (YouTube Shorts) */
+.insp { margin: 26px 0 8px; }
+.insp h2 { margin: 0; font-size: 1.25rem; text-align: center; }
+.insp > p { margin: 4px 0 12px; text-align: center; font-size: .88rem; }
+.insp-row { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 10px; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.insp-row::-webkit-scrollbar { display: none; }
+.insp-card { position: relative; flex: none; width: 128px; aspect-ratio: 9 / 16; border: 0; padding: 0; border-radius: 16px; overflow: hidden; background: #111; scroll-snap-align: start; cursor: pointer; box-shadow: 0 6px 16px rgba(0,0,0,.18); }
+.insp-card img { width: 100%; height: 100%; object-fit: cover; }
+.insp-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,.45); color: #fff; display: grid; place-items: center; font-size: .9rem; backdrop-filter: blur(4px); }
+.insp-card small { position: absolute; left: 6px; right: 6px; bottom: 6px; color: #fff; font-size: .66rem; font-weight: 700; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 3px rgba(0,0,0,.7); }
+.insp-sheet .card { padding-top: 26px; }
+.insp-sheet iframe { display: block; width: 100%; max-width: 360px; aspect-ratio: 9 / 16; max-height: 70dvh; margin: 0 auto 12px; border: 0; border-radius: 16px; background: #000; }
