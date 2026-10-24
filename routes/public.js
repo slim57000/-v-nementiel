@@ -128,9 +128,11 @@ async function listMemberReels() {
 router.get("/reels", async (req, res) => {
   const [mine, insp, likes] = await Promise.all([listMemberReels(), inspirations(reqLangFull(req)).catch(() => []), readSetting("reellikes").catch(() => null)]);
   // Une vidéo de membre toutes les 3 vidéos d'inspiration (les membres d'abord tant qu'il y en a peu).
-  const out = [], m = [...mine], i = [...insp];
+  // Ordre mélangé à chaque chargement (verticales toujours avant horizontales) : actualiser = nouvelles vidéos en tête.
+  const shuffle = (a) => { for (let k = a.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [a[k], a[j]] = [a[j], a[k]]; } return a; };
+  const out = [], m = [...mine], i = [...shuffle(insp.filter((v) => v.portrait !== false)), ...shuffle(insp.filter((v) => v.portrait === false))];
   while (m.length || i.length) { if (m.length) out.push(m.shift()); for (let k = 0; k < 3 && i.length; k++) out.push(i.shift()); }
-  res.set("Cache-Control", "private, max-age=60");
+  res.set("Cache-Control", "no-store");
   res.json(out.map((v) => ({ ...v, likes: (likes || {})[v.id] || 0 })));
 });
 router.post("/reels/:id/like", async (req, res) => {
