@@ -1028,19 +1028,8 @@ export function loadInspirations(section, row, showEmpty = false) {
   api("/api/public/inspirations").then((list) => {
     if (!list?.length) { if (showEmpty) row.innerHTML = `<p class="muted reels-empty">${esc(tr("Aucune vidéo pour le moment."))}</p>`; return; }
     row._reels = list; // liste complète : le lecteur enchaîne sur toutes les vidéos
-    let shown = 0;
-    const more = () => { row.insertAdjacentHTML("beforeend", list.slice(shown, shown + 12).map(card).join("")); shown += 12; };
-    row.innerHTML = "";
-    more();
-    // Chargement de la suite en arrivant en bas de la grille.
-    const sentinel = document.createElement("div");
-    sentinel.className = "reels-sentinel";
-    row.after(sentinel);
-    new IntersectionObserver((entries, obs) => {
-      if (!entries[0].isIntersecting || row.offsetParent === null) return;
-      more();
-      if (shown >= list.length) { obs.disconnect(); sentinel.remove(); }
-    }, { rootMargin: "400px" }).observe(sentinel);
+    // Toutes les vignettes d'un coup (images chargées au fil du défilement) : rien ne dépend d'un « charger plus ».
+    row.innerHTML = list.map(card).join("");
     section.classList.remove("hidden");
   }).catch(() => {});
 }
