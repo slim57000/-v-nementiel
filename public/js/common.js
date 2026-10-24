@@ -415,7 +415,8 @@ export async function editName(current, onDone) {
 // ❤️ Mes likes : événements mis en favoris.
 export async function openFavs() {
   const favs = await api("/api/me/favorites").catch(() => []);
-  const rows = favs.map((ev) => `<a class="notif fav-row" href="${ev.slug ? esc(eventUrl(ev.slug)) : "#"}" ${ev.slug ? "" : "data-invite-only"}>
+  // Favori sans accès (privé / sur invitation) : pas d'ouverture de la page, seulement le message qui explique comment entrer.
+  const rows = favs.map((ev) => `<a class="notif fav-row" href="${ev.slug && !ev.locked ? esc(eventUrl(ev.slug)) : "#"}" ${!ev.locked && ev.slug ? "" : ev.visibility === "private" ? "data-private-only" : "data-invite-only"}>
     <span class="fav-thumb" style="background-image:url('${esc(coverOf(ev))}')"></span>
     <span><b>${esc(ev.name)}</b><small class="muted">${esc(formatDate(ev.date, ev.time))}</small></span></a>`).join("");
   document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="fav-sheet" role="dialog" aria-modal="true">
@@ -972,6 +973,7 @@ document.addEventListener("click", (e) => {
   if (suppressClick && e.target.closest?.("[data-live-preview]")) { e.preventDefault(); suppressClick = false; }
 }, true);
 document.addEventListener("click", (e) => {
+  if (e.target.closest?.("[data-private-only]")) { e.preventDefault(); return toast("🔒 Événement privé : entrez le code reçu avec votre invitation (Découvrir → code)."); }
   if (!e.target.closest?.("[data-invite-only]")) return;
   e.preventDefault();
   toast("🔗 Événement sur invitation : ouvrez le lien reçu par SMS ou WhatsApp.");

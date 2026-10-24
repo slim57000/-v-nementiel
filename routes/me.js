@@ -174,7 +174,7 @@ router.get("/favorites", async (req, res) => {
     // Sans accès : carte masquée (pas d'adresse ; « sur invitation » : pas de lien, seulement une référence).
     const { location, cameras, invite, inviteStyle, description, cagnotteUrl, ...rest } = publicView(e);
     const unlisted = hidden.has(e.id) || e.visibility === "unlisted";
-    return { ...rest, id: e.id, ref: String(e.id), slug: unlisted ? null : rest.slug, visibility: unlisted ? "unlisted" : e.visibility, location: "", time: "", cameras: [] }; // comme sur les cartes : ni adresse ni heure
+    return { ...rest, id: e.id, ref: String(e.id), locked: true, slug: unlisted ? null : rest.slug, visibility: unlisted ? "unlisted" : e.visibility, location: "", time: "", cameras: [] }; // comme sur les cartes : ni adresse ni heure
   }));
 });
 // Favori par identifiant ou par adresse (slug) de l'événement : l'accès est vérifié, sinon
