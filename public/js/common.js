@@ -1020,10 +1020,11 @@ export async function openPot(slug, url) {
 
 // « ✨ Inspirations » : YouTube Shorts de fêtes (intégration officielle), dans la langue du visiteur.
 // Section masquée tant qu'il n'y a aucune vidéo (pas de clé YouTube, quota…).
-export function loadInspirations(section, row) {
+export function loadInspirations(section, row, showEmpty = false) {
   if (!section || !row) return;
+  if (showEmpty) row.innerHTML = '<div class="reels-skel"></div>'.repeat(4);
   api("/api/public/inspirations").then((list) => {
-    if (!list?.length) return;
+    if (!list?.length) { if (showEmpty) row.innerHTML = `<p class="muted reels-empty">${esc(tr("Aucune vidéo pour le moment."))}</p>`; return; }
     row.innerHTML = list.map((v) => `<button type="button" class="insp-card" data-yt="${esc(v.id)}" aria-label="${esc(v.title)}">
       <img src="${esc(v.thumb)}" alt="" loading="lazy"><span class="insp-play">▶</span><small>${esc(v.channel)}</small></button>`).join("");
     section.classList.remove("hidden");

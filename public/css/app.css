@@ -1499,3 +1499,12 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .insp-card small { position: absolute; left: 6px; right: 6px; bottom: 6px; color: #fff; font-size: .66rem; font-weight: 700; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 3px rgba(0,0,0,.7); }
 .insp-sheet .card { padding-top: 26px; }
 .insp-sheet iframe { display: block; width: 100%; max-width: 360px; aspect-ratio: 9 / 16; max-height: 70dvh; margin: 0 auto 12px; border: 0; border-radius: 16px; background: #000; }
+
+/* Onglet « Réels » : grille de vidéos verticales */
+.reels-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.reels-grid .insp-card { width: auto; }
+.reels-grid .insp-card small { font-size: .72rem; }
+.reels-skel { aspect-ratio: 9 / 16; border-radius: 16px; background: var(--card); animation: em-pulse 1.2s ease-in-out infinite alternate; }
+@keyframes em-pulse { from { opacity: .5; } to { opacity: 1; } }
+.reels-empty { grid-column: 1 / -1; text-align: center; padding: 30px 0; }
+.hd-tabs { grid-template-columns: repeat(4, 1fr); } .hd-tabs button { font-size: .8rem; padding: 9px 2px; white-space: nowrap; }

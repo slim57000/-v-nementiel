@@ -28,6 +28,7 @@
       <button class="active" data-filter="all">✨ Tout</button>
       <button data-filter="live">🔴 En direct</button>
       <button data-filter="feed">📰 Fil</button>
+      <button data-filter="reels">🎬 Réels</button>
     </div>
 
     <div id="list"></div>
@@ -35,11 +36,7 @@
       <div id="feed" style="text-align:left"></div>
       <p id="feed-empty" class="card hidden" style="text-align:center">Rien pour l'instant. Rejoignez un événement ou créez le vôtre !</p>
     </div>
-    <section class="insp hidden" id="insp" aria-labelledby="insp-title">
-      <h2 id="insp-title">✨ Inspirations</h2>
-      <p class="muted">Des fêtes partagées en vidéo dans le monde entier.</p>
-      <div class="insp-row" id="insp-row"></div>
-    </section>
+    <div id="reels" class="reels-grid hidden"></div>
     <div id="empty" class="card hidden" style="text-align:center">
       <p style="font-size:2.5rem;margin:0">🎉</p>
       <p id="empty-text">Vous n'avez pas encore d'événement.<br>Créez le premier en quelques minutes !</p>
