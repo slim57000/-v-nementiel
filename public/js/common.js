@@ -1025,7 +1025,7 @@ export function loadInspirations(section, row, showEmpty = false) {
   if (showEmpty) row.innerHTML = '<div class="reels-skel"></div>'.repeat(4);
   const card = (v) => `<button type="button" class="insp-card" data-yt="${esc(v.id)}" aria-label="${esc(v.title)}">
       <img src="${esc(v.thumb)}" alt="" loading="lazy"><span class="insp-play">▶</span><small>${esc(v.channel)}</small></button>`;
-  api("/api/public/inspirations").then((list) => {
+  api("/api/public/reels").then((list) => {
     if (!list?.length) { if (showEmpty) row.innerHTML = `<p class="muted reels-empty">${esc(tr("Aucune vidéo pour le moment."))}</p>`; return; }
     row._reels = list; // liste complète : le lecteur enchaîne sur toutes les vidéos
     // Toutes les vignettes d'un coup (images chargées au fil du défilement) : rien ne dépend d'un « charger plus ».
@@ -1033,12 +1033,19 @@ export function loadInspirations(section, row, showEmpty = false) {
     section.classList.remove("hidden");
   }).catch(() => {});
 }
+const likedReels = () => { try { return new Set(JSON.parse(localStorage.getItem("em-reellikes") || "[]")); } catch { return new Set(); } };
 // Réels en fichiers vidéo (Pexels) : <video> natif, son coupé au départ, lecture automatique fiable sur iPhone.
 // Une seule vidéo chargée à la fois ; glisser vers le haut / la gauche = suivante, le bas / la droite = précédente.
 function openVideoReels(list, start) {
   document.body.insertAdjacentHTML("beforeend", `<div class="reels-viewer" id="reels-viewer" role="dialog" aria-modal="true">
     ${list.map((v, i) => `<section class="reel" data-i="${i}"><video playsinline muted loop preload="none" poster="${esc(v.thumb || "")}"></video>
-      ${v.credit ? `<a class="reel-credit" href="${esc(v.credit)}" target="_blank" rel="noopener">🎥 ${esc(v.channel)} · Pexels</a>` : ""}</section>`).join("")}
+      <div class="reel-side">
+        <button type="button" class="reel-act" data-like="${esc(v.id)}"><span>${likedReels().has(v.id) ? "❤️" : "🤍"}</span><small>${v.likes || ""}</small></button>
+        <button type="button" class="reel-act" data-rshare="${i}"><span>↗</span><small>${esc(tr("Partager"))}</small></button>
+        ${v.event?.slug ? `<a class="reel-act" href="/e/${esc(v.event.slug)}"><span>🎉</span><small>${esc(tr("Événement"))}</small></a>` : ""}
+        ${v.event?.cagnotteUrl ? `<a class="reel-act" href="${esc(v.event.cagnotteUrl)}" target="_blank" rel="noopener"><span>💝</span><small>${esc(tr("Cagnotte"))}</small></a>` : ""}
+      </div>
+      <div class="reel-info">${v.member ? `<b>${esc(v.title)}</b>` : ""}<small>${v.credit ? `<a href="${esc(v.credit)}" target="_blank" rel="noopener">🎥 ${esc(v.channel)} · Pexels</a>` : `👤 ${esc(v.channel)}`}</small></div></section>`).join("")}
     <button type="button" class="reels-btn reels-close" aria-label="${esc(tr("Fermer"))}">✕</button>
     <button type="button" class="reels-btn reels-sound" aria-label="Son">${reelsSound ? "🔊" : "🔇"}</button>
     <div class="reels-hint">↑</div></div>`);
@@ -1081,9 +1088,30 @@ function openVideoReels(list, start) {
     const to = Math.min(list.length - 1, Math.max(0, current + (dx < 0 ? 1 : -1)));
     v.scrollTo({ top: to * v.clientHeight, behavior: "smooth" });
   }, { passive: true });
+  // J'aime (un par vidéo et par appareil) et partage.
+  v.addEventListener("click", async (ev) => {
+    const like = ev.target.closest("[data-like]");
+    if (like) {
+      const id = like.dataset.like, set = likedReels();
+      if (set.has(id)) return;
+      set.add(id);
+      try { localStorage.setItem("em-reellikes", JSON.stringify([...set].slice(-500))); } catch { /* ignoré */ }
+      like.querySelector("span").textContent = "❤️";
+      const n = like.querySelector("small");
+      n.textContent = String((Number(n.textContent) || 0) + 1);
+      api(`/api/public/reels/${encodeURIComponent(id)}/like`, { method: "POST" }).catch(() => {});
+      return;
+    }
+    const sh = ev.target.closest("[data-rshare]");
+    if (sh) {
+      const it = list[Number(sh.dataset.rshare)];
+      const url = it.event?.slug ? `${location.origin}/e/${it.event.slug}` : location.origin;
+      shareSheet({ title: it.event?.name || "MaFeliza", text: it.event?.name ? `🎉 ${it.event.name}` : tr("Créez le vôtre"), url });
+    }
+  });
   // Toucher la vidéo : pause / lecture.
   v.addEventListener("click", (ev) => {
-    if (!ev.target.closest(".reel") || ev.target.closest("a")) return;
+    if (!ev.target.closest(".reel") || ev.target.closest("a, button")) return;
     const el = vids[current];
     if (el.paused) el.play().catch(() => {}); else el.pause();
   });
@@ -1103,10 +1131,12 @@ const loadYtApi = () => (ytApi ||= new Promise((resolve) => {
 document.addEventListener("click", async (e) => {
   const b = e.target.closest?.("[data-yt]");
   if (!b) return;
-  const list = b.parentElement?._reels || [...(b.parentElement?.querySelectorAll("[data-yt]") || [b])].map((c) => ({ id: c.dataset.yt, thumb: c.querySelector("img")?.src || "" }));
-  const start = Math.max(0, list.findIndex((x) => x.id === b.dataset.yt));
+  let list = b.parentElement?._reels || [...(b.parentElement?.querySelectorAll("[data-yt]") || [b])].map((c) => ({ id: c.dataset.yt, thumb: c.querySelector("img")?.src || "" }));
+  let start = Math.max(0, list.findIndex((x) => x.id === b.dataset.yt));
   document.getElementById("reels-viewer")?.remove();
-  if (list[start]?.src) return openVideoReels(list, start); // vidéos Pexels : lecteur vidéo natif
+  // Vidéos en fichier (membres, Pexels) : lecteur vidéo natif ; vidéos YouTube : lecteur YouTube.
+  if (list[start]?.src) { const files = list.filter((x) => x.src); return openVideoReels(files, files.indexOf(list[start])); }
+  list = list.filter((x) => !x.src); start = Math.max(0, list.findIndex((x) => x.id === b.dataset.yt));
   document.body.insertAdjacentHTML("beforeend", `<div class="reels-viewer" id="reels-viewer" role="dialog" aria-modal="true">
     ${list.map((v, i) => `<section class="reel" data-i="${i}" style="background-image:url('${esc(v.thumb || "")}')"></section>`).join("")}
     <div class="reels-player"><div id="reels-yt"></div></div>

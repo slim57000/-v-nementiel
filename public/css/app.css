@@ -1530,3 +1530,12 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .reel video { width: 100%; height: 100%; max-width: calc(100dvh * 9 / 16); object-fit: cover; background: #000; }
 .reel { position: relative; }
 .reel-credit { position: absolute; left: 14px; bottom: calc(18px + env(safe-area-inset-bottom)); color: #fff; font-size: .75rem; font-weight: 600; opacity: .85; text-decoration: none; text-shadow: 0 1px 3px rgba(0,0,0,.7); }
+
+/* Réels : actions sur le côté, infos en bas */
+.reel-side { position: absolute; right: 10px; bottom: calc(90px + env(safe-area-inset-bottom)); display: grid; gap: 16px; z-index: 2; }
+.reel-act { display: grid; justify-items: center; gap: 2px; background: none; border: 0; color: #fff; text-decoration: none; cursor: pointer; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
+.reel-act span { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-size: 1.35rem; background: rgba(0,0,0,.35); backdrop-filter: blur(6px); }
+.reel-act small { font-size: .68rem; font-weight: 700; }
+.reel-info { position: absolute; left: 14px; right: 80px; bottom: calc(18px + env(safe-area-inset-bottom)); color: #fff; display: grid; gap: 3px; z-index: 2; text-shadow: 0 1px 4px rgba(0,0,0,.7); }
+.reel-info b { font-size: .95rem; }
+.reel-info small, .reel-info a { font-size: .75rem; color: #fff; opacity: .9; text-decoration: none; }

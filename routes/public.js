@@ -6,7 +6,7 @@ import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers, rollDemoDates } from "../lib/demo.js";
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
-import { dataVersion, listHistoryIds, listPendingIds, listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory,  listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
+import { listRecentPhotos, getSetting as readSetting, setSetting as writeSetting, dataVersion, listHistoryIds, listPendingIds, listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory,  listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
 import { currentOrganizer, isAdmin } from "./auth.js";
 import { camerasWithLive } from "../lib/livekit.js";
@@ -107,6 +107,41 @@ router.get("/inspirations", async (req, res) => {
   res.set("Cache-Control", "private, max-age=1800"); // dépend de la langue (cookie)
   res.json(await inspirations(reqLangFull(req)));
 });
+// Fil « Réels » : vidéos publiées par les membres sur les événements publics (les plus récentes d'abord),
+// mêlées aux vidéos d'inspiration (Pexels / YouTube). Chaque vidéo : j'aime, partage, lien vers l'événement, cagnotte.
+const isVideoFile = (url) => /\.(mp4|mov|webm)(\?|$)/i.test(url || "");
+let memberReels = { at: 0, list: [] };
+async function listMemberReels() {
+  if (Date.now() - memberReels.at < 60_000) return memberReels.list; // 1 min
+  const [events, hidden] = await Promise.all([listPublicUpcoming(50).catch(() => []), listUnlistedIds().catch(() => new Set())]);
+  const pub = events.filter((e) => e.visibility === "public" && !hidden.has(e.id) && !e.suspended);
+  const byId = new Map(pub.map((e) => [e.id, e]));
+  const photos = await listRecentPhotos([...byId.keys()], 200).catch(() => []);
+  const list = photos.filter((p) => !p.story && isVideoFile(p.url)).slice(0, 60).map((p) => {
+    const e = byId.get(p.eventId);
+    return { id: `m${p.id}`, src: p.url, thumb: e.cover || "", channel: p.name || e.name, title: e.name, member: true,
+      event: { slug: e.slug, name: e.name, cagnotteUrl: e.cagnotteUrl || "" } };
+  });
+  memberReels = { at: Date.now(), list };
+  return list;
+}
+router.get("/reels", async (req, res) => {
+  const [mine, insp, likes] = await Promise.all([listMemberReels(), inspirations(reqLangFull(req)).catch(() => []), readSetting("reellikes").catch(() => null)]);
+  // Une vidéo de membre toutes les 3 vidéos d'inspiration (les membres d'abord tant qu'il y en a peu).
+  const out = [], m = [...mine], i = [...insp];
+  while (m.length || i.length) { if (m.length) out.push(m.shift()); for (let k = 0; k < 3 && i.length; k++) out.push(i.shift()); }
+  res.set("Cache-Control", "private, max-age=60");
+  res.json(out.map((v) => ({ ...v, likes: (likes || {})[v.id] || 0 })));
+});
+router.post("/reels/:id/like", async (req, res) => {
+  const id = String(req.params.id).slice(0, 40);
+  if (!/^[\w-]+$/.test(id) || await tooFast(`reellike:${req.ip}:${id}`, 1, 24 * 3600 * 1000)) return res.json({ ok: false });
+  const likes = (await readSetting("reellikes").catch(() => null)) || {};
+  likes[id] = (likes[id] || 0) + 1;
+  await writeSetting("reellikes", likes);
+  res.json({ ok: true, likes: likes[id] });
+});
+
 router.get("/pot-check", async (req, res) => res.json({ embeddable: await embeddable(String(req.query.url || "")) }));
 // Contenu d'un événement pour la page publique : utilisé par l'API et intégré directement dans la page /e/…
 // (affichage instantané, sans écran « Chargement… »). null = introuvable.
