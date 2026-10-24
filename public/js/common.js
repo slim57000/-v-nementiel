@@ -1097,13 +1097,13 @@ document.addEventListener("click", async (e) => {
     ev.currentTarget.textContent = reelsSound ? "🔊" : "🔇";
     if (reelsSound) { player?.unMute(); player?.playVideo(); } else player?.mute();
   };
-  // Glisser vers la droite : vidéo suivante ; vers la gauche : précédente (en plus du glissement vertical).
+  // Glisser vers la gauche : vidéo suivante ; vers la droite : précédente (en plus du glissement vertical).
   let tx = 0, ty = 0;
   v.addEventListener("touchstart", (ev) => { tx = ev.touches[0].clientX; ty = ev.touches[0].clientY; }, { passive: true });
   v.addEventListener("touchend", (ev) => {
     const dx = ev.changedTouches[0].clientX - tx, dy = ev.changedTouches[0].clientY - ty;
     if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-    const to = Math.min(list.length - 1, Math.max(0, current + (dx > 0 ? 1 : -1)));
+    const to = Math.min(list.length - 1, Math.max(0, current + (dx < 0 ? 1 : -1)));
     v.scrollTo({ top: to * v.clientHeight, behavior: "smooth" });
   }, { passive: true });
   // Toucher la vidéo : pause / lecture.
