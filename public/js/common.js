@@ -1023,19 +1023,67 @@ export async function openPot(slug, url) {
 export function loadInspirations(section, row, showEmpty = false) {
   if (!section || !row) return;
   if (showEmpty) row.innerHTML = '<div class="reels-skel"></div>'.repeat(4);
+  const card = (v) => `<button type="button" class="insp-card" data-yt="${esc(v.id)}" aria-label="${esc(v.title)}">
+      <img src="${esc(v.thumb)}" alt="" loading="lazy"><span class="insp-play">▶</span><small>${esc(v.channel)}</small></button>`;
   api("/api/public/inspirations").then((list) => {
     if (!list?.length) { if (showEmpty) row.innerHTML = `<p class="muted reels-empty">${esc(tr("Aucune vidéo pour le moment."))}</p>`; return; }
-    row.innerHTML = list.map((v) => `<button type="button" class="insp-card" data-yt="${esc(v.id)}" aria-label="${esc(v.title)}">
-      <img src="${esc(v.thumb)}" alt="" loading="lazy"><span class="insp-play">▶</span><small>${esc(v.channel)}</small></button>`).join("");
+    row._reels = list; // liste complète : le lecteur enchaîne sur toutes les vidéos
+    let shown = 0;
+    const more = () => { row.insertAdjacentHTML("beforeend", list.slice(shown, shown + 12).map(card).join("")); shown += 12; };
+    row.innerHTML = "";
+    more();
+    // Chargement de la suite en arrivant en bas de la grille.
+    const sentinel = document.createElement("div");
+    sentinel.className = "reels-sentinel";
+    row.after(sentinel);
+    new IntersectionObserver((entries, obs) => {
+      if (!entries[0].isIntersecting || row.offsetParent === null) return;
+      more();
+      if (shown >= list.length) { obs.disconnect(); sentinel.remove(); }
+    }, { rootMargin: "400px" }).observe(sentinel);
     section.classList.remove("hidden");
   }).catch(() => {});
 }
+// Lecteur de réels plein écran : démarre tout de suite sur la vidéo touchée, glisser vers le haut / bas
+// enchaîne la suivante / précédente (une seule vidéo chargée à la fois). Son coupé au départ (règle des
+// navigateurs) : le bouton 🔊 le remet, et il reste actif pour les vidéos suivantes.
+let reelsSound = false;
 document.addEventListener("click", (e) => {
   const b = e.target.closest?.("[data-yt]");
   if (!b) return;
-  document.body.insertAdjacentHTML("beforeend", `<div class="sheet insp-sheet" id="insp-sheet" role="dialog" aria-modal="true"><div class="card">
-    <iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(b.dataset.yt)}?autoplay=1&playsinline=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="YouTube"></iframe>
-    <button class="btn btn-light btn-block" type="button" id="insp-close">${esc(tr("Fermer"))}</button></div></div>`);
-  const sheet = document.getElementById("insp-sheet");
-  sheet.addEventListener("click", (ev) => { if (ev.target === sheet || ev.target.id === "insp-close") sheet.remove(); });
+  const ids = b.parentElement?._reels?.map((x) => x.id) || [...(b.parentElement?.querySelectorAll("[data-yt]") || [b])].map((c) => c.dataset.yt);
+  const start = Math.max(0, ids.indexOf(b.dataset.yt));
+  document.getElementById("reels-viewer")?.remove();
+  document.body.insertAdjacentHTML("beforeend", `<div class="reels-viewer" id="reels-viewer" role="dialog" aria-modal="true">
+    ${ids.map((id, i) => `<section class="reel" data-i="${i}" data-id="${esc(id)}"><iframe allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="YouTube"></iframe></section>`).join("")}
+    <button type="button" class="reels-btn reels-close" aria-label="${esc(tr("Fermer"))}">✕</button>
+    <button type="button" class="reels-btn reels-sound" aria-label="Son">${reelsSound ? "🔊" : "🔇"}</button>
+    <div class="reels-hint">↑</div></div>`);
+  const v = document.getElementById("reels-viewer");
+  document.body.style.overflow = "hidden";
+  const cmd = (frame, func) => frame?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args: [] }), "*");
+  let current = -1;
+  const show = (i) => {
+    if (i === current) return;
+    current = i;
+    v.querySelectorAll(".reel").forEach((sec, k) => {
+      const f = sec.querySelector("iframe");
+      if (k === i) {
+        f.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(sec.dataset.id)}?autoplay=1&mute=${reelsSound ? 0 : 1}&playsinline=1&loop=1&playlist=${encodeURIComponent(sec.dataset.id)}&rel=0&modestbranding=1&enablejsapi=1`;
+        f.onload = () => { if (reelsSound) cmd(f, "unMute"); cmd(f, "playVideo"); };
+      } else if (f.getAttribute("src")) f.removeAttribute("src"); // une seule vidéo à la fois
+    });
+  };
+  const io = new IntersectionObserver((entries) => entries.forEach((en) => { if (en.isIntersecting) show(Number(en.target.dataset.i)); }), { root: v, threshold: 0.6 });
+  v.querySelectorAll(".reel").forEach((sec) => io.observe(sec));
+  v.scrollTop = start * v.clientHeight;
+  show(start);
+  const close = () => { io.disconnect(); v.remove(); document.body.style.overflow = ""; };
+  v.querySelector(".reels-close").onclick = close;
+  v.querySelector(".reels-sound").onclick = (ev) => {
+    reelsSound = !reelsSound;
+    ev.currentTarget.textContent = reelsSound ? "🔊" : "🔇";
+    cmd(v.querySelector(`.reel[data-i="${current}"] iframe`), reelsSound ? "unMute" : "mute");
+  };
+  document.addEventListener("keydown", function onKey(ev) { if (ev.key === "Escape") { close(); document.removeEventListener("keydown", onKey); } });
 });
