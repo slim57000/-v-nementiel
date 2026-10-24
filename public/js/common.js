@@ -1044,46 +1044,73 @@ export function loadInspirations(section, row, showEmpty = false) {
     section.classList.remove("hidden");
   }).catch(() => {});
 }
-// Lecteur de réels plein écran : démarre tout de suite sur la vidéo touchée, glisser vers le haut / bas
-// enchaîne la suivante / précédente (une seule vidéo chargée à la fois). Son coupé au départ (règle des
-// navigateurs) : le bouton 🔊 le remet, et il reste actif pour les vidéos suivantes.
-let reelsSound = false;
-document.addEventListener("click", (e) => {
+// Lecteur de réels plein écran : un seul lecteur YouTube (API officielle) posé par-dessus des diapositives ;
+// glisser change de vidéo dans ce même lecteur (loadVideoById), ce que Safari iPhone laisse démarrer seul.
+// Son coupé au départ (règle des navigateurs) : 🔇 → 🔊 le remet pour toutes les vidéos suivantes.
+let reelsSound = false, ytApi = null;
+const loadYtApi = () => (ytApi ||= new Promise((resolve) => {
+  if (window.YT?.Player) return resolve(window.YT);
+  window.onYouTubeIframeAPIReady = () => resolve(window.YT);
+  const sc = document.createElement("script");
+  sc.src = "https://www.youtube.com/iframe_api";
+  document.head.append(sc);
+}));
+document.addEventListener("click", async (e) => {
   const b = e.target.closest?.("[data-yt]");
   if (!b) return;
-  const ids = b.parentElement?._reels?.map((x) => x.id) || [...(b.parentElement?.querySelectorAll("[data-yt]") || [b])].map((c) => c.dataset.yt);
-  const start = Math.max(0, ids.indexOf(b.dataset.yt));
+  const list = b.parentElement?._reels || [...(b.parentElement?.querySelectorAll("[data-yt]") || [b])].map((c) => ({ id: c.dataset.yt, thumb: c.querySelector("img")?.src || "" }));
+  const start = Math.max(0, list.findIndex((x) => x.id === b.dataset.yt));
   document.getElementById("reels-viewer")?.remove();
   document.body.insertAdjacentHTML("beforeend", `<div class="reels-viewer" id="reels-viewer" role="dialog" aria-modal="true">
-    ${ids.map((id, i) => `<section class="reel" data-i="${i}" data-id="${esc(id)}"><iframe allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="YouTube"></iframe></section>`).join("")}
+    ${list.map((v, i) => `<section class="reel" data-i="${i}" style="background-image:url('${esc(v.thumb || "")}')"></section>`).join("")}
+    <div class="reels-player"><div id="reels-yt"></div></div>
     <button type="button" class="reels-btn reels-close" aria-label="${esc(tr("Fermer"))}">✕</button>
     <button type="button" class="reels-btn reels-sound" aria-label="Son">${reelsSound ? "🔊" : "🔇"}</button>
     <div class="reels-hint">↑</div></div>`);
   const v = document.getElementById("reels-viewer");
   document.body.style.overflow = "hidden";
-  const cmd = (frame, func) => frame?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args: [] }), "*");
-  let current = -1;
-  const show = (i) => {
-    if (i === current) return;
-    current = i;
-    v.querySelectorAll(".reel").forEach((sec, k) => {
-      const f = sec.querySelector("iframe");
-      if (k === i) {
-        f.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(sec.dataset.id)}?autoplay=1&mute=${reelsSound ? 0 : 1}&playsinline=1&loop=1&playlist=${encodeURIComponent(sec.dataset.id)}&rel=0&modestbranding=1&enablejsapi=1`;
-        f.onload = () => { if (reelsSound) cmd(f, "unMute"); cmd(f, "playVideo"); };
-      } else if (f.getAttribute("src")) f.removeAttribute("src"); // une seule vidéo à la fois
-    });
-  };
-  const io = new IntersectionObserver((entries) => entries.forEach((en) => { if (en.isIntersecting) show(Number(en.target.dataset.i)); }), { root: v, threshold: 0.6 });
-  v.querySelectorAll(".reel").forEach((sec) => io.observe(sec));
   v.scrollTop = start * v.clientHeight;
-  show(start);
-  const close = () => { io.disconnect(); v.remove(); document.body.style.overflow = ""; };
+  let player = null, current = start, paused = false;
+  const YT = await loadYtApi();
+  if (!document.body.contains(v)) return;
+  player = new YT.Player("reels-yt", {
+    videoId: list[start].id, width: "100%", height: "100%",
+    playerVars: { autoplay: 1, mute: 1, playsinline: 1, controls: 0, rel: 0, modestbranding: 1, loop: 1, playlist: list[start].id },
+    events: {
+      onReady: (ev) => { if (reelsSound) ev.target.unMute(); ev.target.playVideo(); },
+      // Fin de vidéo : on relance la même (boucle, comme sur les réseaux).
+      onStateChange: (ev) => { if (ev.data === YT.PlayerState.ENDED) ev.target.playVideo(); },
+    },
+  });
+  const io = new IntersectionObserver((entries) => entries.forEach((en) => {
+    const i = Number(en.target.dataset.i);
+    if (!en.isIntersecting || i === current || !player?.loadVideoById) return;
+    current = i; paused = false;
+    player.loadVideoById(list[i].id);
+    if (reelsSound) player.unMute(); else player.mute();
+  }), { root: v, threshold: 0.6 });
+  v.querySelectorAll(".reel").forEach((sec) => io.observe(sec));
+  const close = () => { io.disconnect(); player?.destroy?.(); v.remove(); document.body.style.overflow = ""; };
   v.querySelector(".reels-close").onclick = close;
   v.querySelector(".reels-sound").onclick = (ev) => {
     reelsSound = !reelsSound;
     ev.currentTarget.textContent = reelsSound ? "🔊" : "🔇";
-    cmd(v.querySelector(`.reel[data-i="${current}"] iframe`), reelsSound ? "unMute" : "mute");
+    if (reelsSound) { player?.unMute(); player?.playVideo(); } else player?.mute();
   };
+  // Glisser vers la droite : vidéo suivante ; vers la gauche : précédente (en plus du glissement vertical).
+  let tx = 0, ty = 0;
+  v.addEventListener("touchstart", (ev) => { tx = ev.touches[0].clientX; ty = ev.touches[0].clientY; }, { passive: true });
+  v.addEventListener("touchend", (ev) => {
+    const dx = ev.changedTouches[0].clientX - tx, dy = ev.changedTouches[0].clientY - ty;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const to = Math.min(list.length - 1, Math.max(0, current + (dx > 0 ? 1 : -1)));
+    v.scrollTo({ top: to * v.clientHeight, behavior: "smooth" });
+  }, { passive: true });
+  // Toucher la vidéo : pause / lecture.
+  v.addEventListener("click", (ev) => {
+    if (!ev.target.closest(".reel") || !player?.pauseVideo) return;
+    paused = !paused;
+    if (paused) player.pauseVideo(); else player.playVideo();
+  });
   document.addEventListener("keydown", function onKey(ev) { if (ev.key === "Escape") { close(); document.removeEventListener("keydown", onKey); } });
 });
