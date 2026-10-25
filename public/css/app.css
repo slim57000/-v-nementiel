@@ -1540,3 +1540,9 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .reel-info b { font-size: .95rem; }
 .reel-info small, .reel-info a { font-size: .75rem; color: #fff; opacity: .9; text-decoration: none; }
 .reel.landscape video { object-fit: contain; } /* vidéo horizontale : affichée en entier */
+/* Organisateur : accès au film souvenir */
+.film-btn { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 10px; padding: 14px 16px; border-radius: 18px; color: #fff; text-decoration: none; background: linear-gradient(120deg, #fd1a85, #8a1259 70%, #4a0b3a); box-shadow: 0 8px 20px rgba(253,26,133,.25); }
+.film-btn span { display: grid; gap: 2px; }
+.film-btn b { font-size: 1rem; }
+.film-btn small { font-size: .78rem; opacity: .85; }
+.film-btn i { font-style: normal; flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: #fd1a85; font-size: .95rem; }

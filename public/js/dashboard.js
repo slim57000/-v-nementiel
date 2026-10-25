@@ -125,6 +125,7 @@ function card(ev) {
         <button class="btn btn-light btn-sm" data-action="direct">🔓 Lien + code</button>` : ""}
       </div>
       <p class="tools-title">Souvenirs</p>
+      ${ev.date <= today ? `<a class="film-btn" href="/e/${esc(ev.slug)}?film=1"><span><b>${t("✨ Revivez l'événement")}</b><small>${t("Le film souvenir")}</small></span><i>▶</i></a>` : ""}
       <div class="tools-grid">
         <button class="btn btn-light btn-sm" data-action="stats">📊 Statistiques</button>
         <a class="btn btn-light btn-sm" href="/album?id=${ev.id}">📖 Album</a>
