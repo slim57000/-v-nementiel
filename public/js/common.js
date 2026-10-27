@@ -329,13 +329,19 @@ export function ageGate() {
     e.preventDefault();
     const date = document.getElementById("age-date").value;
     if (!date) return;
+    // Confirmation avant envoi : une faute de frappe sur l'année ne doit pas bloquer un compte.
+    const b = new Date(`${date}T12:00`), n = new Date();
+    const age = n.getFullYear() - b.getFullYear() - (n < new Date(n.getFullYear(), b.getMonth(), b.getDate()) ? 1 : 0);
+    if (!(age >= 0 && age <= 120)) { document.getElementById("age-error").textContent = tr("Date de naissance invalide."); return; }
+    const ok = await confirmSheet(tr("Vous avez {age} ans : c'est bien ça ?").replace("{age}", age), { title: formatDate(date), ok: tr("Oui, c'est exact") });
+    if (!ok) return;
     try {
       await api("/api/auth/birthdate", { method: "POST", body: { date } });
       document.getElementById("age-sheet").remove();
       toast(tr("Merci ✔"));
     } catch (err) {
-      document.getElementById("age-error").textContent = tr(err.message);
-      if (err.data?.minor) setTimeout(() => { location.href = "/"; }, 3500);
+      document.getElementById("age-error").innerHTML = `${esc(tr(err.message))}${err.data?.minor ? ` <a href="/contact">${esc(tr("Nous contacter"))}</a>` : ""}`;
+      if (err.data?.minor) document.querySelector("#age-form button[type=submit]").remove(); // compte bloqué : seul le contact reste
     }
   });
 }

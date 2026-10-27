@@ -1547,3 +1547,4 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .film-btn small { font-size: .78rem; opacity: .85; }
 .film-btn i { font-style: normal; flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: #fd1a85; font-size: .95rem; }
 #share-sheet { z-index: 120; } /* au-dessus du film souvenir et du lecteur de réels */
+#confirm-sheet { z-index: 140; } /* au-dessus de la fenêtre « date de naissance » */

@@ -29,6 +29,8 @@ $("#login").addEventListener("submit", async (e) => {
       $("#error").textContent = err.data.isNew ? "Nouveau compte : choisissez un mot de passe (8 caractères minimum)." : "Saisissez votre mot de passe.";
     } else {
       $("#error").textContent = err.message;
+      // Compte bloqué pour l'âge : lien direct vers le contact (pour corriger une date erronée).
+      if (err.data?.minor) $("#error").insertAdjacentHTML("beforeend", ' <a href="/contact">Nous contacter</a>');
     }
   } finally {
     button.disabled = false;
@@ -123,6 +125,8 @@ $("#forgot").addEventListener("click", async (e) => {
     "apple-session": "Connexion Apple interrompue : rouvrez mafeliza.com puis réessayez.",
     "apple-refus": "Connexion Apple annulée.",
     "apple-jeton": "Apple a refusé la connexion (configuration du serveur). Utilisez l'email en attendant.",
+    "age": "Ce compte est réservé aux personnes de 15 ans et plus. Date de naissance erronée ? Écrivez-nous depuis la page Contact pour débloquer le compte.",
+    "suspendu": "Ce compte a été suspendu. Contactez le support.",
     "lien-expire": "Ce lien de connexion a expiré ou a déjà servi : demandez-en un nouveau avec l'enveloppe ✉️.",
   };
   if (msgs[err]) setTimeout(() => import("./common.js").then(({ toast }) => toast(msgs[err])), 300);

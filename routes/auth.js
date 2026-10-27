@@ -51,7 +51,10 @@ router.post("/login", async (req, res) => {
     return res.json({ created: true });
   }
 
-  if (organizer.blocked) return res.status(403).json({ error: "Ce compte a été suspendu. Contactez le support." });
+  if (organizer.blocked) {
+    const why = await blockedReason(organizer);
+    return res.status(403).json({ minor: why === "minor", error: why === "minor" ? MINOR_MSG : "Ce compte a été suspendu. Contactez le support." });
+  }
   if (!password && !code) return res.status(401).json({ needPassword: true, legacy: !(await hasPassword(organizer.id)) });
   // Anti-bruteforce partagé entre toutes les instances : 10 essais par email toutes les 15 min.
   if (await tooFast(`login:${email}`, 10, 15 * 60 * 1000)) return res.status(429).json({ error: "Trop d'essais, réessayez dans 15 minutes." });
@@ -179,7 +182,7 @@ router.get("/google/callback", async (req, res) => {
       organizer = await newAccount(req, who.email, loginCode());
       organizer = await saveOrganizer({ ...organizer, displayName: who.name.slice(0, 40), avatar: who.avatar });
     }
-    if (organizer.blocked) return res.redirect("/connexion");
+    if (organizer.blocked) return res.redirect(`/connexion?erreur=${await blockedReason(organizer) === "minor" ? "age" : "suspendu"}`);
     logIn(res, organizer.id);
     res.redirect(safeNext(decodeURIComponent(next || "")));
   } catch (err) {
@@ -207,7 +210,7 @@ router.get("/facebook/callback", async (req, res) => {
       organizer = await newAccount(req, who.email, loginCode());
       organizer = await saveOrganizer({ ...organizer, displayName: who.name.slice(0, 40), avatar: who.avatar });
     }
-    if (organizer.blocked) return res.redirect("/connexion");
+    if (organizer.blocked) return res.redirect(`/connexion?erreur=${await blockedReason(organizer) === "minor" ? "age" : "suspendu"}`);
     logIn(res, organizer.id);
     res.redirect(safeNext(decodeURIComponent(next || "")));
   } catch (err) {
@@ -243,7 +246,7 @@ router.get("/apple/finish", async (req, res) => {
       organizer = await newAccount(req, who.email, loginCode());
       if (who.name) organizer = await saveOrganizer({ ...organizer, displayName: who.name.slice(0, 40) });
     }
-    if (organizer.blocked) return res.redirect("/connexion");
+    if (organizer.blocked) return res.redirect(`/connexion?erreur=${await blockedReason(organizer) === "minor" ? "age" : "suspendu"}`);
     logIn(res, organizer.id);
     res.redirect(safeNext(decodeURIComponent(next || "")));
   } catch (err) {
@@ -296,7 +299,7 @@ router.get("/magic/:token", async (req, res) => {
   if (!link || link.exp < Date.now()) return res.redirect("/connexion?erreur=lien-expire");
   let organizer = await findOrganizerByEmail(link.email);
   if (!organizer) organizer = await newAccount(req, link.email, loginCode());
-  if (organizer.blocked) return res.redirect("/connexion");
+  if (organizer.blocked) return res.redirect(`/connexion?erreur=${await blockedReason(organizer) === "minor" ? "age" : "suspendu"}`);
   logIn(res, organizer.id);
   res.redirect(safeNext(link.next));
 });
@@ -322,6 +325,9 @@ router.post("/send-code", async (req, res) => {
 // Vérification de l'âge (réseau social) : date de naissance obligatoire, 15 ans minimum (majorité numérique en France).
 // Un compte de moins de 15 ans est suspendu (il ne peut plus se connecter) et la session est fermée.
 export const MIN_AGE = 15;
+const MINOR_MSG = "Ce compte est réservé aux personnes de 15 ans et plus. Date de naissance erronée ? Écrivez-nous depuis la page Contact pour débloquer le compte.";
+// Compte bloqué : pour l'âge (message et lien de contact) ou suspendu par l'administration.
+const blockedReason = async (o) => ((await getSetting(`minor:${o.id}`).catch(() => null)) ? "minor" : "blocked");
 const ageOf = (iso) => {
   const b = new Date(`${iso}T12:00`), n = new Date();
   return n.getFullYear() - b.getFullYear() - (n < new Date(n.getFullYear(), b.getMonth(), b.getDate()) ? 1 : 0);
@@ -337,7 +343,7 @@ router.post("/birthdate", async (req, res) => {
     await saveOrganizer({ ...organizer, blocked: true });
     await setSetting(`minor:${organizer.id}`, true);
     res.clearCookie("org");
-    return res.status(403).json({ minor: true, error: `MaFeliza est réservé aux personnes de ${MIN_AGE} ans et plus.` });
+    return res.status(403).json({ minor: true, error: MINOR_MSG });
   }
   await setSetting(`birth:${organizer.id}`, date);
   res.json({ ok: true });

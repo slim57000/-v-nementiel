@@ -176,6 +176,7 @@ router.post("/organizers/:id/block", async (req, res) => {
   if (await isAdmin(organizer)) return res.status(400).json({ error: "Impossible de bloquer un administrateur." });
   const blocked = Boolean(req.body?.blocked);
   await saveOrganizer({ ...organizer, blocked });
+  if (!blocked) await Promise.all([setSetting(`minor:${organizer.id}`, null), setSetting(`birth:${organizer.id}`, null)]).catch(() => {}); // date de naissance redemandée
   for (const event of await listEvents(organizer.id)) await saveEvent({ ...event, suspended: blocked });
   res.json({ ok: true });
 });
