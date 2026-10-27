@@ -319,6 +319,30 @@ router.post("/send-code", async (req, res) => {
   res.json({ ok: true });
 });
 
+// Vérification de l'âge (réseau social) : date de naissance obligatoire, 15 ans minimum (majorité numérique en France).
+// Un compte de moins de 15 ans est suspendu (il ne peut plus se connecter) et la session est fermée.
+export const MIN_AGE = 15;
+const ageOf = (iso) => {
+  const b = new Date(`${iso}T12:00`), n = new Date();
+  return n.getFullYear() - b.getFullYear() - (n < new Date(n.getFullYear(), b.getMonth(), b.getDate()) ? 1 : 0);
+};
+router.post("/birthdate", async (req, res) => {
+  const organizer = await currentOrganizer(req);
+  if (!organizer) return res.status(401).json({ error: "Non connecté." });
+  const date = String(req.body?.date || "");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) return res.status(400).json({ error: "Date de naissance invalide." });
+  const age = ageOf(date);
+  if (age < 0 || age > 120) return res.status(400).json({ error: "Date de naissance invalide." });
+  if (age < MIN_AGE) {
+    await saveOrganizer({ ...organizer, blocked: true });
+    await setSetting(`minor:${organizer.id}`, true);
+    res.clearCookie("org");
+    return res.status(403).json({ minor: true, error: `MaFeliza est réservé aux personnes de ${MIN_AGE} ans et plus.` });
+  }
+  await setSetting(`birth:${organizer.id}`, date);
+  res.json({ ok: true });
+});
+
 router.post("/logout", (req, res) => {
   res.clearCookie("org");
   res.json({ ok: true });
@@ -330,6 +354,7 @@ router.get("/me", async (req, res) => {
   res.json({
     id: organizer.id, email: organizer.email, code: organizer.loginCode, isAdmin: await isAdmin(organizer), superAdmin: isSuperAdmin(organizer), hasPassword: await hasPassword(organizer.id),
     displayName: organizer.displayName || "", avatar: organizer.avatar || null, premium: await isPremium(organizer.id),
+    needBirth: !(await getSetting(`birth:${organizer.id}`).catch(() => null)), // vérification de l'âge à faire
   });
 });
 

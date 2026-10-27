@@ -132,5 +132,19 @@ await owner("/api/auth/login", { method: "POST", body: { email: ORG_EMAIL, passw
 assert.equal((await owner(`/api/me/favorites/${ev.data.id}`, { method: "POST" })).status, 200, "l'organisateur peut mettre son événement en favori");
 ok("pas d'IDOR sur les favoris d'événements privés");
 
+// Vérification de l'âge (réseau social) : demandée aux nouveaux comptes, moins de 15 ans = compte suspendu.
+const kid = await device();
+const kidMail = `kid${Date.now()}@example.com`;
+await kid("/api/auth/login", { method: "POST", body: { email: kidMail, password: "motdepasse123" } });
+assert.equal((await kid("/api/auth/me")).data.needBirth, true, "date de naissance demandée");
+const y = new Date().getFullYear();
+assert.equal((await kid("/api/auth/birthdate", { method: "POST", body: { date: `${y - 10}-01-01` } })).status, 403, "moins de 15 ans refusé");
+assert.equal((await kid("/api/auth/login", { method: "POST", body: { email: kidMail, password: "motdepasse123" } })).status, 403, "compte d'un mineur suspendu");
+const adult = await device();
+await adult("/api/auth/login", { method: "POST", body: { email: `adult${Date.now()}@example.com`, password: "motdepasse123" } });
+assert.equal((await adult("/api/auth/birthdate", { method: "POST", body: { date: `${y - 30}-06-15` } })).status, 200, "adulte accepté");
+assert.equal((await adult("/api/auth/me")).data.needBirth, false, "plus de demande après confirmation");
+ok("vérification de l'âge (15 ans minimum)");
+
 console.log("\nTous les tests sont passés ✅");
 stop(0);

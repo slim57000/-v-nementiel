@@ -313,12 +313,40 @@ export function createSheet(e) {
   });
 }
 
+// Vérification de l'âge : date de naissance demandée une fois (fenêtre impossible à fermer), 15 ans minimum.
+export function ageGate() {
+  if (document.getElementById("age-sheet")) return;
+  const max = new Date().toISOString().slice(0, 10);
+  document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="age-sheet" role="dialog" aria-modal="true" style="z-index:130">
+    <form class="card" id="age-form">
+      <h2 style="margin-top:0">🎂 ${esc(tr("Votre date de naissance"))}</h2>
+      <p class="muted">${esc(tr("MaFeliza est un réseau social réservé aux personnes de 15 ans et plus. Confirmez votre âge pour continuer."))}</p>
+      <input type="date" id="age-date" required max="${max}" min="1900-01-01" style="width:100%">
+      <p class="error" id="age-error" role="alert"></p>
+      <button class="btn btn-block" type="submit">${esc(tr("Confirmer"))}</button>
+    </form></div>`);
+  document.getElementById("age-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const date = document.getElementById("age-date").value;
+    if (!date) return;
+    try {
+      await api("/api/auth/birthdate", { method: "POST", body: { date } });
+      document.getElementById("age-sheet").remove();
+      toast(tr("Merci ✔"));
+    } catch (err) {
+      document.getElementById("age-error").textContent = tr(err.message);
+      if (err.data?.minor) setTimeout(() => { location.href = "/"; }, 3500);
+    }
+  });
+}
+
 // Bouton profil 👤 en haut à droite : menu avec Mon profil, Mes likes (favoris) et Notifications.
 async function profileMenu() {
   const bar = document.querySelector(".topbar");
   if (!bar || bar.querySelector(".me-btn")) return;
   let data, me;
   try { [data, me] = await Promise.all([api("/api/me/notifications"), api("/api/auth/me").catch(() => ({}))]); } catch { return; } // non connecté
+  if (me?.needBirth) ageGate(); // vérification de l'âge (obligatoire pour un réseau social)
   const unread = () => data.items.filter((n) => n.at > data.seen).length;
   const btn = document.createElement("button");
   btn.className = "me-btn";
