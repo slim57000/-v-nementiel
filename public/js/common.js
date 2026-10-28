@@ -316,6 +316,8 @@ export function createSheet(e) {
 // Vérification de l'âge : date de naissance demandée une fois (fenêtre impossible à fermer), 15 ans minimum.
 export function ageGate(minorUntil = 0) {
   if (document.getElementById("age-sheet")) return;
+  // Contact et pages légales toujours accessibles (pour signaler une date erronée, lire les conditions).
+  if (/^\/(contact|cgu|confidentialite|mentions-legales)\b/.test(location.pathname)) return;
   if (minorUntil) return ageLocked(minorUntil);
   const max = new Date().toISOString().slice(0, 10);
   document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="age-sheet" role="dialog" aria-modal="true" style="z-index:130">
