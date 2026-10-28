@@ -342,6 +342,11 @@ export async function minorUntil(id) {
   minorCache.set(id, { at: Date.now(), until });
   return until > Date.now() ? until : 0;
 }
+// Administration : lever le verrou d'âge (date erronée signalée) ; la date sera redemandée à la connexion.
+export async function clearAgeLock(id) {
+  await Promise.all([setSetting(`minor:${id}`, null), setSetting(`birth:${id}`, null)]);
+  minorCache.delete(id);
+}
 const ageOf = (iso) => {
   const b = new Date(`${iso}T12:00`), n = new Date();
   return n.getFullYear() - b.getFullYear() - (n < new Date(n.getFullYear(), b.getMonth(), b.getDate()) ? 1 : 0);

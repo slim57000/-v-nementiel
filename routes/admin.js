@@ -1,6 +1,6 @@
 // Administration de la plateforme : réservée aux emails listés dans ADMIN_EMAILS.
 import { Router } from "express";
-import { currentOrganizer, isAdmin, isSuperAdmin, listExtraAdmins, adminUntil } from "./auth.js";
+import { currentOrganizer, isAdmin, isSuperAdmin, listExtraAdmins, adminUntil, minorUntil, clearAgeLock } from "./auth.js";
 import { destroyEvent } from "./events.js";
 import { seedDemo, demoEvents, sendDemoMessages, sendDemoInvitation, createDemoAlbum } from "../lib/demo.js";
 import { isPremium, setPremium, premiumUntil } from "../lib/premium.js";
@@ -134,7 +134,7 @@ router.get("/organizers", async (req, res) => {
   res.json(await Promise.all(organizers.map(async (o) => {
     const admin = await isAdmin(o);
     return {
-      id: o.id, email: o.email, blocked: Boolean(o.blocked), createdAt: o.createdAt,
+      id: o.id, email: o.email, blocked: Boolean(o.blocked), createdAt: o.createdAt, ageLock: await minorUntil(o.id),
       events: (await listEvents(o.id)).length, admin, superAdmin: isSuperAdmin(o), premium: await isPremium(o.id),
       premiumUntil: await premiumUntil(o.id), adminUntil: admin && !isSuperAdmin(o) ? untils[String(o.email).toLowerCase()] || null : null,
     };
@@ -176,8 +176,17 @@ router.post("/organizers/:id/block", async (req, res) => {
   if (await isAdmin(organizer)) return res.status(400).json({ error: "Impossible de bloquer un administrateur." });
   const blocked = Boolean(req.body?.blocked);
   await saveOrganizer({ ...organizer, blocked });
-  if (!blocked) await Promise.all([setSetting(`minor:${organizer.id}`, null), setSetting(`birth:${organizer.id}`, null)]).catch(() => {}); // date de naissance redemandée
+  if (!blocked) await clearAgeLock(organizer.id).catch(() => {}); // débloquer lève aussi un éventuel verrou d'âge
   for (const event of await listEvents(organizer.id)) await saveEvent({ ...event, suspended: blocked });
+  res.json({ ok: true });
+});
+
+// Verrou d'âge (date de moins de 15 ans saisie) : levé à la demande (erreur de date signalée via Contact).
+router.post("/organizers/:id/age-unlock", async (req, res) => {
+  const organizer = await findOrganizer(Number(req.params.id));
+  if (!organizer) return res.status(404).json({ error: "Utilisateur introuvable." });
+  await clearAgeLock(organizer.id);
+  if (organizer.blocked) await saveOrganizer({ ...organizer, blocked: false }); // ancien blocage pour l'âge
   res.json({ ok: true });
 });
 

@@ -32,6 +32,7 @@ const views = {
       `${o.events} événement(s) · inscrit le ${new Date(o.createdAt).toLocaleDateString(LOCALE)}`,
       (o.superAdmin ? "" : `<button class="btn btn-light btn-sm" data-act="admin" data-id="${o.id}" data-on="${!o.admin}">${o.admin ? "Retirer admin" : "👑 Passer admin"}</button> ${o.admin ? `<button class="btn btn-ghost btn-sm" data-act="admin-dur" data-id="${o.id}">⏱ Durée admin</button> ` : ""}`)
       + `<button class="btn btn-light btn-sm" data-act="premium" data-id="${o.id}" data-on="${!o.premium}">${o.premium ? "Retirer Premium" : "✨ Passer Premium"}</button>${o.premium ? ` <button class="btn btn-ghost btn-sm" data-act="premium-dur" data-id="${o.id}">⏱ Durée Premium</button>` : ""}`
+      + (o.ageLock ? ` <span class="badge" style="background:#fef3c7;color:#92400e">🔒 Âge (moins de 15 ans saisi)</span> <button class="btn btn-sm" data-act="age-unlock" data-id="${o.id}">Lever le verrou d'âge</button>` : "")
       + (o.admin ? "" : ` <button class="btn ${o.blocked ? "btn-light" : "btn-danger"} btn-sm" data-act="block" data-id="${o.id}" data-on="${!o.blocked}">${o.blocked ? "Débloquer" : "Bloquer"}</button>`),
     )).join("") || "<p class='muted'>Aucun utilisateur.</p>";
   },
@@ -390,6 +391,10 @@ $("#content").addEventListener("click", async (e) => {
       await api(`/api/admin/organizers/${id}/premium`, { method: "POST", body: { premium: on === "true", days } });
       toast(on === "true" ? "Compte passé en Premium ✨" : "Premium retiré");
       render();
+    }
+    if (act === "age-unlock") {
+      await api(`/api/admin/organizers/${id}/age-unlock`, { method: "POST" });
+      toast("Verrou d'âge levé : la date de naissance sera redemandée à sa prochaine visite.");
     }
     if (act === "block") {
       if (on === "true" && !confirm("Bloquer cet utilisateur ? Ses événements seront suspendus.")) return;
