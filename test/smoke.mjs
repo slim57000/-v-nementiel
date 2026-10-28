@@ -139,7 +139,12 @@ await kid("/api/auth/login", { method: "POST", body: { email: kidMail, password:
 assert.equal((await kid("/api/auth/me")).data.needBirth, true, "date de naissance demandée");
 const y = new Date().getFullYear();
 assert.equal((await kid("/api/auth/birthdate", { method: "POST", body: { date: `${y - 10}-01-01` } })).status, 403, "moins de 15 ans refusé");
-assert.equal((await kid("/api/auth/login", { method: "POST", body: { email: kidMail, password: "motdepasse123" } })).status, 403, "compte d'un mineur suspendu");
+// La connexion reste possible (pour corriger une erreur plus tard), mais le compte est verrouillé 24 h.
+const kid2 = await device();
+assert.equal((await kid2("/api/auth/login", { method: "POST", body: { email: kidMail, password: "motdepasse123" } })).status, 200, "reconnexion possible");
+assert.ok((await kid2("/api/auth/me")).data.minorUntil > Date.now(), "verrou d'âge signalé");
+assert.equal((await kid2("/api/events")).status, 403, "fonctions du compte verrouillées");
+assert.equal((await kid2("/api/auth/birthdate", { method: "POST", body: { date: `${y - 30}-01-01` } })).status, 403, "pas de nouvelle date avant 24 h");
 const adult = await device();
 await adult("/api/auth/login", { method: "POST", body: { email: `adult${Date.now()}@example.com`, password: "motdepasse123" } });
 assert.equal((await adult("/api/auth/birthdate", { method: "POST", body: { date: `${y - 30}-06-15` } })).status, 200, "adulte accepté");

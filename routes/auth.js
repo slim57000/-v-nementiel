@@ -51,10 +51,7 @@ router.post("/login", async (req, res) => {
     return res.json({ created: true });
   }
 
-  if (organizer.blocked) {
-    const why = await blockedReason(organizer);
-    return res.status(403).json({ minor: why === "minor", error: why === "minor" ? MINOR_MSG : "Ce compte a été suspendu. Contactez le support." });
-  }
+  if (organizer.blocked && !(await unblockOldMinor(organizer))) return res.status(403).json({ error: "Ce compte a été suspendu. Contactez le support." });
   if (!password && !code) return res.status(401).json({ needPassword: true, legacy: !(await hasPassword(organizer.id)) });
   // Anti-bruteforce partagé entre toutes les instances : 10 essais par email toutes les 15 min.
   if (await tooFast(`login:${email}`, 10, 15 * 60 * 1000)) return res.status(429).json({ error: "Trop d'essais, réessayez dans 15 minutes." });
@@ -182,7 +179,7 @@ router.get("/google/callback", async (req, res) => {
       organizer = await newAccount(req, who.email, loginCode());
       organizer = await saveOrganizer({ ...organizer, displayName: who.name.slice(0, 40), avatar: who.avatar });
     }
-    if (organizer.blocked) return res.redirect(`/connexion?erreur=${await blockedReason(organizer) === "minor" ? "age" : "suspendu"}`);
+    if (organizer.blocked && !(await unblockOldMinor(organizer))) return res.redirect("/connexion?erreur=suspendu");
     logIn(res, organizer.id);
     res.redirect(safeNext(decodeURIComponent(next || "")));
   } catch (err) {
@@ -210,7 +207,7 @@ router.get("/facebook/callback", async (req, res) => {
       organizer = await newAccount(req, who.email, loginCode());
       organizer = await saveOrganizer({ ...organizer, displayName: who.name.slice(0, 40), avatar: who.avatar });
     }
-    if (organizer.blocked) return res.redirect(`/connexion?erreur=${await blockedReason(organizer) === "minor" ? "age" : "suspendu"}`);
+    if (organizer.blocked && !(await unblockOldMinor(organizer))) return res.redirect("/connexion?erreur=suspendu");
     logIn(res, organizer.id);
     res.redirect(safeNext(decodeURIComponent(next || "")));
   } catch (err) {
@@ -246,7 +243,7 @@ router.get("/apple/finish", async (req, res) => {
       organizer = await newAccount(req, who.email, loginCode());
       if (who.name) organizer = await saveOrganizer({ ...organizer, displayName: who.name.slice(0, 40) });
     }
-    if (organizer.blocked) return res.redirect(`/connexion?erreur=${await blockedReason(organizer) === "minor" ? "age" : "suspendu"}`);
+    if (organizer.blocked && !(await unblockOldMinor(organizer))) return res.redirect("/connexion?erreur=suspendu");
     logIn(res, organizer.id);
     res.redirect(safeNext(decodeURIComponent(next || "")));
   } catch (err) {
@@ -299,7 +296,7 @@ router.get("/magic/:token", async (req, res) => {
   if (!link || link.exp < Date.now()) return res.redirect("/connexion?erreur=lien-expire");
   let organizer = await findOrganizerByEmail(link.email);
   if (!organizer) organizer = await newAccount(req, link.email, loginCode());
-  if (organizer.blocked) return res.redirect(`/connexion?erreur=${await blockedReason(organizer) === "minor" ? "age" : "suspendu"}`);
+  if (organizer.blocked && !(await unblockOldMinor(organizer))) return res.redirect("/connexion?erreur=suspendu");
   logIn(res, organizer.id);
   res.redirect(safeNext(link.next));
 });
@@ -324,10 +321,27 @@ router.post("/send-code", async (req, res) => {
 
 // Vérification de l'âge (réseau social) : date de naissance obligatoire, 15 ans minimum (majorité numérique en France).
 // Un compte de moins de 15 ans est suspendu (il ne peut plus se connecter) et la session est fermée.
+// Comptes suspendus par l'ancienne vérification de l'âge : réactivés (l'âge reste verrouillé, voir minorUntil).
+async function unblockOldMinor(o) {
+  if (!(await getSetting(`minor:${o.id}`).catch(() => null))) return false;
+  await saveOrganizer({ ...o, blocked: false });
+  return true;
+}
 export const MIN_AGE = 15;
-const MINOR_MSG = "Ce compte est réservé aux personnes de 15 ans et plus. Date de naissance erronée ? Écrivez-nous depuis la page Contact pour débloquer le compte.";
-// Compte bloqué : pour l'âge (message et lien de contact) ou suspendu par l'administration.
-const blockedReason = async (o) => ((await getSetting(`minor:${o.id}`).catch(() => null)) ? "minor" : "blocked");
+// Vérification de l'âge : la connexion reste toujours possible, mais tant que l'âge n'est pas confirmé (15 ans et plus),
+// les fonctions du compte sont verrouillées (requireOrganizer). Une date de moins de 15 ans verrouille 24 h ;
+// ensuite la date peut être ressaisie (erreur de frappe), ou l'administration débloque depuis la page Contact.
+const RETRY_MS = 24 * 3600 * 1000;
+const minorCache = new Map(); // id → { at, until } (évite une lecture en base à chaque appel)
+export async function minorUntil(id) {
+  const c = minorCache.get(id);
+  if (c && Date.now() - c.at < 30_000) return c.until > Date.now() ? c.until : 0;
+  let v = await getSetting(`minor:${id}`).catch(() => null);
+  if (v === true) { v = Date.now(); await setSetting(`minor:${id}`, v).catch(() => {}); } // ancien blocage : 24 h à partir de maintenant
+  const until = typeof v === "number" ? v + RETRY_MS : 0;
+  minorCache.set(id, { at: Date.now(), until });
+  return until > Date.now() ? until : 0;
+}
 const ageOf = (iso) => {
   const b = new Date(`${iso}T12:00`), n = new Date();
   return n.getFullYear() - b.getFullYear() - (n < new Date(n.getFullYear(), b.getMonth(), b.getDate()) ? 1 : 0);
@@ -335,17 +349,19 @@ const ageOf = (iso) => {
 router.post("/birthdate", async (req, res) => {
   const organizer = await currentOrganizer(req);
   if (!organizer) return res.status(401).json({ error: "Non connecté." });
+  const until = await minorUntil(organizer.id);
+  if (until) return res.status(403).json({ minor: true, retryAt: until, error: "MaFeliza est réservé aux personnes de 15 ans et plus." });
   const date = String(req.body?.date || "");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) return res.status(400).json({ error: "Date de naissance invalide." });
   const age = ageOf(date);
   if (age < 0 || age > 120) return res.status(400).json({ error: "Date de naissance invalide." });
   if (age < MIN_AGE) {
-    await saveOrganizer({ ...organizer, blocked: true });
-    await setSetting(`minor:${organizer.id}`, true);
-    res.clearCookie("org");
-    return res.status(403).json({ minor: true, error: MINOR_MSG });
+    await setSetting(`minor:${organizer.id}`, Date.now());
+    minorCache.delete(organizer.id);
+    return res.status(403).json({ minor: true, retryAt: Date.now() + RETRY_MS, error: "MaFeliza est réservé aux personnes de 15 ans et plus." });
   }
-  await setSetting(`birth:${organizer.id}`, date);
+  await Promise.all([setSetting(`birth:${organizer.id}`, date), setSetting(`minor:${organizer.id}`, null)]);
+  minorCache.delete(organizer.id);
   res.json({ ok: true });
 });
 
@@ -361,6 +377,7 @@ router.get("/me", async (req, res) => {
     id: organizer.id, email: organizer.email, code: organizer.loginCode, isAdmin: await isAdmin(organizer), superAdmin: isSuperAdmin(organizer), hasPassword: await hasPassword(organizer.id),
     displayName: organizer.displayName || "", avatar: organizer.avatar || null, premium: await isPremium(organizer.id),
     needBirth: !(await getSetting(`birth:${organizer.id}`).catch(() => null)), // vérification de l'âge à faire
+    minorUntil: await minorUntil(organizer.id), // date de moins de 15 ans saisie : nouvel essai possible après cette heure
   });
 });
 
@@ -400,6 +417,7 @@ export const isAdmin = async (organizer) => {
 export async function requireOrganizer(req, res, next) {
   req.organizer = await currentOrganizer(req);
   if (!req.organizer) return res.status(401).json({ error: "Non connecté." });
+  if (await minorUntil(req.organizer.id)) return res.status(403).json({ minor: true, error: "MaFeliza est réservé aux personnes de 15 ans et plus." });
   next();
 }
 

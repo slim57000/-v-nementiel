@@ -314,8 +314,9 @@ export function createSheet(e) {
 }
 
 // Vérification de l'âge : date de naissance demandée une fois (fenêtre impossible à fermer), 15 ans minimum.
-export function ageGate() {
+export function ageGate(minorUntil = 0) {
   if (document.getElementById("age-sheet")) return;
+  if (minorUntil) return ageLocked(minorUntil);
   const max = new Date().toISOString().slice(0, 10);
   document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="age-sheet" role="dialog" aria-modal="true" style="z-index:130">
     <form class="card" id="age-form">
@@ -340,10 +341,25 @@ export function ageGate() {
       document.getElementById("age-sheet").remove();
       toast(tr("Merci ✔"));
     } catch (err) {
-      document.getElementById("age-error").innerHTML = `${esc(tr(err.message))}${err.data?.minor ? ` <a href="/contact">${esc(tr("Nous contacter"))}</a>` : ""}`;
-      if (err.data?.minor) document.querySelector("#age-form button[type=submit]").remove(); // compte bloqué : seul le contact reste
+      if (err.data?.minor) { document.getElementById("age-sheet").remove(); return ageLocked(err.data.retryAt); }
+      document.getElementById("age-error").textContent = tr(err.message);
     }
   });
+}
+
+// Date de moins de 15 ans saisie : accès verrouillé jusqu'à l'heure indiquée (nouvel essai possible ensuite),
+// avec deux sorties claires : nous contacter (date erronée) ou se déconnecter.
+function ageLocked(until) {
+  const when = new Date(until).toLocaleString(LOCALE, { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+  document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="age-sheet" role="dialog" aria-modal="true" style="z-index:130">
+    <div class="card">
+      <h2 style="margin-top:0">🔒 ${esc(tr("Réservé aux 15 ans et plus"))}</h2>
+      <p>${esc(tr("La date de naissance indiquée correspond à moins de 15 ans : l'accès à MaFeliza n'est pas possible."))}</p>
+      <p class="muted small">${esc(tr("Erreur de date ? Vous pourrez la corriger à partir du {when}, ou écrivez-nous dès maintenant.").replace("{when}", when))}</p>
+      <a class="btn btn-block" href="/contact">${esc(tr("Nous contacter"))}</a>
+      <button class="btn btn-light btn-block" type="button" id="age-logout" style="margin-top:8px">${esc(tr("Se déconnecter"))}</button>
+    </div></div>`);
+  document.getElementById("age-logout").onclick = async () => { await api("/api/auth/logout", { method: "POST" }).catch(() => {}); location.href = "/"; };
 }
 
 // Bouton profil 👤 en haut à droite : menu avec Mon profil, Mes likes (favoris) et Notifications.
@@ -351,8 +367,10 @@ async function profileMenu() {
   const bar = document.querySelector(".topbar");
   if (!bar || bar.querySelector(".me-btn")) return;
   let data, me;
-  try { [data, me] = await Promise.all([api("/api/me/notifications"), api("/api/auth/me").catch(() => ({}))]); } catch { return; } // non connecté
-  if (me?.needBirth) ageGate(); // vérification de l'âge (obligatoire pour un réseau social)
+  me = await api("/api/auth/me").catch(() => null);
+  if (!me) return; // non connecté
+  if (me.needBirth) ageGate(me.minorUntil); // vérification de l'âge (obligatoire pour un réseau social), avant tout le reste
+  try { data = await api("/api/me/notifications"); } catch { return; } // compte verrouillé (âge)
   const unread = () => data.items.filter((n) => n.at > data.seen).length;
   const btn = document.createElement("button");
   btn.className = "me-btn";
