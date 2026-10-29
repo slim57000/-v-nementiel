@@ -1548,3 +1548,26 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .film-btn i { font-style: normal; flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: #fd1a85; font-size: .95rem; }
 #share-sheet { z-index: 120; } /* au-dessus du film souvenir et du lecteur de réels */
 #confirm-sheet { z-index: 140; } /* au-dessus de la fenêtre « date de naissance » */
+/* ===== Mur photo en direct (TV / vidéoprojecteur) ===== */
+.wall-body { margin: 0; background: #000; overflow: hidden; }
+.wall { position: fixed; inset: 0; display: grid; grid-template-columns: 1fr 280px; background: #000; color: #fff; }
+.wall-stage { position: relative; overflow: hidden; }
+.wall-slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1s ease; }
+.wall-slide.on { opacity: 1; }
+.wall-slide img, .wall-slide video { width: 100%; height: 100%; object-fit: contain; animation: wall-kb 9s ease-out both; }
+@keyframes wall-kb { from { transform: scale(1.04); } to { transform: scale(1); } }
+.wall-who { position: absolute; left: 24px; bottom: 24px; padding: 8px 16px; border-radius: 999px; background: rgba(0,0,0,.55); font-weight: 700; font-size: 1.2rem; backdrop-filter: blur(8px); }
+.wall-side { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; background: linear-gradient(160deg, #fd1a85, #8a1259 60%, #2a0620); }
+.wall-side h1 { margin: 0; font-size: 1.5rem; line-height: 1.2; }
+.wall-side img#w-qr { width: 180px; height: 180px; padding: 10px; border-radius: 18px; background: #fff; }
+.wall-side p { margin: 0; font-weight: 700; }
+.wall-count { opacity: .85; }
+.wall-brand { display: flex; align-items: center; gap: 6px; margin-top: auto; opacity: .85; font-weight: 700; }
+.wall-toast { position: fixed; top: 20px; left: 20px; z-index: 2; padding: 10px 18px; border-radius: 999px; background: #fd1a85; font-weight: 800; font-size: 1.1rem; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+.wall-empty { position: absolute; inset: 0 280px 0 0; display: grid; place-content: center; gap: 8px; text-align: center; }
+.wall-empty p { font-size: 4rem; margin: 0; }
+.wall-empty b { font-size: 1.6rem; }
+.wall-empty span { opacity: .75; }
+.wall-full { position: fixed; right: 292px; top: 12px; z-index: 2; width: 40px; height: 40px; border: 0; border-radius: 50%; background: rgba(255,255,255,.15); color: #fff; font-size: 1.1rem; cursor: pointer; }
+@media (max-width: 700px) { .wall { grid-template-columns: 1fr; grid-template-rows: 1fr auto; } .wall-side { flex-direction: row; flex-wrap: wrap; padding: 12px; } .wall-side img#w-qr { width: 90px; height: 90px; } .wall-empty { inset: 0; } .wall-full { right: 12px; } }
+.wall-body #cookie-banner { display: none; } /* écran de TV : pas de bandeau cookies */

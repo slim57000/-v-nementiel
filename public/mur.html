@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/css/app.css?v=123">
+  <link rel="icon" href="/img/logo.png" type="image/png">
+  <title>Mur photo — MaFeliza</title>
+</head>
+<body class="wall-body">
+  <main class="wall" id="wall">
+    <div class="wall-stage" id="stage"></div>
+    <div class="wall-toast hidden" id="new"></div>
+    <aside class="wall-side">
+      <h1 id="w-name"></h1>
+      <img id="w-qr" alt="" width="180" height="180">
+      <p>📸 Scannez pour partager vos photos</p>
+      <small class="wall-count" id="w-count"></small>
+      <span class="wall-brand"><img src="/img/logo.png" alt="" width="22" height="22"> mafeliza.com</span>
+    </aside>
+    <div class="wall-empty hidden" id="empty">
+      <p>📸</p><b>Les photos des invités apparaîtront ici</b><span>Scannez le QR code pour partager les vôtres</span>
+    </div>
+    <button type="button" class="wall-full" id="full" aria-label="Plein écran">⛶</button>
+  </main>
+  <script type="module" src="/js/mur.js"></script>
+</body>
+</html>
