@@ -281,7 +281,7 @@ export const versionHtml = (html) => html
 const pageCache = new Map();
 const gz = new Map(); // scripts et styles compressés (gzip), vidés à chaque mise à jour du site
 const SITE_URL = (process.env.PUBLIC_URL || "https://mafeliza.com").replace(/\/$/, "");
-const INDEXABLE = new Set(["/", "/decouvrir", "/connexion", "/contact", "/mentions-legales", "/cgu", "/confidentialite"]);
+const INDEXABLE = new Set(["/", "/decouvrir", "/connexion", "/contact", "/mentions-legales", "/cgu", "/confidentialite", "/securite-enfants"]);
 // Lien canonique + og:url, image de partage en adresse complète, et liens vers les pages Google en bas de l'accueil.
 const withCanonical = (html, path) => (!INDEXABLE.has(path) || html.includes('rel="canonical"') ? html : html
   .replace(/<\/head>/i, `<link rel="canonical" href="${SITE_URL}${path === "/" ? "/" : path}"><meta property="og:url" content="${SITE_URL}${path === "/" ? "/" : path}">\n</head>`)
@@ -370,7 +370,7 @@ app.get("/e/:slug", async (req, res) => {
 app.get("/sitemap.xml", async (req, res) => {
   const base = (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
   const events = await listPublicUpcoming(50).catch(() => []);
-  const urls = ["/", "/decouvrir", ...Object.keys(LANDINGS).map((s) => `/${s}`), "/contact", "/connexion", "/mentions-legales", "/cgu", "/confidentialite"].map((p) => `<url><loc>${base}${p}</loc></url>`)
+  const urls = ["/", "/decouvrir", ...Object.keys(LANDINGS).map((s) => `/${s}`), "/contact", "/connexion", "/mentions-legales", "/cgu", "/confidentialite", "/securite-enfants"].map((p) => `<url><loc>${base}${p}</loc></url>`)
     .concat(events.map((e) => `<url><loc>${base}/e/${encodeURIComponent(e.slug)}</loc><lastmod>${String(e.updatedAt || e.createdAt || "").slice(0, 10) || e.date}</lastmod></url>`));
   res.type("application/xml").set("Cache-Control", "public, max-age=3600")
     .send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.join("")}</urlset>`);
