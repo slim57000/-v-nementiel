@@ -28,6 +28,9 @@ export const EVENT_TYPES = {
   autre: { label: "Autre", icon: "🎉" },
 };
 
+// 🎁 Parrainage : un lien « Créez le vôtre » porte ?ref=<événement> ; gardé 30 jours pour l'inscription.
+try { const ref = new URLSearchParams(location.search).get("ref"); if (ref && /^[\w-]{1,80}$/.test(ref)) document.cookie = `em-ref=${ref}; path=/; max-age=2592000; SameSite=Lax`; } catch { /* ignoré */ }
+
 export async function api(path, options = {}) {
   const res = await fetch(path, {
     ...options,

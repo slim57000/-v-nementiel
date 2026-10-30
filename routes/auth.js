@@ -10,7 +10,19 @@ import { welcomeMail } from "../lib/confirmations.js";
 async function newAccount(req, email, code) {
   const organizer = await createOrganizer(email, code);
   welcomeMail(email, reqLang(req));
+  recordReferral(req, organizer).catch(() => {});
   return organizer;
+}
+// 🎁 Parrainage : le nouveau compte vient d'un lien « Créez le vôtre » (cookie em-ref = événement) → crédité à son organisateur.
+async function recordReferral(req, organizer) {
+  const ref = /(?:^|;\s*)em-ref=([\w-]{1,80})/.exec(req.headers.cookie || "")?.[1];
+  if (!ref) return;
+  const { findEventBySlug } = await import("../lib/store.js");
+  const ev = await findEventBySlug(ref).catch(() => null);
+  if (!ev || ev.organizerId === organizer.id) return;
+  const key = `refs:${ev.organizerId}`;
+  const list = (await getSetting(key).catch(() => null)) || [];
+  if (!list.includes(organizer.id)) await setSetting(key, [...list, organizer.id]);
 }
 import { setPassword, hasPassword, checkPassword, passwordError } from "../lib/password.js";
 import { GOOGLE_ENABLED, googleAuthUrl, googleIdentity } from "../lib/google.js";
@@ -382,6 +394,7 @@ router.get("/me", async (req, res) => {
     id: organizer.id, email: organizer.email, code: organizer.loginCode, isAdmin: await isAdmin(organizer), superAdmin: isSuperAdmin(organizer), hasPassword: await hasPassword(organizer.id),
     displayName: organizer.displayName || "", avatar: organizer.avatar || null, premium: await isPremium(organizer.id),
     needBirth: !(await getSetting(`birth:${organizer.id}`).catch(() => null)), // vérification de l'âge à faire
+    referrals: ((await getSetting(`refs:${organizer.id}`).catch(() => null)) || []).length, // 🎁 comptes créés grâce à ses événements
     minorUntil: await minorUntil(organizer.id), // date de moins de 15 ans saisie : nouvel essai possible après cette heure
   });
 });

@@ -1579,3 +1579,11 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .gb-sealed { background: linear-gradient(135deg, rgba(253,26,133,.08), rgba(138,29,233,.08)); }
 .gb-sealed header i { background: linear-gradient(135deg, #fd1a85, #8a1de9); }
 .gb-seal { font-weight: 700; color: var(--primary); }
+
+/* 🎁 Parrainage : « Vous aussi, partagez votre événement » */
+.ref-card { display: flex; align-items: center; gap: 12px; margin: 18px 0 8px; padding: 14px 16px; border-radius: 18px; color: #fff; text-decoration: none; background: linear-gradient(120deg, #fe7320, #fd1a85 55%, #8a1de9); box-shadow: 0 10px 24px rgba(253,26,133,.25); }
+.ref-card > span:first-child { font-size: 1.8rem; }
+.ref-card span:nth-child(2) { display: grid; gap: 2px; flex: 1; }
+.ref-card small { opacity: .9; font-size: .8rem; }
+.ref-card i { font-style: normal; font-size: 1.6rem; opacity: .9; }
+.ref-count { margin: 10px 0 0; padding: 10px 14px; border-radius: 14px; background: var(--primary-light); font-weight: 700; font-size: .88rem; text-align: center; }

@@ -9,6 +9,11 @@ document.querySelector(".stories").insertAdjacentHTML("beforebegin", `<div class
 </div>`);
 
 tabbar("home");
+// 🎁 Parrainage : « N personnes ont créé leur événement grâce aux vôtres ».
+api("/api/auth/me").then((me) => {
+  if (!me?.referrals) return;
+  document.querySelector(".hd-top")?.insertAdjacentHTML("beforeend", `<p class="ref-count">🎁 ${t(me.referrals > 1 ? "{n} personnes ont créé leur événement grâce aux vôtres" : "1 personne a créé son événement grâce aux vôtres").replace("{n}", me.referrals)}</p>`);
+}).catch(() => {});
 
 if (new URLSearchParams(location.search).has("saved")) {
   toast("Événement enregistré ✔");

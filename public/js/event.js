@@ -148,6 +148,7 @@ function showEvent(ev) {
   eventReactions(ev);
   hereBadge(ev);
   filmCard(ev);
+  inviteToCreate(ev);
   $("#copy").onclick = () => copy(url, "Lien copié !");
   $("#page").classList.remove("hidden");
 }
@@ -380,4 +381,15 @@ function eventReactions(ev) {
     bar.classList.toggle("is-hidden", y > lastY && y > 120 && !atEnd);
     lastY = y;
   }, { passive: true });
+}
+
+// 🎁 « Vous aussi, créez le vôtre » : en bas de page pour les invités (pas l'organisateur), lien parrainé.
+function inviteToCreate(ev) {
+  if (ev.isOwner || document.getElementById("ref-card")) return;
+  const card = document.createElement("a");
+  card.id = "ref-card";
+  card.className = "ref-card";
+  card.href = `/connexion?next=/edit&ref=${encodeURIComponent(ev.slug)}`;
+  card.innerHTML = `<span>🎉</span><span><b>${tr("Vous aussi, partagez votre événement")}</b><small>${tr("Faire-part, live et souvenirs : gratuit, en 2 minutes")}</small></span><i>›</i>`;
+  (document.querySelector("main.container") || document.querySelector("main") || document.body).append(card);
 }
