@@ -1568,13 +1568,14 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .wall-side p { margin: 0; font-weight: 700; }
 .wall-count { opacity: .85; }
 .wall-brand { display: flex; align-items: center; gap: 6px; margin-top: auto; opacity: .85; font-weight: 700; }
-.wall-toast { position: fixed; top: 20px; left: 20px; z-index: 2; padding: 10px 18px; border-radius: 999px; background: #fd1a85; font-weight: 800; font-size: 1.1rem; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+.wall-toast { position: fixed; top: 12px; left: 64px; max-width: calc(100vw - 128px); z-index: 2; padding: 10px 18px; border-radius: 999px; background: #fd1a85; font-weight: 800; font-size: 1.1rem; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
 .wall-empty { position: absolute; inset: 0 280px 0 0; display: grid; place-content: center; gap: 8px; text-align: center; }
 .wall-empty p { font-size: 4rem; margin: 0; }
 .wall-empty b { font-size: 1.6rem; }
 .wall-empty span { opacity: .75; }
 .wall-full { position: fixed; right: 292px; top: 12px; z-index: 2; width: 40px; height: 40px; border: 0; border-radius: 50%; background: rgba(255,255,255,.15); color: #fff; font-size: 1.1rem; cursor: pointer; }
-@media (max-width: 700px) { .wall { grid-template-columns: 1fr; grid-template-rows: 1fr auto; } .wall-side { flex-direction: row; flex-wrap: wrap; padding: 12px; } .wall-side img#w-qr { width: 90px; height: 90px; } .wall-empty { inset: 0; } .wall-full { right: 12px; } }
+@media (max-width: 700px) { .wall { grid-template-columns: 1fr; grid-template-rows: 1fr auto; } .wall-side { flex-direction: row; flex-wrap: wrap; padding: 12px; } .wall-side img#w-qr { width: 90px; height: 90px; } .wall-empty { inset: 0; } .wall-full { right: 12px; } .wall-close { left: 12px; right: auto; } }
+.wall-close { left: 12px; right: auto; display: grid; place-items: center; text-decoration: none; }
 .wall-body #cookie-banner { display: none; } /* écran de TV : pas de bandeau cookies */
 
 /* 📦 Capsule temporelle */

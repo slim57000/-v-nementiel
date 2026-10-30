@@ -60,5 +60,8 @@ $("#w-qr").src = qrUrl(link);
 await refresh();
 setInterval(refresh, 8000);
 // Écran toujours allumé + plein écran au toucher.
-try { await navigator.wakeLock?.request("screen"); } catch { /* non disponible */ }
+navigator.wakeLock?.request("screen").catch(() => {});
+// iPhone : pas de plein écran possible (bouton masqué) ; ✕ ramène au tableau de bord.
+if (!document.documentElement.requestFullscreen) $("#full").remove();
+$("#close").onclick = (e) => { if (history.length > 1) { e.preventDefault(); history.back(); } };
 $("#full").onclick = () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.());
