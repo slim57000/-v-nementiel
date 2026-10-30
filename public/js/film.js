@@ -28,7 +28,7 @@ export async function filmScenes(ev) {
 }
 
 // Musique douce : accords de piano électrique + clochettes, synthétisés (Web Audio), avec fondu final.
-function music(seconds, ctx0) {
+export function music(seconds, ctx0) {
   const Ctx = window.AudioContext || window.webkitAudioContext;
   if (!Ctx) return null;
   const ctx = ctx0 || new Ctx();

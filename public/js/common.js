@@ -1113,13 +1113,22 @@ function openVideoReels(list, start) {
   document.body.style.overflow = "hidden";
   const vids = [...v.querySelectorAll("video")];
   let current = -1;
+  // Les vidéos des bibliothèques (Pixabay, Coverr…) sont muettes : une musique douce les accompagne quand le son est activé.
+  let F = null, bgm = null;
+  import("./film.js").then((m) => { F = m; syncMusic(); }).catch(() => {});
+  const syncMusic = () => {
+    const want = reelsSound && current >= 0 && !list[current]?.member;
+    if (want && !bgm && F) bgm = F.music(3600);
+    else if (want && bgm?.state === "suspended") bgm.resume().catch(() => {});
+    else if (!want && bgm) { bgm.close().catch(() => {}); bgm = null; }
+  };
   const show = (i) => {
     if (i === current) return;
     current = i;
     vids.forEach((el, k) => {
       if (k === i) {
         if (!el.getAttribute("src")) el.src = list[k].src;
-        el.muted = !reelsSound;
+        el.muted = !reelsSound || !list[k].member;
         el.play().catch(() => { el.muted = true; el.play().catch(() => {}); });
       } else if (Math.abs(k - i) > 1 && el.getAttribute("src")) { el.pause(); el.removeAttribute("src"); el.load(); }
       else el.pause();
@@ -1127,21 +1136,24 @@ function openVideoReels(list, start) {
     // Vidéo suivante préparée à l'avance.
     const next = vids[i + 1];
     if (next && !next.getAttribute("src")) { next.preload = "auto"; next.src = list[i + 1].src; }
+    syncMusic();
   };
   const io = new IntersectionObserver((entries) => entries.forEach((en) => { if (en.isIntersecting) show(Number(en.target.dataset.i)); }), { root: v, threshold: 0.6 });
   v.querySelectorAll(".reel").forEach((sec) => io.observe(sec));
   v.scrollTop = start * v.clientHeight;
   show(start);
-  const close = () => { io.disconnect(); vids.forEach((el) => { el.pause(); el.removeAttribute("src"); }); v.remove(); document.body.style.overflow = ""; };
+  const close = () => { bgm?.close().catch(() => {}); bgm = null; io.disconnect(); vids.forEach((el) => { el.pause(); el.removeAttribute("src"); }); v.remove(); document.body.style.overflow = ""; };
   v.querySelector(".reels-close").onclick = close;
   v.querySelector(".reels-sound").onclick = (ev) => {
     reelsSound = !reelsSound;
     ev.currentTarget.textContent = reelsSound ? "🔊" : "🔇";
-    vids[current].muted = !reelsSound;
+    vids[current].muted = !reelsSound || !list[current].member;
     vids[current].play().catch(() => {});
+    syncMusic();
   };
   let tx = 0, ty = 0;
   v.addEventListener("touchstart", (ev) => { tx = ev.touches[0].clientX; ty = ev.touches[0].clientY; }, { passive: true });
+  v.addEventListener("touchend", () => syncMusic(), { passive: true }); // iOS : la musique ne démarre qu'après un toucher
   v.addEventListener("touchend", (ev) => {
     const dx = ev.changedTouches[0].clientX - tx, dy = ev.changedTouches[0].clientY - ty;
     if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
