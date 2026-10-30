@@ -50,12 +50,18 @@ function quickBar() {
   const mine = events.filter((e) => !myId || !e.organizerId || e.organizerId === myId);
   const soon = mine.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0];
   const ago = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
-  const ev = soon || mine.filter((e) => e.date < today && e.date >= ago).sort((a, b) => b.date.localeCompare(a.date))[0];
-  if (!ev) return;
+  const ev = soon || mine.filter((e) => e.date < today).sort((a, b) => b.date.localeCompare(a.date))[0];
+  if (!ev) {
+    // Pas encore d'événement : on montre ce qui l'attend (live, mur photo, film).
+    document.querySelector(".hd-top")?.insertAdjacentHTML("afterend", `<div class="my-quick" id="my-quick">
+      <b>${t("Vous aussi, partagez votre événement")}</b><small>🔴 ${t("Live")} · 📺 ${t("Mur photo")} · ✨ ${t("Le film souvenir")}</small>
+      <div class="my-quick-row"><a href="/edit">✨ ${t("Créez le vôtre")}</a></div></div>`);
+    return;
+  }
   document.querySelector(".hd-top")?.insertAdjacentHTML("afterend", `<div class="my-quick" id="my-quick">
     <b>${esc(ev.name)}</b><small>${esc(dayBadge(ev.date))}</small>
     <div class="my-quick-row">
-      ${ev.date >= today ? `<a href="/cameraman?code=${esc(ev.cameramanCode)}">🔴 ${t("Live")}</a>` : `<a href="/e/${esc(ev.slug)}?film=1">✨ ${t("Le film souvenir")}</a>`}
+      ${ev.date >= today || ev.date < ago ? `<a href="/cameraman?code=${esc(ev.cameramanCode)}">🔴 ${t("Live")}</a>` : `<a href="/e/${esc(ev.slug)}?film=1">✨ ${t("Le film souvenir")}</a>`}
       <a href="/mur?id=${ev.id}">📺 ${t("Mur photo")}</a>
       <a href="/e/${esc(ev.slug)}">💌 ${t("Voir")}</a>
     </div></div>`);
