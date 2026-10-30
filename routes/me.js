@@ -9,7 +9,7 @@ import { requireOrganizer } from "./auth.js";
 import { hasAccess } from "./public.js";
 import { publicView } from "../lib/events.js";
 import { saveDataUrl, removeUpload, isVideoUrl } from "../lib/uploads.js";
-import { withReactions } from "./social.js";
+import { withReactions, sealCapsules } from "./social.js";
 import {
   saveOrganizer, listEvents, findEvent, findEventBySlug, findEventsByIds, findOrganizersByIds,
   addFavorite, removeFavorite, listFavoriteIds, listHistoryIds,
@@ -97,7 +97,11 @@ router.get("/feed", async (req, res) => {
   const ids = [...byId.keys()];
   const [photos, entries] = await Promise.all([listRecentPhotos(ids).catch(() => []), listRecentGuestbook(ids).catch(() => [])]);
   for (const p of photos.filter((x) => !x.story)) items.push({ kind: "photo", at: p.createdAt, event: head(byId.get(p.eventId)), name: p.name, url: p.url, author: p.author });
-  for (const g of entries) {
+  // Capsules encore scellées : absentes du fil jusqu'à leur date d'ouverture.
+  const byEvent = new Map();
+  for (const g of entries) byEvent.set(g.eventId, [...(byEvent.get(g.eventId) || []), g]);
+  const opened = (await Promise.all([...byEvent].map(([eid, list]) => sealCapsules(eid, list, null)))).flat().filter((g) => !g.sealed);
+  for (const g of opened) {
     items.push({ kind: "message", at: g.createdAt, event: head(byId.get(g.eventId)), id: g.id, name: g.name, text: g.text, url: g.photoUrl || null, audio: g.audioUrl || null, likes: g.likes || 0, replies: (g.replies || []).length, author: g.author });
   }
   res.json(items.sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 80));

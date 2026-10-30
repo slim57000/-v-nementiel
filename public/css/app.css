@@ -1571,3 +1571,11 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .wall-full { position: fixed; right: 292px; top: 12px; z-index: 2; width: 40px; height: 40px; border: 0; border-radius: 50%; background: rgba(255,255,255,.15); color: #fff; font-size: 1.1rem; cursor: pointer; }
 @media (max-width: 700px) { .wall { grid-template-columns: 1fr; grid-template-rows: 1fr auto; } .wall-side { flex-direction: row; flex-wrap: wrap; padding: 12px; } .wall-side img#w-qr { width: 90px; height: 90px; } .wall-empty { inset: 0; } .wall-full { right: 12px; } }
 .wall-body #cookie-banner { display: none; } /* écran de TV : pas de bandeau cookies */
+
+/* 📦 Capsule temporelle */
+.gb-capsule { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--primary-light); }
+.gb-capsule summary { cursor: pointer; font-weight: 700; }
+.gb-capsule input { margin-top: 4px; }
+.gb-sealed { background: linear-gradient(135deg, rgba(253,26,133,.08), rgba(138,29,233,.08)); }
+.gb-sealed header i { background: linear-gradient(135deg, #fd1a85, #8a1de9); }
+.gb-seal { font-weight: 700; color: var(--primary); }

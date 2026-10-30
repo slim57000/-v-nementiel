@@ -54,6 +54,18 @@ router.get("/lk", async (req, res) => {
 });
 
 // Contenus des personnes bloquées par l'organisateur : masqués pour tout le monde.
+// 📦 Capsule temporelle : message du livre d'or scellé jusqu'à une date choisie par l'invité (1er anniversaire
+// de mariage, 18 ans…). Avant cette date, personne d'autre que son auteur n'en voit le contenu, pas même l'organisateur.
+export async function sealCapsules(eventId, entries, author) {
+  const caps = (await getSetting(`capsules:${eventId}`).catch(() => null)) || {};
+  const today = new Date().toISOString().slice(0, 10);
+  return entries.map((e) => {
+    const date = caps[e.id];
+    if (!date) return e;
+    if (date <= today || (author && e.author === author)) return { ...e, capsule: date };
+    return { ...e, capsule: date, sealed: true, text: "", photoUrl: null, audioUrl: null, replies: [] };
+  });
+}
 const visible = (req, items) => items.filter((i) => !i.author || !(req.event.blockedAuthors || []).includes(i.author));
 
 // Une personne bloquée ne peut plus rien publier sur l'événement.
@@ -279,7 +291,7 @@ router.delete("/photos/:id", ownerOnly, async (req, res) => {
 
 // --- Livre d'or : texte, photo et/ou message vocal ---
 router.get("/guestbook", async (req, res) => {
-  res.json(visible(req, await listGuestbook(req.event.id)));
+  res.json(await sealCapsules(req.event.id, visible(req, await listGuestbook(req.event.id)), req.author));
 });
 
 router.post("/guestbook", notBlocked, async (req, res) => {
@@ -294,12 +306,20 @@ router.post("/guestbook", notBlocked, async (req, res) => {
     // La vidéo courte éventuelle est rangée dans le champ « photo » (détectée par son extension).
     const photoUrl = req.body?.image ? await saveDataUrl(req.body.image) : await videoFrom(req.body);
     const audioUrl = req.body?.audio ? await saveDataUrl(req.body.audio, "audio") : null;
+    // Capsule : date d'ouverture valide (demain à 30 ans), sinon message normal.
+    const cap = String(req.body?.capsuleDate || "");
+    const tomorrow = new Date(Date.now() + 864e5).toISOString().slice(0, 10), max = new Date(Date.now() + 30 * 365 * 864e5).toISOString().slice(0, 10);
+    const capsule = /^\d{4}-\d{2}-\d{2}$/.test(cap) && cap >= tomorrow && cap <= max ? cap : null;
     const entry = await addGuestbookEntry(req.event.id, { name, text, photoUrl, audioUrl, author: req.author });
-    guestbookMail(req.event, name, text);
+    if (capsule) {
+      const caps = (await getSetting(`capsules:${req.event.id}`).catch(() => null)) || {};
+      caps[entry.id] = capsule;
+      await setSetting(`capsules:${req.event.id}`, caps);
+    } else guestbookMail(req.event, name, text);
     notify([orgOwner(req.event.organizerId)], {
-      title: `✍️ Livre d'or — ${req.event.name}`, body: `${name} : ${text || "a partagé un souvenir"}`.slice(0, 140), url: `/e/${req.event.slug}#gb-list`,
+      title: `✍️ Livre d'or — ${req.event.name}`, body: capsule ? `${name} a déposé un message capsule 📦 (ouverture le ${capsule})` : `${name} : ${text || "a partagé un souvenir"}`.slice(0, 140), url: `/e/${req.event.slug}#gb-list`,
     }).catch(() => {});
-    res.status(201).json(entry);
+    res.status(201).json(capsule ? { ...entry, capsule } : entry);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

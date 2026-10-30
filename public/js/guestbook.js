@@ -1,5 +1,6 @@
 // Livre d'or multimédia de la page événement : texte, photo, message vocal, likes, filtres, recherche.
 import { api, $, esc, toast, guestName, resizeImage, viewPhoto, contentMenu, isHidden, isVideo, uploadVideo, LOCALE } from "./common.js";
+import { t as tr } from "./i18n.js";
 
 const MAX_VOICE_SECONDS = 60;
 
@@ -30,10 +31,15 @@ export function initGuestbook(ev) {
       `<p class="muted small" style="text-align:center">${entries.length ? "Aucun message ne correspond." : "Soyez le premier à laisser un mot ✍️"}</p>`;
   }
 
-  const card = (e) => `
+  // Capsule scellée : seule la date d'ouverture est visible.
+  const capDate = (d) => new Date(`${d}T12:00`).toLocaleDateString(LOCALE, { day: "numeric", month: "long", year: "numeric" });
+  const sealedCard = (e) => `<article class="gb-entry gb-sealed" data-id="${e.id}">
+      <header><i>📦</i><div><b>${esc(e.name)}</b><span class="muted small">${esc(tr("Message capsule"))}</span></div></header>
+      <p class="gb-seal">🔒 ${esc(tr("Scellé jusqu'au {date}").replace("{date}", capDate(e.capsule)))}</p></article>`;
+  const card = (e) => e.sealed ? sealedCard(e) : `
     <article class="gb-entry ${e.pinned ? "pinned" : ""}" data-id="${e.id}">
       <header><i>${esc(e.name.charAt(0).toUpperCase())}</i><div><b>${esc(e.name)}</b>
-        <span class="muted small">${new Date(e.createdAt).toLocaleDateString(LOCALE, { day: "numeric", month: "long" })}${e.pinned ? " · ⭐ À la une" : ""}</span></div></header>
+        <span class="muted small">${new Date(e.createdAt).toLocaleDateString(LOCALE, { day: "numeric", month: "long" })}${e.pinned ? " · ⭐ À la une" : ""}${e.capsule ? ` · 📦 ${esc(tr("Capsule ouverte le {date}").replace("{date}", capDate(e.capsule)))}` : ""}</span></div></header>
       ${e.text ? `<p>${esc(e.text)}</p>` : ""}
       ${e.photoUrl && isVideo(e.photoUrl) ? `<video src="${esc(e.photoUrl)}" controls playsinline preload="metadata"></video>` : ""}
       ${e.photoUrl && !isVideo(e.photoUrl) ? `<img src="${esc(e.photoUrl)}" alt="Photo de ${esc(e.name)}" loading="lazy" data-photo>` : ""}
@@ -248,7 +254,9 @@ export function initGuestbook(ev) {
     try {
       const name = await guestName();
       const video = draft.videoFile ? await uploadVideo(ev.slug, draft.videoFile) : {};
-      const entry = await api(base, { method: "POST", body: { name, text, image: draft.image, audio: draft.audio, ...video } });
+      const capsuleDate = $("#gb-capsule-date")?.value || undefined;
+      if (capsuleDate) toast(tr("📦 Message scellé jusqu'au {date}").replace("{date}", capsuleDate.split("-").reverse().join("/")));
+      const entry = await api(base, { method: "POST", body: { name, text, image: draft.image, audio: draft.audio, capsuleDate, ...video } });
       entries.unshift(entry);
       render();
       resetDraft();
