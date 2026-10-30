@@ -1597,3 +1597,7 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .chat-tr.on { opacity: 1; filter: none; }
 .chat-txt.is-tr { cursor: pointer; }
 .chat-txt.is-tr::after { content: " 🌍"; font-size: .7em; opacity: .6; }
+.my-quick { margin: 8px 16px 4px; padding: 12px 14px; border-radius: 18px; background: linear-gradient(135deg, #fd1a85, #c60bd2); color: #fff; display: grid; gap: 2px; box-shadow: 0 8px 22px rgba(198,11,210,.25); }
+.my-quick small { opacity: .9; }
+.my-quick-row { display: flex; gap: 8px; margin-top: 8px; }
+.my-quick-row a { flex: 1; text-align: center; padding: 9px 6px; border-radius: 999px; background: rgba(255,255,255,.95); color: #c20f68; font-weight: 700; font-size: .85rem; text-decoration: none; white-space: nowrap; }

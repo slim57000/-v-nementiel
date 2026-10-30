@@ -41,6 +41,24 @@ async function load() {
   // Ordre du serveur conservé : publics et privés en alternance.
   try { localStorage.setItem(DASH_KEY, JSON.stringify({ events, discover: discover.slice(0, 30), stories, joined, myId })); } catch { /* plein ou indisponible */ }
   render();
+  quickBar();
+}
+
+// Raccourcis de mon prochain événement (ou du dernier, jusqu'à 30 jours après) : live, mur photo, film.
+function quickBar() {
+  document.getElementById("my-quick")?.remove();
+  const mine = events.filter((e) => !myId || !e.organizerId || e.organizerId === myId);
+  const soon = mine.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0];
+  const ago = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
+  const ev = soon || mine.filter((e) => e.date < today && e.date >= ago).sort((a, b) => b.date.localeCompare(a.date))[0];
+  if (!ev) return;
+  document.querySelector(".hd-top")?.insertAdjacentHTML("afterend", `<div class="my-quick" id="my-quick">
+    <b>${esc(ev.name)}</b><small>${esc(dayBadge(ev.date))}</small>
+    <div class="my-quick-row">
+      ${ev.date >= today ? `<a href="/cameraman?code=${esc(ev.cameramanCode)}">🔴 ${t("Live")}</a>` : `<a href="/e/${esc(ev.slug)}?film=1">✨ ${t("Le film souvenir")}</a>`}
+      <a href="/mur?id=${ev.id}">📺 ${t("Mur photo")}</a>
+      <a href="/e/${esc(ev.slug)}">💌 ${t("Voir")}</a>
+    </div></div>`);
 }
 
 // Mélange privés / non répertoriés et publics (un sur deux), pour que les privés ne soient pas noyés en fin de liste.
