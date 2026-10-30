@@ -186,7 +186,8 @@ const tooManyTries = (key) => tooFast(`try:${key}`, 10, 15 * 60 * 1000);
 router.post("/translate", async (req, res) => {
   const lang = /^[a-z]{2}$/.test(req.body?.lang) ? req.body.lang : "fr";
   const texts = (Array.isArray(req.body?.texts) ? req.body.texts : []).slice(0, 20).map((t) => String(t).slice(0, 2000));
-  if (lang === "fr" || !texts.length || tooFast(`tr:${req.ip}`, 60, 60 * 1000)) return res.json({ texts });
+  // any : messages écrits par les invités (chat du live), à traduire même vers le français.
+  if ((lang === "fr" && !req.body?.any) || !texts.length || tooFast(`tr:${req.ip}`, 60, 60 * 1000)) return res.json({ texts });
   res.json({ texts: await translateTexts(texts, lang) });
 });
 

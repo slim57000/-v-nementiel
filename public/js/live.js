@@ -280,10 +280,50 @@ function addChat(m) {
   const list = $("#chat-list");
   list.querySelector(".chat-empty")?.remove();
   list.insertAdjacentHTML("beforeend",
-    `<div class="chat-msg" data-id="${m.id}"><i>${esc(m.name.charAt(0).toUpperCase())}</i><div><b>${esc(m.name)}</b>${esc(m.text)}</div><button class="more-btn" data-more aria-label="Plus d'actions">⋯</button></div>`);
+    `<div class="chat-msg" data-id="${m.id}"><i>${esc(m.name.charAt(0).toUpperCase())}</i><div><b>${esc(m.name)}</b><span class="chat-txt">${esc(m.text)}</span></div><button class="more-btn" data-more aria-label="Plus d'actions">⋯</button></div>`);
   while (list.children.length > 50) list.firstElementChild.remove();
   list.scrollTop = list.scrollHeight;
+  if (trOn && !mine.has(m.id)) queueTr(m);
 }
+
+// 🌍 Traduction automatique du chat dans la langue du visiteur (regroupée toutes les 600 ms ; toucher = original).
+const TR_KEY = "em-chat-tr";
+let trOn = (() => { try { return localStorage.getItem(TR_KEY) !== "0"; } catch { return true; } })();
+const trWait = [];
+let trTimer = null;
+function queueTr(m) {
+  if (m.text.length < 2 || !/\p{L}{2}/u.test(m.text)) return;
+  trWait.push(m);
+  trTimer ||= setTimeout(async () => {
+    const batch = trWait.splice(0, 20); trTimer = null;
+    if (trWait.length) trTimer = setTimeout(() => queueTr(trWait.pop()), 600);
+    try {
+      const { texts } = await api("/api/public/translate", { method: "POST", body: { texts: batch.map((b) => b.text), lang, any: true } });
+      batch.forEach((b, k) => {
+        const v = texts?.[k];
+        if (!v || v.trim().toLowerCase() === b.text.trim().toLowerCase()) return;
+        b.translated = v;
+        const span = document.querySelector(`.chat-msg[data-id="${b.id}"] .chat-txt`);
+        if (span && trOn) { span.textContent = v; span.classList.add("is-tr"); span.title = tr("Traduit · toucher pour l'original"); }
+      });
+    } catch { /* traduction indisponible : on garde l'original */ }
+  }, 600);
+}
+function showTr(on) {
+  trOn = on;
+  try { localStorage.setItem(TR_KEY, on ? "1" : "0"); } catch { /* stockage bloqué */ }
+  const b = $("#chat-tr"); b.setAttribute("aria-pressed", on); b.classList.toggle("on", on);
+  document.querySelectorAll(".chat-msg").forEach((node) => {
+    const m = messages.get(Number(node.dataset.id)), span = node.querySelector(".chat-txt");
+    if (!m || !span) return;
+    if (on && m.translated) { span.textContent = m.translated; span.classList.add("is-tr"); }
+    else { span.textContent = m.text; span.classList.remove("is-tr"); }
+    if (on && !m.translated && !mine.has(m.id)) queueTr(m);
+  });
+}
+$("#chat").insertAdjacentHTML("afterbegin", `<button type="button" id="chat-tr" class="chat-tr" aria-label="${tr("Traduire le chat")}" title="${tr("Traduire le chat")}">🌍</button>`);
+$("#chat-tr").onclick = () => { showTr(!trOn); toast(trOn ? tr("Traduction du chat activée 🌍") : tr("Messages d'origine")); };
+$("#chat-tr").classList.toggle("on", trOn);
 
 function handle(items) {
   for (const m of items) {
@@ -318,6 +358,12 @@ $("#reactions").addEventListener("click", async (e) => {
 
 // Menu ⋯ d'un message : signaler, masquer ; organisateur : supprimer, bloquer.
 $("#chat-list").addEventListener("click", (e) => {
+  const txt = e.target.closest(".chat-txt");
+  if (txt && messages.get(Number(txt.closest("[data-id]").dataset.id))?.translated) {
+    const m = messages.get(Number(txt.closest("[data-id]").dataset.id));
+    txt.textContent = txt.classList.toggle("is-tr") ? m.translated : m.text;
+    return;
+  }
   if (!e.target.matches("[data-more]")) return;
   const el = e.target.closest("[data-id]");
   const m = messages.get(Number(el.dataset.id));
