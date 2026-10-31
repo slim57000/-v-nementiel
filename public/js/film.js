@@ -47,12 +47,20 @@ export function music(seconds, ctx0) {
     g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(g).connect(out); o.start(t); o.stop(t + dur + 0.05);
   };
+  // Notes programmées au fil de l'eau (6 s d'avance) : pas de milliers de sons créés d'un coup.
   const t0 = ctx.currentTime + 0.1;
-  for (let bar = 0; bar * 8 * beat < seconds; bar++) {
-    const c = chords[bar % 4], start = t0 + bar * 8 * beat;
-    c.forEach((n) => note(n - 12, start, 8 * beat, 0.05, "triangle"));
-    for (let i = 0; i < 8; i++) note(c[[0, 2, 1, 3, 2, 1, 3, 2][i]] + 12, start + i * beat, 1.4, 0.035);
-  }
+  let bar = 0;
+  const feed = () => {
+    if (ctx.state === "closed") return clearInterval(iv);
+    while (bar * 8 * beat < seconds && t0 + bar * 8 * beat < ctx.currentTime + 6) {
+      const c = chords[bar % 4], start = t0 + bar * 8 * beat;
+      c.forEach((n) => note(n - 12, start, 8 * beat, 0.05, "triangle"));
+      for (let i = 0; i < 8; i++) note(c[[0, 2, 1, 3, 2, 1, 3, 2][i]] + 12, start + i * beat, 1.4, 0.035);
+      bar++;
+    }
+  };
+  const iv = setInterval(feed, 1000);
+  feed();
   return ctx;
 }
 

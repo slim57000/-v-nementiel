@@ -1118,7 +1118,7 @@ function openVideoReels(list, start) {
   import("./film.js").then((m) => { F = m; syncMusic(); }).catch(() => {});
   const syncMusic = () => {
     const want = reelsSound && current >= 0 && !list[current]?.member;
-    if (want && !bgm && F) bgm = F.music(3600);
+    if (want && !bgm && F) bgm = F.music(600);
     else if (want && bgm?.state === "suspended") bgm.resume().catch(() => {});
     else if (!want && bgm) { bgm.close().catch(() => {}); bgm = null; }
   };
@@ -1153,7 +1153,7 @@ function openVideoReels(list, start) {
   };
   let tx = 0, ty = 0;
   v.addEventListener("touchstart", (ev) => { tx = ev.touches[0].clientX; ty = ev.touches[0].clientY; }, { passive: true });
-  v.addEventListener("touchend", () => syncMusic(), { passive: true }); // iOS : la musique ne démarre qu'après un toucher
+  v.addEventListener("touchend", () => { if (bgm?.state === "suspended") syncMusic(); }, { passive: true }); // iOS : la musique ne démarre qu'après un toucher
   v.addEventListener("touchend", (ev) => {
     const dx = ev.changedTouches[0].clientX - tx, dy = ev.changedTouches[0].clientY - ty;
     if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
