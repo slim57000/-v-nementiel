@@ -33,6 +33,7 @@ import { getSetting, setSetting, listEventsOnDate, findOrganizer, listPublicUpco
 import { EMAIL_ENABLED, sendEmail } from "./lib/email.js";
 import { eventLang } from "./lib/invites.js";
 import { UPLOAD_DIR } from "./lib/uploads.js";
+import { mediaJson, serveMedia, localMedia } from "./lib/media-cache.js";
 import { findEventBySlug } from "./lib/store.js";
 import { ON_VERCEL, missingConfig } from "./lib/config.js";
 
@@ -54,6 +55,8 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.json({ limit: "15mb" })); // images envoyées en base64 (couverture + photo du faire-part)
+app.use("/api", mediaJson); // photos et vidéos servies depuis le cache du serveur
+app.get(/^\/media\/(.+)$/, serveMedia);
 
 // Configuration incomplète : message explicite plutôt qu'un plantage.
 if (missingConfig.length) {
@@ -361,9 +364,9 @@ app.get("/e/:slug", async (req, res) => {
   let data = "";
   if (event && !("code" in req.query) && !/bot|crawl|spider|facebookexternalhit|whatsapp|preview|slack|telegram/i.test(req.get("user-agent") || "")) {
     const payload = await eventPayload(req, req.params.slug).then((p) => translateNames(p, reqLangFull(req))).catch(() => null);
-    if (payload) data = `<script>window.__evdata=${JSON.stringify(payload).replace(/</g, "\\u003c")}</script>`;
+    if (payload) data = `<script>window.__evdata=${localMedia(JSON.stringify(payload)).replace(/</g, "\\u003c")}</script>`;
   }
-  res.status(event ? 200 : 404).set("Cache-Control", "no-store").type("html").send(eventTemplate.replace("<!--META-->", meta + data));
+  res.status(event ? 200 : 404).set("Cache-Control", "no-store").type("html").send(eventTemplate.replace("<!--META-->", localMedia(meta, `${base}/media/`) + data));
 });
 
 // Plan du site pour Google : pages publiques et événements publics à venir.
