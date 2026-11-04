@@ -1,7 +1,7 @@
 // Utilitaires partagés par toutes les pages.
 import { icon } from "./icons.js";
 import { lang, tr, t } from "./i18n.js"; // langue (FR/EN) et thème (clair/sombre), appliqués au chargement
-import { isNativeApp, nativeShare } from "./native.js";
+import { isNativeApp, nativeShare, inAppView } from "./native.js";
 import { translateNotif } from "./notif-i18n.js";
 
 // Format des dates selon la langue choisie.
@@ -727,7 +727,7 @@ const readConsent = () => { try { return localStorage.getItem(CONSENT_KEY); } ca
 
 // Identifiant GA4 fourni par le serveur (variable GA_MEASUREMENT_ID) ; rien n'est chargé sans lui.
 async function loadAnalytics() {
-  if (window.gtag) return;
+  if (window.gtag || inAppView()) return; // application : aucune mesure d'audience tierce
   const { gaId: GA_ID } = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
   if (!GA_ID) return;
   const script = Object.assign(document.createElement("script"), { async: true, src: `https://www.googletagmanager.com/gtag/js?id=${GA_ID}` });
@@ -756,7 +756,7 @@ export function cookieBanner() {
 
 if (readConsent() === "accepted") loadAnalytics();
 
-else if (!readConsent()) addEventListener("DOMContentLoaded", cookieBanner);
+else if (!readConsent() && !inAppView()) addEventListener("DOMContentLoaded", cookieBanner);
 
 // Statistiques de fréquentation MaFeliza (sans cookie, rien d'identifiant) : une page vue par chargement.
 try {
