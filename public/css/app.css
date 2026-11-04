@@ -1601,3 +1601,4 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .my-quick small { opacity: .9; }
 .my-quick-row { display: flex; gap: 8px; margin-top: 8px; }
 .my-quick-row a { flex: 1; text-align: center; padding: 9px 6px; border-radius: 999px; background: rgba(255,255,255,.95); color: #c20f68; font-weight: 700; font-size: .85rem; text-decoration: none; white-space: nowrap; }
+.dash-stores { margin: 10px 0 0; } a.hx-badge { text-decoration: none; }
