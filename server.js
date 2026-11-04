@@ -334,10 +334,9 @@ app.get("/e/:slug", async (req, res) => {
   if (event && !event.suspended) {
     const pic = event.invite?.photo && !["none", "cover"].includes(event.invite.photo) ? event.invite.photo : event.cover;
     const host = (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
-    if (pic) {
-      const url = pic.startsWith("/") ? `${host}${pic}` : pic;
-      image = `<meta property="og:image" content="${escapeHtml(url)}"><meta name="twitter:card" content="summary_large_image">`;
-    }
+    // Sans photo : logo MaFeliza (Facebook n'affiche pas d'aperçu sans image).
+    const url = pic ? (pic.startsWith("/") ? `${host}${pic}` : pic) : `${host}/img/icon-1024.png`;
+    image = `<meta property="og:image" content="${escapeHtml(url)}"><meta name="twitter:card" content="summary_large_image">`;
   }
   const isPublic = event?.visibility === "public" && !event.suspended && !(await listUnlistedIds()).has(event.id) && !(await listPendingIds()).has(event.id);
   const base = (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
@@ -358,7 +357,9 @@ app.get("/e/:slug", async (req, res) => {
     <meta name="description" content="${escapeHtml(desc)}">
     ${isPublic ? `<link rel="canonical" href="${escapeHtml(`${base}/e/${event.slug}`)}">` : '<meta name="robots" content="noindex">'}
     <meta property="og:title" content="${escapeHtml(title)}">
-    <meta property="og:description" content="${escapeHtml(desc)}">${image}${jsonLd}`;
+    <meta property="og:description" content="${escapeHtml(desc)}">
+    <meta property="og:type" content="website"><meta property="og:site_name" content="MaFeliza">
+    ${isPublic ? `<meta property="og:url" content="${escapeHtml(`${base}/e/${event.slug}`)}">` : ""}${image}${jsonLd}`;
   // Contenu de l'événement intégré à la page : affichage immédiat, sans attendre une 2e requête.
   // (Lien « ?code=… » : la page déverrouille d'abord, puis charge normalement.)
   let data = "";
