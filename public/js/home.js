@@ -1,7 +1,7 @@
 // Page d'accueil publique (visiteurs non connectés).
 import { api, $, esc, toast, dayBadge, coverOf, liveAttrs } from "./common.js";
 import { icon, BRAND } from "./icons.js";
-import { hasNativeApple, appleNative } from "./native.js";
+import { hasNativeApple, appleNative, inAppView } from "./native.js";
 
 // Pictogrammes et logos des boutons de connexion.
 document.querySelectorAll("[data-icon]").forEach((el) => { el.innerHTML = icon(el.dataset.icon, 26); });
@@ -12,9 +12,9 @@ api("/api/auth/me").then(() => { document.querySelectorAll("#create, [data-creat
 
 // Dans l'application iOS / Android, les connexions sociales sont masquées :
 // Apple refuse les boutons non fonctionnels et Google la connexion dans une vue intégrée.
-if (window.Capacitor?.isNativePlatform?.()) {
-  document.querySelector(".socials")?.remove();
-  document.querySelector(".divider")?.remove();
+if (inAppView()) {
+  document.querySelectorAll('[data-social="Google"], [data-social="Facebook"]').forEach((b) => b.remove());
+  if (!hasNativeApple()) { document.querySelector(".socials")?.remove(); document.querySelector(".divider")?.remove(); }
 }
 
 // Connexions sociales : actives si configurées sur le serveur (Google pour l'instant), sinon « bientôt ».

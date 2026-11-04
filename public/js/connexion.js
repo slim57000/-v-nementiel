@@ -1,7 +1,7 @@
 // Écran de connexion / inscription : email + mot de passe, connexion sociale, mot de passe oublié (code à 6 chiffres).
 import { api, $, toast } from "./common.js";
 import { BRAND } from "./icons.js";
-import { hasNativeApple, appleNative } from "./native.js";
+import { hasNativeApple, appleNative, inAppView } from "./native.js";
 
 // Page de retour après connexion (chemin interne uniquement).
 const next = new URLSearchParams(location.search).get("next");
@@ -93,7 +93,10 @@ fetch("/api/config").then((r) => r.json()).then((c) => {
 }).catch(() => {});
 
 // Logos Apple / Google / Facebook : connexion si configurée, sinon « bientôt ». Masqués dans l'app iOS / Android.
-if (window.Capacitor?.isNativePlatform?.()) $("#social-block")?.remove();
+if (inAppView()) {
+  document.querySelectorAll('[data-social="Google"], [data-social="Facebook"]').forEach((b) => b.remove());
+  if (!hasNativeApple()) $("#social-block")?.remove();
+}
 document.querySelectorAll("[data-social]").forEach((b) => {
   b.innerHTML = BRAND[b.dataset.social.toLowerCase()];
   b.addEventListener("click", () => {

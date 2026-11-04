@@ -58,6 +58,9 @@ export async function nativeShare({ title, text, url }) {
 export function tap() { P.Haptics?.impact?.({ style: "LIGHT" }).catch?.(() => {}); }
 
 export const isNativeApp = Boolean(cap?.isNativePlatform?.());
+// Vue web intégrée (application iPhone / iPad / Android, ou navigateur interne d'une autre appli) :
+// Google refuse la connexion dans ces vues et Apple refuse l'ouverture du navigateur externe.
+export const inAppView = () => isNativeApp || typeof window.webkit?.messageHandlers === "object" || /; wv\)/.test(navigator.userAgent);
 
 if (isNativeApp) {
   document.documentElement.classList.add("native-app");

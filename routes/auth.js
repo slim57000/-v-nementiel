@@ -169,8 +169,11 @@ router.get("/redirect-uris", (req, res) => res.json({
   google: callbackUrl(req), facebook: fbCallbackUrl(req), publicUrl: process.env.PUBLIC_URL || "(non défini)",
 }));
 
+// Vue web intégrée (application iPhone / iPad / Android) : pas de connexion Google (refusée par Google et Apple).
+const inAppView = (ua = "") => /; wv\)/.test(ua) || (/AppleWebKit/.test(ua) && /iPhone|iPad|Macintosh/.test(ua) && !/Safari\//.test(ua));
+
 router.get("/google", (req, res) => {
-  if (!GOOGLE_ENABLED) return res.redirect("/connexion");
+  if (!GOOGLE_ENABLED || inAppView(req.get("user-agent"))) return res.redirect("/connexion");
   const nonce = randomBytes(12).toString("hex");
   setSigned(res, "gstate", `${nonce}~${encodeURIComponent(safeNext(req.query.next))}`);
   res.redirect(googleAuthUrl(callbackUrl(req), nonce));
