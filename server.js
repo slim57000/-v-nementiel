@@ -35,6 +35,7 @@ import { eventLang } from "./lib/invites.js";
 import { UPLOAD_DIR } from "./lib/uploads.js";
 import { mediaJson, serveMedia, localMedia } from "./lib/media-cache.js";
 import { findEventBySlug } from "./lib/store.js";
+import { ogCard, ogVersion, OG_ENABLED } from "./lib/og-card.js";
 import { ON_VERCEL, missingConfig } from "./lib/config.js";
 
 const PUBLIC_DIR = fileURLToPath(new URL("./public", import.meta.url));
@@ -325,6 +326,19 @@ try {
 } catch { /* surveillance indisponible : un redémarrage reste nécessaire */ }
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
+// Carte de partage de l'événement (image 1200×630 pour Facebook, WhatsApp…).
+app.get("/og/:file", async (req, res, next) => {
+  const slug = String(req.params.file).replace(/\.png$/, "");
+  const event = await findEventBySlug(slug).catch(() => null);
+  if (!event || event.suspended) return next();
+  const host = (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+  try {
+    const png = await ogCard(event, host);
+    if (!png) return next();
+    res.set("Cache-Control", "public, max-age=86400").type("png").send(png);
+  } catch (err) { reportError(err, { url: req.originalUrl }); next(); }
+});
+
 app.get("/e/:slug", async (req, res) => {
   const event = await findEventBySlug(req.params.slug);
   const title = event ? event.name : "Événement";
@@ -335,8 +349,9 @@ app.get("/e/:slug", async (req, res) => {
     const pic = event.invite?.photo && !["none", "cover"].includes(event.invite.photo) ? event.invite.photo : event.cover;
     const host = (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
     // Sans photo : logo MaFeliza (Facebook n'affiche pas d'aperçu sans image).
-    const url = pic ? (pic.startsWith("/") ? `${host}${pic}` : pic) : `${host}/img/icon-1024.png`;
-    image = `<meta property="og:image" content="${escapeHtml(url)}"><meta name="twitter:card" content="summary_large_image">`;
+    const url = OG_ENABLED ? `${host}/og/${encodeURIComponent(event.slug)}.png?v=${ogVersion(event)}`
+      : pic ? (pic.startsWith("/") ? `${host}${pic}` : pic) : `${host}/img/icon-1024.png`;
+    image = `<meta property="og:image" content="${escapeHtml(url)}">${OG_ENABLED ? '<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">' : ""}<meta name="twitter:card" content="summary_large_image">`;
   }
   const isPublic = event?.visibility === "public" && !event.suspended && !(await listUnlistedIds()).has(event.id) && !(await listPendingIds()).has(event.id);
   const base = (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");

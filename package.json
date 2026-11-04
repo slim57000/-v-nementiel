@@ -12,6 +12,7 @@
     "test": "node --no-warnings test/smoke.mjs"
   },
   "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@supabase/supabase-js": "^2.117.2",
     "express": "^5.2.1",
     "qrcode": "^1.5.4",
