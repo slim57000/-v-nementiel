@@ -1609,3 +1609,7 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .reel-new textarea, .reel-new select { width: 100%; font: inherit; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line, #e5e0e3); background: var(--card, #fff); color: inherit; }
 .rn-bar { height: 6px; border-radius: 6px; background: rgba(253,26,133,.15); overflow: hidden; }
 .rn-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #fd1a85, #c60bd2); transition: width .3s; }
+/* Carte raccourcis : titre et sous-titre sur une seule ligne */
+.my-quick b, .my-quick small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.my-quick b { font-size: clamp(.9rem, 4.2vw, 1.05rem); }
+.my-quick small { font-size: clamp(.68rem, 3.2vw, .82rem); }
