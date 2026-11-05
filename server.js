@@ -23,6 +23,7 @@ import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import authRoutes, { currentOrganizer } from "./routes/auth.js";
 import eventRoutes from "./routes/events.js";
+import reelRoutes from "./routes/reels.js";
 import publicRoutes, { eventPayload } from "./routes/public.js";
 import { translateMiddleware, translateNames, reqLangFull } from "./lib/translate.js";
 import socialRoutes from "./routes/social.js";
@@ -247,6 +248,7 @@ if (!process.env.VERCEL) setInterval(() => liveSoonTick().catch((err) => console
 
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
+app.use("/api/reels", reelRoutes);
 app.use(["/api/public", "/api/me"], translateMiddleware);
 app.use("/api/public", publicRoutes);
 app.use("/api/public/:slug", socialRoutes);

@@ -9,6 +9,7 @@ import { publicView } from "../lib/events.js";
 import { listRecentPhotos, getSetting as readSetting, setSetting as writeSetting, dataVersion, listHistoryIds, listPendingIds, listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory,  listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
 import { currentOrganizer, isAdmin } from "./auth.js";
+import { listUserReels } from "./reels.js";
 import { camerasWithLive } from "../lib/livekit.js";
 
 const router = Router();
@@ -126,7 +127,10 @@ async function listMemberReels() {
   return list;
 }
 router.get("/reels", async (req, res) => {
-  const [mine, insp, likes] = await Promise.all([listMemberReels(), inspirations(reqLangFull(req)).catch(() => []), readSetting("reellikes").catch(() => null)]);
+  const [members, insp, likes, users] = await Promise.all([listMemberReels(), inspirations(reqLangFull(req)).catch(() => []), readSetting("reellikes").catch(() => null), listUserReels()]);
+  // Réels publiés par les membres (bouton « Créer → Un réel ») : les plus récents d'abord, masqués après 3 signalements.
+  const mine = [...users.filter((r) => (r.reports || 0) < 3).slice(0, 200).map((r) => ({ id: `u${r.id}`, reel: r.id, by: r.by, src: r.src, thumb: r.thumb,
+    channel: r.name, title: r.caption, member: true, event: r.event || undefined })), ...members];
   // Une vidéo de membre toutes les 3 vidéos d'inspiration (les membres d'abord tant qu'il y en a peu).
   // Ordre mélangé à chaque chargement (verticales toujours avant horizontales) : actualiser = nouvelles vidéos en tête.
   const shuffle = (a) => { for (let k = a.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [a[k], a[j]] = [a[j], a[k]]; } return a; };

@@ -292,10 +292,20 @@ export function createSheet(e) {
     <div class="card"><h2 style="margin-top:0">Que voulez-vous créer ?</h2>
       <div id="create-body" style="display:grid;gap:10px">
         <button class="btn btn-block create-big" type="button" id="create-story">Une story</button>
+        <button class="btn btn-block create-big create-reel" type="button" id="create-reel">🎬 ${t("Un réel")}</button>
+        <input type="file" id="create-reel-file" accept="video/*" hidden>
         <a class="btn btn-light btn-block create-big" href="/edit">Un événement</a>
       </div></div></div>`);
   const sheet = $("#create-sheet");
   const close = () => sheet.remove();
+  // 🎬 Réel : le choix du fichier suit directement l'appui (exigé par l'iPhone).
+  $("#create-reel").addEventListener("click", () => $("#create-reel-file").click());
+  $("#create-reel-file").addEventListener("change", (ev) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    close();
+    import("./reel-new.js").then((m) => m.openReelComposer(file));
+  });
   sheet.addEventListener("click", (ev) => { if (ev.target === sheet) close(); });
   const publish = (slug) => {
     close();
@@ -1104,6 +1114,7 @@ function openVideoReels(list, start) {
         <button type="button" class="reel-act" data-rshare="${i}"><span>↗</span><small>${esc(tr("Partager"))}</small></button>
         ${v.event?.slug ? `<a class="reel-act" href="/e/${esc(v.event.slug)}"><span>🎉</span><small>${esc(tr("Événement"))}</small></a>` : ""}
         ${v.event?.cagnotteUrl ? `<a class="reel-act" href="${esc(v.event.cagnotteUrl)}" target="_blank" rel="noopener"><span>💝</span><small>${esc(tr("Cagnotte"))}</small></a>` : ""}
+        ${v.reel ? `<button type="button" class="reel-act" data-rmore="${i}"><span>⋯</span></button>` : ""}
       </div>
       <div class="reel-info">${v.member ? `<b>${esc(v.title)}</b>` : ""}<small>${v.credit ? `<a href="${esc(v.credit)}" target="_blank" rel="noopener">🎥 ${esc(v.channel)} · ${esc(v.source || "Pexels")}</a>` : `👤 ${esc(v.channel)}`}</small></div></section>`).join("")}
     <button type="button" class="reels-btn reels-close" aria-label="${esc(tr("Fermer"))}">✕</button>
@@ -1172,6 +1183,21 @@ function openVideoReels(list, start) {
       const n = like.querySelector("small");
       n.textContent = String((Number(n.textContent) || 0) + 1);
       api(`/api/public/reels/${encodeURIComponent(id)}/like`, { method: "POST" }).catch(() => {});
+      return;
+    }
+    // Réel d'un membre : supprimer (auteur ou modérateur) ou signaler.
+    const more = ev.target.closest("[data-rmore]");
+    if (more) {
+      const it = list[Number(more.dataset.rmore)];
+      const me = await api("/api/auth/me").catch(() => null);
+      if (me && (me.id === it.by || me.isAdmin)) {
+        if (!confirm(tr("Supprimer ce réel ?"))) return;
+        await api(`/api/reels/${encodeURIComponent(it.reel)}`, { method: "DELETE" }).then(() => { more.closest(".reel").remove(); toast(tr("Réel supprimé")); }, (err) => toast(err.message));
+      } else if (confirm(tr("Signaler ce réel (contenu choquant, violent, illégal…) ?"))) {
+        await api(`/api/reels/${encodeURIComponent(it.reel)}/report`, { method: "POST" }).catch(() => {});
+        more.closest(".reel").remove();
+        toast(tr("Merci, le réel a été signalé et masqué."));
+      }
       return;
     }
     const sh = ev.target.closest("[data-rshare]");

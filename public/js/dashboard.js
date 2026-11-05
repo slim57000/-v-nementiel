@@ -295,6 +295,8 @@ document.querySelector(".segments").addEventListener("click", (e) => {
   filter = e.target.dataset.filter;
   render();
 });
+// Après la publication d'un réel : onglet Réels ouvert directement.
+if (location.hash === "#reels") { document.querySelector('.segments [data-filter="reels"]')?.click(); history.replaceState(null, "", "/dashboard"); }
 
 $("#list").addEventListener("click", async (e) => {
   const action = e.target.dataset.action;
