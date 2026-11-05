@@ -107,14 +107,14 @@ $("#p-list").addEventListener("click", (e) => {
   if (tile) viewPhoto(videos[tile.dataset.video]);
 });
 
-$("#logout").addEventListener("click", async () => {
+$("#logout")?.addEventListener("click", async () => {
   if (!(await confirmSheet("Se déconnecter de MaFeliza ?", { ok: "🚪 Se déconnecter" }))) return;
   try { localStorage.removeItem("em-dash"); } catch { /* ignoré */ }
   await api("/api/auth/logout", { method: "POST" });
   location.replace("/");
 });
 
-$("#delete-account").addEventListener("click", () => deleteAccount());
+$("#delete-account")?.addEventListener("click", () => deleteAccount());
 
 // Notifications push de cet appareil.
 const paintPush = () => { if (pushState() === "granted") { $("#push-btn").textContent = "🔔 Notifications activées ✔"; } };
