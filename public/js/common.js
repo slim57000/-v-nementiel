@@ -292,7 +292,7 @@ export function createSheet(e) {
     <div class="card"><h2 style="margin-top:0">Que voulez-vous créer ?</h2>
       <div id="create-body" style="display:grid;gap:10px">
         <button class="btn btn-block create-big" type="button" id="create-story">Une story</button>
-        <button class="btn btn-block create-big create-reel" type="button" id="create-reel">🎬 ${t("Un réel")}</button>
+        <button class="btn btn-block create-big create-reel" type="button" id="create-reel">${t("Un réel")}</button>
         <input type="file" id="create-reel-file" accept="video/*" hidden>
         <a class="btn btn-light btn-block create-big" href="/edit">Un événement</a>
       </div></div></div>`);
