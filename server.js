@@ -366,7 +366,7 @@ app.get("/e/:slug", async (req, res) => {
   const base = (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
   const desc = isPublic
     ? `${event.name} — ${event.date.split("-").reverse().join("/")} à ${event.time}, ${event.location}. Suivez l'événement en direct sur MaFeliza.`
-    : "Vous êtes invité·e ! Découvrez tous les détails de l'événement.";
+    : "💌 Vous êtes invité·e ! Faire-part, compte à rebours, live le jour J, photos et livre d'or.";
   // Fiche « Événement » pour Google (événements publics) ; les événements privés ne sont pas indexés.
   const jsonLd = isPublic ? `<script type="application/ld+json">${JSON.stringify({
     "@context": "https://schema.org", "@type": "Event", name: event.name, startDate: `${event.date}T${event.time || "12:00"}`,
