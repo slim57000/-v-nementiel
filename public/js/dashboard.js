@@ -1,5 +1,5 @@
 // Accueil connecté : ronds des stories, onglets Pour vous / En direct / À venir, cartes des événements.
-import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories, liveAttrs, createSheet, syncFavs, LOCALE, loadInspirations } from "./common.js";
+import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories, liveAttrs, createSheet, syncFavs, LOCALE, loadInspirations, openByCode } from "./common.js";
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { inAppView } from "./native.js";
@@ -10,6 +10,13 @@ document.querySelector(".stories").insertAdjacentHTML("beforebegin", `<div class
 </div>`);
 
 tabbar("home");
+// Recherche : un code d'invitation (6 caractères) ouvre directement l'événement.
+document.querySelector(".hd-search")?.addEventListener("submit", async (e) => {
+  const q = e.target.q.value;
+  if (!/^\s*[A-Za-z0-9]{6}\s*$/.test(q)) return;
+  e.preventDefault();
+  if (!(await openByCode(q))) location.href = `/decouvrir?q=${encodeURIComponent(q)}`;
+});
 // 📱 Application : disponible sur Google Play, bientôt sur l'App Store (site web uniquement).
 if (!inAppView()) document.querySelector(".hd-top")?.insertAdjacentHTML("beforeend", `<div class="hx-stores dash-stores">
   <span class="hx-badge"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff" aria-hidden="true"><path d="M16.4 12.6c0-2.4 2-3.5 2-3.6-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9s-1.8-.9-3-.8C7 7.3 5.6 8.2 4.8 9.6c-1.6 2.8-.4 6.9 1.2 9.1.8 1.1 1.7 2.3 2.9 2.3 1.1 0 1.6-.7 3-.7s1.8.7 3 .7c1.2 0 2-1.1 2.8-2.2.9-1.3 1.2-2.5 1.2-2.6 0 0-2.5-.9-2.5-3.6zM14.1 5.6c.6-.8 1.1-1.8 1-2.9-.9 0-2.1.6-2.7 1.4-.6.7-1.1 1.8-1 2.8 1 .1 2.1-.5 2.7-1.3z"/></svg><span><small>${t("Bientôt sur")}</small><b>App Store</b></span></span>

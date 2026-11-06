@@ -3,7 +3,7 @@ import { Router } from "express";
 import { currentOrganizer, isAdmin, isSuperAdmin, listExtraAdmins, adminUntil, minorUntil, clearAgeLock } from "./auth.js";
 import { destroyEvent } from "./events.js";
 import { listUserReels, removeReel } from "./reels.js";
-import { setSetting as storeSetting } from "../lib/store.js";
+import { setSetting as storeSetting, listUnlistedIds } from "../lib/store.js";
 import { seedDemo, demoEvents, sendDemoMessages, sendDemoInvitation, createDemoAlbum } from "../lib/demo.js";
 import { isPremium, setPremium, premiumUntil } from "../lib/premium.js";
 import { tooFast } from "../lib/limits.js";
@@ -55,14 +55,19 @@ const superOnly = (req, res, next) => (isSuperAdmin(req.admin) ? next()
 
 // Événements : recherche (nom, lien, lieu), avec email de l'organisateur et signalements.
 router.get("/events", async (req, res) => {
-  const pending = await listPendingIds();
-  const events = req.query.pending ? (await findEventsByIds([...pending])).filter(Boolean) : await searchEvents(String(req.query.q || ""));
+  const [pending, unlisted] = await Promise.all([listPendingIds(), listUnlistedIds()]);
+  // Filtre de visibilité (public / non répertorié / privé) : recherche sur tous les événements, pas seulement les 50 derniers.
+  const vis = String(req.query.vis || "");
+  const kind = (e) => (e.visibility === "private" ? "private" : unlisted.has(e.id) ? "unlisted" : "public");
+  const events = req.query.pending ? (await findEventsByIds([...pending])).filter(Boolean)
+    : vis ? (await searchEvents(String(req.query.q || ""), 100000)).filter((e) => kind(e) === vis).slice(0, 300)
+    : await searchEvents(String(req.query.q || ""));
   const emails = new Map();
   res.json(await Promise.all(events.map(async (e) => {
     if (!emails.has(e.organizerId)) emails.set(e.organizerId, (await findOrganizer(e.organizerId))?.email || "?");
     return {
       id: e.id, slug: e.slug, name: e.name, type: e.type, date: e.date, location: e.location,
-      visibility: e.visibility, suspended: Boolean(e.suspended), pending: pending.has(e.id), organizer: emails.get(e.organizerId),
+      visibility: kind(e), suspended: Boolean(e.suspended), pending: pending.has(e.id), organizer: emails.get(e.organizerId),
       reports: await countReports(e.id),
     };
   })));

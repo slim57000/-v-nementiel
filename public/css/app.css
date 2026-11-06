@@ -1622,3 +1622,4 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .adm-reel.hidden-reel { border-color: #e5484d; }
 .adm-reel video { width: 100%; aspect-ratio: 9 / 16; object-fit: cover; border-radius: 10px; background: #000; }
 .adm-reel-act { display: flex; gap: 6px; flex-wrap: wrap; }
+.adm-vis { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }

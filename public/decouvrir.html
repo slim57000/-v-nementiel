@@ -42,8 +42,10 @@
     <a href="/mentions-legales">Mentions légales</a> · <a href="/cgu">CGU</a> · <a href="/confidentialite">Confidentialité</a><br><a href="#" data-cookies>Gérer les cookies</a>
   </footer>
   <script type="module">
-    import { api, publicCard, tabbar, EVENT_TYPES, isLiveNow, syncFavs } from "/js/common.js";
+    import { api, publicCard, tabbar, EVENT_TYPES, isLiveNow, syncFavs, openByCode } from "/js/common.js";
     const $ = (s) => document.querySelector(s);
+    // Code d'invitation tapé dans la recherche (Entrée) : ouverture directe de l'événement.
+    $("#q").addEventListener("keydown", (e) => { if (e.key === "Enter") openByCode($("#q").value); });
     // La barre d'onglets n'est utile qu'aux organisateurs connectés.
     api("/api/auth/me").then(() => tabbar("discover")).catch(() => {});
     let events = [], filter = "all";

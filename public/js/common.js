@@ -811,6 +811,14 @@ document.addEventListener("click", (e) => {
 // --- Partage : WhatsApp, Facebook, Instagram, SMS, email, copie, partage natif ---
 // image (facultatif) : fonction qui partage l'image du faire-part (bouton « Image du faire-part »).
 // Facebook ne garde que le lien : il affiche alors la carte de l'événement (aperçu généré par le serveur).
+// Code d'invitation tapé dans une recherche (6 caractères) : ouvre directement l'événement. Vrai si trouvé.
+export async function openByCode(text) {
+  const code = String(text || "").trim().toUpperCase();
+  if (!/^[A-Z0-9]{6}$/.test(code)) return false;
+  try { const { slug } = await api("/api/public/join", { method: "POST", body: { code } }); location.href = `/e/${encodeURIComponent(slug)}`; return true; }
+  catch { return false; }
+}
+
 export function shareSheet({ title, text, url, image }) {
   text = tr(text); title = tr(title);
   if (isNativeApp && !image) { nativeShare({ title, text, url }); return; } // application : feuille de partage du téléphone

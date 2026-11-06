@@ -4,6 +4,7 @@ backButton();
 
 let tab = "events";
 let timer;
+let visFilter = ""; // onglet Événements : « » tous, public, unlisted, private
 let pendingOnly = false; // onglet Événements filtré sur ceux qui attendent une validation
 
 const row = (main, sub, actions) => `
@@ -23,11 +24,13 @@ const views = {
       <button class="btn btn-danger btn-sm" data-act="reel-del" data-id="${esc(r.id)}">🗑️ Supprimer</button></div></div>`).join("")}</div>`;
   },
   async events(q) {
-    const list = await api(`/api/admin/events?q=${encodeURIComponent(q)}${pendingOnly ? "&pending=1" : ""}`);
+    const list = await api(`/api/admin/events?q=${encodeURIComponent(q)}${pendingOnly ? "&pending=1" : ""}${visFilter ? `&vis=${visFilter}` : ""}`);
+    const chips = `<div class="adm-vis">${[["", "Tous"], ["public", "🔓 Publics"], ["unlisted", "👁️ Non répertoriés"], ["private", "🔒 Privés"]]
+      .map(([v, l]) => `<button type="button" class="btn btn-sm ${visFilter === v ? "" : "btn-light"}" data-act="vis" data-vis="${v}">${l}</button>`).join("")}</div>`;
     const head = pendingOnly ? `<p class="muted small" style="text-align:center">⏳ ${list.length} événement(s) en attente de validation · <button class="btn btn-ghost btn-sm" data-act="all-events">Tout voir</button></p>` : "";
-    return head + (list.map((e) => row(
+    return chips + head + (list.map((e) => row(
       `<b>${esc(e.name)}</b> ${e.pending ? '<span class="badge">⏳ En attente</span>' : ""} ${e.suspended ? '<span class="badge private">Suspendu</span>' : ""} ${e.reports ? `<span class="report-badge">⚠️ ${e.reports}</span>` : ""}`,
-      `${EVENT_TYPES[e.type]?.label || e.type} · ${esc(formatDate(e.date, "00:00").split(" à")[0])} · ${esc(e.location)} · ${esc(e.organizer)} · ${e.visibility === "private" ? "🔒" : "🔓"}`,
+      `${EVENT_TYPES[e.type]?.label || e.type} · ${esc(formatDate(e.date, "00:00").split(" à")[0])} · ${esc(e.location)} · ${esc(e.organizer)} · ${{ private: "🔒 Privé", unlisted: "👁️ Non répertorié" }[e.visibility] || "🔓 Public"}`,
       `<a class="btn btn-light btn-sm" href="/e/${esc(e.slug)}" target="_blank">Voir</a>
        ${e.pending ? `<button class="btn btn-sm" data-act="approve" data-id="${e.id}" data-on="true">✅ Valider</button>
        <button class="btn btn-ghost btn-sm" data-act="approve" data-id="${e.id}" data-on="false">✋ Refuser</button>` : ""}
@@ -263,6 +266,7 @@ $("#q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeou
 
 $("#content").addEventListener("click", async (e) => {
   const btn = e.target.closest("[data-act]");
+  if (btn?.dataset.act === "vis") { visFilter = btn.dataset.vis; render(); return; }
   if (btn?.dataset.act === "reel-del" || btn?.dataset.act === "reel-restore") {
     const del = btn.dataset.act === "reel-del";
     if (del && !confirm("Supprimer définitivement ce réel ?")) return;
