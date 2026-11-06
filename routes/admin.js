@@ -2,6 +2,8 @@
 import { Router } from "express";
 import { currentOrganizer, isAdmin, isSuperAdmin, listExtraAdmins, adminUntil, minorUntil, clearAgeLock } from "./auth.js";
 import { destroyEvent } from "./events.js";
+import { listUserReels, removeReel } from "./reels.js";
+import { setSetting as storeSetting } from "../lib/store.js";
 import { seedDemo, demoEvents, sendDemoMessages, sendDemoInvitation, createDemoAlbum } from "../lib/demo.js";
 import { isPremium, setPremium, premiumUntil } from "../lib/premium.js";
 import { tooFast } from "../lib/limits.js";
@@ -191,6 +193,24 @@ router.post("/organizers/:id/age-unlock", async (req, res) => {
 });
 
 // Signalements : liste avec l'événement concerné.
+// 🎬 Réels des membres : signalés d'abord, puis les plus récents.
+router.get("/reels", async (req, res) => {
+  const q = String(req.query.q || "").toLowerCase();
+  const list = (await listUserReels()).filter((r) => !q || `${r.name} ${r.caption} ${r.event?.name || ""}`.toLowerCase().includes(q));
+  res.json(list.sort((a, b) => (b.reports || 0) - (a.reports || 0)).slice(0, 300));
+});
+router.post("/reels/:id/restore", async (req, res) => {
+  const list = await listUserReels();
+  const r = list.find((x) => x.id === req.params.id);
+  if (!r) return res.status(404).json({ error: "Réel introuvable." });
+  r.reports = 0;
+  await storeSetting("ureels", list);
+  res.json({ ok: true });
+});
+router.delete("/reels/:id", async (req, res) => {
+  res.json({ ok: await removeReel(req.params.id) });
+});
+
 router.get("/reports", async (req, res) => {
   const reports = await listReports();
   res.json(await Promise.all(reports.map(async (r) => {

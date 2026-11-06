@@ -20,6 +20,17 @@ mkdirSync(UPLOAD_DIR, { recursive: true });
 export const listUserReels = async () => (await getSetting("ureels").catch(() => null)) || [];
 const removeFile = (url) => { try { if (url?.startsWith("/uploads/")) unlinkSync(`${UPLOAD_DIR}/${url.slice(9)}`); } catch { /* déjà absent */ } };
 
+// Suppression d'un réel et de ses fichiers (auteur, modération).
+export async function removeReel(id) {
+  const list = await listUserReels();
+  const k = list.findIndex((r) => r.id === id);
+  if (k < 0) return false;
+  const [r] = list.splice(k, 1);
+  removeFile(r.src); removeFile(r.thumb);
+  await setSetting("ureels", list);
+  return true;
+}
+
 // Morceau de vidéo (dans l'ordre : i = 0, 1, 2…).
 router.post("/chunk", requireOrganizer, express.raw({ type: () => true, limit: "1mb" }), (req, res) => {
   const u = String(req.query.u || ""), i = Number(req.query.i);

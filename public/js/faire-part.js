@@ -97,10 +97,9 @@ function render() {
   // (WhatsApp affiche le faire-part, le lien en dessous). Sinon, feuille de partage classique.
   let card = null;
   inviteImage(ev, invite, style, isLive ? photo : invitePhotoUrl(ev.invite, ev.cover), link).then((b) => { card = b; }).catch(() => {});
-  $("#share").onclick = async () => {
-    if (card && await shareBlob(card, `faire-part-${ev.slug}.png`, text, link)) return;
-    shareSheet({ title: ev.name, text, url: link });
-  };
+  // Partage du lien (Facebook, WhatsApp… affichent la carte de l'événement) ; l'image du faire-part reste au choix.
+  $("#share").onclick = () => shareSheet({ title: ev.name, text, url: link,
+    image: () => (card ? shareBlob(card, `faire-part-${ev.slug}.png`, text, link) : toast(tr("Image en préparation, réessayez dans un instant."))) });
   $("#copy").onclick = () => copy(link, "Lien copié !");
   // Mode simple : une page avec un seul gros bouton « Regarder le live » (idéal pour les grands-parents).
   const simple = `${location.origin}/simple?e=${encodeURIComponent(ev.slug)}${ev.visibility === "private" ? `&code=${ev.accessCode}` : ""}`;

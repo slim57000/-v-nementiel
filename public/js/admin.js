@@ -12,6 +12,16 @@ const row = (main, sub, actions) => `
 const me = await api("/api/auth/me").catch(() => ({}));
 
 const views = {
+  async reels(q) {
+    const list = await api(`/api/admin/reels?q=${encodeURIComponent(q)}`);
+    if (!list.length) return '<p class="muted" style="text-align:center">Aucun réel publié.</p>';
+    return `<div class="adm-reels">${list.map((r) => `<div class="adm-reel${r.reports >= 3 ? " hidden-reel" : ""}">
+      <video src="${esc(r.src)}" poster="${esc(r.thumb || "")}" controls playsinline preload="none"></video>
+      <b>${esc(r.name)}</b><small>${esc(r.caption || "")}</small>
+      <small class="muted">${esc(new Date(r.at).toLocaleString("fr-FR"))}${r.reports ? ` · <span class="report-badge">⚠️ ${r.reports}${r.reports >= 3 ? " · masqué" : ""}</span>` : ""}</small>
+      <div class="adm-reel-act">${r.reports ? `<button class="btn btn-light btn-sm" data-act="reel-restore" data-id="${esc(r.id)}">✅ Rétablir</button>` : ""}
+      <button class="btn btn-danger btn-sm" data-act="reel-del" data-id="${esc(r.id)}">🗑️ Supprimer</button></div></div>`).join("")}</div>`;
+  },
   async events(q) {
     const list = await api(`/api/admin/events?q=${encodeURIComponent(q)}${pendingOnly ? "&pending=1" : ""}`);
     const head = pendingOnly ? `<p class="muted small" style="text-align:center">⏳ ${list.length} événement(s) en attente de validation · <button class="btn btn-ghost btn-sm" data-act="all-events">Tout voir</button></p>` : "";
@@ -253,6 +263,13 @@ $("#q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeou
 
 $("#content").addEventListener("click", async (e) => {
   const btn = e.target.closest("[data-act]");
+  if (btn?.dataset.act === "reel-del" || btn?.dataset.act === "reel-restore") {
+    const del = btn.dataset.act === "reel-del";
+    if (del && !confirm("Supprimer définitivement ce réel ?")) return;
+    try { await api(`/api/admin/reels/${encodeURIComponent(btn.dataset.id)}${del ? "" : "/restore"}`, { method: del ? "DELETE" : "POST" }); render(); }
+    catch (err) { alert(err.message); }
+    return;
+  }
   if (btn?.dataset.act === "health") {
     const out = $("#health-result");
     out.classList.remove("hidden"); out.textContent = "Bilan en cours…";

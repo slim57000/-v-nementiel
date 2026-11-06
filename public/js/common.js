@@ -809,9 +809,11 @@ document.addEventListener("click", (e) => {
 });
 
 // --- Partage : WhatsApp, Facebook, Instagram, SMS, email, copie, partage natif ---
-export function shareSheet({ title, text, url }) {
+// image (facultatif) : fonction qui partage l'image du faire-part (bouton « Image du faire-part »).
+// Facebook ne garde que le lien : il affiche alors la carte de l'événement (aperçu généré par le serveur).
+export function shareSheet({ title, text, url, image }) {
   text = tr(text); title = tr(title);
-  if (isNativeApp) { nativeShare({ title, text, url }); return; } // application : feuille de partage du téléphone
+  if (isNativeApp && !image) { nativeShare({ title, text, url }); return; } // application : feuille de partage du téléphone
   const msg = `${text} ${url}`;
   const enc = encodeURIComponent;
   const links = [
@@ -826,9 +828,10 @@ export function shareSheet({ title, text, url }) {
         <h2 id="share-title" style="font-size:1.1rem">Partager</h2>
         <div class="share-grid">
           ${links.map(([n, c, href]) => `<a class="share-opt" href="${esc(href)}" target="_blank" rel="noopener"><i style="background:${c}">${n[0]}</i>${n}</a>`).join("")}
+          ${image ? `<button class="share-opt" data-s="image"><i style="background:linear-gradient(135deg,#fd1a85,#c60bd2)">🖼</i>${esc(tr("Image du faire-part"))}</button>` : ""}
           <button class="share-opt" data-s="instagram"><i style="background:linear-gradient(45deg,#f58529,#dd2a7b,#8134af)">I</i>Instagram</button>
           <button class="share-opt" data-s="copy"><i style="background:var(--primary)">🔗</i>Copier le lien</button>
-          ${navigator.share ? '<button class="share-opt" data-s="native"><i style="background:#1d1a20">⋯</i>Plus…</button>' : ""}
+          ${navigator.share || isNativeApp ? '<button class="share-opt" data-s="native"><i style="background:#1d1a20">⋯</i>Plus…</button>' : ""}
         </div>
         <button class="btn btn-light btn-block" data-s="close" style="margin-top:12px">Fermer</button>
       </div>
@@ -842,7 +845,8 @@ export function shareSheet({ title, text, url }) {
     // Instagram n'accepte pas de lien pré-rempli : on copie le message à coller en story ou en message.
     if (s === "instagram") copy(msg, "Message copié : collez-le dans Instagram");
     if (s === "copy") copy(url, "Lien copié !");
-    if (s === "native") share({ title, text, url });
+    if (s === "native") isNativeApp ? nativeShare({ title, text, url }) : share({ title, text, url });
+    if (s === "image") image();
   });
 }
 

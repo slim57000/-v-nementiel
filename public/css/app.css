@@ -1617,3 +1617,8 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .my-reel { display: grid; gap: 4px; font-size: .75rem; }
 .my-reel video { width: 100%; aspect-ratio: 9 / 16; object-fit: cover; border-radius: 12px; background: #000; }
 .my-reel span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-reels { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+.adm-reel { display: grid; gap: 4px; padding: 8px; border-radius: 14px; background: var(--card, #fff); border: 1px solid var(--line, #eee); font-size: .8rem; }
+.adm-reel.hidden-reel { border-color: #e5484d; }
+.adm-reel video { width: 100%; aspect-ratio: 9 / 16; object-fit: cover; border-radius: 10px; background: #000; }
+.adm-reel-act { display: flex; gap: 6px; flex-wrap: wrap; }
