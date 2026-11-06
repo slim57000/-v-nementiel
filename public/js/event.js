@@ -1,5 +1,5 @@
 // Page publique d'un événement : faire-part, compte à rebours, stories, réponses, livre d'or, cagnotte.
-import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, EN, guestName, LOCALE, placeholderCover, tabbar, createSheet, openPot } from "./common.js";
+import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, EN, guestName, LOCALE, placeholderCover, tabbar, createSheet, openPot, coverOf } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 import { t as tr } from "./i18n.js";
 import { initGuestbook } from "./guestbook.js";
@@ -76,6 +76,7 @@ function showEvent(ev) {
   renderStories(ev);
   initFavorite(ev);
   welcome(ev);
+  visitorHero(ev);
   initGuestbook(ev);
 
   $("#when").textContent = formatDate(ev.date, ev.time);
@@ -217,6 +218,49 @@ function welcome(ev) {
     </div>`;
   $("#welcome").classList.remove("hidden");
   $("#welcome-create").addEventListener("click", createSheet);
+}
+
+// Arrivée depuis un lien partagé (Facebook, WhatsApp…) : grande affiche plein écran avec la photo,
+// les noms, la date, un compte à rebours et deux actions (voir le faire-part, répondre). Pas pour l'organisateur.
+function visitorHero(ev) {
+  if (ev.isOwner || document.getElementById("ev-hero")) return;
+  const start = new Date(`${ev.date}T${ev.time || "12:00"}`);
+  const future = start > new Date();
+  const when = start.toLocaleDateString(LOCALE, { weekday: "long", day: "numeric", month: "long", year: "numeric" }).replace(/^./, (c) => c.toUpperCase());
+  const city = ev.visibility === "public" ? String(ev.location || "").split(",").slice(-2).join(",").trim() : "";
+  const title = ev.invite?.title || ev.name;
+  const kicker = ev.invite?.kicker || EVENT_TYPES[ev.type]?.label || "";
+  document.querySelector(".invite-top").insertAdjacentHTML("beforebegin", `<section class="ev-hero" id="ev-hero">
+    <div class="ev-hero-bg" style="background-image:url('${esc(invitePhotoUrl(ev.invite, ev.cover) || coverOf(ev))}')"></div>
+    <div class="ev-hero-in">
+      ${kicker ? `<span class="ev-hero-kicker">${esc(kicker)}</span>` : ""}
+      <h1>${esc(title)}</h1>
+      <p>${esc(when)}${ev.time ? ` · ${esc(ev.time.replace(":", "h"))}` : ""}${city ? `<br>${esc(city)}` : ""}</p>
+      ${future ? '<div class="ev-hero-cd" id="hero-cd"></div>' : ""}
+      <div class="ev-hero-cta">
+        <button type="button" class="btn" data-hero="invite">💌 ${esc(tr("Voir le faire-part"))}</button>
+        <button type="button" class="btn ev-hero-ghost" data-hero="rsvp">${future ? `✅ ${esc(tr("Je réponds"))}` : `✍️ ${esc(tr("Livre d'or"))}`}</button>
+      </div>
+      <small>🎥 ${esc(tr("Live, photos des invités et livre d'or sur cette page"))}</small>
+    </div>
+    <button type="button" class="ev-hero-down" data-hero="invite" aria-label="${esc(tr("Voir le faire-part"))}">⌄</button>
+  </section>`);
+  const hero = $("#ev-hero");
+  hero.addEventListener("click", (e) => {
+    const go = e.target.closest("[data-hero]")?.dataset.hero;
+    if (!go) return;
+    const target = go === "invite" ? ".invite-top" : future ? "#rsvp" : "#gb-count";
+    document.querySelector(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  const cd = $("#hero-cd");
+  if (!cd) return;
+  const tick = () => {
+    const s = Math.max(0, Math.floor((start - Date.now()) / 1000));
+    const parts = [[Math.floor(s / 86400), tr("jours")], [Math.floor(s / 3600) % 24, tr("h")], [Math.floor(s / 60) % 60, tr("min")], [s % 60, tr("s")]];
+    cd.innerHTML = parts.map(([n, l]) => `<span><b>${String(n).padStart(2, "0")}</b><small>${esc(l)}</small></span>`).join("");
+  };
+  tick();
+  setInterval(tick, 1000);
 }
 
 // Jour J : l'organisateur lance le live en un clic, les invités le rejoignent.
