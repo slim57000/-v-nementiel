@@ -344,6 +344,13 @@ app.get("/og/:file", async (req, res, next) => {
 app.get("/e/:slug", async (req, res) => {
   const event = await findEventBySlug(req.params.slug);
   const title = event ? event.name : "Événement";
+  // Titre affiché sous l'aperçu Facebook / WhatsApp : « 💍 Frieda & Elias · Nous nous marions · 18 avril 2027 ».
+  const EMO = { mariage: "💍", fiancailles: "💍", anniversaire: "🎂", bapteme: "🕊️", communion: "🕊️", "baby-shower": "🍼", diplome: "🎓", retraite: "🌴", inauguration: "🎉", autre: "🎉" };
+  const shareTitle = event ? [
+    `${EMO[event.type] || "🎉"} ${(event.invite?.title || event.name).replace(/\s*&\s*/g, " & ")}`,
+    event.invite?.kicker || "",
+    new Date(`${event.date}T12:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }),
+  ].filter(Boolean).join(" · ") : title;
   let image = "";
   // Aperçu WhatsApp / SMS : photo du faire-part (ou couverture), y compris pour les événements privés,
   // puisque le lien n'est envoyé qu'aux invités. Sans photo : visuel du type d'événement.
@@ -373,7 +380,7 @@ app.get("/e/:slug", async (req, res) => {
   const meta = `<title>${escapeHtml(title)} — MaFeliza</title>
     <meta name="description" content="${escapeHtml(desc)}">
     ${isPublic ? `<link rel="canonical" href="${escapeHtml(`${base}/e/${event.slug}`)}">` : '<meta name="robots" content="noindex">'}
-    <meta property="og:title" content="${escapeHtml(title)}">
+    <meta property="og:title" content="${escapeHtml(shareTitle)}">
     <meta property="og:description" content="${escapeHtml(desc)}">
     <meta property="og:type" content="website"><meta property="og:site_name" content="MaFeliza">
     ${isPublic ? `<meta property="og:url" content="${escapeHtml(`${base}/e/${event.slug}`)}">` : ""}${image}${jsonLd}`;
