@@ -57,6 +57,11 @@ router.post("/", requireOrganizer, async (req, res) => {
   res.status(201).json(reel);
 });
 
+// Mes réels (menu du profil).
+router.get("/mine", requireOrganizer, async (req, res) => {
+  res.json((await listUserReels()).filter((r) => r.by === req.organizer.id));
+});
+
 // Suppression : l'auteur, ou un administrateur (modération).
 router.delete("/:id", requireOrganizer, async (req, res) => {
   const list = await listUserReels();

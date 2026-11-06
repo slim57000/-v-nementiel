@@ -413,6 +413,7 @@ async function profileMenu() {
         <p class="me-sec">Mon espace</p>
         <a class="me-row" href="/profil"><span>👤</span>Mon profil<i>›</i></a>
         <button type="button" class="me-row" data-me="likes"><span>❤️</span>Mes favoris<i>›</i></button>
+        <button type="button" class="me-row" data-me="reels"><span>🎬</span>${esc(tr("Mes réels"))}<i>›</i></button>
         <a class="me-row" href="/messages"><span>💬</span>Messages<i>›</i></a>
         <a class="me-row" href="/cameraman"><span>🎥</span>Espace caméraman<i>›</i></a>
         <p class="me-sec">Paramètres et aide</p>
@@ -428,6 +429,7 @@ async function profileMenu() {
       const act = e.target.closest("[data-me]")?.dataset.me;
       if (e.target === sheet || act === "close") sheet.remove();
       if (act === "likes") { sheet.remove(); openFavs(); }
+      if (act === "reels") { sheet.remove(); openMyReels(); }
       if (act === "avatar") { sheet.remove(); pickAvatar(me?.avatar, (p) => { me = { ...me, avatar: p.avatar }; paint(); }); }
       if (act === "name") { sheet.remove(); editName(name, (p) => { me = { ...me, displayName: p.name }; location.reload(); }); }
       if (act === "delete") { sheet.remove(); deleteAccount(); }
@@ -440,6 +442,28 @@ async function profileMenu() {
         });
       }
     });
+  });
+}
+
+// 🎬 Mes réels : liste avec suppression.
+async function openMyReels() {
+  const list = await api("/api/reels/mine").catch(() => []);
+  document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="my-reels" role="dialog" aria-modal="true"><div class="card">
+    <h2 style="margin-top:0">🎬 ${esc(tr("Mes réels"))}</h2>
+    <div class="my-reels">${list.map((r) => `<div class="my-reel" data-id="${esc(r.id)}">
+      <video src="${esc(r.src)}" poster="${esc(r.thumb || "")}" muted playsinline preload="none"></video>
+      <span>${esc(r.caption || "")}</span><button type="button" class="btn btn-danger btn-sm" data-del>${esc(tr("Supprimer"))}</button></div>`).join("")
+      || `<p class="muted">${esc(tr("Aucun réel pour le moment. Créer → Un réel."))}</p>`}</div>
+    <button class="btn btn-light btn-block" type="button" data-close>${esc(tr("Fermer"))}</button></div></div>`);
+  const sheet = $("#my-reels");
+  sheet.addEventListener("click", async (e) => {
+    if (e.target === sheet || e.target.closest("[data-close]")) return sheet.remove();
+    const row = e.target.closest("[data-del]")?.closest(".my-reel");
+    if (row && await confirmSheet(tr("Supprimer ce réel ?"), { ok: `🗑️ ${tr("Supprimer")}`, danger: true })) {
+      await api(`/api/reels/${encodeURIComponent(row.dataset.id)}`, { method: "DELETE" }).then(() => { row.remove(); toast(tr("Réel supprimé")); }, (err) => toast(err.message));
+    }
+    const vid = e.target.closest(".my-reel video");
+    if (vid) vid.paused ? vid.play().catch(() => {}) : vid.pause();
   });
 }
 

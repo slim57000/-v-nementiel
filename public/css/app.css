@@ -1613,3 +1613,7 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .my-quick b, .my-quick small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .my-quick b { font-size: clamp(.9rem, 4.2vw, 1.05rem); }
 .my-quick small { font-size: clamp(.68rem, 3.2vw, .82rem); }
+.my-reels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-height: 60vh; overflow: auto; margin-bottom: 12px; }
+.my-reel { display: grid; gap: 4px; font-size: .75rem; }
+.my-reel video { width: 100%; aspect-ratio: 9 / 16; object-fit: cover; border-radius: 12px; background: #000; }
+.my-reel span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
