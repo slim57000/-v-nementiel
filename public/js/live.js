@@ -327,15 +327,20 @@ $("#chat").insertAdjacentHTML("afterbegin", `<button type="button" id="chat-tr" 
 $("#chat-tr").onclick = () => { showTr(!trOn); toast(trOn ? tr("Traduction du chat activée 🌍") : tr("Messages d'origine")); };
 $("#chat-tr").classList.toggle("on", trOn);
 
-// « 👋 Marie a rejoint le live » : petite ligne discrète dans le chat.
+// « 👋 Marie a rejoint » : petite bulle discrète en bas à gauche de la vidéo (pas dans le chat).
+let joinQueue = 0;
 function joinLine(m) {
   if (shown.has(m.id) || isHidden(m.author)) return;
   shown.add(m.id);
-  const list = $("#chat-list");
-  list.querySelector(".chat-empty")?.remove();
-  list.insertAdjacentHTML("beforeend", `<div class="chat-join">👋 <b>${esc(m.name)}</b> ${esc(tr("a rejoint le live"))}</div>`);
-  while (list.children.length > 50) list.firstElementChild.remove();
-  list.scrollTop = list.scrollHeight;
+  const delay = Math.min(joinQueue++, 5) * 1200; // plusieurs arrivées : l'une après l'autre
+  setTimeout(() => {
+    joinQueue = Math.max(0, joinQueue - 1);
+    const el = document.createElement("div");
+    el.className = "live-join";
+    el.innerHTML = `👋 <b>${esc(m.name)}</b> ${esc(tr("a rejoint"))}`;
+    $("#stage").append(el);
+    setTimeout(() => el.remove(), 3500);
+  }, delay);
 }
 
 function handle(items) {

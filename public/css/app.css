@@ -1659,3 +1659,5 @@ body.cam-full .cam-viewers { top: calc(14px + env(safe-area-inset-top)); right: 
 .preview-wrap .live-dot { width: auto; height: auto; border-radius: 999px; animation: none; box-shadow: none; display: inline-flex; align-items: center; white-space: nowrap; }
 .chat-join { font-size: .78rem; opacity: .7; padding: 2px 8px; }
 .cam-join { position: absolute; left: 14px; bottom: calc(110px + env(safe-area-inset-bottom)); z-index: 3; background: rgba(0,0,0,.55); color: #fff; font-weight: 700; padding: 8px 14px; border-radius: 999px; animation: film-up .4s ease both; backdrop-filter: blur(6px); }
+.live-join { position: absolute; left: 10px; bottom: 52px; z-index: 4; max-width: 70%; padding: 4px 10px; border-radius: 999px; background: rgba(0,0,0,.45); color: #fff; font-size: .72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; animation: live-join 3.5s ease both; backdrop-filter: blur(4px); }
+@keyframes live-join { 0% { opacity: 0; transform: translateY(8px); } 10%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-6px); } }
