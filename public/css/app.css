@@ -1657,3 +1657,5 @@ body.cam-full #live-controls #stop-live { background: #e11d48; color: #fff; bord
 body.cam-full .cam-viewers { top: calc(14px + env(safe-area-inset-top)); right: 14px; font-size: .9rem; padding: 6px 12px; }
 /* Badge « EN DIRECT » du caméraman (à ne pas confondre avec le point vert .live-dot des listes) */
 .preview-wrap .live-dot { width: auto; height: auto; border-radius: 999px; animation: none; box-shadow: none; display: inline-flex; align-items: center; white-space: nowrap; }
+.chat-join { font-size: .78rem; opacity: .7; padding: 2px 8px; }
+.cam-join { position: absolute; left: 14px; bottom: calc(110px + env(safe-area-inset-bottom)); z-index: 3; background: rgba(0,0,0,.55); color: #fff; font-weight: 700; padding: 8px 14px; border-radius: 999px; animation: film-up .4s ease both; backdrop-filter: blur(6px); }

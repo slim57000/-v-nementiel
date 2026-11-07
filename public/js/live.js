@@ -248,7 +248,9 @@ const formatCount = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1).replace(".", ",
 async function heartbeat() {
   if (!document.hidden) {
     try {
-      const { viewers } = await api(`${base}/presence`, { method: "POST", body: { clientId } });
+      let name = "";
+      try { name = localStorage.getItem("em-name") || ""; } catch { /* stockage indisponible */ }
+      const { viewers } = await api(`${base}/presence`, { method: "POST", body: { clientId, name } });
       $("#viewers").innerHTML = `${icon("eye", 16)} ${formatCount(viewers)}`;
       $("#viewers").classList.remove("hidden");
     } catch { /* réseau : on réessaie */ }
@@ -325,11 +327,23 @@ $("#chat").insertAdjacentHTML("afterbegin", `<button type="button" id="chat-tr" 
 $("#chat-tr").onclick = () => { showTr(!trOn); toast(trOn ? tr("Traduction du chat activée 🌍") : tr("Messages d'origine")); };
 $("#chat-tr").classList.toggle("on", trOn);
 
+// « 👋 Marie a rejoint le live » : petite ligne discrète dans le chat.
+function joinLine(m) {
+  if (shown.has(m.id) || isHidden(m.author)) return;
+  shown.add(m.id);
+  const list = $("#chat-list");
+  list.querySelector(".chat-empty")?.remove();
+  list.insertAdjacentHTML("beforeend", `<div class="chat-join">👋 <b>${esc(m.name)}</b> ${esc(tr("a rejoint le live"))}</div>`);
+  while (list.children.length > 50) list.firstElementChild.remove();
+  list.scrollTop = list.scrollHeight;
+}
+
 function handle(items) {
   for (const m of items) {
     lastId = Math.max(lastId, m.id);
     if (mine.has(m.id)) continue;
     if (m.kind === "chat") addChat(m);
+    else if (m.kind === "join") { if (!firstLoad) joinLine(m); }
     else if (!firstLoad && !isHidden(m.author)) floatEmoji(m.text);
   }
   firstLoad = false;

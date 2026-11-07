@@ -1,7 +1,7 @@
 // Espace caméraman : accès par un code dédié, gestion des liens du live et consignes.
 import express, { Router } from "express";
 import { replayRecordedMail, replayReadyMail } from "../lib/confirmations.js";
-import { countViewers, findEventBySlug, findEventByCameramanCode, saveEvent, getSetting, setSetting, addHistory, clearLimit } from "../lib/store.js";
+import { countViewers, listMessages, findEventBySlug, findEventByCameramanCode, saveEvent, getSetting, setSetting, addHistory, clearLimit } from "../lib/store.js";
 import { currentOrganizer } from "./auth.js";
 import { videoUploadTarget, saveLocalVideo, isOwnUpload, HAS_STORAGE, MAX_VIDEO_BYTES } from "../lib/uploads.js";
 import { parseCameras } from "../lib/events.js";
@@ -106,7 +106,13 @@ router.post("/:slug/replay", async (req, res) => {
 
 router.get("/:slug", (req, res) => res.json(view(req.event)));
 // Nombre de spectateurs du live (affiché au caméraman pendant qu'il filme).
-router.get("/:slug/viewers", async (req, res) => res.json({ viewers: await countViewers(req.event.id).catch(() => 0) }));
+// Avec ?after=N : les spectateurs arrivés depuis (« 👋 Marie a rejoint »).
+router.get("/:slug/viewers", async (req, res) => {
+  const after = Math.max(0, Number(req.query.after) || 0);
+  const msgs = await listMessages(req.event.id, after).catch(() => []);
+  res.json({ viewers: await countViewers(req.event.id).catch(() => 0), last: msgs.at(-1)?.id || after,
+    joins: req.query.after !== undefined ? msgs.filter((m) => m.kind === "join").slice(-5).map((m) => m.name) : [] });
+});
 
 router.put("/:slug/cameras", async (req, res) => {
   try {

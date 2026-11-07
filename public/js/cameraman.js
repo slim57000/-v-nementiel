@@ -250,18 +250,33 @@ async function stopLive(silent) {
   if (wasLive && !silent) status("✅ Direct arrêté. Le replay est disponible pour les invités.");
 }
 
+// « 👋 Marie a rejoint » en surimpression sur l'image du caméraman.
+function joinToast(name) {
+  const el = document.createElement("div");
+  el.className = "cam-join";
+  el.textContent = `👋 ${name} a rejoint`;
+  $("#preview-wrap").append(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
 // Pendant le direct : plein écran et nombre de spectateurs (toutes les 10 s).
 let viewersTimer = null;
 function liveScreen() {
   document.body.classList.add("cam-full");
+  let after = 0, started = false;
   const show = async () => {
-    const { viewers = 0 } = await api(`/api/cameraman/${encodeURIComponent(slug)}/viewers`).catch(() => ({}));
-    $("#cam-viewers").textContent = `👁 ${viewers}`;
+    const r = await api(`/api/cameraman/${encodeURIComponent(slug)}/viewers?after=${after}`).catch(() => null);
+    if (!r) return;
+    $("#cam-viewers").textContent = `👁 ${r.viewers}`;
     $("#cam-viewers").classList.remove("hidden");
+    // Premier appel : on part du dernier message, sans afficher les anciennes arrivées.
+    if (started) r.joins.forEach((n, i) => setTimeout(() => joinToast(n), i * 1200));
+    started = true;
+    after = r.last || after;
   };
   show();
   clearInterval(viewersTimer);
-  viewersTimer = setInterval(show, 10_000);
+  viewersTimer = setInterval(show, 5_000);
 }
 
 // Retourner la caméra (avant / arrière) sans couper le direct.

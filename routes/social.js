@@ -375,9 +375,20 @@ router.delete("/guestbook/:id", ownerOnly, async (req, res) => {
 });
 
 // Présence d'un spectateur du live (appelé toutes les 15 s) : renvoie le nombre de spectateurs.
+// « 👋 Marie a rejoint le live » : message dans le chat à la première apparition d'un spectateur
+// (pas de nouveau message s'il revient dans les 30 minutes).
+const joined = new Map(); // `${eventId}:${clientId}` → dernière présence
 router.post("/presence", async (req, res) => {
   const clientId = String(req.body?.clientId || "").replace(/[^\w-]/g, "").slice(0, 40);
   if (!clientId) return res.status(400).json({ error: "Identifiant manquant." });
+  const key = `${req.event.id}:${clientId}`, last = joined.get(key) || 0;
+  joined.set(key, Date.now());
+  if (Date.now() - last > 30 * 60 * 1000) {
+    if (joined.size > 50_000) for (const [k, t] of joined) if (Date.now() - t > 3600_000) joined.delete(k);
+    const name = (await authorName(req)) || "Un invité";
+    await addMessage(req.event.id, { kind: "join", name, text: "", author: req.author }).catch(() => {});
+    await ping(eventTopic(req.event.slug)).catch(() => {});
+  }
   const viewers = await touchPresence(req.event.id, clientId);
   await recordPeak(req.event.id, viewers);
   res.json({ viewers });
