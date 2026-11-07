@@ -216,6 +216,7 @@ async function startLive() {
     $("#go-live").classList.add("hidden");
     $("#live-controls").classList.remove("hidden");
     $("#live-dot").classList.add("on");
+    liveScreen();
     status("Les invités vous voient. Gardez cet écran ouvert.");
   } catch (err) {
     await stopLive(true);
@@ -228,21 +229,39 @@ async function startLive() {
 async function stopLive(silent) {
   const wasLive = Boolean(room);
   await stopRecording();
-  if (wasLive && !silent) status("Enregistrement du replay… gardez cette page ouverte.");
-  await uploads;
-  if (wasLive && roomName) api(`/api/cameraman/${encodeURIComponent(slug)}/stop-live`, { method: "POST", body: { room: roomName } }).catch(() => {});
+  // Le direct s'arrête tout de suite ; le replay finit de s'envoyer ensuite (page à garder ouverte).
   const r = room;
   room = null;
   r?.localParticipant.trackPublications.forEach((p) => p.track?.stop());
-  await r?.disconnect().catch(() => {});
+  r?.disconnect().catch(() => {});
   $("#preview").srcObject?.getTracks?.().forEach((t) => t.stop());
   wakeLock?.release?.().catch(() => {});
   wakeLock = null;
+  clearInterval(viewersTimer);
+  document.body.classList.remove("cam-full");
+  $("#cam-viewers").classList.add("hidden");
   $("#preview-wrap").classList.add("hidden");
   $("#live-controls").classList.add("hidden");
   $("#go-live").classList.remove("hidden");
   $("#live-dot").classList.remove("on");
-  if (!silent) { status("Direct arrêté. Le replay est disponible pour les invités."); toast("Direct arrêté"); }
+  if (wasLive && !silent) { toast("Direct arrêté"); status("⏳ Envoi du replay… gardez cette page ouverte quelques instants."); }
+  await uploads;
+  if (wasLive && roomName) await api(`/api/cameraman/${encodeURIComponent(slug)}/stop-live`, { method: "POST", body: { room: roomName } }).catch(() => {});
+  if (wasLive && !silent) status("✅ Direct arrêté. Le replay est disponible pour les invités.");
+}
+
+// Pendant le direct : plein écran et nombre de spectateurs (toutes les 10 s).
+let viewersTimer = null;
+function liveScreen() {
+  document.body.classList.add("cam-full");
+  const show = async () => {
+    const { viewers = 0 } = await api(`/api/cameraman/${encodeURIComponent(slug)}/viewers`).catch(() => ({}));
+    $("#cam-viewers").textContent = `👁 ${viewers}`;
+    $("#cam-viewers").classList.remove("hidden");
+  };
+  show();
+  clearInterval(viewersTimer);
+  viewersTimer = setInterval(show, 10_000);
 }
 
 // Retourner la caméra (avant / arrière) sans couper le direct.
@@ -258,6 +277,7 @@ async function flipCamera() {
 
 $("#go-live").addEventListener("click", startLive);
 $("#stop-live").addEventListener("click", () => {
+  if (!room) return;
   // Mémorisé pour qu'un rechargement de la page ne reparte pas tout seul.
   try { sessionStorage.setItem(STOPPED, slug); } catch { /* ignoré */ }
   stopLive();

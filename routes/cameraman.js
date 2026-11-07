@@ -1,7 +1,7 @@
 // Espace caméraman : accès par un code dédié, gestion des liens du live et consignes.
 import express, { Router } from "express";
 import { replayRecordedMail, replayReadyMail } from "../lib/confirmations.js";
-import { findEventBySlug, findEventByCameramanCode, saveEvent, getSetting, setSetting, addHistory, clearLimit } from "../lib/store.js";
+import { countViewers, findEventBySlug, findEventByCameramanCode, saveEvent, getSetting, setSetting, addHistory, clearLimit } from "../lib/store.js";
 import { currentOrganizer } from "./auth.js";
 import { videoUploadTarget, saveLocalVideo, isOwnUpload, HAS_STORAGE, MAX_VIDEO_BYTES } from "../lib/uploads.js";
 import { parseCameras } from "../lib/events.js";
@@ -105,6 +105,8 @@ router.post("/:slug/replay", async (req, res) => {
 });
 
 router.get("/:slug", (req, res) => res.json(view(req.event)));
+// Nombre de spectateurs du live (affiché au caméraman pendant qu'il filme).
+router.get("/:slug/viewers", async (req, res) => res.json({ viewers: await countViewers(req.event.id).catch(() => 0) }));
 
 router.put("/:slug/cameras", async (req, res) => {
   try {

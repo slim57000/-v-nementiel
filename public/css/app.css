@@ -1644,3 +1644,16 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .ev-hero-in { padding-bottom: calc(120px + env(safe-area-inset-bottom)); }
 .ev-hero-down { bottom: calc(86px + env(safe-area-inset-bottom)); font-size: 1.6rem; }
 .ev-hero-cta .btn { white-space: nowrap; font-size: .95rem; padding-left: 8px; padding-right: 8px; }
+/* Caméraman en direct : aperçu plein écran, boutons et spectateurs par-dessus */
+body.cam-full { overflow: hidden; }
+body.cam-full .preview-wrap { position: fixed; inset: 0; z-index: 300; margin: 0; border-radius: 0; aspect-ratio: auto; }
+body.cam-full .preview-wrap video { object-fit: cover; }
+body.cam-full .live-dot { top: calc(14px + env(safe-area-inset-top)); left: 14px; font-size: .9rem; padding: 6px 12px; border-radius: 999px; }
+body.cam-full #live-controls { position: fixed; left: 16px; right: 16px; bottom: calc(22px + env(safe-area-inset-bottom)); z-index: 301; margin: 0 !important; gap: 12px; }
+body.cam-full #live-controls .btn { padding: 16px; font-size: 1.05rem; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+body.cam-full #live-controls #flip { background: rgba(255,255,255,.9); }
+body.cam-full #live-controls #stop-live { background: #e11d48; color: #fff; border-color: #e11d48; }
+.cam-viewers { position: absolute; top: 10px; right: 10px; z-index: 2; background: rgba(0,0,0,.55); color: #fff; font-weight: 800; font-size: .8rem; padding: 4px 10px; border-radius: 999px; }
+body.cam-full .cam-viewers { top: calc(14px + env(safe-area-inset-top)); right: 14px; font-size: .9rem; padding: 6px 12px; }
+/* Badge « EN DIRECT » du caméraman (à ne pas confondre avec le point vert .live-dot des listes) */
+.preview-wrap .live-dot { width: auto; height: auto; border-radius: 999px; animation: none; box-shadow: none; display: inline-flex; align-items: center; white-space: nowrap; }
