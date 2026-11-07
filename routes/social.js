@@ -1,6 +1,6 @@
 // Interactions des invités sur un événement : chat, réactions, photos.
 // Monté sur /api/public/:slug — accessible à toute personne ayant accès à l'événement.
-import { Router } from "express";
+import express, { Router } from "express";
 import { tooFast } from "../lib/limits.js";
 import { notify, orgOwner } from "../lib/push.js";
 import { ping, eventTopic } from "../lib/realtime.js";
@@ -13,7 +13,7 @@ import {
 import { guestAuthor } from "../lib/guest.js";
 import { getSetting, setSetting } from "../lib/store.js";
 import { rsvpMail, guestbookMail } from "../lib/confirmations.js";
-import { saveDataUrl, removeUpload, isOwnUpload, isVideoUrl, videoUploadTarget, MAX_VIDEO_BYTES } from "../lib/uploads.js";
+import { saveDataUrl, removeUpload, isOwnUpload, isVideoUrl, videoUploadTarget, saveLocalVideo, MAX_VIDEO_BYTES } from "../lib/uploads.js";
 import { hasAccess } from "./public.js";
 import { currentOrganizer } from "./auth.js";
 import { LIVEKIT_ENABLED, LIVEKIT_URL, lkToken, isLkRoom, isLive } from "../lib/livekit.js";
@@ -270,10 +270,18 @@ router.post("/upload-url", notBlocked, async (req, res) => {
   if (await tooFast(`${req.ip}:video`, 10, 3_600_000)) return res.status(429).json({ error: "Limite de vidéos atteinte, réessayez plus tard." });
   if (Number(req.body?.size) > MAX_VIDEO_BYTES) return res.status(400).json({ error: "Vidéo trop lourde (50 Mo max)." });
   try {
-    res.json(await videoUploadTarget(String(req.body?.type || "")));
+    const target = await videoUploadTarget(String(req.body?.type || ""));
+    // Sans Supabase (VPS) : la vidéo est envoyée telle quelle au serveur (50 Mo max), et non en base64 limité à 4 Mo.
+    if (target.mode === "inline") return res.json({ mode: "direct", uploadUrl: `/api/public/${encodeURIComponent(req.event.slug)}/video-file?type=${encodeURIComponent(String(req.body?.type || ""))}` });
+    res.json(target);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
+});
+router.put("/video-file", notBlocked, express.raw({ type: () => true, limit: MAX_VIDEO_BYTES }), async (req, res) => {
+  if (await tooFast(`${req.ip}:videofile`, 10, 3_600_000)) return res.status(429).json({ error: "Limite de vidéos atteinte, réessayez plus tard." });
+  try { res.json({ publicUrl: saveLocalVideo(req.body, String(req.query.type || "")) }); }
+  catch (err) { res.status(400).json({ error: err.message }); }
 });
 
 const isOwner = async (req) => (await currentOrganizer(req))?.id === req.event.organizerId;

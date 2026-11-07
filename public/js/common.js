@@ -721,8 +721,8 @@ export async function uploadVideo(slug, file) {
   const target = await api(`/api/public/${encodeURIComponent(slug)}/upload-url`, { method: "POST", body: { type, size: file.size } });
   if (target.mode === "direct") {
     const res = await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": type }, body: file });
-    if (!res.ok) throw new Error("Envoi de la vidéo impossible, réessayez.");
-    return { videoUrl: target.publicUrl };
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Envoi de la vidéo impossible, réessayez.");
+    return { videoUrl: target.publicUrl || (await res.json().catch(() => ({}))).publicUrl };
   }
   if (file.size > 4 * 1024 * 1024) throw new Error("Vidéo trop lourde (4 Mo maximum).");
   return { video: await readAsDataUrl(file) };
