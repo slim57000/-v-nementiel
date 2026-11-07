@@ -143,6 +143,13 @@ $("#share-photo").addEventListener("click", () =>
 // --- Direct depuis le téléphone (LiveKit) ---
 let room = null, wakeLock = null, facing = "environment", roomName = "";
 
+// Toutes les pistes caméra / micro ouvertes par la page (LiveKit, retournement de caméra…) :
+// fermées sans exception à l'arrêt, pour que le téléphone ne filme plus (pastille verte de Safari).
+const openTracks = new Set();
+const gum = navigator.mediaDevices?.getUserMedia?.bind(navigator.mediaDevices);
+if (gum) navigator.mediaDevices.getUserMedia = async (c) => { const st = await gum(c); st.getTracks().forEach((t) => openTracks.add(t)); return st; };
+const closeAllTracks = () => { openTracks.forEach((t) => { try { t.stop(); } catch { /* déjà arrêtée */ } }); openTracks.clear(); };
+
 // --- Replay : le téléphone enregistre le direct par segments de 4 min, envoyés au fur et à mesure ---
 const SEGMENT_MS = 4 * 60 * 1000;
 let recorder = null, segTimer = null, uploads = Promise.resolve(), recording = false;
@@ -235,6 +242,8 @@ async function stopLive(silent) {
   r?.localParticipant.trackPublications.forEach((p) => p.track?.stop());
   r?.disconnect().catch(() => {});
   $("#preview").srcObject?.getTracks?.().forEach((t) => t.stop());
+  $("#preview").srcObject = null;
+  closeAllTracks();
   wakeLock?.release?.().catch(() => {});
   wakeLock = null;
   clearInterval(viewersTimer);
