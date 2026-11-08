@@ -248,6 +248,7 @@ function visitorHero(ev) {
     <button type="button" class="ev-hero-down" data-hero="invite" aria-label="${esc(tr("Voir le faire-part"))}">⌄</button>
   </section>`);
   const hero = $("#ev-hero");
+  $("#lock")?.classList.add("hidden"); // la pastille « Public / Non répertorié » dépassait au-dessus de l'affiche
   hero.addEventListener("click", (e) => {
     const go = e.target.closest("[data-hero]")?.dataset.hero;
     if (!go) return;
