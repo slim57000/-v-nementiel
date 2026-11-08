@@ -282,7 +282,7 @@ function addChat(m) {
   const list = $("#chat-list");
   list.querySelector(".chat-empty")?.remove();
   list.insertAdjacentHTML("beforeend",
-    `<div class="chat-msg" data-id="${m.id}"><i>${esc(m.name.charAt(0).toUpperCase())}</i><div><b>${esc(m.name)}</b><span class="chat-txt">${esc(m.text)}</span></div><button class="more-btn" data-more aria-label="Plus d'actions">⋯</button></div>`);
+    `<div class="chat-msg" data-id="${m.id}"><i>${esc(String(m.name || "?").charAt(0).toUpperCase())}</i><div><b>${esc(m.name)}</b><span class="chat-txt">${esc(m.text)}</span></div><button class="more-btn" data-more aria-label="Plus d'actions">⋯</button></div>`);
   while (list.children.length > 50) list.firstElementChild.remove();
   list.scrollTop = list.scrollHeight;
   if (trOn && !mine.has(m.id)) queueTr(m);

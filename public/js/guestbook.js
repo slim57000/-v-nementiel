@@ -14,7 +14,8 @@ export function initGuestbook(ev) {
   let filter = "all";
 
   async function load() {
-    try { entries = (await api(base)).filter((e) => !isHidden(e.author)); } catch { return; }
+    try { entries = (await api(base)).filter((e) => e && !isHidden(e.author)).map((e) => ({ ...e, name: e.name || "Invité", text: e.text || "", replies: Array.isArray(e.replies) ? e.replies : [] })); }
+    catch (err) { console.error("Livre d'or :", err); $("#gb-list").innerHTML = `<p class="muted small" style="text-align:center">⚠️ ${esc(err.message || "Livre d'or indisponible, réessayez.")}</p>`; return; }
     render();
   }
 
@@ -27,7 +28,9 @@ export function initGuestbook(ev) {
       .filter((e) => !q || `${e.name} ${e.text} ${(e.replies || []).map((r) => `${r.name} ${r.text}`).join(" ")}`.toLowerCase().includes(q))
       .sort((a, b) => b.pinned - a.pinned || b.id - a.id);
     $("#gb-count").textContent = entries.length ? `(${entries.length})` : "";
-    $("#gb-list").innerHTML = shown.length ? shown.map(card).join("") :
+    // Un message abîmé (ancienne donnée incomplète) ne doit jamais empêcher d'afficher les autres.
+    const safeCard = (e) => { try { return card(e); } catch (err) { console.error("Livre d'or :", err, e); return ""; } };
+    $("#gb-list").innerHTML = shown.length ? shown.map(safeCard).join("") :
       `<p class="muted small" style="text-align:center">${entries.length ? "Aucun message ne correspond." : "Soyez le premier à laisser un mot ✍️"}</p>`;
   }
 
@@ -38,7 +41,7 @@ export function initGuestbook(ev) {
       <p class="gb-seal">🔒 ${esc(tr("Scellé jusqu'au {date}").replace("{date}", capDate(e.capsule)))}</p></article>`;
   const card = (e) => e.sealed ? sealedCard(e) : `
     <article class="gb-entry ${e.pinned ? "pinned" : ""}" data-id="${e.id}">
-      <header><i>${esc(e.name.charAt(0).toUpperCase())}</i><div><b>${esc(e.name)}</b>
+      <header><i>${esc(String(e.name || "?").charAt(0).toUpperCase())}</i><div><b>${esc(e.name)}</b>
         <span class="muted small">${new Date(e.createdAt).toLocaleDateString(LOCALE, { day: "numeric", month: "long" })}${e.pinned ? " · ⭐ À la une" : ""}${e.capsule ? ` · 📦 ${esc(tr("Capsule ouverte le {date}").replace("{date}", capDate(e.capsule)))}` : ""}</span></div></header>
       ${e.text ? `<p>${esc(e.text)}</p>` : ""}
       ${e.photoUrl && isVideo(e.photoUrl) ? `<video src="${esc(e.photoUrl)}" controls playsinline preload="metadata"></video>` : ""}
