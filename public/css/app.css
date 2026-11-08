@@ -1666,3 +1666,4 @@ body.cam-full .cam-viewers { top: calc(14px + env(safe-area-inset-top)); right: 
 .my-quick small { font-size: clamp(.6rem, 2.95vw, .78rem); letter-spacing: -.01em; }
 .wall-del { left: 60px; right: auto; }
 @media (max-width: 700px) { .wall-del { left: 60px; right: auto; } }
+.wall-del { background: #e11d48; box-shadow: 0 4px 14px rgba(225,29,72,.45); }
