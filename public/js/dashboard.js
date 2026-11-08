@@ -433,6 +433,9 @@ document.addEventListener("click", (e) => { if (e.target.closest("[data-create]"
   if (!/(^|; )em-tuto=1/.test(document.cookie)) return;
   document.cookie = "em-tuto=; path=/; max-age=0";
   if (document.getElementById("guide")) return; // jamais deux guides superposés
+  // Nouveau compte : d'abord la date de naissance, le guide s'affiche ensuite (jamais deux fenêtres empilées).
+  await new Promise((ok) => setTimeout(ok, 800));
+  while (document.getElementById("age-sheet")) await new Promise((ok) => setTimeout(ok, 500));
   document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="guide" role="dialog" aria-modal="true"><div class="card guide-card">
     <h2>Bienvenue sur MaFeliza 👋</h2>
     <ol class="guide-steps">
