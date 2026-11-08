@@ -15,16 +15,19 @@ export async function filmScenes(ev) {
     .filter((p) => p.url && !isHidden(p.author));
   // Au plus 12 médias, répartis sur toute la soirée, et 3 messages courts du livre d'or (les épinglés d'abord).
   const pick = media.length <= 12 ? media : Array.from({ length: 12 }, (_, i) => media[Math.floor((i * media.length) / 12)]);
-  const words = book.filter((g) => g.text && g.text.length <= 160 && !isHidden(g.author))
-    .sort((a, b) => (b.pinned - a.pinned) || (b.likes || 0) - (a.likes || 0)).slice(0, 3);
+  // Messages du livre d'or (épinglés et plus aimés d'abord) ; les longs sont raccourcis.
+  const words = book.filter((g) => g.text && !g.sealed && !isHidden(g.author))
+    .sort((a, b) => (b.pinned - a.pinned) || (b.likes || 0) - (a.likes || 0)).slice(0, 5)
+    .map((g) => ({ ...g, text: g.text.length > 180 ? `${g.text.slice(0, 170).replace(/\s+\S*$/, "")}…` : g.text }));
+  const quotes = words.length;
   const scenes = [{ kind: "title" }];
   pick.forEach((m, i) => {
     scenes.push({ kind: isVideo(m.url) ? "video" : "photo", url: m.url, name: m.name });
-    if (words.length && (i + 1) % 4 === 0) scenes.push({ kind: "quote", ...words.shift() });
+    if (words.length && (i + 1) % 3 === 0) scenes.push({ kind: "quote", ...words.shift() });
   });
   words.forEach((w) => scenes.push({ kind: "quote", ...w }));
   scenes.push({ kind: "end" });
-  return { scenes, count: pick.length };
+  return { scenes, count: pick.length, quotes };
 }
 
 // Musique douce : accords de piano électrique + clochettes, synthétisés (Web Audio), avec fondu final.

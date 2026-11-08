@@ -364,13 +364,17 @@ async function initRsvp(ev) {
 async function filmCard(ev) {
   if (!ev.date || ev.date > new Date().toISOString().slice(0, 10)) return;
   const { filmScenes, playFilm } = await import("./film.js");
-  const { scenes, count } = await filmScenes(ev);
-  if (count < 3) return;
+  const { scenes, count, quotes } = await filmScenes(ev);
+  // Film dès 1 photo ou vidéo, ou 2 messages du livre d'or ; sinon, le lien « ?film=1 » explique quoi faire.
+  if (count < 1 && quotes < 2) {
+    if (new URLSearchParams(location.search).get("film")) toast(tr("Le film souvenir se crée tout seul dès que les invités ajoutent des photos, vidéos ou messages au livre d'or 📸"));
+    return;
+  }
   const card = document.createElement("button");
   card.type = "button";
   card.className = "film-card";
   card.innerHTML = `<span class="film-card-bg" style="background-image:url('${esc(scenes.find((s) => s.kind === "photo")?.url || "")}')"></span>
-    <span class="film-card-txt"><b>${tr("✨ Revivez l'événement")}</b><small>${tr("Le film souvenir")} · ${count} 📷🎬</small></span><span class="film-card-play">▶</span>`;
+    <span class="film-card-txt"><b>${tr("✨ Revivez l'événement")}</b><small>${tr("Le film souvenir")}${count ? ` · ${count} 📷🎬` : ""}${quotes ? ` · ${quotes} 💬` : ""}</small></span><span class="film-card-play">▶</span>`;
   card.onclick = () => playFilm(ev, scenes);
   $("#ev-react")?.before(card);
   if (new URLSearchParams(location.search).get("film")) playFilm(ev, scenes);
