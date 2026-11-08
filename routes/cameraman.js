@@ -1,9 +1,9 @@
 // Espace caméraman : accès par un code dédié, gestion des liens du live et consignes.
 import express, { Router } from "express";
 import { replayRecordedMail, replayReadyMail } from "../lib/confirmations.js";
-import { countViewers, listMessages, findEventBySlug, findEventByCameramanCode, saveEvent, getSetting, setSetting, addHistory, clearLimit } from "../lib/store.js";
+import { addPhoto, countViewers, listMessages, findEventBySlug, findEventByCameramanCode, saveEvent, getSetting, setSetting, addHistory, clearLimit } from "../lib/store.js";
 import { currentOrganizer } from "./auth.js";
-import { videoUploadTarget, saveLocalVideo, isOwnUpload, HAS_STORAGE, MAX_VIDEO_BYTES } from "../lib/uploads.js";
+import { saveDataUrl, videoUploadTarget, saveLocalVideo, isOwnUpload, HAS_STORAGE, MAX_VIDEO_BYTES } from "../lib/uploads.js";
 import { parseCameras } from "../lib/events.js";
 import { LIVEKIT_ENABLED, LIVEKIT_URL, lkToken, newRoom, LK_PREFIX, isLkRoom, markLive, isLive } from "../lib/livekit.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
@@ -106,6 +106,15 @@ router.post("/:slug/replay", async (req, res) => {
 });
 
 router.get("/:slug", (req, res) => res.json(view(req.event)));
+// 📸 Photo prise pendant le direct : ajoutée aux photos des invités (album, mur photo, film souvenir).
+router.post("/:slug/photo", async (req, res) => {
+  if (await tooFast(`camphoto:${req.event.id}`, 120, 3600_000)) return res.status(429).json({ error: "Trop de photos d'un coup, patientez un peu." });
+  try {
+    const url = await saveDataUrl(String(req.body?.image || ""));
+    const name = String(req.body?.name || "Caméra").replace(/\s+/g, " ").trim().slice(0, 40) || "Caméra";
+    res.status(201).json(await addPhoto(req.event.id, { name: `📸 ${name}`, url, author: `cam-${req.event.id}` }));
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
 // Nombre de spectateurs du live (affiché au caméraman pendant qu'il filme).
 // Avec ?after=N : les spectateurs arrivés depuis (« 👋 Marie a rejoint »).
 router.get("/:slug/viewers", async (req, res) => {

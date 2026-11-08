@@ -322,6 +322,20 @@ $("#stop-live").addEventListener("click", () => {
   stopLive();
 });
 $("#flip").addEventListener("click", flipCamera);
+// 📸 Photo de l'image filmée, envoyée dans les photos des invités (album, mur photo).
+$("#snap").addEventListener("click", async () => {
+  const v = $("#preview");
+  if (!v.videoWidth) return;
+  const scale = Math.min(1, 1600 / Math.max(v.videoWidth, v.videoHeight));
+  const cv = Object.assign(document.createElement("canvas"), { width: Math.round(v.videoWidth * scale), height: Math.round(v.videoHeight * scale) });
+  cv.getContext("2d").drawImage(v, 0, 0, cv.width, cv.height);
+  $("#preview-wrap").insertAdjacentHTML("beforeend", '<i class="cam-flash"></i>');
+  setTimeout(() => $(".cam-flash")?.remove(), 500);
+  try {
+    await api(`/api/cameraman/${encodeURIComponent(slug)}/photo`, { method: "POST", body: { image: cv.toDataURL("image/jpeg", 0.85), name: $("#cam-label").value } });
+    toast("📸 Photo ajoutée à l'album et au mur photo");
+  } catch (err) { toast(err.message); }
+});
 addEventListener("beforeunload", (e) => { if (room || pending) { e.preventDefault(); e.returnValue = ""; } }); // replay pas encore envoyé
 
 // Partager le live aux invités : lien direct (+ code si l'événement est privé).

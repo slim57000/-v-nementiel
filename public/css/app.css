@@ -1675,3 +1675,7 @@ body.cam-full .cam-viewers { top: calc(14px + env(safe-area-inset-top)); right: 
 .tool-row em { font-style: normal; font-size: 1.4rem; color: var(--primary, #c20f68); }
 [data-theme="dark"] .tool-row { background: #2a1724; }
 @media print { #add-photos { display: none; } }
+.cam-snap { flex: none !important; width: 64px; border-radius: 50% !important; padding: 0 !important; font-size: 1.6rem !important; }
+body.cam-full #live-controls .cam-snap { width: 74px; height: 74px; align-self: center; background: #fff !important; border: 4px solid rgba(255,255,255,.6) !important; background-clip: padding-box !important; }
+.cam-flash { position: absolute; inset: 0; z-index: 5; background: #fff; animation: cam-flash .5s ease-out forwards; pointer-events: none; }
+@keyframes cam-flash { from { opacity: .85; } to { opacity: 0; } }
