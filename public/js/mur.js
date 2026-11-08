@@ -5,9 +5,11 @@ import { t as tr } from "./i18n.js";
 
 const id = new URLSearchParams(location.search).get("id");
 const SHOW_MS = 7000; // durée d'une photo à l'écran
-let ev, items = [], seen = new Set(), queue = [], i = -1, timer = null;
+let ev, items = [], seen = new Set(), queue = [], i = -1, timer = null, current = null;
 
 function show(item) {
+  current = item;
+  $("#wall-del").classList.remove("hidden");
   const el = document.createElement("div");
   el.className = "wall-slide";
   el.innerHTML = (isVideo(item.url)
@@ -64,4 +66,15 @@ navigator.wakeLock?.request("screen").catch(() => {});
 // iPhone : pas de plein écran possible (bouton masqué) ; ✕ ramène au tableau de bord.
 if (!document.documentElement.requestFullscreen) $("#full").remove();
 $("#close").onclick = (e) => { if (history.length > 1) { e.preventDefault(); history.back(); } };
+// 🗑 Retirer la photo affichée (organisateur) : supprimée de l'événement, du mur et de l'album.
+$("#wall-del").onclick = async () => {
+  if (!current || !confirm(tr("Retirer cette photo de l'événement ?"))) return;
+  try {
+    await api(`/api/public/${encodeURIComponent(ev.slug)}/photos/${current.id}`, { method: "DELETE" });
+    items = items.filter((p) => p.id !== current.id);
+    queue = queue.filter((p) => p.id !== current.id);
+    clearTimeout(timer);
+    if (items.length) next(); else { $("#stage").innerHTML = ""; $("#empty").classList.remove("hidden"); $("#wall-del").classList.add("hidden"); }
+  } catch (err) { alert(err.message); }
+};
 $("#full").onclick = () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.());
