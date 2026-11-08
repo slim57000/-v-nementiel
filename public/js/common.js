@@ -691,7 +691,7 @@ export function viewPhoto(photo, onDelete, onMore) {
 
 // --- Vidéos courtes (stories, photos du live, livre d'or) ---
 export const MAX_VIDEO_SECONDS = 30;
-export const isVideo = (url) => /\.(mp4|mov|webm)(\?|$)/i.test(url || "");
+export const isVideo = (url) => /\.(mp4|mov|webm)(\?|#|$)/i.test(url || "");
 
 // Durée d'une vidéo locale (en secondes), lue sans l'envoyer.
 function videoDuration(file) {

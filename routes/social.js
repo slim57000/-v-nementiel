@@ -53,6 +53,15 @@ router.get("/lk", async (req, res) => {
   });
 });
 
+// 🎬 Extraits du replay pour le film souvenir (jusqu'à 6 morceaux répartis sur tout le direct).
+router.get("/replay-clips", async (req, res) => {
+  const all = (await getSetting(`replay:${req.event.id}`).catch(() => null)) || [];
+  const past = req.event.date < new Date().toISOString().slice(0, 10);
+  if (!all.length || (past && (await getSetting(`replayhide:${req.event.id}`)) && !(await isOwner(req)))) return res.json([]);
+  const n = Math.min(6, all.length);
+  res.json(Array.from({ length: n }, (_, i) => all[Math.floor((i * all.length) / n)].url));
+});
+
 // Contenus des personnes bloquées par l'organisateur : masqués pour tout le monde.
 // 📦 Capsule temporelle : message du livre d'or scellé jusqu'à une date choisie par l'invité (1er anniversaire
 // de mariage, 18 ans…). Avant cette date, personne d'autre que son auteur n'en voit le contenu, pas même l'organisateur.

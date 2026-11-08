@@ -10,10 +10,13 @@ const T = { thanks: tr("Merci d'avoir partagé ce moment 💛"), made: tr("Fait 
 // Médias et messages de l'événement : de quoi faire un film ?
 export async function filmScenes(ev) {
   const base = `/api/public/${encodeURIComponent(ev.slug)}`;
-  const [photos, book] = await Promise.all([api(`${base}/photos?limit=200`).catch(() => []), api(`${base}/guestbook`).catch(() => [])]);
+  const [photos, book, clips] = await Promise.all([api(`${base}/photos?limit=200`).catch(() => []), api(`${base}/guestbook`).catch(() => []),
+    api(`${base}/replay-clips`).catch(() => [])]);
   const media = [...photos, ...book.filter((g) => g.photoUrl).map((g) => ({ url: g.photoUrl, name: g.name, author: g.author }))]
     .filter((p) => p.url && !isHidden(p.author));
   // Au plus 12 médias, répartis sur toute la soirée, et 3 messages courts du livre d'or (les épinglés d'abord).
+  // Extraits du live (replay) : ajoutés au film, surtout utiles quand les invités ont peu partagé.
+  media.push(...clips.slice(0, media.length >= 8 ? 2 : 6).map((url) => ({ url: `${url}#t=8`, name: "🔴 Live" })));
   const pick = media.length <= 12 ? media : Array.from({ length: 12 }, (_, i) => media[Math.floor((i * media.length) / 12)]);
   // Messages du livre d'or (épinglés et plus aimés d'abord) ; les longs sont raccourcis.
   const words = book.filter((g) => g.text && !g.sealed && !isHidden(g.author))
