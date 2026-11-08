@@ -1667,3 +1667,11 @@ body.cam-full .cam-viewers { top: calc(14px + env(safe-area-inset-top)); right: 
 .wall-del { left: 60px; right: auto; }
 @media (max-width: 700px) { .wall-del { left: 60px; right: auto; } }
 .wall-del { background: #e11d48; box-shadow: 0 4px 14px rgba(225,29,72,.45); }
+.tool-row { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; padding: 12px 14px; border-radius: 16px; background: var(--primary-soft, #fde7f3); color: inherit; text-decoration: none; }
+.tool-row i { font-style: normal; font-size: 1.6rem; flex: none; }
+.tool-row span { flex: 1; display: grid; gap: 2px; }
+.tool-row b { color: var(--primary, #c20f68); }
+.tool-row small { font-size: .78rem; opacity: .8; line-height: 1.35; }
+.tool-row em { font-style: normal; font-size: 1.4rem; color: var(--primary, #c20f68); }
+[data-theme="dark"] .tool-row { background: #2a1724; }
+@media print { #add-photos { display: none; } }

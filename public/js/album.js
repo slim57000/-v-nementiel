@@ -1,5 +1,5 @@
 // Album souvenir imprimable (ou enregistrable en PDF) : couverture, photos et vidéos des invités, livre d'or.
-import { api, $, esc, goLogin, coverOf, isVideo, formatDate, EVENT_TYPES } from "./common.js";
+import { api, $, esc, goLogin, coverOf, isVideo, formatDate, EVENT_TYPES, pickAndUploadPhoto, toast } from "./common.js";
 
 const id = new URLSearchParams(location.search).get("id");
 $("#print").addEventListener("click", () => print());
@@ -9,6 +9,8 @@ try {
   const base = `/api/public/${encodeURIComponent(ev.slug)}`;
   const [photos, entries] = await Promise.all([api(`${base}/photos?limit=200`), api(`${base}/guestbook`)]);
   document.title = `Album — ${ev.name}`;
+  // L'organisateur peut aussi ajouter ses propres photos (même envoi que les invités).
+  $("#add-photos").onclick = () => pickAndUploadPhoto(ev.slug).then(() => { toast("Photo ajoutée ✔"); setTimeout(() => location.reload(), 700); }, () => {});
   const pictures = [
     ...photos.filter((p) => !isVideo(p.url)).map((p) => ({ url: p.url, name: p.name })),
     ...entries.filter((e) => e.photoUrl && !isVideo(e.photoUrl)).map((e) => ({ url: e.photoUrl, name: e.name })),
@@ -25,7 +27,7 @@ try {
     ${words.length ? `<h2>Le livre d'or</h2>
       <div class="album-words">${words.map((e) => `<blockquote><p>${esc(e.text)}</p><cite>— ${esc(e.name)}</cite>
         ${(e.replies || []).map((r) => `<p class="album-reply">↳ <b>${esc(r.name)}</b> ${esc(r.text)}</p>`).join("")}</blockquote>`).join("")}</div>` : ""}
-    ${!pictures.length && !words.length ? '<p class="muted" style="text-align:center">Les photos et messages de vos invités apparaîtront ici.</p>' : ""}`;
+    ${!pictures.length && !words.length ? '<p class="muted" style="text-align:center">📸 Les photos et messages de vos invités apparaîtront ici.<br>Ils les ajoutent depuis le lien de l\'événement (bouton <b>+</b> sous « Photos des invités »), ou en scannant le QR code du mur photo.</p>' : ""}`;
 } catch (err) {
   if (err.status === 401) goLogin();
   else $("#album").innerHTML = `<p class="error" style="text-align:center">${esc(err.message)}</p>`;
