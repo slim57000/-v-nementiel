@@ -17,7 +17,8 @@ const views = {
     const list = await api(`/api/admin/reels?q=${encodeURIComponent(q)}`);
     if (!list.length) return '<p class="muted" style="text-align:center">Aucun réel publié.</p>';
     return `<div class="adm-reels">${list.map((r) => `<div class="adm-reel${r.reports >= 3 ? " hidden-reel" : ""}">
-      <video src="${esc(r.src)}" poster="${esc(r.thumb || "")}" controls playsinline preload="none"></video>
+      ${r.thumb ? `<video src="${esc(r.src)}" poster="${esc(r.thumb)}" controls playsinline preload="none"></video>`
+        : `<video src="${esc(r.src)}#t=0.3" controls playsinline muted preload="metadata"></video>`}
       <b>${esc(r.name)}</b><small>${esc(r.caption || "")}</small>
       <small class="muted">${esc(new Date(r.at).toLocaleString("fr-FR"))}${r.reports ? ` · <span class="report-badge">⚠️ ${r.reports}${r.reports >= 3 ? " · masqué" : ""}</span>` : ""}</small>
       <div class="adm-reel-act">${r.reports ? `<button class="btn btn-light btn-sm" data-act="reel-restore" data-id="${esc(r.id)}">✅ Rétablir</button>` : ""}
