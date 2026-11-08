@@ -151,7 +151,7 @@ if (gum) navigator.mediaDevices.getUserMedia = async (c) => { const st = await g
 const closeAllTracks = () => { openTracks.forEach((t) => { try { t.stop(); } catch { /* déjà arrêtée */ } }); openTracks.clear(); };
 
 // --- Replay : le téléphone enregistre le direct par segments de 4 min, envoyés au fur et à mesure ---
-const SEGMENT_MS = 4 * 60 * 1000;
+const SEGMENT_MS = 60 * 1000; // 1 min : petits fichiers, envoyés vite, rien de perdu si la page se ferme
 let recorder = null, segTimer = null, uploads = Promise.resolve(), recording = false;
 const MIME = ["video/mp4;codecs=avc1,mp4a", "video/mp4", "video/webm;codecs=vp8,opus", "video/webm"]
   .find((m) => window.MediaRecorder?.isTypeSupported?.(m));
@@ -179,16 +179,28 @@ function stopRecording() {
   if (rec?.state !== "recording") return Promise.resolve();
   return new Promise((done) => { rec.addEventListener("stop", () => setTimeout(done, 0), { once: true }); rec.stop(); });
 }
+let pending = 0; // segments en cours d'envoi
 async function sendSegment(blob) {
   const s = encodeURIComponent(slug);
-  try {
-    const type = blob.type;
-    const target = await api(`/api/cameraman/${s}/replay-url`, { method: "POST", body: { type, size: blob.size } });
-    let url = target.publicUrl;
-    if (target.mode === "local") url = (await (await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": type }, body: blob })).json()).publicUrl;
-    else if (!(await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": type }, body: blob })).ok) throw new Error();
-    await api(`/api/cameraman/${s}/replay`, { method: "POST", body: { room: roomName, url } });
-  } catch { toast("Un morceau du replay n'a pas pu être enregistré."); }
+  pending++;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const type = blob.type;
+      const target = await api(`/api/cameraman/${s}/replay-url`, { method: "POST", body: { type, size: blob.size } });
+      let url = target.publicUrl;
+      if (target.mode === "local") {
+        const r = await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": type }, body: blob });
+        if (!r.ok) throw new Error();
+        url = (await r.json()).publicUrl;
+      } else if (!(await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": type }, body: blob })).ok) throw new Error();
+      await api(`/api/cameraman/${s}/replay`, { method: "POST", body: { room: roomName, url } });
+      pending--;
+      return;
+    } catch {
+      if (attempt === 3) { pending--; toast("Un morceau du replay n'a pas pu être enregistré."); }
+      else await new Promise((ok) => setTimeout(ok, 3000 * attempt)); // réseau instable : nouvel essai
+    }
+  }
 }
 const status = (t) => { $("#live-status").textContent = t; };
 
@@ -248,7 +260,7 @@ async function stopLive(silent) {
   wakeLock = null;
   clearInterval(viewersTimer);
   document.body.classList.remove("cam-full");
-  $("#cam-viewers").classList.add("hidden");
+  $("#cam-viewers")?.classList.add("hidden");
   $("#preview-wrap").classList.add("hidden");
   $("#live-controls").classList.add("hidden");
   $("#go-live").classList.remove("hidden");
@@ -272,6 +284,9 @@ function joinToast(name) {
 let viewersTimer = null;
 function liveScreen() {
   document.body.classList.add("cam-full");
+  if (!$("#cam-viewers")) $("#preview-wrap").insertAdjacentHTML("beforeend", '<span class="cam-viewers" id="cam-viewers"></span>');
+  $("#cam-viewers").textContent = "👁 0";
+  $("#cam-viewers").classList.remove("hidden");
   let after = 0, started = false;
   const show = async () => {
     const r = await api(`/api/cameraman/${encodeURIComponent(slug)}/viewers?after=${after}`).catch(() => null);
@@ -307,7 +322,7 @@ $("#stop-live").addEventListener("click", () => {
   stopLive();
 });
 $("#flip").addEventListener("click", flipCamera);
-addEventListener("beforeunload", (e) => { if (room) { e.preventDefault(); e.returnValue = ""; } });
+addEventListener("beforeunload", (e) => { if (room || pending) { e.preventDefault(); e.returnValue = ""; } }); // replay pas encore envoyé
 
 // Partager le live aux invités : lien direct (+ code si l'événement est privé).
 $("#share-live").addEventListener("click", () => {

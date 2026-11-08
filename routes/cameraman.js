@@ -79,15 +79,16 @@ router.post("/:slug/stop-live", async (req, res) => {
 });
 
 // Replay : chaque segment enregistré par le téléphone (≈ 4 min) est envoyé au stockage puis ajouté à la liste.
+const REPLAY_MAX = 300 * 1024 * 1024; // segment de replay stocké sur le serveur (VPS)
 router.post("/:slug/replay-url", async (req, res) => {
-  if (Number(req.body?.size) > MAX_VIDEO_BYTES) return res.status(400).json({ error: "Segment trop lourd." });
+  if (Number(req.body?.size) > REPLAY_MAX) return res.status(400).json({ error: "Segment trop lourd." });
   const type = String(req.body?.type || "");
   try {
     const target = await videoUploadTarget(type);
     res.json(target.mode === "inline" ? { mode: "local", uploadUrl: `/api/cameraman/${encodeURIComponent(req.event.slug)}/replay-file?type=${encodeURIComponent(type)}` } : target);
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
-router.put("/:slug/replay-file", express.raw({ type: () => true, limit: MAX_VIDEO_BYTES }), (req, res) => {
+router.put("/:slug/replay-file", express.raw({ type: () => true, limit: REPLAY_MAX }), (req, res) => {
   try { res.json({ publicUrl: saveLocalVideo(req.body, String(req.query.type || "")) }); }
   catch (err) { res.status(400).json({ error: err.message }); }
 });
@@ -96,7 +97,7 @@ router.post("/:slug/replay", async (req, res) => {
   if (!isLkRoom(req.event, String(room)) || !isOwnUpload(url)) return res.status(400).json({ error: "Segment invalide." });
   const key = `replay:${req.event.id}`;
   const list = (await getSetting(key)) || [];
-  if (list.length >= 200) return res.status(400).json({ error: "Replay trop long." });
+  if (list.length >= 720) return res.status(400).json({ error: "Replay trop long." }); // 12 h de segments d'1 min
   list.push({ room, url, at: Date.now() });
   await setSetting(key, list);
   if (list.length === 1) replayRecordedMail(req.event);
