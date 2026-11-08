@@ -3,7 +3,7 @@
 // puis la publication l'enregistre dans le réglage « ureels » (les plus récents d'abord).
 import { Router } from "express";
 import express from "express";
-import { appendFileSync, existsSync, mkdirSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readdirSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { getSetting, setSetting, findEventBySlug } from "../lib/store.js";
 import { requireOrganizer, isAdmin } from "./auth.js";
@@ -16,6 +16,14 @@ const EXT = { "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm"
 const clean = (s, n) => String(s ?? "").replace(/\s+/g, " ").trim().slice(0, n);
 const tmpOf = (orgId, u) => `${UPLOAD_DIR}/reel-tmp-${orgId}-${u}`;
 mkdirSync(UPLOAD_DIR, { recursive: true });
+
+// Envois commencés puis abandonnés (fichiers reel-tmp-*) : supprimés au bout d'une heure.
+setInterval(() => {
+  for (const f of readdirSync(UPLOAD_DIR)) {
+    if (!f.startsWith("reel-tmp-")) continue;
+    try { if (Date.now() - statSync(`${UPLOAD_DIR}/${f}`).mtimeMs > 3600_000) unlinkSync(`${UPLOAD_DIR}/${f}`); } catch { /* déjà supprimé */ }
+  }
+}, 15 * 60 * 1000).unref();
 
 export const listUserReels = async () => (await getSetting("ureels").catch(() => null)) || [];
 
@@ -45,8 +53,9 @@ export async function removeReel(id) {
 }
 
 // Morceau de vidéo (dans l'ordre : i = 0, 1, 2…).
-router.post("/chunk", requireOrganizer, express.raw({ type: () => true, limit: "1mb" }), (req, res) => {
+router.post("/chunk", requireOrganizer, express.raw({ type: () => true, limit: "1mb" }), async (req, res) => {
   const u = String(req.query.u || ""), i = Number(req.query.i);
+  if (await tooFast(`reelchunk:${req.organizer.id}`, 400, 3600_000)) return res.status(429).json({ error: "Trop d'envois, réessayez plus tard." }); // ≈ 350 Mo / h
   if (!/^[a-f0-9]{16}$/.test(u) || !Number.isInteger(i) || i < 0) return res.status(400).json({ error: "Envoi invalide." });
   const file = tmpOf(req.organizer.id, u);
   if (i === 0 && existsSync(file)) unlinkSync(file);

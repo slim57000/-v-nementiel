@@ -79,7 +79,7 @@ router.post("/:slug/stop-live", async (req, res) => {
 });
 
 // Replay : chaque segment enregistré par le téléphone (≈ 4 min) est envoyé au stockage puis ajouté à la liste.
-const REPLAY_MAX = 300 * 1024 * 1024; // segment de replay stocké sur le serveur (VPS)
+const REPLAY_MAX = 150 * 1024 * 1024; // segment de replay stocké sur le serveur (VPS)
 router.post("/:slug/replay-url", async (req, res) => {
   if (Number(req.body?.size) > REPLAY_MAX) return res.status(400).json({ error: "Segment trop lourd." });
   const type = String(req.body?.type || "");

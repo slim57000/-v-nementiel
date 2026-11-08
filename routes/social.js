@@ -279,7 +279,9 @@ router.post("/upload-url", notBlocked, async (req, res) => {
   }
 });
 router.put("/video-file", notBlocked, express.raw({ type: () => true, limit: MAX_VIDEO_BYTES }), async (req, res) => {
-  if (await tooFast(`${req.ip}:videofile`, 10, 3_600_000)) return res.status(429).json({ error: "Limite de vidéos atteinte, réessayez plus tard." });
+  if (await tooFast(`${req.ip}:videofile`, 10, 3_600_000) || await tooFast(`videofile:${req.event.id}`, 300, 24 * 3_600_000)) {
+    return res.status(429).json({ error: "Limite de vidéos atteinte, réessayez plus tard." });
+  }
   try { res.json({ publicUrl: saveLocalVideo(req.body, String(req.query.type || "")) }); }
   catch (err) { res.status(400).json({ error: err.message }); }
 });

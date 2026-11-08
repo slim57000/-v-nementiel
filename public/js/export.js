@@ -22,15 +22,17 @@ export async function exportEvent(ev, onProgress = () => {}) {
   const enc = new TextEncoder();
   const lines = [`Livre d'or — ${ev.name}`, ""];
   const media = [];
-  photos.forEach((p, i) => media.push({ url: p.url, date: p.createdAt, name: `photos-invites/${String(i + 1).padStart(3, "0")}-${p.name}.${ext(p.url)}` }));
+  // Prénoms dans les noms de fichiers : sans « / », « .. » ni caractères interdits (archive sûre à extraire).
+  const safe = (n) => String(n || "invite").replace(/[\\/:*?"<>|\x00-\x1f]/g, "_").replace(/\.{2,}/g, "_").slice(0, 40);
+  photos.forEach((p, i) => media.push({ url: p.url, date: p.createdAt, name: `photos-invites/${String(i + 1).padStart(3, "0")}-${safe(p.name)}.${ext(p.url)}` }));
   entries.slice().reverse().forEach((e, i) => {
     const n = String(i + 1).padStart(3, "0");
     lines.push(`#${n} ${e.name} (${new Date(e.createdAt).toLocaleString(LOCALE)}) — ❤️ ${e.likes || 0}`);
     if (e.text) lines.push(e.text);
     for (const r of e.replies || []) lines.push(`   ↳ ${r.name} : ${r.text}`);
     lines.push("");
-    if (e.photoUrl) media.push({ url: e.photoUrl, date: e.createdAt, name: `livre-d-or/${n}-${e.name}.${ext(e.photoUrl)}` });
-    if (e.audioUrl) media.push({ url: e.audioUrl, date: e.createdAt, name: `livre-d-or/${n}-${e.name}-vocal.${ext(e.audioUrl)}` });
+    if (e.photoUrl) media.push({ url: e.photoUrl, date: e.createdAt, name: `livre-d-or/${n}-${safe(e.name)}.${ext(e.photoUrl)}` });
+    if (e.audioUrl) media.push({ url: e.audioUrl, date: e.createdAt, name: `livre-d-or/${n}-${safe(e.name)}-vocal.${ext(e.audioUrl)}` });
   });
   // Replay du live (enregistré par le téléphone du caméraman), inclus automatiquement, partie par partie.
   const perCam = {};

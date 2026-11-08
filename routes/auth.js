@@ -73,7 +73,8 @@ router.post("/login", async (req, res) => {
     // Anciens comptes : code organisateur permanent, ou code temporaire reçu par email (15 min, usage unique).
     const otp = await getSetting(`otp:${email}`).catch(() => null);
     const otpOk = otp && otp.code === code && otp.exp > Date.now();
-    ok = code === organizer.loginCode || otpOk;
+    // Le code permanent n'ouvre plus un compte protégé par mot de passe (seulement les anciens comptes sans).
+    ok = (code === organizer.loginCode && !(await hasPassword(organizer.id))) || otpOk;
     if (otpOk) await setSetting(`otp:${email}`, null);
   }
   if (!ok) {
