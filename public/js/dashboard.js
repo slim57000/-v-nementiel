@@ -170,6 +170,7 @@ function card(ev) {
       <div class="tools-grid">
         <button class="btn btn-light btn-sm" data-action="stats">📊 Statistiques</button>
         <a class="btn btn-light btn-sm" href="/album?id=${ev.id}">📖 Album</a>
+        <a class="btn btn-light btn-sm" href="/e/${esc(ev.slug)}#livre-dor">✍️ ${t("Livre d'or")}</a>
         <a class="btn btn-light btn-sm" href="/mur?id=${ev.id}">📺 Mur photo</a>
         <button class="btn btn-light btn-sm" data-action="export">📦 Télécharger (zip)</button>
       </div>

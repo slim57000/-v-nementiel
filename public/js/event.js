@@ -77,6 +77,8 @@ function showEvent(ev) {
   initFavorite(ev);
   welcome(ev);
   visitorHero(ev);
+  // Lien « …#livre-dor » (tableau de bord) : on descend au livre d'or une fois la page affichée.
+  if (location.hash === "#livre-dor") setTimeout(() => $("#livre-dor")?.scrollIntoView({ behavior: "smooth", block: "start" }), 600);
   initGuestbook(ev);
 
   $("#when").textContent = formatDate(ev.date, ev.time);
@@ -249,7 +251,7 @@ function visitorHero(ev) {
   hero.addEventListener("click", (e) => {
     const go = e.target.closest("[data-hero]")?.dataset.hero;
     if (!go) return;
-    const target = go === "invite" ? ".invite-top" : future ? "#rsvp" : "#gb-count";
+    const target = go === "invite" ? ".invite-top" : future ? "#rsvp" : "#livre-dor";
     document.querySelector(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
   const cd = $("#hero-cd");
