@@ -451,7 +451,7 @@ async function openMyReels() {
   document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="my-reels" role="dialog" aria-modal="true"><div class="card">
     <h2 style="margin-top:0">🎬 ${esc(tr("Mes réels"))}</h2>
     <div class="my-reels">${list.map((r) => `<div class="my-reel" data-id="${esc(r.id)}">
-      <video src="${esc(r.src)}" poster="${esc(r.thumb || "")}" muted playsinline preload="none"></video>
+      ${r.thumb ? `<video src="${esc(r.src)}" poster="${esc(r.thumb)}" muted playsinline preload="none"></video>` : `<video src="${esc(r.src)}#t=0.3" muted playsinline preload="metadata"></video>`}
       <span>${esc(r.caption || "")}</span><button type="button" class="btn btn-danger btn-sm" data-del>${esc(tr("Supprimer"))}</button></div>`).join("")
       || `<p class="muted">${esc(tr("Aucun réel pour le moment. Créer → Un réel."))}</p>`}</div>
     <button class="btn btn-light btn-block" type="button" data-close>${esc(tr("Fermer"))}</button></div></div>`);
@@ -1130,7 +1130,7 @@ export function loadInspirations(section, row, showEmpty = false) {
   if (!section || !row) return;
   if (showEmpty) row.innerHTML = '<div class="reels-skel"></div>'.repeat(4);
   const card = (v) => `<button type="button" class="insp-card" data-yt="${esc(v.id)}" aria-label="${esc(v.title)}">
-      <img src="${esc(v.thumb)}" alt="" loading="lazy"><span class="insp-play">▶</span><small>${esc(v.channel)}</small></button>`;
+      ${v.thumb ? `<img src="${esc(v.thumb)}" alt="" loading="lazy">` : `<video src="${esc(v.src)}#t=0.3" muted playsinline preload="metadata"></video>`}<span class="insp-play">▶</span><small>${esc(v.channel)}</small></button>`;
   api("/api/public/reels").then((list) => {
     if (!list?.length) { if (showEmpty) row.innerHTML = `<p class="muted reels-empty">${esc(tr("Aucune vidéo pour le moment."))}</p>`; return; }
     row._reels = list; // liste complète : le lecteur enchaîne sur toutes les vidéos

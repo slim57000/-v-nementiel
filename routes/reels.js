@@ -18,6 +18,19 @@ const tmpOf = (orgId, u) => `${UPLOAD_DIR}/reel-tmp-${orgId}-${u}`;
 mkdirSync(UPLOAD_DIR, { recursive: true });
 
 export const listUserReels = async () => (await getSetting("ureels").catch(() => null)) || [];
+
+// Miniature noire (iPhone : image pas encore décodée) : retirée, l'appli montre alors la 1re image de la vidéo.
+const sharp = await import("sharp").then((m) => m.default).catch(() => null);
+async function darkThumb(file) {
+  if (!sharp) return false;
+  try { const { channels } = await sharp(file).stats(); return channels.slice(0, 3).every((c) => c.mean < 12); } catch { return false; }
+}
+setTimeout(async () => { // une fois au démarrage, pour les réels déjà publiés
+  const list = await listUserReels().catch(() => []);
+  let changed = false;
+  for (const r of list) if (r.thumb?.startsWith("/uploads/") && await darkThumb(`${UPLOAD_DIR}/${r.thumb.slice(9)}`)) { removeFile(r.thumb); r.thumb = ""; changed = true; }
+  if (changed) await setSetting("ureels", list).catch(() => {});
+}, 5000);
 const removeFile = (url) => { try { if (url?.startsWith("/uploads/")) unlinkSync(`${UPLOAD_DIR}/${url.slice(9)}`); } catch { /* déjà absent */ } };
 
 // Suppression d'un réel et de ses fichiers (auteur, modération).
@@ -54,7 +67,10 @@ router.post("/", requireOrganizer, async (req, res) => {
   renameSync(file, `${UPLOAD_DIR}/${id}.${EXT[type]}`);
   let thumb = "";
   const m = /^data:image\/jpeg;base64,(.+)$/.exec(String(req.body?.thumb || ""));
-  if (m && m[1].length < 700_000) { writeFileSync(`${UPLOAD_DIR}/${id}.jpg`, Buffer.from(m[1], "base64")); thumb = `/uploads/${id}.jpg`; }
+  if (m && m[1].length < 700_000) {
+    writeFileSync(`${UPLOAD_DIR}/${id}.jpg`, Buffer.from(m[1], "base64"));
+    if (await darkThumb(`${UPLOAD_DIR}/${id}.jpg`)) removeFile(`/uploads/${id}.jpg`); else thumb = `/uploads/${id}.jpg`;
+  }
   // Événement lié : seulement un des siens, et public (le réel est visible de tous).
   let event = null;
   const ev = req.body?.slug ? await findEventBySlug(String(req.body.slug)).catch(() => null) : null;

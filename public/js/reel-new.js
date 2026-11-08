@@ -18,10 +18,18 @@ async function compress(file, onProgress) {
   const cv = document.createElement("canvas");
   cv.width = Math.round((v.videoWidth * scale) / 2) * 2; cv.height = Math.round((v.videoHeight * scale) / 2) * 2;
   // Miniature : première image.
-  await new Promise((ok) => { v.onseeked = ok; v.currentTime = Math.min(0.5, dur / 2); });
+  // iPhone : l'image n'est vraiment décodée qu'après un court instant de lecture (sinon miniature noire).
+  v.muted = true;
+  await v.play().then(() => new Promise((ok) => setTimeout(ok, 400))).catch(() => {});
+  v.pause();
+  await new Promise((ok) => { v.onseeked = ok; v.currentTime = Math.min(0.5, dur / 2); setTimeout(ok, 1500); });
   const g = cv.getContext("2d");
   g.drawImage(v, 0, 0, cv.width, cv.height);
-  const thumb = cv.toDataURL("image/jpeg", 0.8);
+  const px = g.getImageData(0, 0, cv.width, cv.height).data;
+  let sum = 0;
+  for (let i = 0; i < px.length; i += 4 * 97) sum += px[i] + px[i + 1] + px[i + 2];
+  const thumb = sum / (px.length / (4 * 97)) / 3 > 12 ? cv.toDataURL("image/jpeg", 0.8) : ""; // image noire : pas de miniature
+  v.muted = false;
   const small = file.size <= 15 * 1024 * 1024 && (v.duration || 0) <= MAX_S + 1;
   if (small || !mime || !cv.captureStream) {
     if ((v.duration || 0) > MAX_S + 1) throw new Error(t("Vidéo trop longue : 60 secondes maximum."));
