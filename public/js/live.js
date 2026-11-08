@@ -61,7 +61,7 @@ async function load() {
   if (ev.locked) return location.replace(`/e/${encodeURIComponent(slug)}`);
 
   // Présence MaFeliza : lien vers la page de l'événement, et présentation du site aux visiteurs.
-  $("#event-link").href = `/e/${encodeURIComponent(ev.slug || slug)}`;
+  $("#event-link").href = `/e/${encodeURIComponent(ev.slug || slug)}#livre-dor`; // directement au livre d'or (le faire-part est juste au-dessus)
   if (ev.loggedIn) $("#live-logo").href = "/dashboard";
   else $("#live-promo").classList.remove("hidden");
   document.title = `Live — ${ev.name}`;

@@ -78,7 +78,8 @@ function showEvent(ev) {
   welcome(ev);
   visitorHero(ev);
   // Lien « …#livre-dor » (tableau de bord) : on descend au livre d'or une fois la page affichée.
-  if (location.hash === "#livre-dor") setTimeout(() => $("#livre-dor")?.scrollIntoView({ behavior: "smooth", block: "start" }), 600);
+  // (deux fois : les photos qui se chargent décalent la page, surtout sur iPhone)
+  if (location.hash === "#livre-dor") [600, 1800].forEach((ms) => setTimeout(() => $("#livre-dor")?.scrollIntoView({ behavior: ms < 1000 ? "smooth" : "auto", block: "start" }), ms));
   initGuestbook(ev);
 
   $("#when").textContent = formatDate(ev.date, ev.time);
