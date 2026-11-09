@@ -1687,3 +1687,12 @@ h1, h2, h3 { overflow-wrap: break-word; hyphens: auto; }
 .hx-login { white-space: nowrap; flex: none; }
 .hx-nav .hx-brand { min-width: 0; overflow: hidden; }
 .hx-pill { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+/* Grandes polices (Android) : ronds de stories et carte raccourcis sans chevauchement */
+.stories .story { min-width: 0; }
+.stories .story-badge { max-width: 92%; overflow: hidden; text-overflow: ellipsis; }
+.story-vis { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.my-quick-row { flex-wrap: wrap; }
+.my-quick-row a { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.segments { overflow-x: auto; scrollbar-width: none; }
+.segments::-webkit-scrollbar { display: none; }
+.segments button { white-space: nowrap; flex: none; }

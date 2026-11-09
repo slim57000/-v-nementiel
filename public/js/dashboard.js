@@ -113,7 +113,7 @@ function renderStories() {
   $("#stories").innerHTML = `
     <a class="story new" href="/edit" data-create><div class="story-img">+</div><span>Créer</span></a>
     ${upcoming.map((ev) => {
-      const badge = dayBadge(ev.date);
+      const badge = dayBadge(ev.date, true);
       const live = isLive(ev);
       if (!ev.slug) return `<a class="story" href="#" data-invite-only><div class="story-img" ${liveAttrs(ev)}><span class="story-badge">${badge}</span></div>
         <span>${esc(evTitle(ev))}</span><small class="story-vis unlisted">${VIS.unlisted[0]}</small></a>`; // sur invitation : lien reçu nécessaire

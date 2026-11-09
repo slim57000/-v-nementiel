@@ -119,11 +119,12 @@ export function resizeImage(file, maxSize = 1280) {
 }
 
 // Nombre de jours avant l'événement : « J-6 », « Aujourd'hui » ou « Passé ».
-export function dayBadge(date) {
+// compact : pastille courte des ronds de stories (« J-33 », ailleurs « D-33 ») au lieu de « 33 gün sonra ».
+export function dayBadge(date, compact = false) {
   const today = new Date(new Date().toDateString());
   const days = Math.round((new Date(`${date}T00:00`) - today) / 86400000);
   const up = (x) => x.charAt(0).toUpperCase() + x.slice(1);
-  if (days > 0) return lang === "fr" ? `J-${days}` : !RTF ? `D-${days}` : RTF.format(days, "day");
+  if (days > 0) return lang === "fr" ? `J-${days}` : compact || !RTF ? `D-${days}` : RTF.format(days, "day");
   return days === 0 ? up(t("Aujourd'hui")) : t("Passé");
 }
 
