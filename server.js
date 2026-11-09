@@ -36,6 +36,7 @@ import { eventLang } from "./lib/invites.js";
 import { UPLOAD_DIR } from "./lib/uploads.js";
 import { mediaJson, serveMedia, localMedia } from "./lib/media-cache.js";
 import { findEventBySlug } from "./lib/store.js";
+import { SEO_LANGS, localize, withAlternates, sitemapEntries } from "./lib/seo-i18n.js";
 import { ogCard, ogVersion, OG_ENABLED } from "./lib/og-card.js";
 import { ON_VERCEL, missingConfig } from "./lib/config.js";
 
@@ -275,8 +276,9 @@ computeAssets();
 // Nom du site pour Google (sinon il le devine) : « MaFeliza » dans chaque page.
 // + fiche « Organisation » (logo affiché par Google) et « Application web ».
 const SITE_NAME = `<meta property="og:site_name" content="MaFeliza"><meta name="application-name" content="MaFeliza">
-<script type="application/ld+json">[{"@context":"https://schema.org","@type":"WebSite","name":"MaFeliza","alternateName":["Ma Feliza","mafeliza.com"],"url":"https://mafeliza.com/","inLanguage":["fr-FR","en"]},
-{"@context":"https://schema.org","@type":"Organization","name":"MaFeliza","url":"https://mafeliza.com/","logo":"https://mafeliza.com/img/icon-512.png"},
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"WebSite","name":"MaFeliza","alternateName":["Ma Feliza","mafeliza.com"],"url":"https://mafeliza.com/","inLanguage":["fr","en","de","es","it","pt","nl","tr","ar","pl","ro","ru","uk","zh","hi"]},
+{"@context":"https://schema.org","@type":"Organization","name":"MaFeliza","url":"https://mafeliza.com/","logo":"https://mafeliza.com/img/icon-512.png","email":"contact@mafeliza.com","sameAs":["https://play.google.com/store/apps/details?id=fr.mafeliza.app"]},
+{"@context":"https://schema.org","@type":"MobileApplication","name":"MaFeliza","operatingSystem":"Android","applicationCategory":"LifestyleApplication","installUrl":"https://play.google.com/store/apps/details?id=fr.mafeliza.app","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"}},
 {"@context":"https://schema.org","@type":"WebApplication","name":"MaFeliza","url":"https://mafeliza.com/","applicationCategory":"LifestyleApplication","operatingSystem":"Web, iOS, Android","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"description":"Faire-part en ligne, mariage en direct, livre d'or et album photo partagé pour tous vos événements."}]</script>`;
 export const versionHtml = (html) => html
   .replace(/<\/head>/i, (m) => (html.includes("og:site_name") ? m : `${SITE_NAME}\n${m}`))
@@ -372,9 +374,13 @@ app.get("/e/:slug", async (req, res) => {
     "@context": "https://schema.org", "@type": "Event", name: event.name, startDate: `${event.date}T${event.time || "12:00"}`,
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: event.cameras?.length ? "https://schema.org/MixedEventAttendanceMode" : "https://schema.org/OfflineEventAttendanceMode",
-    location: { "@type": "Place", name: event.location, address: event.location },
-    image: event.cover ? [event.cover.startsWith("/") ? base + event.cover : event.cover] : undefined,
-    description: event.description || desc, url: `${base}/e/${event.slug}`,
+    // Lieu réel + diffusion en direct sur MaFeliza (live depuis le téléphone, YouTube…).
+    location: event.cameras?.length
+      ? [{ "@type": "Place", name: event.location, address: event.location }, { "@type": "VirtualLocation", url: `${base}/live?e=${event.slug}` }]
+      : { "@type": "Place", name: event.location, address: event.location },
+    image: [OG_ENABLED ? `${base}/og/${encodeURIComponent(event.slug)}.png` : null, event.cover ? (event.cover.startsWith("/") ? base + event.cover : event.cover) : null].filter(Boolean),
+    description: event.description || desc, url: `${base}/e/${event.slug}`, isAccessibleForFree: true, inLanguage: "fr",
+    offers: { "@type": "Offer", price: "0", priceCurrency: "EUR", availability: "https://schema.org/InStock", url: `${base}/e/${event.slug}`, validFrom: String(event.createdAt || "").slice(0, 10) || undefined },
     organizer: { "@type": "Organization", name: "MaFeliza", url: base },
   }).replace(/</g, "\\u003c")}</script>` : "";
   const meta = `<title>${escapeHtml(title)} — MaFeliza</title>
@@ -398,10 +404,12 @@ app.get("/e/:slug", async (req, res) => {
 app.get("/sitemap.xml", async (req, res) => {
   const base = (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
   const events = await listPublicUpcoming(50).catch(() => []);
-  const urls = ["/", "/decouvrir", ...Object.keys(LANDINGS).map((s) => `/${s}`), "/contact", "/connexion", "/mentions-legales", "/cgu", "/confidentialite", "/securite-enfants"].map((p) => `<url><loc>${base}${p}</loc></url>`)
+  const today = new Date().toISOString().slice(0, 10);
+  const urls = [sitemapEntries(base, "/"), ...Object.keys(LANDINGS).map((s) => sitemapEntries(base, `/${s}`)),
+    ...["/decouvrir", "/contact", "/connexion", "/mentions-legales", "/cgu", "/confidentialite", "/securite-enfants"].map((p) => `<url><loc>${base}${p}</loc><lastmod>${today}</lastmod></url>`)]
     .concat(events.map((e) => `<url><loc>${base}/e/${encodeURIComponent(e.slug)}</loc><lastmod>${String(e.updatedAt || e.createdAt || "").slice(0, 10) || e.date}</lastmod></url>`));
   res.type("application/xml").set("Cache-Control", "public, max-age=3600")
-    .send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.join("")}</urlset>`);
+    .send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">${urls.join("")}</urlset>`);
 });
 
 // Erreurs JavaScript des navigateurs (limitées) : transmises au suivi des erreurs.
@@ -436,7 +444,22 @@ if (!ON_VERCEL) {
     if (!Object.hasOwn(LANDINGS, slug)) return next();
     const key = `landing:${slug}`;
     if (!pageCache.has(key)) pageCache.set(key, versionHtml(renderLanding(slug, SITE_URL)));
-    res.set("Cache-Control", "no-cache").type("html").send(applySeo(pageCache.get(key), `/${slug}`));
+    res.set("Cache-Control", "no-cache").type("html").send(withAlternates(applySeo(pageCache.get(key), `/${slug}`), SITE_URL, `/${slug}`));
+  });
+  // Versions traduites de l'accueil et des pages Google : /en/, /es/mariage-en-direct… (référencement par langue).
+  const langCache = new Map();
+  app.get(new RegExp(`^/(${SEO_LANGS.join("|")})(?:/([\\w-]+))?/?$`), async (req, res, next) => {
+    const [lang, slug] = [req.params[0], req.params[1]];
+    if (slug && !Object.hasOwn(LANDINGS, slug)) return next();
+    const path = slug ? `/${slug}` : "/";
+    const key = `${lang}:${path}`;
+    if (!langCache.has(key)) {
+      const src = applySeo(slug ? versionHtml(renderLanding(slug, SITE_URL)) : withCanonical(versionedPage(`${PUBLIC_DIR}/index.html`), "/"), path);
+      const html = await localize(src, lang, path, SITE_URL, Boolean(slug), Object.keys(LANDINGS).map((x) => `/${x}`)).catch(() => null);
+      if (!html) return res.redirect(302, path); // traduction indisponible pour l'instant : version française
+      langCache.set(key, html);
+    }
+    res.set("Cache-Control", "no-cache").type("html").send(langCache.get(key));
   });
   app.get(/^\/(?:[\w-]+(?:\.html)?)?$/, (req, res, next) => {
     // Déjà connecté : la page d'accueil publique mène directement à l'accueil du compte (sauf « /?accueil »).
@@ -447,7 +470,8 @@ if (!ON_VERCEL) {
     const path = req.path.replace(/\.html$/, "") || "/";
     // Pages publiques : adresse officielle (canonique) ; pages de compte : jamais dans Google.
     if (!INDEXABLE.has(path)) res.set("X-Robots-Tag", "noindex");
-    res.set("Cache-Control", "no-cache").type("html").send(applySeo(withCanonical(versionedPage(file), path), path));
+    const page = applySeo(withCanonical(versionedPage(file), path), path);
+    res.set("Cache-Control", "no-cache").type("html").send(path === "/" ? withAlternates(page, SITE_URL, "/") : page);
   });
   // Scripts et styles compressés (gzip, ~4 fois plus légers sur mobile), gardés en mémoire après la 1re fois.
   app.get(/^\/(js|css)\/[\w.-]+\.(js|css)$/, (req, res, next) => {

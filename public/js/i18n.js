@@ -593,6 +593,9 @@ if (lang !== "fr") {
 
 export function setLang(value) {
   write(LANG_KEY, value);
+  // Page traduite pour Google (/en/, /es/mariage-en-direct…) : on va à la même page dans la langue choisie.
+  const m = location.pathname.match(/^\/([a-z]{2})(\/.*)?$/);
+  if (m && LANGS[m[1]]) { location.href = value === "fr" ? (m[2] || "/") : `/${value}${m[2] || "/"}`; return; }
   location.reload();
 }
 
