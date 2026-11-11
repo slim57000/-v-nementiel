@@ -32,6 +32,9 @@ ok('Tableau de bord : carte raccourcis', await o.locator('#my-quick').count() > 
 ok('Tableau de bord : Photos des invités / Mur photo / Livre d\'or', await o.locator('.tool-row').count() >= 2 && await o.locator(`a[href="/e/${ev.slug}#livre-dor"]`).count() > 0);
 // 4. Invité : ouverture du lien
 const g = await mk('invité'); await g.goto(B+'/e/'+ev.slug); await g.waitForTimeout(2500);
+ok('Invité : enveloppe d\'invitation', await g.locator('#env').count() === 1);
+await g.click('#env').catch(()=>{}); await g.waitForTimeout(2500);
+ok('Invité : enveloppe ouverte', await g.locator('#env').count() === 0);
 ok('Invité : affiche d\'accueil', await g.locator('#ev-hero').count() > 0);
 // RSVP
 await g.click('[data-hero="rsvp"]').catch(()=>{}); await g.waitForTimeout(800); await g.click('[data-rsvp="yes"]'); await g.waitForTimeout(800);
