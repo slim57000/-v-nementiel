@@ -18,10 +18,23 @@ document.querySelector(".hd-search")?.addEventListener("submit", async (e) => {
   if (!(await openByCode(q))) location.href = `/decouvrir?q=${encodeURIComponent(q)}`;
 });
 // 📱 Application : disponible sur Google Play, bientôt sur l'App Store (site web uniquement).
-if (!inAppView()) document.querySelector(".hd-top")?.insertAdjacentHTML("beforeend", `<div class="hx-stores dash-stores">
+let storesHidden = false;
+try { storesHidden = localStorage.getItem("em-stores-x") === "1"; } catch { /* ignoré */ }
+if (!inAppView() && !storesHidden) document.querySelector(".hd-top")?.insertAdjacentHTML("beforeend", `<div class="hx-stores dash-stores">
   <span class="hx-badge"><svg viewBox="0 0 24 24" width="24" height="24" fill="#fff" aria-hidden="true"><path d="M16.4 12.6c0-2.4 2-3.5 2-3.6-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9s-1.8-.9-3-.8C7 7.3 5.6 8.2 4.8 9.6c-1.6 2.8-.4 6.9 1.2 9.1.8 1.1 1.7 2.3 2.9 2.3 1.1 0 1.6-.7 3-.7s1.8.7 3 .7c1.2 0 2-1.1 2.8-2.2.9-1.3 1.2-2.5 1.2-2.6 0 0-2.5-.9-2.5-3.6zM14.1 5.6c.6-.8 1.1-1.8 1-2.9-.9 0-2.1.6-2.7 1.4-.6.7-1.1 1.8-1 2.8 1 .1 2.1-.5 2.7-1.3z"/></svg><span><small>${t("Bientôt sur")}</small><b>App Store</b></span></span>
   <a class="hx-badge" href="https://play.google.com/store/apps/details?id=fr.mafeliza.app" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="#34A853" d="M3.6 2.3 13.4 12l-9.8 9.7c-.4-.2-.6-.6-.6-1.1V3.4c0-.5.2-.9.6-1.1z"/><path fill="#FBBC04" d="m16.8 8.6-3.4 3.4 3.4 3.4 3.8-2.2c.9-.5.9-1.9 0-2.4z"/><path fill="#4285F4" d="M3.6 2.3c.3-.2.8-.2 1.2 0l12 6.3-3.4 3.4z"/><path fill="#EA4335" d="m13.4 12 3.4 3.4-12 6.3c-.4.2-.9.2-1.2 0z"/></svg><span><small>${t("Disponible sur")}</small><b>Google Play</b></span></a>
+  <button type="button" class="stores-x" aria-label="${t("Fermer")}">${icon("close", 14)}</button>
 </div>`);
+document.querySelector(".stores-x")?.addEventListener("click", (e) => {
+  e.currentTarget.parentElement.remove();
+  try { localStorage.setItem("em-stores-x", "1"); } catch { /* ignoré */ }
+});
+// Onglets du fil : pictogrammes au trait + libellé.
+const TAB_ICONS = { all: ["all", "Tout"], reels: ["reels", "Réels"], live: ["live", "En direct"], feed: ["feed", "Fil"] };
+document.querySelectorAll(".hd-tabs button").forEach((b) => {
+  const [ico, label] = TAB_ICONS[b.dataset.filter] || [];
+  if (ico) b.innerHTML = `${icon(ico, 17)}<span>${t(label)}</span>`;
+});
 // 🎁 Parrainage : « N personnes ont créé leur événement grâce aux vôtres ».
 api("/api/auth/me").then((me) => {
   if (!me?.referrals) return;
@@ -66,16 +79,17 @@ function quickBar() {
   if (!ev) {
     // Pas encore d'événement : on montre ce qui l'attend (live, mur photo, film).
     document.querySelector(".hd-top")?.insertAdjacentHTML("afterend", `<div class="my-quick" id="my-quick">
-      <b>${t("Vous aussi, partagez votre événement")}</b><small>🔴 ${t("Live")} · 📺 ${t("Mur photo")} · ✨ ${t("Le film souvenir")}</small>
-      <div class="my-quick-row"><a href="/edit">✨ ${t("Créez le vôtre")}</a></div></div>`);
+      <div class="mq-head"><span class="mq-ico">${icon("sparkles", 20)}</span><div><b>${t("Vous aussi, partagez votre événement")}</b><small>${t("Live")} · ${t("Mur photo")} · ${t("Le film souvenir")}</small></div></div>
+      <div class="my-quick-row"><a class="mq-main" href="/edit">${icon("plus", 18)}<span>${t("Créez le vôtre")}</span></a></div></div>`);
     return;
   }
+  const past = ev.date < today;
   document.querySelector(".hd-top")?.insertAdjacentHTML("afterend", `<div class="my-quick" id="my-quick">
-    <b>${esc(ev.name)}</b><small>${esc(dayBadge(ev.date))}</small>
+    <div class="mq-head"><span class="mq-ico">${coverOf(ev) ? `<img src="${esc(coverOf(ev))}" alt="">` : icon("calendar", 20)}</span><div><b>${esc(ev.name)}</b><small>${esc(dayBadge(ev.date))}</small></div></div>
     <div class="my-quick-row">
-      ${ev.date >= today ? `<a href="/cameraman?code=${esc(ev.cameramanCode)}">🔴 ${t("Live")}</a>` : `<a href="/e/${esc(ev.slug)}?film=1">✨ ${t("Le film souvenir")}</a>`}
-      <a href="/mur?id=${ev.id}">📺 ${t("Mur photo")}</a>
-      <a href="/e/${esc(ev.slug)}">💌 ${t("Voir")}</a>
+      ${past ? `<a class="mq-main" href="/e/${esc(ev.slug)}?film=1">${icon("sparkles", 18)}<span>${t("Le film souvenir")}</span></a>` : `<a class="mq-main" href="/cameraman?code=${esc(ev.cameramanCode)}">${icon("live", 18)}<span>${t("Live")}</span></a>`}
+      <a href="/mur?id=${ev.id}">${icon("tv", 18)}<span>${t("Mur photo")}</span></a>
+      <a href="/e/${esc(ev.slug)}">${icon("eye", 18)}<span>${t("Voir")}</span></a>
     </div></div>`);
 }
 
@@ -169,6 +183,7 @@ function card(ev) {
       ${ev.date <= today ? `<a class="film-btn" href="/e/${esc(ev.slug)}?film=1"><span><b>${t("✨ Revivez l'événement")}</b><small>${t("Le film souvenir")}</small></span><i>▶</i></a>` : ""}
       <a class="tool-row" href="/album?id=${ev.id}"><i>📸</i><span><b>${t("Photos des invités")}</b><small>${t("Les invités ajoutent leurs photos depuis le lien de l'événement (bouton +). Retrouvez-les toutes ici, à imprimer ou en PDF.")}</small></span><em>›</em></a>
       <a class="tool-row" href="/mur?id=${ev.id}"><i>📺</i><span><b>${t("Mur photo")}</b><small>${t("À afficher sur une TV pendant la fête : les photos des invités défilent en direct. Ils scannent le QR code pour envoyer les leurs.")}</small></span><em>›</em></a>
+      <a class="tool-row" href="/affiche?id=${ev.id}"><i>🖨️</i><span><b>${t("Affiche QR pour la salle")}</b><small>${t("À imprimer et poser sur les tables : les invités scannent pour envoyer leurs photos et signer le livre d'or.")}</small></span><em>›</em></a>
       <div class="tools-grid">
         <button class="btn btn-light btn-sm" data-action="stats">📊 Statistiques</button>
         <a class="btn btn-light btn-sm" href="/e/${esc(ev.slug)}#livre-dor">✍️ ${t("Livre d'or")}</a>
@@ -216,7 +231,7 @@ function camReminder() {
   list = [...mineToShow.map((e) => ({ slug: e.slug, name: e.name, date: e.date, code: e.cameramanCode })), ...list.filter((x) => !mineToShow.some((e) => e.slug === x.slug))];
   setTimeout(() => pruneCams(list.filter((x) => !mineToShow.some((e) => e.slug === x.slug))), 0);
   return list.map((x) => `<a class="cam-reminder" data-slug="${esc(x.slug)}" href="/cameraman?${x.code ? `code=${encodeURIComponent(x.code)}` : `e=${encodeURIComponent(x.slug)}`}">
-    <span>🎥</span><div><b>Espace caméraman</b><small>${esc(x.name)}${x.date === today ? " · c'est aujourd'hui !" : ""}</small></div><em>Ouvrir ›</em></a>`).join("");
+    <span class="cr-ico">${icon("video", 20)}</span><div><b>${t("Espace caméraman")}</b><small>${esc(x.name)}${x.date === today ? " · c'est aujourd'hui !" : ""}</small></div><em>${t("Ouvrir")} ${icon("chevron", 16)}</em></a>`).join("");
 }
 
 function render() {
@@ -290,9 +305,10 @@ function upRow(ev) {
 }
 
 document.querySelector(".segments").addEventListener("click", (e) => {
-  if (!e.target.dataset.filter) return;
-  const tab = e.target.dataset.filter, feed = tab === "feed", reels = tab === "reels";
-  document.querySelectorAll(".segments button").forEach((b) => b.classList.toggle("active", b === e.target));
+  const btn = e.target.closest("[data-filter]");
+  if (!btn) return;
+  const tab = btn.dataset.filter, feed = tab === "feed", reels = tab === "reels";
+  document.querySelectorAll(".segments button").forEach((b) => b.classList.toggle("active", b === btn));
   // Fil et Réels : onglets de l'accueil (chargés une seule fois), sans changer de page.
   $("#feed-wrap").classList.toggle("hidden", !feed);
   $("#reels").classList.toggle("hidden", !reels);
@@ -300,7 +316,7 @@ document.querySelector(".segments").addEventListener("click", (e) => {
   if (feed || reels) $("#empty").classList.add("hidden");
   if (feed) { import("./fil.js"); return; }
   if (reels) { if (!$("#reels").children.length) loadInspirations($("#reels"), $("#reels"), true); return; }
-  filter = e.target.dataset.filter;
+  filter = btn.dataset.filter;
   render();
 });
 // Après la publication d'un réel : onglet Réels ouvert directement.

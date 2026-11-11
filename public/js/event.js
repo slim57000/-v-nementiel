@@ -77,6 +77,7 @@ function showEvent(ev) {
   initFavorite(ev);
   welcome(ev);
   visitorHero(ev);
+  envelope(ev);
   // Lien « …#livre-dor » (tableau de bord) : on descend au livre d'or une fois la page affichée.
   // (deux fois : les photos qui se chargent décalent la page, surtout sur iPhone)
   if (location.hash === "#livre-dor") [600, 1800].forEach((ms) => setTimeout(() => $("#livre-dor")?.scrollIntoView({ behavior: ms < 1000 ? "smooth" : "auto", block: "start" }), ms));
@@ -225,6 +226,36 @@ function welcome(ev) {
 
 // Arrivée depuis un lien partagé (Facebook, WhatsApp…) : grande affiche plein écran avec la photo,
 // les noms, la date, un compte à rebours et deux actions (voir le faire-part, répondre). Pas pour l'organisateur.
+// 💌 Première visite d'un invité : enveloppe scellée qui s'ouvre d'un toucher, puis le faire-part apparaît.
+function envelope(ev) {
+  if (ev.isOwner || location.hash || location.search.includes("film") || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const key = `em-env-${ev.slug}`;
+  try { if (localStorage.getItem(key)) return; localStorage.setItem(key, "1"); } catch { return; }
+  const title = ev.invite?.title || ev.name;
+  const initial = (title.match(/\p{L}/u)?.[0] || "♥").toUpperCase();
+  document.body.insertAdjacentHTML("beforeend", `<div class="env-wrap" id="env" role="dialog" aria-modal="true" aria-label="${esc(tr("Ouvrir l'invitation"))}">
+    <p class="env-to">${esc(tr("Vous avez reçu une invitation"))}</p>
+    <button type="button" class="env" aria-label="${esc(tr("Ouvrir l'invitation"))}">
+      <span class="env-back"></span>
+      <span class="env-card"><b>${esc(title)}</b><small>${esc(new Date(`${ev.date}T${ev.time || "12:00"}`).toLocaleDateString(LOCALE, { day: "numeric", month: "long", year: "numeric" }))}</small></span>
+      <span class="env-front"></span>
+      <span class="env-flap"></span>
+      <span class="env-seal">${esc(initial)}</span>
+    </button>
+    <p class="env-hint">${esc(tr("Touchez pour ouvrir"))}</p>
+  </div>`);
+  const wrap = document.getElementById("env");
+  document.body.style.overflow = "hidden";
+  const open = () => {
+    if (wrap.classList.contains("open")) return;
+    navigator.vibrate?.(15);
+    wrap.classList.add("open");
+    setTimeout(() => wrap.classList.add("gone"), 1500);
+    setTimeout(() => { wrap.remove(); document.body.style.overflow = ""; }, 2100);
+  };
+  wrap.addEventListener("click", open);
+}
+
 function visitorHero(ev) {
   if (ev.isOwner || document.getElementById("ev-hero")) return;
   const start = new Date(`${ev.date}T${ev.time || "12:00"}`);

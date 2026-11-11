@@ -1143,12 +1143,53 @@ export function loadInspirations(section, row, showEmpty = false) {
 const likedReels = () => { try { return new Set(JSON.parse(localStorage.getItem("em-reellikes") || "[]")); } catch { return new Set(); } };
 // Réels en fichiers vidéo (Pexels) : <video> natif, son coupé au départ, lecture automatique fiable sur iPhone.
 // Une seule vidéo chargée à la fois ; glisser vers le haut / la gauche = suivante, le bas / la droite = précédente.
+const agoLong = (iso) => {
+  const d = Math.floor((Date.now() - new Date(iso)) / 864e5);
+  if (d < 1) return relAgo(iso);
+  return lang === "fr" || !RTF ? `il y a ${d} j` : RTF.format(-d, "day");
+};
+// 💬 Commentaires d'un réel de membre : liste + champ d'écriture (compte requis pour écrire).
+async function reelComments(it, counter) {
+  document.getElementById("reel-coms")?.remove();
+  document.body.insertAdjacentHTML("beforeend", `<div class="sheet reel-coms-sheet" id="reel-coms" role="dialog" aria-modal="true"><div class="card">
+    <div class="rc-head"><b>${esc(tr("Commentaires"))}</b><button type="button" class="rc-x" aria-label="${esc(tr("Fermer"))}">${icon("close", 20)}</button></div>
+    <div class="rc-list"><p class="muted small">…</p></div>
+    <form class="rc-form"><input maxlength="300" placeholder="${esc(tr("Ajouter un commentaire…"))}" aria-label="${esc(tr("Ajouter un commentaire…"))}"><button class="btn" aria-label="${esc(tr("Envoyer"))}">${icon("send", 18)}</button></form>
+  </div></div>`);
+  const sh = document.getElementById("reel-coms"), box = sh.querySelector(".rc-list");
+  const close = () => sh.remove();
+  sh.querySelector(".rc-x").onclick = close;
+  sh.addEventListener("click", (e) => { if (e.target === sh) close(); });
+  const me = await api("/api/auth/me").catch(() => null);
+  const row = (c) => `<div class="rc-item" data-cid="${esc(c.id)}"><span class="rc-av">${esc((c.name || "?")[0].toUpperCase())}</span><div><b>${esc(c.name)}</b> <small class="muted">${esc(agoLong(c.at))}</small><p>${esc(c.text)}</p></div>${me && (me.id === c.by || me.id === it.by || me.isAdmin) ? `<button type="button" class="rc-del" aria-label="${esc(tr("Supprimer"))}">${icon("close", 14)}</button>` : ""}</div>`;
+  const render = (l) => { box.innerHTML = l.length ? l.map(row).join("") : `<p class="muted small rc-empty">${esc(tr("Soyez le premier à commenter."))}</p>`; box.scrollTop = box.scrollHeight; if (counter) counter.textContent = l.length || ""; };
+  let items = await api(`/api/reels/${encodeURIComponent(it.reel)}/comments`).catch(() => []);
+  render(items);
+  box.addEventListener("click", async (e) => {
+    const del = e.target.closest(".rc-del");
+    if (!del) return;
+    const cid = del.closest(".rc-item").dataset.cid;
+    await api(`/api/reels/${encodeURIComponent(it.reel)}/comments/${encodeURIComponent(cid)}`, { method: "DELETE" }).then(() => { items = items.filter((c) => c.id !== cid); render(items); }, (err) => toast(err.message));
+  });
+  sh.querySelector(".rc-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const inp = e.currentTarget.querySelector("input"), text = inp.value.trim();
+    if (!text) return;
+    if (!me) { toast(tr("Connectez-vous pour commenter.")); return; }
+    inp.disabled = true;
+    await api(`/api/reels/${encodeURIComponent(it.reel)}/comments`, { method: "POST", body: { text } })
+      .then((c) => { items.push(c); render(items); inp.value = ""; it.nc = items.length; }, (err) => toast(err.message));
+    inp.disabled = false; inp.focus();
+  });
+}
+
 function openVideoReels(list, start) {
   document.body.insertAdjacentHTML("beforeend", `<div class="reels-viewer" id="reels-viewer" role="dialog" aria-modal="true">
     ${list.map((v, i) => `<section class="reel ${v.portrait === false ? "landscape" : ""}" data-i="${i}"><video playsinline muted loop preload="none" poster="${esc(v.thumb || "")}"></video>
       <div class="reel-side">
         <button type="button" class="reel-act" data-like="${esc(v.id)}"><span>${likedReels().has(v.id) ? "❤️" : "🤍"}</span><small>${v.likes || ""}</small></button>
-        <button type="button" class="reel-act" data-rshare="${i}"><span>↗</span><small>${esc(tr("Partager"))}</small></button>
+        ${v.reel ? `<button type="button" class="reel-act" data-rcom="${i}"><span>${icon("chat", 28)}</span><small>${v.nc || ""}</small></button>` : ""}
+        <button type="button" class="reel-act" data-rshare="${i}"><span>${icon("share", 28)}</span><small>${esc(tr("Partager"))}</small></button>
         ${v.event?.slug ? `<a class="reel-act" href="/e/${esc(v.event.slug)}"><span>🎉</span><small>${esc(tr("Événement"))}</small></a>` : ""}
         ${v.event?.cagnotteUrl ? `<a class="reel-act" href="${esc(v.event.cagnotteUrl)}" target="_blank" rel="noopener"><span>💝</span><small>${esc(tr("Cagnotte"))}</small></a>` : ""}
         ${v.reel ? `<button type="button" class="reel-act" data-rmore="${i}"><span>⋯</span></button>` : ""}
@@ -1208,12 +1249,29 @@ function openVideoReels(list, start) {
     const to = Math.min(list.length - 1, Math.max(0, current + (dx < 0 ? 1 : -1)));
     v.scrollTo({ top: to * v.clientHeight, behavior: "smooth" });
   }, { passive: true });
-  // J'aime (un par vidéo et par appareil) et partage.
+  // Double-tap sur la vidéo : j'aime + grand cœur animé (comme les grands réseaux).
+  let lastTap = 0;
+  v.addEventListener("click", (ev) => {
+    const sec = ev.target.closest(".reel");
+    if (!sec || ev.target.closest(".reel-side, .reel-info, a, button")) return;
+    const now = Date.now();
+    if (now - lastTap < 320) {
+      sec.insertAdjacentHTML("beforeend", `<span class="pop-heart">${icon("heart", 110).replace('fill="none"', 'fill="#ff2e74"')}</span>`);
+      setTimeout(() => sec.querySelector(".pop-heart")?.remove(), 850);
+      sec.querySelector("[data-like]")?.click();
+      lastTap = 0;
+    } else lastTap = now;
+  });
+  // J'aime (un par vidéo et par appareil), commentaires et partage.
   v.addEventListener("click", async (ev) => {
+    const com = ev.target.closest("[data-rcom]");
+    if (com) { reelComments(list[Number(com.dataset.rcom)], com.querySelector("small")); return; }
     const like = ev.target.closest("[data-like]");
     if (like) {
       const id = like.dataset.like, set = likedReels();
       if (set.has(id)) return;
+      navigator.vibrate?.(12);
+      like.animate([{ transform: "scale(1)" }, { transform: "scale(1.35)" }, { transform: "scale(1)" }], { duration: 300 });
       set.add(id);
       try { localStorage.setItem("em-reellikes", JSON.stringify([...set].slice(-500))); } catch { /* ignoré */ }
       like.querySelector("span").textContent = "❤️";

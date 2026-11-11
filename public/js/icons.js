@@ -13,6 +13,21 @@ const P = {
   calendar: '<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
   eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
   play: '<path d="M7 5l12 7-12 7z" fill="currentColor"/>',
+  all: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',
+  reels: '<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M3 8h18M8.5 3l2.5 5M14.5 3l2.5 5"/><path d="M10 11.5v5l4.5-2.5z" fill="currentColor"/>',
+  live: '<circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M8 16a5.7 5.7 0 0 1 0-8M16 8a5.7 5.7 0 0 1 0 8M5.2 18.8a9.6 9.6 0 0 1 0-13.6M18.8 5.2a9.6 9.6 0 0 1 0 13.6"/>',
+  feed: '<rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M8 9h8M8 12.5h8M8 16h5"/>',
+  tv: '<rect x="2.5" y="7" width="19" height="13" rx="2.5"/><path d="M16.5 3 12 7 7.5 3"/>',
+  sparkles: '<path d="M11 3.5l1.7 4.3 4.3 1.7-4.3 1.7L11 15.5l-1.7-4.3L5 9.5l4.3-1.7z"/><path d="M18.5 14.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/>',
+  share: '<path d="M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/><path d="M16 7l-4-4-4 4M12 3v13"/>',
+  qr: '<rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1"/><path d="M14 14h3v3h-3zM20.5 14v.01M14 20.5h.01M17 17h3.5v3.5H17"/>',
+  book: '<path d="M5 19.5V5.5A2.5 2.5 0 0 1 7.5 3H19v15H7.5A2.5 2.5 0 0 0 5 20.5 2.5 2.5 0 0 0 7.5 23H19"/>',
+  image: '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>',
+  print: '<path d="M6 9V3h12v6"/><rect x="2.5" y="9" width="19" height="8.5" rx="2"/><path d="M6.5 14h11v7h-11z"/>',
+  send: '<path d="m21.5 2.5-6.5 19-3.8-8.2L3 9.5z"/><path d="M21.5 2.5 11.2 13.3"/>',
+  close: '<path d="M18 6 6 18M6 6l12 12"/>',
+  chevron: '<path d="m9 6 6 6-6 6"/>',
 };
 
 export const icon = (name, size = 22) =>

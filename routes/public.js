@@ -130,7 +130,7 @@ router.get("/reels", async (req, res) => {
   const [members, insp, likes, users] = await Promise.all([listMemberReels(), inspirations(reqLangFull(req)).catch(() => []), readSetting("reellikes").catch(() => null), listUserReels()]);
   // Réels publiés par les membres (bouton « Créer → Un réel ») : les plus récents d'abord, masqués après 3 signalements.
   const mine = [...users.filter((r) => (r.reports || 0) < 3).slice(0, 200).map((r) => ({ id: `u${r.id}`, reel: r.id, by: r.by, src: r.src, thumb: r.thumb,
-    channel: r.name, title: r.caption, member: true, event: r.event || undefined })), ...members];
+    channel: r.name, title: r.caption, member: true, nc: r.nc || 0, event: r.event || undefined })), ...members];
   // Une vidéo de membre toutes les 3 vidéos d'inspiration (les membres d'abord tant qu'il y en a peu).
   // Ordre mélangé à chaque chargement (verticales toujours avant horizontales) : actualiser = nouvelles vidéos en tête.
   const shuffle = (a) => { for (let k = a.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [a[k], a[j]] = [a[j], a[k]]; } return a; };

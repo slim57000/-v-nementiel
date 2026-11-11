@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="icon" href="/img/logo.png" type="image/png">
+  <title>Affiche QR — MaFeliza</title>
+</head>
+<body class="poster-body">
+  <div class="poster-bar no-print">
+    <a class="btn btn-light btn-sm" href="/dashboard" id="p-back">‹</a>
+    <button class="btn btn-sm" id="p-print"></button>
+  </div>
+  <main class="poster" id="poster">
+    <p class="poster-kicker" id="p-kicker"></p>
+    <h1 id="p-name"></h1>
+    <p class="poster-date" id="p-date"></p>
+    <div class="poster-qrs">
+      <figure><img id="p-qr1" alt="" width="260" height="260"><figcaption><b id="p-t1"></b><span id="p-s1"></span></figcaption></figure>
+      <figure><img id="p-qr2" alt="" width="260" height="260"><figcaption><b id="p-t2"></b><span id="p-s2"></span></figcaption></figure>
+    </div>
+    <p class="poster-steps" id="p-steps"></p>
+    <p class="poster-brand"><img src="/img/logo.png" alt="" width="26" height="26"> mafeliza.com</p>
+  </main>
+  <script type="module" src="/js/affiche.js"></script>
+</body>
+</html>

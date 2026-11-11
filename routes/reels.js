@@ -9,6 +9,7 @@ import { getSetting, setSetting, findEventBySlug } from "../lib/store.js";
 import { requireOrganizer, isAdmin } from "./auth.js";
 import { tooFast } from "../lib/limits.js";
 import { UPLOAD_DIR } from "../lib/uploads.js";
+import { notify, orgOwner } from "../lib/push.js";
 
 const router = Router();
 const MAX_BYTES = 80 * 1024 * 1024;
@@ -107,6 +108,42 @@ router.delete("/:id", requireOrganizer, async (req, res) => {
   const [r] = list.splice(k, 1);
   removeFile(r.src); removeFile(r.thumb);
   await setSetting("ureels", list);
+  res.json({ ok: true });
+});
+
+// 💬 Commentaires d'un réel de membre (lecture libre, écriture avec un compte). Réglage « reelc:{id} ».
+const reelOf = async (id) => (await listUserReels()).find((r) => r.id === id);
+router.get("/:id/comments", async (req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json(((await getSetting(`reelc:${String(req.params.id).slice(0, 20)}`).catch(() => null)) || []).slice(-200));
+});
+router.post("/:id/comments", requireOrganizer, async (req, res) => {
+  const reel = await reelOf(req.params.id);
+  if (!reel) return res.status(404).json({ error: "Réel introuvable." });
+  const text = clean(req.body?.text, 300);
+  if (!text) return res.status(400).json({ error: "Écrivez un commentaire." });
+  if (await tooFast(`reelcom:${req.organizer.id}`, 30, 3600_000)) return res.status(429).json({ error: "Trop de commentaires, réessayez plus tard." });
+  const name = clean(req.organizer.displayName || req.organizer.email?.split("@")[0], 40);
+  const c = { id: randomBytes(6).toString("hex"), by: req.organizer.id, name, text, at: new Date().toISOString() };
+  const list = ((await getSetting(`reelc:${reel.id}`).catch(() => null)) || []);
+  list.push(c);
+  await setSetting(`reelc:${reel.id}`, list.slice(-500));
+  // Nombre de commentaires gardé sur le réel (affiché sans charger la liste).
+  const all = await listUserReels(), r = all.find((x) => x.id === reel.id);
+  if (r) { r.nc = list.length; await setSetting("ureels", all); }
+  if (reel.by !== req.organizer.id) notify([orgOwner(reel.by)], { title: `💬 ${name} a commenté votre réel`, body: text.slice(0, 140), url: `/dashboard#reels` }).catch(() => {});
+  res.status(201).json(c);
+});
+router.delete("/:id/comments/:cid", requireOrganizer, async (req, res) => {
+  const reel = await reelOf(req.params.id);
+  const list = (reel && await getSetting(`reelc:${reel.id}`).catch(() => null)) || [];
+  const c = list.find((x) => x.id === req.params.cid);
+  if (!c) return res.status(404).json({ error: "Commentaire introuvable." });
+  if (c.by !== req.organizer.id && reel.by !== req.organizer.id && !(await isAdmin(req.organizer))) return res.status(403).json({ error: "Action non autorisée." });
+  const rest = list.filter((x) => x !== c);
+  await setSetting(`reelc:${reel.id}`, rest);
+  const all = await listUserReels(), r = all.find((x) => x.id === reel.id);
+  if (r) { r.nc = rest.length; await setSetting("ureels", all); }
   res.json({ ok: true });
 });
 
