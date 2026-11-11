@@ -95,11 +95,14 @@ function render() {
     : tr("💌 Vous êtes invité·e à « {name} » !").replace("{name}", ev.name) + (ev.visibility === "private" ? ` ${tr("Code d'accès :")} ${ev.accessCode}` : "");
   // Image du faire-part préparée à l'avance : au toucher de « Partager », elle part avec le texte et le lien
   // (WhatsApp affiche le faire-part, le lien en dessous). Sinon, feuille de partage classique.
-  let card = null;
-  inviteImage(ev, invite, style, isLive ? photo : invitePhotoUrl(ev.invite, ev.cover), link).then((b) => { card = b; }).catch(() => {});
+  let card = null, storyCard = null;
+  const pic = isLive ? photo : invitePhotoUrl(ev.invite, ev.cover);
+  inviteImage(ev, invite, style, pic, link).then((b) => { card = b; }).catch(() => {});
+  inviteImage(ev, invite, style, pic, link, true).then((b) => { storyCard = b; }).catch(() => {});
   // Partage du lien (Facebook, WhatsApp… affichent la carte de l'événement) ; l'image du faire-part reste au choix.
   $("#share").onclick = () => shareSheet({ title: ev.name, text, url: link,
-    image: () => (card ? shareBlob(card, `faire-part-${ev.slug}.png`, text, link) : toast(tr("Image en préparation, réessayez dans un instant."))) });
+    image: () => (card ? shareBlob(card, `faire-part-${ev.slug}.png`, text, link) : toast(tr("Image en préparation, réessayez dans un instant."))),
+    story: () => (storyCard ? shareBlob(storyCard, `story-${ev.slug}.png`, text, link) : toast(tr("Image en préparation, réessayez dans un instant."))) });
   $("#copy").onclick = () => copy(link, "Lien copié !");
   // Mode simple : une page avec un seul gros bouton « Regarder le live » (idéal pour les grands-parents).
   const simple = `${location.origin}/simple?e=${encodeURIComponent(ev.slug)}${ev.visibility === "private" ? `&code=${ev.accessCode}` : ""}`;

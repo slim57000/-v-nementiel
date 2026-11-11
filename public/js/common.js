@@ -821,7 +821,7 @@ export async function openByCode(text) {
   catch { return false; }
 }
 
-export function shareSheet({ title, text, url, image }) {
+export function shareSheet({ title, text, url, image, story }) {
   text = tr(text); title = tr(title);
   if (isNativeApp && !image) { nativeShare({ title, text, url }); return; } // application : feuille de partage du téléphone
   const msg = `${text} ${url}`;
@@ -839,6 +839,7 @@ export function shareSheet({ title, text, url, image }) {
         <div class="share-grid">
           ${links.map(([n, c, href]) => `<a class="share-opt" href="${esc(href)}" target="_blank" rel="noopener"><i style="background:${c}">${n[0]}</i>${n}</a>`).join("")}
           ${image ? `<button class="share-opt" data-s="image"><i style="background:linear-gradient(135deg,#fd1a85,#c60bd2)">🖼</i>${esc(tr("Image du faire-part"))}</button>` : ""}
+          ${story ? `<button class="share-opt" data-s="story"><i style="background:linear-gradient(135deg,#feda75,#d62976,#4f5bd5)">📱</i>${esc(tr("Format story (Instagram, WhatsApp)"))}</button>` : ""}
           <button class="share-opt" data-s="instagram"><i style="background:linear-gradient(45deg,#f58529,#dd2a7b,#8134af)">I</i>Instagram</button>
           <button class="share-opt" data-s="copy"><i style="background:var(--primary)">🔗</i>Copier le lien</button>
           ${navigator.share || isNativeApp ? '<button class="share-opt" data-s="native"><i style="background:#1d1a20">⋯</i>Plus…</button>' : ""}
@@ -857,6 +858,7 @@ export function shareSheet({ title, text, url, image }) {
     if (s === "copy") copy(url, "Lien copié !");
     if (s === "native") isNativeApp ? nativeShare({ title, text, url }) : share({ title, text, url });
     if (s === "image") image();
+    if (s === "story") story();
   });
 }
 

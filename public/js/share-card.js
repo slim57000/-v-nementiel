@@ -35,9 +35,10 @@ function lines(ctx, text, width, max) {
   return clean;
 }
 
-export async function inviteImage(ev, invite, style, photoUrl, link) {
+// story : format vertical 1080×1920 (stories Instagram / WhatsApp / Facebook).
+export async function inviteImage(ev, invite, style, photoUrl, link, story = false) {
   const t = THEMES[style] || THEMES.classique;
-  const W = 1080, H = 1350;
+  const W = 1080, H = story ? 1920 : 1350;
   const c = document.createElement("canvas");
   c.width = W; c.height = H;
   const ctx = c.getContext("2d");
@@ -53,7 +54,7 @@ export async function inviteImage(ev, invite, style, photoUrl, link) {
   if (style === "fleuri") { ctx.font = "64px serif"; ctx.fillText("🌸", 70, 140); ctx.fillText("🌿", W - 140, 140); }
 
   ctx.textAlign = "center"; ctx.fillStyle = t.accent;
-  let y = 150;
+  let y = story ? 330 : 150;
   ctx.font = `600 34px ${serif}`;
   ctx.fillText(String(invite.kicker || "").toUpperCase().split("").join(" "), W / 2, y);
   y += 90;
@@ -61,7 +62,7 @@ export async function inviteImage(ev, invite, style, photoUrl, link) {
   for (const l of lines(ctx, invite.title || ev.name, W - 200, 2)) { ctx.fillText(l, W / 2, y); y += 86; }
 
   if (photo) {
-    const r = 170, cx = W / 2, cy = y + r - 10;
+    const r = story ? 230 : 170, cx = W / 2, cy = y + r - 10;
     ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
     const s = Math.max((2 * r) / photo.width, (2 * r) / photo.height);
     ctx.drawImage(photo, cx - (photo.width * s) / 2, cy - (photo.height * s) / 2, photo.width * s, photo.height * s);
@@ -72,7 +73,7 @@ export async function inviteImage(ev, invite, style, photoUrl, link) {
 
   ctx.fillStyle = t.accent; ctx.fillRect(W / 2 - 80, y - 30, 160, 3);
   ctx.fillStyle = t.ink; ctx.font = `400 38px ${serif}`;
-  const max = photo ? 5 : 9;
+  const max = story ? (photo ? 7 : 12) : photo ? 5 : 9;
   for (const l of lines(ctx, invite.text, W - 220, max)) { ctx.fillText(l, W / 2, y + 24); y += 52; }
   y += 40;
   const when = ev.date ? formatDate(ev.date, ev.time) : "";
@@ -82,7 +83,7 @@ export async function inviteImage(ev, invite, style, photoUrl, link) {
   if (ev.location) for (const l of lines(ctx, `📍 ${ev.location}`, W - 240, 2)) { ctx.fillText(l, W / 2, y); y += 46; }
 
   // Bas : lien + QR code
-  const by = H - 200;
+  const by = H - (story ? 330 : 200); // story : au-dessus de la zone de réponse d'Instagram
   ctx.fillStyle = "rgba(255,255,255,.9)";
   ctx.beginPath(); ctx.roundRect?.(80, by, W - 160, 130, 26); ctx.fill();
   ctx.fillStyle = "#c20f68"; ctx.textAlign = "left"; ctx.font = "700 34px -apple-system, Arial, sans-serif";
@@ -97,7 +98,13 @@ export async function inviteImage(ev, invite, style, photoUrl, link) {
 export async function shareBlob(blob, name, text, link) {
   try {
     const file = new File([blob], name, { type: "image/png" });
-    if (!navigator.canShare?.({ files: [file] })) return false;
+    if (!navigator.canShare?.({ files: [file] })) {
+      // Ordinateur / navigateur sans partage de fichiers : l'image est téléchargée.
+      const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: name });
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      return true;
+    }
     await navigator.share({ files: [file], text: `${text}\n${link}` });
     return true;
   } catch (err) {
