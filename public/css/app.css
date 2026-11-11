@@ -1842,3 +1842,13 @@ h1, h2, h3 { overflow-wrap: break-word; hyphens: auto; }
 .btn.has-ic .i { flex: none; }
 .qa > span.has-ic, .tool-row > i.has-ic, .me-row > span.has-ic { color: var(--primary); display: inline-grid; place-items: center; font-style: normal; }
 .btn-golive .i, .has-ic .i[data-live] { color: inherit; }
+/* Dégradé plus discret : boutons d'une seule teinte (rose MaFeliza), le grand dégradé reste réservé au live et aux appels finaux */
+.btn:not(.btn-light):not(.btn-ghost):not(.btn-danger) { background: linear-gradient(180deg, #f5228c, #e0127a); box-shadow: 0 6px 16px rgba(224,18,122,.22); }
+.btn:not(.btn-light):not(.btn-ghost):not(.btn-danger):hover { background: linear-gradient(180deg, #e8137a, #c90f6c); }
+.btn-golive, .hx-cta, .hp-final-btn { box-shadow: 0 8px 22px rgba(224,18,122,.3); }
+.btn-golive:not(.btn-light) { background: linear-gradient(135deg, #fd1a85, #c60bd2) !important; }
+.home-tabs button.active, .hd-tabs button.active { background: #1d1a21; color: #fff; box-shadow: none; border-color: #1d1a21; }
+[data-theme="dark"] :is(.home-tabs, .hd-tabs) button.active { background: #f3eef5; color: #1d1a21; border-color: #f3eef5; }
+.cagnotte-promo { background: linear-gradient(135deg, #fff0f7, #f6eaff); color: var(--text, #1d1a21); border: 1px solid #f6cfe3; }
+.cagnotte-promo .cagnotte-links a { border: 1px solid #f6cfe3; }
+.ev-cover .btn:not(.btn-light):not(.btn-ghost):not(.btn-danger) { background: #fff; color: var(--primary); box-shadow: 0 6px 16px rgba(0,0,0,.15); }
