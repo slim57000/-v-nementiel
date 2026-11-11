@@ -13,70 +13,7 @@ const P = {
   calendar: '<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
   eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
   play: '<path d="M7 5l12 7-12 7z" fill="currentColor"/>',
-  all: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',
-  reels: '<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M3 8h18M8.5 3l2.5 5M14.5 3l2.5 5"/><path d="M10 11.5v5l4.5-2.5z" fill="currentColor"/>',
-  live: '<circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M8 16a5.7 5.7 0 0 1 0-8M16 8a5.7 5.7 0 0 1 0 8M5.2 18.8a9.6 9.6 0 0 1 0-13.6M18.8 5.2a9.6 9.6 0 0 1 0 13.6"/>',
-  feed: '<rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M8 9h8M8 12.5h8M8 16h5"/>',
-  tv: '<rect x="2.5" y="7" width="19" height="13" rx="2.5"/><path d="M16.5 3 12 7 7.5 3"/>',
-  sparkles: '<path d="M11 3.5l1.7 4.3 4.3 1.7-4.3 1.7L11 15.5l-1.7-4.3L5 9.5l4.3-1.7z"/><path d="M18.5 14.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>',
-  mail: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/>',
-  share: '<path d="M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/><path d="M16 7l-4-4-4 4M12 3v13"/>',
-  qr: '<rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1"/><path d="M14 14h3v3h-3zM20.5 14v.01M14 20.5h.01M17 17h3.5v3.5H17"/>',
-  book: '<path d="M5 19.5V5.5A2.5 2.5 0 0 1 7.5 3H19v15H7.5A2.5 2.5 0 0 0 5 20.5 2.5 2.5 0 0 0 7.5 23H19"/>',
-  image: '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>',
-  print: '<path d="M6 9V3h12v6"/><rect x="2.5" y="9" width="19" height="8.5" rx="2"/><path d="M6.5 14h11v7h-11z"/>',
-  send: '<path d="m21.5 2.5-6.5 19-3.8-8.2L3 9.5z"/><path d="M21.5 2.5 11.2 13.3"/>',
-  close: '<path d="M18 6 6 18M6 6l12 12"/>',
-  chevron: '<path d="m9 6 6 6-6 6"/>',
-  link: '<path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/>',
-  key: '<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M14.5 8.5l2 2"/>',
-  chart: '<path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/>',
-  edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
-  download: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/>',
-  trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
-  settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
-  star: '<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/>',
-  help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h.01"/>',
-  logout: '<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10"/>',
-  lock: '<rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/>',
 };
-
-// Emoji en tête des boutons → pictogramme au trait (même couleur que le texte), sur tout le site.
-// Appliqué après la traduction : les textes et leurs clés de traduction ne changent pas.
-const EMOJI = { "📤": "share", "↗": "share", "🔗": "link", "✉️": "mail", "💌": "mail", "🎥": "video", "🔑": "key", "📊": "chart", "✍️": "book",
-  "📦": "download", "⬇": "download", "✏️": "edit", "🔴": "live", "📸": "camera", "📷": "camera", "📺": "tv", "🖨️": "print", "👤": "user",
-  "❤️": "heart", "🎬": "reels", "💬": "chat", "⚙️": "settings", "🗑️": "trash", "🗑": "trash", "📍": "pin", "📅": "calendar", "🗓️": "calendar",
-  "🎁": "gift", "✨": "sparkles", "🌟": "star", "❓": "help", "🔒": "lock", "🔓": "lock", "🖼": "image", "🖼️": "image", "🚪": "logout" };
-const RE = new RegExp(`^\\s*(${Object.keys(EMOJI).map((e) => e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\uFE0F?\\s*`, "u");
-const SEL = ".btn, .qa > span, .tool-row > i, .me-row > span, .tools-grid > *, .share-opt";
-function swapIn(el) {
-  if (el.closest(".share-opt i, .reels-viewer, .stories, .wall, .poster, .fp-card, #invite")) return;
-  const only = el.matches(".qa > span, .tool-row > i, .me-row > span");
-  const node = [...el.childNodes].find((n) => n.nodeType === 3 && n.nodeValue.trim()) ;
-  if (!node || node !== [...el.childNodes].find((n) => n.nodeType !== 3 || n.nodeValue.trim())) return; // l'emoji doit être tout au début
-  const m = node.nodeValue.match(RE);
-  if (!m || (only && node.nodeValue.trim() !== m[1] && node.nodeValue.trim() !== `${m[1]}\uFE0F`)) return;
-  node.nodeValue = node.nodeValue.slice(m[0].length);
-  el.insertAdjacentHTML("afterbegin", icon(EMOJI[m[1]], only ? 22 : 18));
-  el.classList.add("has-ic");
-}
-export function iconize(root = document.body) {
-  if (!root?.querySelectorAll) return;
-  if (root.matches?.(SEL)) swapIn(root);
-  root.querySelectorAll(SEL).forEach(swapIn);
-}
-if (typeof document !== "undefined") {
-  const run = () => {
-    iconize();
-    let pending = false;
-    new MutationObserver(() => {
-      if (pending) return;
-      pending = true;
-      setTimeout(() => { pending = false; iconize(); }, 0); // après la traduction de la page
-    }).observe(document.body, { childList: true, subtree: true });
-  };
-  document.body ? setTimeout(run, 0) : addEventListener("DOMContentLoaded", () => setTimeout(run, 0));
-}
 
 export const icon = (name, size = 22) =>
   `<svg class="i" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[name]}</svg>`;

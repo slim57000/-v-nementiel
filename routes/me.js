@@ -237,27 +237,6 @@ router.post("/friends/add", async (req, res) => {
   res.json({ ok: true, id: other });
 });
 
-// ➕ Suivre / ne plus suivre un membre (réglages « follows:{moi} » et « followers:{lui} »).
-router.post("/follow/:userId", async (req, res) => {
-  const me = req.organizer.id, other = Number(req.params.userId);
-  if (!Number.isInteger(other) || other === me) return res.status(400).json({ error: "Action impossible." });
-  if (await tooFast(`follow:${me}`, 60, 3_600_000)) return res.status(429).json({ error: "Trop d'essais, réessayez plus tard." });
-  const [u] = await findOrganizersByIds([other]);
-  if (!u || (await listBlockIds(other)).includes(me)) return res.status(404).json({ error: "Profil introuvable." });
-  const [mine, theirs] = await Promise.all([getSetting(`follows:${me}`), getSetting(`followers:${other}`)]);
-  const fresh = !(theirs || []).includes(me);
-  await Promise.all([setSetting(`follows:${me}`, [...new Set([...(mine || []), other])]), setSetting(`followers:${other}`, [...new Set([...(theirs || []), me])])]);
-  if (fresh) notify([orgOwner(other)], { title: `➕ ${displayName(req.organizer)} vous suit`, body: "Découvrez son profil.", url: `/u?id=${me}` }).catch(() => {});
-  res.json({ ok: true, followers: [...new Set([...(theirs || []), me])].length });
-});
-router.delete("/follow/:userId", async (req, res) => {
-  const me = req.organizer.id, other = Number(req.params.userId);
-  const [mine, theirs] = await Promise.all([getSetting(`follows:${me}`), getSetting(`followers:${other}`)]);
-  const left = (theirs || []).filter((x) => x !== me);
-  await Promise.all([setSetting(`follows:${me}`, (mine || []).filter((x) => x !== other)), setSetting(`followers:${other}`, left)]);
-  res.json({ ok: true, followers: left.length });
-});
-
 router.get("/friends", async (req, res) => {
   const me = req.organizer.id;
   const blocked = new Set(await listBlockIds(me));

@@ -412,7 +412,6 @@ async function profileMenu() {
         <button type="button" class="me-x" data-me="close" aria-label="Fermer">✕</button>
         <div class="me-head"><button type="button" class="me-edit-av" data-me="avatar" aria-label="Changer d'avatar">${av("big")}<span class="me-pen">✏️</span></button><button type="button" class="me-edit-name" data-me="name"><b>${esc(name || "Mon compte")}</b> <span class="me-pen-txt">✏️</span></button></div>
         <p class="me-sec">Mon espace</p>
-        <a class="me-row" href="/u?id=${esc(me?.id || "")}"><span>🌟</span>${esc(tr("Mon profil public"))}<i>›</i></a>
         <a class="me-row" href="/profil"><span>👤</span>Mon profil<i>›</i></a>
         <button type="button" class="me-row" data-me="likes"><span>❤️</span>Mes favoris<i>›</i></button>
         <button type="button" class="me-row" data-me="reels"><span>🎬</span>${esc(tr("Mes réels"))}<i>›</i></button>
@@ -821,7 +820,7 @@ export async function openByCode(text) {
   catch { return false; }
 }
 
-export function shareSheet({ title, text, url, image, story }) {
+export function shareSheet({ title, text, url, image }) {
   text = tr(text); title = tr(title);
   if (isNativeApp && !image) { nativeShare({ title, text, url }); return; } // application : feuille de partage du téléphone
   const msg = `${text} ${url}`;
@@ -839,7 +838,6 @@ export function shareSheet({ title, text, url, image, story }) {
         <div class="share-grid">
           ${links.map(([n, c, href]) => `<a class="share-opt" href="${esc(href)}" target="_blank" rel="noopener"><i style="background:${c}">${n[0]}</i>${n}</a>`).join("")}
           ${image ? `<button class="share-opt" data-s="image"><i style="background:linear-gradient(135deg,#fd1a85,#c60bd2)">🖼</i>${esc(tr("Image du faire-part"))}</button>` : ""}
-          ${story ? `<button class="share-opt" data-s="story"><i style="background:linear-gradient(135deg,#feda75,#d62976,#4f5bd5)">📱</i>${esc(tr("Format story (Instagram, WhatsApp)"))}</button>` : ""}
           <button class="share-opt" data-s="instagram"><i style="background:linear-gradient(45deg,#f58529,#dd2a7b,#8134af)">I</i>Instagram</button>
           <button class="share-opt" data-s="copy"><i style="background:var(--primary)">🔗</i>Copier le lien</button>
           ${navigator.share || isNativeApp ? '<button class="share-opt" data-s="native"><i style="background:#1d1a20">⋯</i>Plus…</button>' : ""}
@@ -858,7 +856,6 @@ export function shareSheet({ title, text, url, image, story }) {
     if (s === "copy") copy(url, "Lien copié !");
     if (s === "native") isNativeApp ? nativeShare({ title, text, url }) : share({ title, text, url });
     if (s === "image") image();
-    if (s === "story") story();
   });
 }
 
@@ -1146,58 +1143,17 @@ export function loadInspirations(section, row, showEmpty = false) {
 const likedReels = () => { try { return new Set(JSON.parse(localStorage.getItem("em-reellikes") || "[]")); } catch { return new Set(); } };
 // Réels en fichiers vidéo (Pexels) : <video> natif, son coupé au départ, lecture automatique fiable sur iPhone.
 // Une seule vidéo chargée à la fois ; glisser vers le haut / la gauche = suivante, le bas / la droite = précédente.
-const agoLong = (iso) => {
-  const d = Math.floor((Date.now() - new Date(iso)) / 864e5);
-  if (d < 1) return relAgo(iso);
-  return lang === "fr" || !RTF ? `il y a ${d} j` : RTF.format(-d, "day");
-};
-// 💬 Commentaires d'un réel de membre : liste + champ d'écriture (compte requis pour écrire).
-async function reelComments(it, counter) {
-  document.getElementById("reel-coms")?.remove();
-  document.body.insertAdjacentHTML("beforeend", `<div class="sheet reel-coms-sheet" id="reel-coms" role="dialog" aria-modal="true"><div class="card">
-    <div class="rc-head"><b>${esc(tr("Commentaires"))}</b><button type="button" class="rc-x" aria-label="${esc(tr("Fermer"))}">${icon("close", 20)}</button></div>
-    <div class="rc-list"><p class="muted small">…</p></div>
-    <form class="rc-form"><input maxlength="300" placeholder="${esc(tr("Ajouter un commentaire…"))}" aria-label="${esc(tr("Ajouter un commentaire…"))}"><button class="btn" aria-label="${esc(tr("Envoyer"))}">${icon("send", 18)}</button></form>
-  </div></div>`);
-  const sh = document.getElementById("reel-coms"), box = sh.querySelector(".rc-list");
-  const close = () => sh.remove();
-  sh.querySelector(".rc-x").onclick = close;
-  sh.addEventListener("click", (e) => { if (e.target === sh) close(); });
-  const me = await api("/api/auth/me").catch(() => null);
-  const row = (c) => `<div class="rc-item" data-cid="${esc(c.id)}"><a class="rc-av" href="/u?id=${esc(c.by)}">${esc((c.name || "?")[0].toUpperCase())}</a><div><a href="/u?id=${esc(c.by)}"><b>${esc(c.name)}</b></a> <small class="muted">${esc(agoLong(c.at))}</small><p>${esc(c.text)}</p></div>${me && (me.id === c.by || me.id === it.by || me.isAdmin) ? `<button type="button" class="rc-del" aria-label="${esc(tr("Supprimer"))}">${icon("close", 14)}</button>` : ""}</div>`;
-  const render = (l) => { box.innerHTML = l.length ? l.map(row).join("") : `<p class="muted small rc-empty">${esc(tr("Soyez le premier à commenter."))}</p>`; box.scrollTop = box.scrollHeight; if (counter) counter.textContent = l.length || ""; };
-  let items = await api(`/api/reels/${encodeURIComponent(it.reel)}/comments`).catch(() => []);
-  render(items);
-  box.addEventListener("click", async (e) => {
-    const del = e.target.closest(".rc-del");
-    if (!del) return;
-    const cid = del.closest(".rc-item").dataset.cid;
-    await api(`/api/reels/${encodeURIComponent(it.reel)}/comments/${encodeURIComponent(cid)}`, { method: "DELETE" }).then(() => { items = items.filter((c) => c.id !== cid); render(items); }, (err) => toast(err.message));
-  });
-  sh.querySelector(".rc-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const inp = e.currentTarget.querySelector("input"), text = inp.value.trim();
-    if (!text) return;
-    if (!me) { toast(tr("Connectez-vous pour commenter.")); return; }
-    inp.disabled = true;
-    await api(`/api/reels/${encodeURIComponent(it.reel)}/comments`, { method: "POST", body: { text } })
-      .then((c) => { items.push(c); render(items); inp.value = ""; it.nc = items.length; }, (err) => toast(err.message));
-    inp.disabled = false; inp.focus();
-  });
-}
-
 function openVideoReels(list, start) {
   document.body.insertAdjacentHTML("beforeend", `<div class="reels-viewer" id="reels-viewer" role="dialog" aria-modal="true">
     ${list.map((v, i) => `<section class="reel ${v.portrait === false ? "landscape" : ""}" data-i="${i}"><video playsinline muted loop preload="none" poster="${esc(v.thumb || "")}"></video>
       <div class="reel-side">
         <button type="button" class="reel-act" data-like="${esc(v.id)}"><span>${likedReels().has(v.id) ? "❤️" : "🤍"}</span><small>${v.likes || ""}</small></button>
-        ${v.reel ? `<button type="button" class="reel-act" data-rcom="${i}"><span>${icon("chat", 28)}</span><small>${v.nc || ""}</small></button>` : ""}
-        <button type="button" class="reel-act" data-rshare="${i}"><span>${icon("share", 28)}</span><small>${esc(tr("Partager"))}</small></button>
+        <button type="button" class="reel-act" data-rshare="${i}"><span>↗</span><small>${esc(tr("Partager"))}</small></button>
         ${v.event?.slug ? `<a class="reel-act" href="/e/${esc(v.event.slug)}"><span>🎉</span><small>${esc(tr("Événement"))}</small></a>` : ""}
         ${v.event?.cagnotteUrl ? `<a class="reel-act" href="${esc(v.event.cagnotteUrl)}" target="_blank" rel="noopener"><span>💝</span><small>${esc(tr("Cagnotte"))}</small></a>` : ""}
         ${v.reel ? `<button type="button" class="reel-act" data-rmore="${i}"><span>⋯</span></button>` : ""}
       </div>
-      <div class="reel-info">${v.member ? `<b>${esc(v.title)}</b>` : ""}<small>${v.credit ? `<a href="${esc(v.credit)}" target="_blank" rel="noopener">🎥 ${esc(v.channel)} · ${esc(v.source || "Pexels")}</a>` : (v.by ? `<a class="reel-who" href="/u?id=${esc(v.by)}">👤 ${esc(v.channel)}</a>` : `👤 ${esc(v.channel)}`)}</small></div></section>`).join("")}
+      <div class="reel-info">${v.member ? `<b>${esc(v.title)}</b>` : ""}<small>${v.credit ? `<a href="${esc(v.credit)}" target="_blank" rel="noopener">🎥 ${esc(v.channel)} · ${esc(v.source || "Pexels")}</a>` : `👤 ${esc(v.channel)}`}</small></div></section>`).join("")}
     <button type="button" class="reels-btn reels-close" aria-label="${esc(tr("Fermer"))}">✕</button>
     <button type="button" class="reels-btn reels-sound" aria-label="Son">${reelsSound ? "🔊" : "🔇"}</button>
     <div class="reels-hint">↑</div></div>`);
@@ -1252,29 +1208,12 @@ function openVideoReels(list, start) {
     const to = Math.min(list.length - 1, Math.max(0, current + (dx < 0 ? 1 : -1)));
     v.scrollTo({ top: to * v.clientHeight, behavior: "smooth" });
   }, { passive: true });
-  // Double-tap sur la vidéo : j'aime + grand cœur animé (comme les grands réseaux).
-  let lastTap = 0;
-  v.addEventListener("click", (ev) => {
-    const sec = ev.target.closest(".reel");
-    if (!sec || ev.target.closest(".reel-side, .reel-info, a, button")) return;
-    const now = Date.now();
-    if (now - lastTap < 320) {
-      sec.insertAdjacentHTML("beforeend", `<span class="pop-heart">${icon("heart", 110).replace('fill="none"', 'fill="#ff2e74"')}</span>`);
-      setTimeout(() => sec.querySelector(".pop-heart")?.remove(), 850);
-      sec.querySelector("[data-like]")?.click();
-      lastTap = 0;
-    } else lastTap = now;
-  });
-  // J'aime (un par vidéo et par appareil), commentaires et partage.
+  // J'aime (un par vidéo et par appareil) et partage.
   v.addEventListener("click", async (ev) => {
-    const com = ev.target.closest("[data-rcom]");
-    if (com) { reelComments(list[Number(com.dataset.rcom)], com.querySelector("small")); return; }
     const like = ev.target.closest("[data-like]");
     if (like) {
       const id = like.dataset.like, set = likedReels();
       if (set.has(id)) return;
-      navigator.vibrate?.(12);
-      like.animate([{ transform: "scale(1)" }, { transform: "scale(1.35)" }, { transform: "scale(1)" }], { duration: 300 });
       set.add(id);
       try { localStorage.setItem("em-reellikes", JSON.stringify([...set].slice(-500))); } catch { /* ignoré */ }
       like.querySelector("span").textContent = "❤️";
