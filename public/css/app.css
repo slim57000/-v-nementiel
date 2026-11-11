@@ -1793,3 +1793,19 @@ h1, h2, h3 { overflow-wrap: break-word; hyphens: auto; }
 .cookie-banner p { margin: 0 0 8px; line-height: 1.35; }
 .cookie-banner .row { gap: 8px; }
 .cookie-banner .btn { padding: 7px 12px; min-height: 0; font-size: .82rem; }
+/* Accueil plus court : étapes sur une ligne, fonctionnalités en bandeau défilant */
+.hp-how { margin-top: 22px; }
+.hp-how h2 { font-size: 1.15rem; margin-bottom: 10px; }
+.hp-how ol { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.hp-how li { grid-template-columns: 1fr; justify-items: center; text-align: center; row-gap: 6px; padding: 12px 6px; }
+.hp-how li i { grid-row: auto; width: 32px; height: 32px; border-radius: 10px; }
+.hp-how li b { font-size: .82rem; line-height: 1.2; }
+.hp-how li span { display: none; }
+.hp-feats { display: flex; overflow-x: auto; gap: 8px; margin: 12px 0 0; padding: 0 16px 4px; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.hp-feats::-webkit-scrollbar { display: none; }
+.hp-feats > div { flex: none; width: 150px; scroll-snap-align: start; padding: 12px; }
+.hp-feats b { font-size: .88rem; }
+.hp-feats span { font-size: .78rem; }
+.hp-final { margin-top: 22px; }
+.hp-final .hp-mini { display: none; }
+@media (min-width: 760px) { .hp-how li span { display: block; } .hp-feats { justify-content: center; } }
