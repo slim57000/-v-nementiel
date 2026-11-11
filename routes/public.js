@@ -6,7 +6,7 @@ import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers, rollDemoDates } from "../lib/demo.js";
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
-import { listRecentPhotos, getSetting as readSetting, setSetting as writeSetting, dataVersion, listHistoryIds, listPendingIds, listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory,  listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
+import { listRecentPhotos, getSetting as readSetting, setSetting as writeSetting, dataVersion, listHistoryIds, listPendingIds, listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory,  listFriendIds, clearLimit, findInvite, saveInvite, getSetting, findOrganizer, listEvents } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
 import { currentOrganizer, isAdmin } from "./auth.js";
 import { listUserReels } from "./reels.js";
@@ -174,6 +174,26 @@ export async function eventPayload(req, slug) {
   const view = publicView(withVisibility(event, unlisted));
   return { locked: false, isOwner, loggedIn: Boolean(me), ...view, cameras, id: event.id, premium, replayDays: replayDays(premium), replayDeleted: Boolean(replayDeleted), replayOnline: !replayHidden, program: program || null, pot: pot || null, reactions: reactions || {} };
 }
+// 👤 Profil public d'un membre : nom, photo, abonnés, ses réels et ses événements publics.
+router.get("/u/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  const u = Number.isInteger(id) ? await findOrganizer(id).catch(() => null) : null;
+  if (!u || u.blocked || u.suspended) return res.status(404).json({ error: "Profil introuvable." });
+  const viewer = await currentOrganizer(req).catch(() => null);
+  const [reels, events, hidden, pending, followers, following] = await Promise.all([listUserReels(), listEvents(id).catch(() => []), listUnlistedIds(), listPendingIds(),
+    getSetting(`followers:${id}`).catch(() => null), getSetting(`follows:${id}`).catch(() => null)]);
+  const today = new Date().toISOString().slice(0, 10);
+  const pub = events.map((e) => withVisibility(e, hidden)).filter((e) => e.visibility === "public" && !e.suspended && !pending.has(e.id))
+    .sort((a, b) => ((b.date >= today) - (a.date >= today)) || (a.date >= today ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date))) // à venir d'abord
+    .slice(0, 30).map((e) => { const { invite, inviteStyle, description, ...card } = publicView(e); return card; });
+  const mine = reels.filter((r) => r.by === id && (r.reports || 0) < 3).slice(0, 60).map((r) => ({ id: `u${r.id}`, reel: r.id, by: r.by, src: r.src, thumb: r.thumb,
+    channel: r.name, title: r.caption, member: true, nc: r.nc || 0, event: r.event || undefined }));
+  res.set("Cache-Control", "no-store");
+  res.json({ id, name: u.displayName || u.email.split("@")[0], avatar: u.avatar || null, bio: u.bio || "",
+    followers: (followers || []).length, following: (following || []).length, isMe: viewer?.id === id,
+    isFollowing: Boolean(viewer && (followers || []).includes(viewer.id)), reels: mine, events: pub });
+});
+
 router.get("/:slug", async (req, res) => {
   const t0 = Date.now();
   const data = await eventPayload(req, req.params.slug);

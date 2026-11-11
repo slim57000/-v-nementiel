@@ -412,6 +412,7 @@ async function profileMenu() {
         <button type="button" class="me-x" data-me="close" aria-label="Fermer">✕</button>
         <div class="me-head"><button type="button" class="me-edit-av" data-me="avatar" aria-label="Changer d'avatar">${av("big")}<span class="me-pen">✏️</span></button><button type="button" class="me-edit-name" data-me="name"><b>${esc(name || "Mon compte")}</b> <span class="me-pen-txt">✏️</span></button></div>
         <p class="me-sec">Mon espace</p>
+        <a class="me-row" href="/u?id=${esc(me?.id || "")}"><span>🌟</span>${esc(tr("Mon profil public"))}<i>›</i></a>
         <a class="me-row" href="/profil"><span>👤</span>Mon profil<i>›</i></a>
         <button type="button" class="me-row" data-me="likes"><span>❤️</span>Mes favoris<i>›</i></button>
         <button type="button" class="me-row" data-me="reels"><span>🎬</span>${esc(tr("Mes réels"))}<i>›</i></button>
@@ -1161,7 +1162,7 @@ async function reelComments(it, counter) {
   sh.querySelector(".rc-x").onclick = close;
   sh.addEventListener("click", (e) => { if (e.target === sh) close(); });
   const me = await api("/api/auth/me").catch(() => null);
-  const row = (c) => `<div class="rc-item" data-cid="${esc(c.id)}"><span class="rc-av">${esc((c.name || "?")[0].toUpperCase())}</span><div><b>${esc(c.name)}</b> <small class="muted">${esc(agoLong(c.at))}</small><p>${esc(c.text)}</p></div>${me && (me.id === c.by || me.id === it.by || me.isAdmin) ? `<button type="button" class="rc-del" aria-label="${esc(tr("Supprimer"))}">${icon("close", 14)}</button>` : ""}</div>`;
+  const row = (c) => `<div class="rc-item" data-cid="${esc(c.id)}"><a class="rc-av" href="/u?id=${esc(c.by)}">${esc((c.name || "?")[0].toUpperCase())}</a><div><a href="/u?id=${esc(c.by)}"><b>${esc(c.name)}</b></a> <small class="muted">${esc(agoLong(c.at))}</small><p>${esc(c.text)}</p></div>${me && (me.id === c.by || me.id === it.by || me.isAdmin) ? `<button type="button" class="rc-del" aria-label="${esc(tr("Supprimer"))}">${icon("close", 14)}</button>` : ""}</div>`;
   const render = (l) => { box.innerHTML = l.length ? l.map(row).join("") : `<p class="muted small rc-empty">${esc(tr("Soyez le premier à commenter."))}</p>`; box.scrollTop = box.scrollHeight; if (counter) counter.textContent = l.length || ""; };
   let items = await api(`/api/reels/${encodeURIComponent(it.reel)}/comments`).catch(() => []);
   render(items);
@@ -1194,7 +1195,7 @@ function openVideoReels(list, start) {
         ${v.event?.cagnotteUrl ? `<a class="reel-act" href="${esc(v.event.cagnotteUrl)}" target="_blank" rel="noopener"><span>💝</span><small>${esc(tr("Cagnotte"))}</small></a>` : ""}
         ${v.reel ? `<button type="button" class="reel-act" data-rmore="${i}"><span>⋯</span></button>` : ""}
       </div>
-      <div class="reel-info">${v.member ? `<b>${esc(v.title)}</b>` : ""}<small>${v.credit ? `<a href="${esc(v.credit)}" target="_blank" rel="noopener">🎥 ${esc(v.channel)} · ${esc(v.source || "Pexels")}</a>` : `👤 ${esc(v.channel)}`}</small></div></section>`).join("")}
+      <div class="reel-info">${v.member ? `<b>${esc(v.title)}</b>` : ""}<small>${v.credit ? `<a href="${esc(v.credit)}" target="_blank" rel="noopener">🎥 ${esc(v.channel)} · ${esc(v.source || "Pexels")}</a>` : (v.by ? `<a class="reel-who" href="/u?id=${esc(v.by)}">👤 ${esc(v.channel)}</a>` : `👤 ${esc(v.channel)}`)}</small></div></section>`).join("")}
     <button type="button" class="reels-btn reels-close" aria-label="${esc(tr("Fermer"))}">✕</button>
     <button type="button" class="reels-btn reels-sound" aria-label="Son">${reelsSound ? "🔊" : "🔇"}</button>
     <div class="reels-hint">↑</div></div>`);
