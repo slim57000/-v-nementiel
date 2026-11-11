@@ -1695,4 +1695,4 @@ h1, h2, h3 { overflow-wrap: break-word; hyphens: auto; }
 .my-quick-row a { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .segments { overflow-x: auto; scrollbar-width: none; }
 .segments::-webkit-scrollbar { display: none; }
-.segments button { white-space: nowrap; flex: none; }
+.segments button { white-space: nowrap; flex: 1 0 auto; text-align: center; }
