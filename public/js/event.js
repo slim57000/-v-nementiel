@@ -79,6 +79,7 @@ function showEvent(ev) {
   visitorHero(ev);
   // Lien « …#livre-dor » (tableau de bord) : on descend au livre d'or une fois la page affichée.
   // (deux fois : les photos qui se chargent décalent la page, surtout sur iPhone)
+  if (location.hash === "#photos") photoSheet(ev);
   if (location.hash === "#livre-dor") [600, 1800].forEach((ms) => setTimeout(() => $("#livre-dor")?.scrollIntoView({ behavior: ms < 1000 ? "smooth" : "auto", block: "start" }), ms));
   initGuestbook(ev);
 
@@ -225,6 +226,22 @@ function welcome(ev) {
 
 // Arrivée depuis un lien partagé (Facebook, WhatsApp…) : grande affiche plein écran avec la photo,
 // les noms, la date, un compte à rebours et deux actions (voir le faire-part, répondre). Pas pour l'organisateur.
+// QR code « photos » (mur photo, affiche de la salle) : fenêtre d'envoi de photos dès l'arrivée.
+function photoSheet(ev) {
+  document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="photo-sheet" role="dialog" aria-modal="true"><div class="card" style="text-align:center">
+    <h2>📸 ${esc(tr("Partagez vos photos"))}</h2>
+    <p class="muted">${esc(tr("Elles s'affichent en direct sur le mur photo"))}</p>
+    <button type="button" class="btn btn-block" id="ps-go">📷 ${esc(tr("Choisir une photo ou une vidéo"))}</button>
+    <button type="button" class="btn btn-light btn-block" id="ps-close">${esc(tr("Fermer"))}</button>
+  </div></div>`);
+  const close = () => { $("#photo-sheet")?.remove(); history.replaceState(null, "", location.pathname + location.search); };
+  $("#ps-close").onclick = close;
+  $("#ps-go").onclick = () => pickAndUploadPhoto(ev.slug).then(() => {
+    toast(tr("Photo envoyée ✔ Elle apparaît sur le mur photo."));
+    $("#ps-go").textContent = `📷 ${tr("Envoyer une autre photo")}`;
+  }, () => {});
+}
+
 function visitorHero(ev) {
   if (ev.isOwner || document.getElementById("ev-hero")) return;
   const start = new Date(`${ev.date}T${ev.time || "12:00"}`);

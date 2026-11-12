@@ -169,6 +169,7 @@ function card(ev) {
       ${ev.date <= today ? `<a class="film-btn" href="/e/${esc(ev.slug)}?film=1"><span><b>${t("✨ Revivez l'événement")}</b><small>${t("Le film souvenir")}</small></span><i>▶</i></a>` : ""}
       <a class="tool-row" href="/album?id=${ev.id}"><i>📸</i><span><b>${t("Photos des invités")}</b><small>${t("Les invités ajoutent leurs photos depuis le lien de l'événement (bouton +). Retrouvez-les toutes ici, à imprimer ou en PDF.")}</small></span><em>›</em></a>
       <a class="tool-row" href="/mur?id=${ev.id}"><i>📺</i><span><b>${t("Mur photo")}</b><small>${t("À afficher sur une TV pendant la fête : les photos des invités défilent en direct. Ils scannent le QR code pour envoyer les leurs.")}</small></span><em>›</em></a>
+      <a class="tool-row" href="/affiche?id=${ev.id}"><i>🖨️</i><span><b>${t("Affiche QR pour la salle")}</b><small>${t("À imprimer et poser sur les tables : les invités scannent pour envoyer leurs photos et signer le livre d'or.")}</small></span><em>›</em></a>
       <div class="tools-grid">
         <button class="btn btn-light btn-sm" data-action="stats">📊 Statistiques</button>
         <a class="btn btn-light btn-sm" href="/e/${esc(ev.slug)}#livre-dor">✍️ ${t("Livre d'or")}</a>
