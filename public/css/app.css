@@ -1732,3 +1732,20 @@ h1, h2, h3 { overflow-wrap: break-word; hyphens: auto; }
 .replay-bar .btn { margin: 0; }
 .replay-bar .replay-del-btn { color: #e11d48; }
 .rp-card, .rp-card h2, .rp-card b { color: #1d1a21; }
+/* 🛡️ Modération (admin) */
+.mod-card { display: grid; gap: 8px; }
+.mod-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.mod-head small { flex: 1 1 100%; }
+.mod-content { display: grid; gap: 6px; padding: 10px; border-radius: 12px; background: #fff5f7; border: 1px solid #fecdd3; }
+.mod-content img, .mod-content video { max-width: 100%; max-height: 260px; border-radius: 10px; object-fit: contain; background: #000; }
+.mod-content p { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
+.mod-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.mod-actions .btn { margin: 0; }
+.mod-actions .mod-ban { background: #b91c1c !important; }
+[data-theme="dark"] .mod-content { background: #2a1a1f; border-color: #5a2a35; }
+.mod-card { text-align: left; }
+.mod-ban-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--border); }
+.mod-log { display: grid; gap: 2px; padding: 6px 0; border-top: 1px solid var(--border); font-size: .88rem; }
+.mod-help p { margin: 4px 0 0; }
+.mod-help, .mod-help p { text-align: left; }
+.mod-card, .mod-card p, .mod-card small { text-align: left !important; }

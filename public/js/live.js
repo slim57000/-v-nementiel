@@ -122,7 +122,7 @@ async function load() {
     if (new URLSearchParams(location.search).get("zip")) bar.scrollIntoView({ block: "center" });
   }
   // Organisateur : mettre le replay en ligne (ou le retirer) et le supprimer.
-  if (isOwner && state === "replay" && cameras.length) {
+  if ((isOwner || ev.isAdmin) && state === "replay" && cameras.length) {
     document.querySelector(".live-stage").insertAdjacentHTML("afterend", `<div class="replay-bar">
       <span>${ev.replayOnline ? "🌍 Replay <b>en ligne</b> : vos invités peuvent le voir." : "🔒 Replay <b>retiré</b> : vous seul le voyez."}</span>
       <button type="button" class="btn btn-sm" id="replay-pub">${ev.replayOnline ? "🙈 Retirer" : "🌍 Mettre en ligne"}</button>

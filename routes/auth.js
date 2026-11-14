@@ -436,6 +436,14 @@ export const isAdmin = async (organizer) => {
   return !until || until > Date.now();
 };
 
+// Notification (téléphone + cloche) à tous les administrateurs : signalements à traiter.
+export async function alertAdmins(message) {
+  const { notify, orgOwner } = await import("../lib/push.js");
+  const emails = [...new Set([...ADMINS, ...(await listExtraAdmins()).map(low)])];
+  const ids = (await Promise.all(emails.map((e) => findOrganizerByEmail(e).catch(() => null)))).filter(Boolean).map((o) => orgOwner(o.id));
+  if (ids.length) await notify(ids, message);
+}
+
 export async function requireOrganizer(req, res, next) {
   req.organizer = await currentOrganizer(req);
   if (!req.organizer) return res.status(401).json({ error: "Non connecté." });

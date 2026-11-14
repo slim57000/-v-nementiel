@@ -3,6 +3,7 @@ import { Router } from "express";
 import { reqLang } from "../lib/email.js";
 import { randomCode } from "../lib/codes.js";
 import { tooFast } from "../lib/limits.js";
+import { rejectAbuse } from "../lib/moderation.js";
 import { notify, orgOwner } from "../lib/push.js";
 import { ping, dmTopic } from "../lib/realtime.js";
 import { requireOrganizer } from "./auth.js";
@@ -298,7 +299,7 @@ router.delete("/dm/:userId", async (req, res) => {
   res.json({ ok: true });
 });
 
-router.post("/dm/:userId", async (req, res) => {
+router.post("/dm/:userId", rejectAbuse("text"), async (req, res) => {
   const other = Number(req.params.userId);
   const text = String(req.body?.text || "").trim().slice(0, 1000);
   if (!text) return res.status(400).json({ error: "Message vide." });

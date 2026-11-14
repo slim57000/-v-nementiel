@@ -16,12 +16,13 @@ import { sendEmail, EMAIL_ENABLED } from "../lib/email.js";
 import {
   searchEvents, searchOrganizers, findEvent, findOrganizer, saveOrganizer, saveEvent, listEvents,
   listReports, deleteReport, countReports, getSetting, setSetting, findOrganizersByIds,
+  findEventMessage, deleteMessage, findPhoto, deletePhoto, findGuestbookEntry, deleteGuestbookEntry,
   moderationMode, listPendingIds, setPending, setUnlisted, findEventsByIds,
 } from "../lib/store.js";
 import { statfs } from "node:fs/promises";
 import os from "node:os";
 import { USE_SUPABASE, STORAGE_BUCKET } from "../lib/config.js";
-import { UPLOAD_DIR } from "../lib/uploads.js";
+import { UPLOAD_DIR, removeUpload } from "../lib/uploads.js";
 
 const router = Router();
 
@@ -216,16 +217,86 @@ router.delete("/reels/:id", async (req, res) => {
   res.json({ ok: await removeReel(req.params.id) });
 });
 
+// 🛡️ Modération des contenus signalés : le contenu lui-même (texte, photo), son auteur, et les actions.
+async function reportedItem(r) {
+  if (r.kind === "message") return findEventMessage(r.eventId, r.itemId).catch(() => null);
+  if (r.kind === "photo") return findPhoto(r.itemId).catch(() => null);
+  if (r.kind === "guestbook") return findGuestbookEntry(r.itemId).catch(() => null);
+  return null;
+}
 router.get("/reports", async (req, res) => {
-  const reports = await listReports();
-  res.json(await Promise.all(reports.map(async (r) => {
-    const e = await findEvent(r.eventId);
-    return { ...r, eventName: e?.name || "(supprimé)", eventSlug: e?.slug || "" };
+  const [reports, banned, hidden] = await Promise.all([listReports(), getSetting("bannedAuthors").catch(() => null), getSetting("modhidden").catch(() => null)]);
+  // Plusieurs signalements du même contenu : regroupés (le plus récent en premier, avec leur nombre).
+  const groups = new Map();
+  for (const r of reports) { const k = `${r.eventId}:${r.kind}:${r.itemId}`; groups.has(k) ? groups.get(k).push(r) : groups.set(k, [r]); }
+  res.json(await Promise.all([...groups.values()].map(async (list) => {
+    const r = list[0], e = await findEvent(r.eventId), item = await reportedItem(r);
+    const content = item ? { name: item.name || "", text: item.text || "", url: item.url || item.photoUrl || "", author: item.author || "" }
+      : r.kind === "event" ? { name: e?.name || "", text: e?.description || "", url: e?.cover || "", author: "" } : null;
+    return { ...r, ids: list.map((x) => x.id), count: list.length, reasons: [...new Set(list.map((x) => x.reason).filter(Boolean))],
+      eventName: e?.name || "(supprimé)", eventSlug: e?.slug || "", eventId: r.eventId, suspended: Boolean(e?.suspended), content,
+      banned: Boolean(content?.author && (banned || []).includes(content.author)), autoHidden: (hidden || []).includes(`${r.kind}:${r.itemId}`) };
   })));
 });
 
+const closeReports = (ids) => Promise.all(ids.map((id) => deleteReport(Number(id)).catch(() => {})));
+// Contenu masqué automatiquement (3 signalements) : remis en ligne (« rien à signaler ») ou oublié (supprimé).
+async function unhide(r) {
+  const hidden = (await getSetting("modhidden").catch(() => null)) || [];
+  const key = `${r.kind}:${r.itemId}`;
+  if (hidden.includes(key)) await setSetting("modhidden", hidden.filter((k) => k !== key));
+}
+async function modLog(entry) {
+  const log = (await getSetting("modlog").catch(() => null)) || [];
+  log.unshift({ at: new Date().toISOString(), ...entry });
+  await setSetting("modlog", log.slice(0, 200));
+}
 router.delete("/reports/:id", async (req, res) => {
-  await deleteReport(Number(req.params.id));
+  const r = (await listReports()).find((x) => x.id === Number(req.params.id));
+  if (r) {
+    await unhide(r);
+    const [e, item] = await Promise.all([findEvent(r.eventId).catch(() => null), reportedItem(r)]);
+    await modLog({ by: req.admin?.email || "", action: "ok", kind: r.kind, event: r.eventId, eventName: e?.name || "", text: String(item?.text || "").slice(0, 80) });
+  }
+  await closeReports(String(req.query.ids || req.params.id).split(","));
+  res.json({ ok: true });
+});
+// Historique des décisions et auteurs bloqués sur tout le site (avec possibilité de débloquer).
+router.get("/moderation-log", async (req, res) => {
+  const [log, banned, names] = await Promise.all([getSetting("modlog"), getSetting("bannedAuthors"), getSetting("bannedNames")].map((p) => p.catch(() => null)));
+  res.json({ log: log || [], banned: (banned || []).map((a) => ({ author: a, name: (names || {})[a] || "Invité" })) });
+});
+router.delete("/bans/:author", async (req, res) => {
+  const banned = (await getSetting("bannedAuthors").catch(() => null)) || [];
+  await setSetting("bannedAuthors", banned.filter((a) => a !== req.params.author));
+  await modLog({ by: req.admin?.email || "", action: "unban", text: req.params.author });
+  res.json({ ok: true });
+});
+
+// Supprimer le contenu signalé (événement : suspendu), puis clore ses signalements.
+async function removeReported(r) {
+  const item = await reportedItem(r);
+  if (r.kind === "message" && item) await deleteMessage(item);
+  if (r.kind === "photo" && item) { await deletePhoto(item); await removeUpload(item.url); }
+  if (r.kind === "guestbook" && item) { await deleteGuestbookEntry(item); await Promise.all([removeUpload(item.photoUrl), removeUpload(item.audioUrl)]); }
+  if (r.kind === "event") { const e = await findEvent(r.eventId); if (e) await saveEvent({ ...e, suspended: true }); }
+  return item;
+}
+router.post("/reports/:id/remove", async (req, res) => {
+  const r = (await listReports()).find((x) => x.id === Number(req.params.id));
+  if (!r) return res.status(404).json({ error: "Signalement introuvable." });
+  const item = await removeReported(r);
+  // Bloquer aussi l'auteur sur tout le site (il ne peut plus rien publier : chat, photos, livre d'or).
+  if (req.body?.ban && item?.author) {
+    const [banned, names] = await Promise.all([getSetting("bannedAuthors").catch(() => null), getSetting("bannedNames").catch(() => null)]);
+    await setSetting("bannedAuthors", [...new Set([...(banned || []), item.author])]);
+    await setSetting("bannedNames", { ...(names || {}), [item.author]: String(item.name || "Invité").slice(0, 40) });
+  }
+  await unhide(r);
+  await closeReports(String(req.body?.ids || r.id).split(","));
+  const e = await findEvent(r.eventId).catch(() => null);
+  await modLog({ by: req.admin?.email || "", action: req.body?.ban ? "ban" : "remove", kind: r.kind, event: r.eventId, eventName: e?.name || "",
+    name: String(item?.name || ""), text: String(item?.text || "").slice(0, 80) });
   res.json({ ok: true });
 });
 

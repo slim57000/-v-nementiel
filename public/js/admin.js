@@ -52,13 +52,24 @@ const views = {
   },
   async reports() {
     const list = await api("/api/admin/reports");
-    const kinds = { message: "Message du chat", photo: "Photo", guestbook: "Livre d'or", event: "Événement" };
-    return list.map((r) => row(
-      `<b>${kinds[r.kind] || r.kind}</b> sur « ${esc(r.eventName)} »`,
-      `${esc(r.reason || "Sans motif")} · ${new Date(r.createdAt).toLocaleString(LOCALE)}`,
-      `${r.eventSlug ? `<a class="btn btn-light btn-sm" href="/e/${esc(r.eventSlug)}" target="_blank">Voir</a>` : ""}
-       <button class="btn btn-ghost btn-sm" data-act="close-report" data-id="${r.id}">Traité</button>`,
-    )).join("") || "<p class='muted'>Aucun signalement 🎉</p>";
+    const kinds = { message: "💬 Message du chat", photo: "📷 Photo", guestbook: "✍️ Livre d'or", event: "🎉 Événement" };
+    const cards = list.map((r) => {
+      const c = r.content;
+      const media = c?.url ? (/\.(mp4|webm|mov)(\?|#|$)/i.test(c.url) ? `<video src="${esc(c.url)}#t=0.5" controls playsinline preload="metadata"></video>` : `<img src="${esc(c.url)}" alt="" loading="lazy">`) : "";
+      return `<section class="card mod-card">
+        <div class="mod-head"><b>${kinds[r.kind] || r.kind}</b>${r.count > 1 ? ` <span class="report-badge">⚠️ ${r.count} signalements</span>` : ""}${r.autoHidden ? ' <span class="badge private">🙈 Masqué automatiquement</span>' : ""}
+          <small class="muted">sur « ${esc(r.eventName)} » · ${new Date(r.createdAt).toLocaleString(LOCALE)}</small></div>
+        ${c ? `<div class="mod-content">${media}${c.text ? `<p>${esc(c.text)}</p>` : ""}<small class="muted">Publié par : ${esc(c.name || "Invité")}${r.banned ? " · ⛔ déjà bloqué" : ""}</small></div>`
+          : `<p class="muted small">Contenu déjà supprimé.</p>`}
+        <p class="small"><b>Motif :</b> ${esc(r.reasons.join(" · ") || "Sans motif")}</p>
+        <div class="mod-actions">
+          ${c ? `<button class="btn btn-sm mod-del" data-act="mod-remove" data-id="${r.id}" data-ids="${r.ids.join(",")}">🗑️ ${r.kind === "event" ? "Suspendre l'événement" : "Supprimer le contenu"}</button>` : ""}
+          ${c?.author ? `<button class="btn btn-sm mod-ban" data-act="mod-ban" data-id="${r.id}" data-ids="${r.ids.join(",")}">⛔ Supprimer + bloquer l'auteur</button>` : ""}
+          ${r.eventSlug ? `<a class="btn btn-light btn-sm" href="/e/${esc(r.eventSlug)}" target="_blank">Voir l'événement</a>` : ""}
+          <button class="btn btn-ghost btn-sm" data-act="close-report" data-id="${r.id}" data-ids="${r.ids.join(",")}">✅ Rien à signaler</button>
+        </div></section>`;
+    }).join("") || "<p class='muted'>Aucun signalement 🎉</p>";
+    return cards + await modHistory();
   },
   async contact() {
     const list = await api("/api/admin/contact");
@@ -348,7 +359,7 @@ $("#content").addEventListener("click", async (e) => {
     await api(`/api/admin/contact/${btn.dataset.id}`, { method: "DELETE" }).catch(() => {});
     stats(); return render();
   }
-  const { act, id, on, p, demo, mod } = e.target.dataset;
+  const { act, id, on, p, demo, mod, ids } = e.target.dataset;
   try {
     if (demo) {
       if (demo === "del" && !confirm("Supprimer tous les événements de démonstration ?")) return;
@@ -422,9 +433,36 @@ $("#content").addEventListener("click", async (e) => {
       if (on === "true" && !confirm("Bloquer cet utilisateur ? Ses événements seront suspendus.")) return;
       await api(`/api/admin/organizers/${id}/block`, { method: "POST", body: { blocked: on === "true" } });
     }
-    if (act === "close-report") await api(`/api/admin/reports/${id}`, { method: "DELETE" });
+    if (act === "close-report") await api(`/api/admin/reports/${id}?ids=${encodeURIComponent(ids || id)}`, { method: "DELETE" });
+    if (act === "mod-unban") {
+      if (!confirm("Débloquer cette personne ? Elle pourra de nouveau publier.")) return;
+      await api(`/api/admin/bans/${encodeURIComponent(id)}`, { method: "DELETE" });
+      toast("Auteur débloqué ✔");
+    }
+    if (act === "mod-remove" || act === "mod-ban") {
+      const ban = act === "mod-ban";
+      if (!confirm(ban ? "Supprimer ce contenu et bloquer son auteur sur tout MaFeliza ? Il ne pourra plus rien publier." : "Supprimer définitivement ce contenu ?")) return;
+      await api(`/api/admin/reports/${id}/remove`, { method: "POST", body: { ids, ban } });
+      toast(ban ? "Contenu supprimé, auteur bloqué ✔" : "Contenu supprimé ✔");
+    }
     if (act || p || mod) render();
   } catch (err) { toast(err.message); }
 });
 
 render();
+
+// 🛡️ Bas de l'onglet Signalements : comment marche la modération, auteurs bloqués, historique des décisions.
+async function modHistory() {
+  const { log, banned } = await api("/api/admin/moderation-log").catch(() => ({ log: [], banned: [] }));
+  const ACT = { remove: "🗑️ Contenu supprimé", ban: "⛔ Supprimé + auteur bloqué", ok: "✅ Rien à signaler", unban: "🔓 Auteur débloqué" };
+  return `<section class="card mod-card mod-help"><b>🛡️ Comment ça marche</b>
+      <p class="small muted">Insultes, propos haineux et spam sont refusés automatiquement avant publication (chat, livre d'or, messages privés, légendes).
+      Un contenu signalé par 3 personnes est masqué tout de suite, en attendant votre décision. Vous recevez une notification à chaque nouveau signalement.</p></section>
+    <section class="card mod-card"><b>⛔ Auteurs bloqués (${banned.length})</b>
+      ${banned.map((b) => `<div class="mod-ban-row"><span>${esc(b.name)}</span><button class="btn btn-light btn-sm" data-act="mod-unban" data-id="${esc(b.author)}">🔓 Débloquer</button></div>`).join("") || '<p class="muted small">Personne.</p>'}</section>
+    <section class="card mod-card"><b>📜 Historique des décisions</b>
+      ${log.slice(0, 50).map((l) => `<div class="mod-log"><small class="muted">${new Date(l.at).toLocaleString(LOCALE)} · ${esc(l.by || "")}</small>
+        <span>${ACT[l.action] || (l.ban ? ACT.ban : ACT.remove)}${l.eventName ? ` · « ${esc(l.eventName)} »` : ""}${l.text ? ` — ${esc(l.text)}` : ""}</span></div>`).join("") || '<p class="muted small">Aucune décision pour le moment.</p>'}</section>`;
+}
+// Lien des notifications de signalement (/admin#reports) : onglet Signalements ouvert directement.
+if (location.hash === "#reports") setTimeout(() => document.querySelector('[data-tab="reports"]')?.click(), 600);

@@ -172,7 +172,7 @@ export async function eventPayload(req, slug) {
     camerasWithLive(event.cameras),
   ]);
   const view = publicView(withVisibility(event, unlisted));
-  return { locked: false, isOwner, loggedIn: Boolean(me), ...view, cameras, id: event.id, premium, replayDays: replayDays(premium), replayDeleted: Boolean(replayDeleted), replayOnline: !replayHidden, program: program || null, pot: pot || null, reactions: reactions || {} };
+  return { locked: false, isOwner, isAdmin: Boolean(me && !isOwner && await isAdmin(me).catch(() => false)), loggedIn: Boolean(me), ...view, cameras, id: event.id, premium, replayDays: replayDays(premium), replayDeleted: Boolean(replayDeleted), replayOnline: !replayHidden, program: program || null, pot: pot || null, reactions: reactions || {} };
 }
 router.get("/:slug", async (req, res) => {
   const t0 = Date.now();

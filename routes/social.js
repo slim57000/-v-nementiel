@@ -8,14 +8,15 @@ import { recordPeak, isPremium } from "../lib/premium.js";
 import {
   findEventBySlug, addMessage, listMessages, addPhoto, listPhotos, findPhoto, deletePhoto,
   addGuestbookEntry, listGuestbook, findGuestbookEntry, updateGuestbookEntry, likeGuestbookEntry, deleteGuestbookEntry,
-  findEventMessage, deleteMessage, addReport, saveEvent, touchPresence,
+  findEventMessage, deleteMessage, addReport, listReports, saveEvent, touchPresence,
 } from "../lib/store.js";
 import { guestAuthor } from "../lib/guest.js";
 import { getSetting, setSetting } from "../lib/store.js";
+import { rejectAbuse } from "../lib/moderation.js";
 import { rsvpMail, guestbookMail } from "../lib/confirmations.js";
 import { saveDataUrl, removeUpload, isOwnUpload, isVideoUrl, videoUploadTarget, saveLocalVideo, MAX_VIDEO_BYTES } from "../lib/uploads.js";
 import { hasAccess } from "./public.js";
-import { currentOrganizer } from "./auth.js";
+import { currentOrganizer, alertAdmins, isAdmin } from "./auth.js";
 import { LIVEKIT_ENABLED, LIVEKIT_URL, lkToken, isLkRoom, isLive } from "../lib/livekit.js";
 
 const router = Router({ mergeParams: true });
@@ -31,6 +32,9 @@ router.use(async (req, res, next) => {
   if (!(await hasAccess(req, event))) return res.status(403).json({ error: "Accès réservé aux invités." });
   req.event = event;
   req.author = guestAuthor(req, res);
+  // Modération : auteurs bloqués sur tout le site et contenus masqués (3 signalements), lus une fois par requête.
+  const [banned, hidden] = await Promise.all([getSetting("bannedAuthors").catch(() => null), getSetting("modhidden").catch(() => null)]);
+  req.mod = { banned: new Set(banned || []), hidden: new Set(hidden || []) };
   next();
 });
 
@@ -43,7 +47,7 @@ router.get("/lk", async (req, res) => {
   // (replay supprimé par l'organisateur : la liste a été vidée)
   // Replay retiré par l'organisateur : invisible pour les invités (l'organisateur le voit toujours).
   const past = req.event.date < new Date().toISOString().slice(0, 10);
-  const hidden = past && (await getSetting(`replayhide:${req.event.id}`)) && !(await isOwner(req));
+  const hidden = past && (await getSetting(`replayhide:${req.event.id}`)) && !(await canSeeHiddenReplay(req));
   const mine = hidden ? [] : (all || []).filter((s) => s.room === room);
   const replay = mine.map((s) => s.url);
   res.json({
@@ -76,11 +80,14 @@ export async function sealCapsules(eventId, entries, author) {
     return { ...e, capsule: date, sealed: true, text: "", photoUrl: null, audioUrl: null, replies: [] };
   });
 }
-const visible = (req, items) => items.filter((i) => !i.author || !(req.event.blockedAuthors || []).includes(i.author));
+const visible = (req, items, kind = "message") => items.filter((i) => !(i.author && ((req.event.blockedAuthors || []).includes(i.author) || req.mod.banned.has(i.author)))
+  && !req.mod.hidden.has(`${kind}:${i.id}`));
 
 // Une personne bloquée ne peut plus rien publier sur l'événement.
-function notBlocked(req, res, next) {
-  if ((req.event.blockedAuthors || []).includes(req.author)) {
+async function notBlocked(req, res, next) {
+  // Bloqué par l'organisateur sur cet événement, ou par la modération MaFeliza sur tout le site.
+  const banned = (await getSetting("bannedAuthors").catch(() => null)) || [];
+  if ((req.event.blockedAuthors || []).includes(req.author) || banned.includes(req.author)) {
     return res.status(403).json({ error: "Vous ne pouvez plus publier sur cet événement." });
   }
   next();
@@ -89,10 +96,10 @@ function notBlocked(req, res, next) {
 // Nouveaux messages et réactions depuis `after` (interrogé toutes les quelques secondes).
 router.get("/feed", async (req, res) => {
   const after = Math.max(0, Number(req.query.after) || 0);
-  res.json(visible(req, await listMessages(req.event.id, after)));
+  res.json(visible(req, await listMessages(req.event.id, after), "message"));
 });
 
-router.post("/messages", notBlocked, async (req, res) => {
+router.post("/messages", notBlocked, rejectAbuse("text"), async (req, res) => {
   const name = await authorName(req);
   const text = clean(req.body?.text, 200);
   if (!name || !text) return res.status(400).json({ error: "Prénom et message obligatoires." });
@@ -161,14 +168,14 @@ router.get("/calendar.ics", (req, res) => {
 
 router.get("/photos", async (req, res) => {
   const limit = Math.min(Number(req.query.limit) || 60, 200);
-  res.json(visible(req, (await listPhotos(req.event.id, limit + 50)).filter((p) => !p.story).slice(0, limit)));
+  res.json(visible(req, (await listPhotos(req.event.id, limit + 50)).filter((p) => !p.story).slice(0, limit), "photo"));
 });
 
 // Stories des dernières 24 h (les plus anciennes d'abord, comme sur Instagram).
 const DAY = 24 * 3600 * 1000;
 export const activeStories = (photos) => photos.filter((p) => p.story && Date.now() - new Date(p.createdAt) < DAY).reverse();
 router.get("/stories", async (req, res) => {
-  res.json(await withReactions(visible(req, activeStories(await listPhotos(req.event.id, 200)))));
+  res.json(await withReactions(visible(req, activeStories(await listPhotos(req.event.id, 200)), "photo")));
 });
 
 // Réactions aux stories : compteur par emoji (réglage « storyreact:{id} »), l'organisateur est prévenu.
@@ -248,7 +255,7 @@ router.post("/event-react", async (req, res) => {
   res.json(counts);
 });
 
-router.post("/photos", notBlocked, async (req, res) => {
+router.post("/photos", notBlocked, rejectAbuse("caption"), async (req, res) => {
   const name = await authorName(req);
   if (!name) return res.status(400).json({ error: "Prénom obligatoire." });
   if (await tooFast(`${req.ip}:photo`, 20, 3_600_000)) return res.status(429).json({ error: "Limite de photos atteinte, réessayez plus tard." });
@@ -297,6 +304,8 @@ router.put("/video-file", notBlocked, express.raw({ type: () => true, limit: MAX
 });
 
 const isOwner = async (req) => (await currentOrganizer(req))?.id === req.event.organizerId;
+// Replay retiré : visible par l'organisateur et par l'administration.
+const canSeeHiddenReplay = async (req) => { const me = await currentOrganizer(req); return Boolean(me && (me.id === req.event.organizerId || await isAdmin(me))); };
 const ownerOnly = async (req, res, next) =>
   (await isOwner(req)) ? next() : res.status(403).json({ error: "Réservé à l'organisateur." });
 
@@ -311,10 +320,10 @@ router.delete("/photos/:id", ownerOnly, async (req, res) => {
 
 // --- Livre d'or : texte, photo et/ou message vocal ---
 router.get("/guestbook", async (req, res) => {
-  res.json(await sealCapsules(req.event.id, visible(req, await listGuestbook(req.event.id)), req.author));
+  res.json(await sealCapsules(req.event.id, visible(req, await listGuestbook(req.event.id), "guestbook"), req.author));
 });
 
-router.post("/guestbook", notBlocked, async (req, res) => {
+router.post("/guestbook", notBlocked, rejectAbuse("text"), async (req, res) => {
   const name = await authorName(req);
   const text = String(req.body?.text ?? "").trim().slice(0, 1000);
   if (!name) return res.status(400).json({ error: "Prénom obligatoire." });
@@ -359,7 +368,7 @@ router.post("/guestbook/:id/like", async (req, res) => {
 });
 
 // Réponse à un message du livre d'or (50 max par message).
-router.post("/guestbook/:id/replies", notBlocked, async (req, res) => {
+router.post("/guestbook/:id/replies", notBlocked, rejectAbuse("text"), async (req, res) => {
   const name = await authorName(req);
   const text = String(req.body?.text ?? "").trim().slice(0, 500);
   if (!name || !text) return res.status(400).json({ error: "Écrivez votre réponse." });
@@ -414,6 +423,15 @@ router.post("/reports", async (req, res) => {
   if (!["message", "photo", "guestbook", "event"].includes(kind) || !itemId) return res.status(400).json({ error: "Signalement invalide." });
   if (await tooFast(`${req.ip}:report`, 10, 3_600_000)) return res.status(429).json({ error: "Trop de signalements, réessayez plus tard." });
   await addReport(req.event.id, { kind, itemId, reason: clean(req.body?.reason, 300), author: req.author });
+  const same = (await listReports()).filter((r) => r.eventId === req.event.id && r.kind === kind && r.itemId === itemId);
+  // 3 signalements (de personnes différentes) : le contenu est masqué en attendant la décision de la modération.
+  if (kind !== "event" && new Set(same.map((r) => r.author)).size >= 3) {
+    const hidden = new Set((await getSetting("modhidden").catch(() => null)) || []);
+    hidden.add(`${kind}:${itemId}`);
+    await setSetting("modhidden", [...hidden].slice(-2000));
+  }
+  // Alerte immédiate aux administrateurs (une seule par contenu).
+  if (same.length === 1) alertAdmins({ title: "⚠️ Nouveau signalement", body: `${{ message: "Message", photo: "Photo", guestbook: "Livre d'or", event: "Événement" }[kind]} sur « ${req.event.name} »${req.body?.reason ? ` : ${clean(req.body.reason, 80)}` : ""}`, url: "/admin#reports" }).catch(() => {});
   res.status(201).json({ ok: true });
 });
 

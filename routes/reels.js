@@ -8,6 +8,7 @@ import { randomBytes } from "node:crypto";
 import { getSetting, setSetting, findEventBySlug } from "../lib/store.js";
 import { requireOrganizer, isAdmin } from "./auth.js";
 import { tooFast } from "../lib/limits.js";
+import { rejectAbuse } from "../lib/moderation.js";
 import { UPLOAD_DIR } from "../lib/uploads.js";
 
 const router = Router();
@@ -66,7 +67,7 @@ router.post("/chunk", requireOrganizer, express.raw({ type: () => true, limit: "
 });
 
 // Publication : vidéo envoyée + légende, miniature et événement facultatif.
-router.post("/", requireOrganizer, async (req, res) => {
+router.post("/", requireOrganizer, rejectAbuse("caption"), async (req, res) => {
   const u = String(req.body?.u || ""), type = String(req.body?.type || "").split(";")[0].trim().toLowerCase();
   const file = tmpOf(req.organizer.id, u);
   if (!/^[a-f0-9]{16}$/.test(u) || !existsSync(file)) return res.status(400).json({ error: "Vidéo introuvable, réessayez." });

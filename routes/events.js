@@ -1,6 +1,6 @@
 // API /api/events : espace organisateur (créer, modifier, supprimer ses événements, statistiques, replay, cagnotte).
 import { Router } from "express";
-import { requireOrganizer } from "./auth.js";
+import { requireOrganizer, isAdmin } from "./auth.js";
 import { parseEventInput, ownerView } from "../lib/events.js";
 import { randomCode, slugify } from "../lib/codes.js";
 import { saveDataUrl, removeUpload, isOwnUpload } from "../lib/uploads.js";
@@ -30,6 +30,12 @@ router.use(requireOrganizer);
 async function findOwned(req) {
   const event = await findEvent(Number(req.params.id));
   return event?.organizerId === req.organizer.id ? event : null;
+}
+// Replay : l'organisateur, ou un administrateur MaFeliza (modération).
+async function findOwnedOrAdmin(req) {
+  const event = await findEvent(Number(req.params.id));
+  if (!event) return null;
+  return event.organizerId === req.organizer.id || (await isAdmin(req.organizer)) ? event : null;
 }
 
 // Gère les images envoyées : nouvelle couverture et photo propre au faire-part.
@@ -172,7 +178,7 @@ router.post("/:id/invites", handle(async (req, res) => {
 
 // Segments du replay (organisateur) : pour les inclure dans le zip des souvenirs.
 router.get("/:id/replay", handle(async (req, res) => {
-  const event = await findOwned(req);
+  const event = await findOwnedOrAdmin(req);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
   const names = Object.fromEntries((event.cameras || []).map((c) => [c.url.replace(/^lk:/, ""), c.name]));
   const parts = (await getSetting(`replay:${event.id}`).catch(() => null)) || [];
@@ -181,7 +187,7 @@ router.get("/:id/replay", handle(async (req, res) => {
 
 // Replay en ligne (par défaut) ou retiré temporairement par l'organisateur (réversible).
 router.patch("/:id/replay", handle(async (req, res) => {
-  const event = await findOwned(req);
+  const event = await findOwnedOrAdmin(req);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
   const online = Boolean(req.body?.online);
   await setSetting(`replayhide:${event.id}`, online ? null : true);
@@ -202,7 +208,7 @@ router.post("/:id/replay/send", handle(async (req, res) => {
 
 // Supprimer une seule partie du replay (organisateur) : le fichier vidéo est effacé, les autres parties restent.
 router.delete("/:id/replay/part", handle(async (req, res) => {
-  const event = await findOwned(req);
+  const event = await findOwnedOrAdmin(req);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
   const url = String(req.body?.url || req.query.url || "");
   const parts = (await getSetting(`replay:${event.id}`).catch(() => null)) || [];
@@ -215,7 +221,7 @@ router.delete("/:id/replay/part", handle(async (req, res) => {
 
 // Supprimer le replay (organisateur) : vidéos enregistrées effacées et lecteur fermé aux invités.
 router.delete("/:id/replay", handle(async (req, res) => {
-  const event = await findOwned(req);
+  const event = await findOwnedOrAdmin(req);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
   const parts = (await getSetting(`replay:${event.id}`).catch(() => null)) || [];
   await Promise.all(parts.map((p) => removeUpload(p.url)));
