@@ -46,7 +46,10 @@
     // Lecteur d'une caméra « téléphone » (LiveKit) : affiché dans le live comme une vidéo YouTube.
     const q = new URLSearchParams(location.search);
     const video = document.getElementById("video"), msg = document.getElementById("msg"), sound = document.getElementById("sound");
-    const say = (t) => { msg.textContent = t; msg.classList.toggle("hidden", !t); };
+    // Messages dans la langue du visiteur (dictionnaire du site).
+    let T = (t) => t;
+    import("/js/i18n.js").then(({ tr }) => { T = tr; if (msg.dataset.fr) msg.textContent = tr(msg.dataset.fr); }).catch(() => {});
+    const say = (t) => { msg.dataset.fr = t; msg.textContent = T(t); msg.classList.toggle("hidden", !t); };
     const { Room, RoomEvent, Track } = LivekitClient;
     const room = new Room({ adaptiveStream: true });
     let audio = null;
@@ -63,7 +66,7 @@
     });
     room.on(RoomEvent.TrackUnsubscribed, (track) => {
       track.detach();
-      if (track.kind === Track.Kind.Video) { say("Le direct est en pause… le replay arrive dans un instant."); live = false; setTimeout(watch, 6000); }
+      if (track.kind === Track.Kind.Video) { say("Le direct est en pause, il reprend dans un instant…"); live = false; setTimeout(watch, 6000); }
     });
     room.on(RoomEvent.Disconnected, () => say("Direct terminé."));
     sound.addEventListener("click", async () => {
@@ -73,7 +76,7 @@
       sound.classList.add("hidden");
     });
     // Replay : les segments enregistrés s'enchaînent comme une seule vidéo.
-    function playReplay(parts, brand, times = []) {
+    function playReplay(parts, brand, times = [], today = false) {
       // Signature discrète + écran de fin (sauf organisateur Premium).
       if (brand) {
         document.getElementById("brand").classList.remove("hidden");
@@ -93,11 +96,13 @@
       // Plusieurs parties : ‹ › pour passer de l'une à l'autre, et la liste (heure de début) pour en choisir une.
       let PART = "Partie";
       import("/js/i18n.js").then(({ tr }) => { PART = tr("Partie"); if (multi) paint(); }).catch(() => {}); // langue du visiteur
-      const multi = parts.length > 1, nav = document.getElementById("parts"), list = document.getElementById("plist");
+      let multi = parts.length > 1;
+      const nav = document.getElementById("parts"), list = document.getElementById("plist");
       const hour = (k) => (times[k] ? new Date(times[k]).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "");
       const go = (k) => { i = Math.max(0, Math.min(parts.length - 1, k)); list.classList.add("hidden"); document.getElementById("endcard").classList.add("hidden"); load(); video.play().catch(() => {}); };
-      if (multi) {
-        tag.classList.add("hidden"); nav.classList.remove("hidden");
+      const paintMulti = () => { multi = parts.length > 1; if (multi) { tag.classList.add("hidden"); nav.classList.remove("hidden"); } };
+      paintMulti();
+      {
         document.getElementById("p-prev").onclick = () => go(i - 1);
         document.getElementById("p-next").onclick = () => go(i + 1);
         document.getElementById("p-now").onclick = () => {
@@ -115,10 +120,24 @@
           document.getElementById("p-next").disabled = i === parts.length - 1;
         }
       }
+      let atEnd = false;
       video.addEventListener("ended", () => {
-        if (++i < parts.length) { load(); video.play().catch(() => {}); }
-        else if (brand) document.getElementById("endcard").classList.remove("hidden");
+        if (i + 1 < parts.length) { i++; load(); video.play().catch(() => {}); }
+        else { atEnd = true; if (brand && !today) document.getElementById("endcard").classList.remove("hidden"); else if (today) say("La suite du replay arrive dès qu'elle est envoyée…"); }
       });
+      // Jour J : le caméraman envoie de nouvelles parties (1 par minute) : on les ajoute sans recharger la page,
+      // on enchaîne si on était arrivé au bout, et on rebascule sur le direct s'il reprend.
+      if (today) setInterval(async () => {
+        const r = await fetch(`/api/public/${encodeURIComponent(q.get("e"))}/lk?room=${encodeURIComponent(q.get("room"))}`).then((x) => x.json()).catch(() => null);
+        if (!r) return;
+        if (r.live) return location.reload();
+        if (r.replay.length > parts.length) {
+          const before = parts.length;
+          parts.push(...r.replay.slice(before)); times.push(...(r.times || []).slice(before));
+          paintMulti();
+          if (atEnd) { atEnd = false; say(""); i = before; load(); video.play().catch(() => {}); } else paint();
+        }
+      }, 20000);
       load();
       say("");
     }
@@ -130,16 +149,17 @@
       try {
         const res = await fetch(`/api/public/${encodeURIComponent(q.get("e"))}/lk?room=${encodeURIComponent(q.get("room"))}`);
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Direct indisponible.");
-        const { url, token, live: on, replay, brand, times } = await res.json();
+        const { url, token, live: on, replay, brand, times, started, today } = await res.json();
         if (on) {
           live = true;
           await room.connect(url, token);
           if (![...room.remoteParticipants.values()].some((p) => p.videoTrackPublications.size)) say("Le direct va bientôt commencer…");
         } else if (replay.length) {
-          playReplay(replay, brand, times);
+          playReplay(replay, brand, times || [], today);
         } else {
-          say("Le direct va bientôt commencer…");
-          if (++waited < 120) setTimeout(watch, 5000); // ~10 minutes d'attente
+          say(started ? "Le direct est en pause, il reprend dans un instant…" : "Le direct va bientôt commencer…");
+          // Jour J : on continue d'attendre (le direct ou les premières parties du replay), sans limite pratique.
+          if (++waited < (today ? 4000 : 120)) setTimeout(watch, waited < 60 ? 5000 : 15000);
         }
       } catch (err) { live = true; say(err.message || "Direct indisponible."); }
     }

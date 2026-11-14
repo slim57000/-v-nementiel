@@ -39,7 +39,7 @@ function play(index) {
 function paintCams() {
   $("#cams").innerHTML = cameras.map((c, i) => {
     const thumb = thumbnailUrl(c.url);
-    return `<button class="cam ${thumb ? "has-thumb" : ""} ${c.live ? "is-live" : ""}" data-index="${i}" ${thumb ? `style="background-image:url('${esc(thumb)}')"` : ""}>${esc(c.name)}</button>`;
+    return `<button class="cam ${thumb ? "has-thumb" : ""} ${c.live ? "is-live" : ""}" data-index="${i}" ${thumb ? `style="background-image:url('${esc(thumb)}')"` : ""}>${esc(String(c.name || "").replace(/^Caméra(?= \d+$)/, tr("Caméra")))}</button>`;
   }).join("");
 }
 

@@ -52,6 +52,8 @@ router.get("/lk", async (req, res) => {
   const replay = mine.map((s) => s.url);
   res.json({
     live: live && LIVEKIT_ENABLED, replay, times: mine.map((s) => s.at || 0), // heure de chaque partie (navigation du lecteur)
+    // Événement commencé (aujourd'hui, heure passée) : « direct en pause » plutôt que « va bientôt commencer ».
+    started: new Date(`${req.event.date}T${req.event.time || "00:00"}`) <= new Date(), today: req.event.date === new Date().toISOString().slice(0, 10),
     // Signature MaFeliza sur le replay (retirée pour les organisateurs Premium).
     brand: replay.length ? !(await isPremium(req.event.organizerId).catch(() => false)) : false,
     ...(live && LIVEKIT_ENABLED && { url: LIVEKIT_URL, token: lkToken({ room, identity: `v-${req.author}-${Date.now().toString(36)}`, name: "Invité" }) }),
