@@ -44,9 +44,10 @@ router.get("/lk", async (req, res) => {
   // Replay retiré par l'organisateur : invisible pour les invités (l'organisateur le voit toujours).
   const past = req.event.date < new Date().toISOString().slice(0, 10);
   const hidden = past && (await getSetting(`replayhide:${req.event.id}`)) && !(await isOwner(req));
-  const replay = hidden ? [] : (all || []).filter((s) => s.room === room).map((s) => s.url);
+  const mine = hidden ? [] : (all || []).filter((s) => s.room === room);
+  const replay = mine.map((s) => s.url);
   res.json({
-    live: live && LIVEKIT_ENABLED, replay,
+    live: live && LIVEKIT_ENABLED, replay, times: mine.map((s) => s.at || 0), // heure de chaque partie (navigation du lecteur)
     // Signature MaFeliza sur le replay (retirée pour les organisateurs Premium).
     brand: replay.length ? !(await isPremium(req.event.organizerId).catch(() => false)) : false,
     ...(live && LIVEKIT_ENABLED && { url: LIVEKIT_URL, token: lkToken({ room, identity: `v-${req.author}-${Date.now().toString(36)}`, name: "Invité" }) }),

@@ -200,6 +200,19 @@ router.post("/:id/replay/send", handle(async (req, res) => {
   res.json({ sent });
 }));
 
+// Supprimer une seule partie du replay (organisateur) : le fichier vidéo est effacé, les autres parties restent.
+router.delete("/:id/replay/part", handle(async (req, res) => {
+  const event = await findOwned(req);
+  if (!event) return res.status(404).json({ error: "Événement introuvable." });
+  const url = String(req.body?.url || req.query.url || "");
+  const parts = (await getSetting(`replay:${event.id}`).catch(() => null)) || [];
+  const part = parts.find((p) => p.url === url);
+  if (!part) return res.status(404).json({ error: "Partie introuvable." });
+  await setSetting(`replay:${event.id}`, parts.filter((p) => p !== part));
+  await removeUpload(part.url);
+  res.json({ ok: true, left: parts.length - 1 });
+}));
+
 // Supprimer le replay (organisateur) : vidéos enregistrées effacées et lecteur fermé aux invités.
 router.delete("/:id/replay", handle(async (req, res) => {
   const event = await findOwned(req);

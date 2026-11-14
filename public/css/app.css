@@ -1717,4 +1717,18 @@ h1, h2, h3 { overflow-wrap: break-word; hyphens: auto; }
   .no-print { display: none !important; }
   .poster-body { background: #fff; }
   .poster { border-radius: 0; margin: 0; max-width: none; padding: 24px 12px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-}
+}/* ✂️ Parties du replay (organisateur) */
+.rp-card { max-height: 85vh; display: flex; flex-direction: column; }
+.rp-list { overflow-y: auto; flex: 1; margin: 8px 0 12px; display: grid; gap: 8px; text-align: left; }
+.rp-row { display: grid; grid-template-columns: 72px 1fr auto auto; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--border); border-radius: 14px; }
+.rp-row video { width: 72px; height: 48px; object-fit: cover; border-radius: 8px; background: #000; }
+.rp-row video.big { grid-column: 1 / -1; grid-row: 2; width: 100%; height: auto; max-height: 50vh; }
+.rp-row > div { display: grid; min-width: 0; }
+.rp-play, .rp-del { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: var(--card, #fff); cursor: pointer; font-size: 1rem; }
+.rp-del { color: #e11d48; border-color: #fecdd3; }
+/* Barre du replay (organisateur) : texte sur toute la largeur, boutons en dessous qui passent à la ligne */
+.replay-bar { flex-wrap: wrap; justify-content: flex-start; }
+.replay-bar > span { flex: 1 1 100%; }
+.replay-bar .btn { margin: 0; }
+.replay-bar .replay-del-btn { color: #e11d48; }
+.rp-card, .rp-card h2, .rp-card b { color: #1d1a21; }

@@ -126,7 +126,9 @@ async function load() {
     document.querySelector(".live-stage").insertAdjacentHTML("afterend", `<div class="replay-bar">
       <span>${ev.replayOnline ? "🌍 Replay <b>en ligne</b> : vos invités peuvent le voir." : "🔒 Replay <b>retiré</b> : vous seul le voyez."}</span>
       <button type="button" class="btn btn-sm" id="replay-pub">${ev.replayOnline ? "🙈 Retirer" : "🌍 Mettre en ligne"}</button>
-      ${ev.replayOnline ? '<button type="button" class="btn btn-sm btn-light" id="replay-mail">📧 Envoyer aux invités</button>' : ""}</div>`);
+      ${ev.replayOnline ? '<button type="button" class="btn btn-sm btn-light" id="replay-mail">📧 Envoyer aux invités</button>' : ""}
+      <button type="button" class="btn btn-sm btn-light" id="replay-parts">✂️ Gérer les parties</button></div>`);
+    $("#replay-parts").addEventListener("click", () => replayParts(ev));
     $("#replay-mail")?.addEventListener("click", async (e) => {
       const btn = e.currentTarget;
       if (!confirm("Envoyer maintenant le lien du replay par email à vos invités (et à vous) ?")) return;
@@ -144,7 +146,8 @@ async function load() {
         setTimeout(() => location.reload(), 1200);
       } catch (err) { toast(err.message); }
     });
-    $("#stage").insertAdjacentHTML("beforeend", '<button type="button" class="replay-del" id="replay-del">🗑️ Supprimer le replay</button>');
+    // (dans la barre sous la vidéo : rien ne recouvre la navigation entre les parties du lecteur)
+    $(".replay-bar").insertAdjacentHTML("beforeend", '<button type="button" class="btn btn-sm btn-light replay-del-btn" id="replay-del">🗑️ Supprimer le replay</button>');
     $("#replay-del").addEventListener("click", async () => {
       if (!confirm("Supprimer définitivement le replay ? Une copie (.zip) va d'abord être téléchargée sur votre appareil.")) return;
       const btn = $("#replay-del");
@@ -463,3 +466,42 @@ document.querySelector(".live-tabs").addEventListener("click", (e) => {
     else go($("#cams-section"));
   }
 });
+
+// ✂️ Organisateur : liste des parties du replay (aperçu, heure, caméra) et suppression d'une partie.
+async function replayParts(ev) {
+  document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="rp-sheet" role="dialog" aria-modal="true"><div class="card rp-card">
+    <h2>✂️ Parties du replay</h2>
+    <p class="muted small">Touchez ▶ pour revoir une partie. 🗑️ la supprime définitivement (les autres parties restent).</p>
+    <div class="rp-list"><p class="muted">…</p></div>
+    <button type="button" class="btn btn-light btn-block" id="rp-close">Fermer</button>
+  </div></div>`);
+  const sheet = $("#rp-sheet"), box = sheet.querySelector(".rp-list");
+  let changed = false;
+  const close = () => { sheet.remove(); if (changed) location.reload(); };
+  $("#rp-close").onclick = close;
+  sheet.addEventListener("click", (e) => { if (e.target === sheet) close(); });
+  let parts = [];
+  try { parts = await api(`/api/events/${ev.id}/replay`); } catch (err) { box.innerHTML = `<p class="error">${esc(err.message)}</p>`; return; }
+  const hour = (at) => (at ? new Date(at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "");
+  const render = () => {
+    box.innerHTML = parts.length ? parts.map((p, k) => `<div class="rp-row" data-k="${k}">
+      <video src="${esc(p.url)}#t=1" muted playsinline preload="metadata"></video>
+      <div><b>Partie ${k + 1}</b><small class="muted">${esc(hour(p.at))} · ${esc(p.camera)}</small></div>
+      <button type="button" class="rp-play" aria-label="Revoir">▶</button>
+      <button type="button" class="rp-del" aria-label="Supprimer cette partie">🗑️</button></div>`).join("")
+      : '<p class="muted">Plus aucune partie dans le replay.</p>';
+  };
+  render();
+  box.addEventListener("click", async (e) => {
+    const row = e.target.closest(".rp-row");
+    if (!row) return;
+    const p = parts[Number(row.dataset.k)];
+    if (e.target.closest(".rp-play")) { const v = row.querySelector("video"); v.controls = true; v.muted = false; v.classList.add("big"); v.play().catch(() => {}); return; }
+    if (!e.target.closest(".rp-del")) return;
+    if (!confirm(`Supprimer définitivement la partie ${Number(row.dataset.k) + 1} (${hour(p.at)}) ?`)) return;
+    try {
+      await api(`/api/events/${ev.id}/replay/part?url=${encodeURIComponent(p.url)}`, { method: "DELETE" });
+      parts = parts.filter((x) => x !== p); changed = true; render(); toast("Partie supprimée ✔");
+    } catch (err) { toast(err.message); }
+  });
+}
