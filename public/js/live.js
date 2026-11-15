@@ -124,10 +124,10 @@ async function load() {
   // Organisateur : mettre le replay en ligne (ou le retirer) et le supprimer.
   if ((isOwner || ev.isAdmin) && state === "replay" && cameras.length) {
     document.querySelector(".live-stage").insertAdjacentHTML("afterend", `<div class="replay-bar">
-      <span>${ev.replayOnline ? "🌍 Replay <b>en ligne</b> : vos invités peuvent le voir." : "🔒 Replay <b>retiré</b> : vous seul le voyez."}</span>
-      <button type="button" class="btn btn-sm" id="replay-pub">${ev.replayOnline ? "🙈 Retirer" : "🌍 Mettre en ligne"}</button>
+      <span>${esc(tr(ev.replayOnline ? "🌍 Replay en ligne : vos invités peuvent le voir." : "🔒 Replay retiré : vous seul le voyez."))}</span>
+      <button type="button" class="btn btn-sm" id="replay-pub">${esc(tr(ev.replayOnline ? "🙈 Retirer" : "🌍 Mettre en ligne"))}</button>
       ${ev.replayOnline ? '<button type="button" class="btn btn-sm btn-light" id="replay-mail">📧 Envoyer aux invités</button>' : ""}
-      <button type="button" class="btn btn-sm btn-light" id="replay-parts">✂️ Gérer les parties</button></div>`);
+      <button type="button" class="btn btn-sm btn-light" id="replay-parts">${esc(tr("✂️ Gérer les parties"))}</button></div>`);
     $("#replay-parts").addEventListener("click", () => replayParts(ev));
     $("#replay-mail")?.addEventListener("click", async (e) => {
       const btn = e.currentTarget;
@@ -147,7 +147,7 @@ async function load() {
       } catch (err) { toast(err.message); }
     });
     // (dans la barre sous la vidéo : rien ne recouvre la navigation entre les parties du lecteur)
-    $(".replay-bar").insertAdjacentHTML("beforeend", '<button type="button" class="btn btn-sm btn-light replay-del-btn" id="replay-del">🗑️ Supprimer le replay</button>');
+    $(".replay-bar").insertAdjacentHTML("beforeend", `<button type="button" class="btn btn-sm btn-light replay-del-btn" id="replay-del">${esc(tr("🗑️ Supprimer le replay"))}</button>`);
     $("#replay-del").addEventListener("click", async () => {
       if (!confirm("Supprimer définitivement le replay ? Une copie (.zip) va d'abord être téléchargée sur votre appareil.")) return;
       const btn = $("#replay-del");
@@ -471,13 +471,13 @@ document.querySelector(".live-tabs").addEventListener("click", (e) => {
 // Choisir un moment (de … à …) coche toutes les parties de toutes les caméras dans ce créneau ; une seule confirmation.
 async function replayParts(ev) {
   document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="rp-sheet" role="dialog" aria-modal="true"><div class="card rp-card">
-    <h2>✂️ Parties du replay</h2>
-    <div class="rp-range"><label>De <input type="time" id="rp-from"></label><label>à <input type="time" id="rp-to"></label>
-      <button type="button" class="btn btn-sm btn-light" id="rp-pick">Sélectionner ce moment</button></div>
-    <p class="muted small" style="margin:0">Toutes les caméras sont concernées. Vous pouvez aussi cocher les parties une par une (▶ pour revoir).</p>
+    <h2>${esc(tr("✂️ Parties du replay"))}</h2>
+    <div class="rp-range"><label>${esc(tr("De"))} <input type="time" id="rp-from"></label><label>${esc(tr("à"))} <input type="time" id="rp-to"></label>
+      <button type="button" class="btn btn-sm btn-light" id="rp-pick">${esc(tr("Sélectionner ce moment"))}</button></div>
+    <p class="muted small" style="margin:0">${esc(tr("Toutes les caméras sont concernées. Vous pouvez aussi cocher les parties une par une (▶ pour revoir)."))}</p>
     <div class="rp-list"><p class="muted">…</p></div>
-    <button type="button" class="btn btn-block rp-go" id="rp-del-sel" disabled>🗑️ Supprimer la sélection</button>
-    <button type="button" class="btn btn-light btn-block" id="rp-close">Fermer</button>
+    <button type="button" class="btn btn-block rp-go" id="rp-del-sel" disabled>${esc(tr("🗑️ Supprimer la sélection"))}</button>
+    <button type="button" class="btn btn-light btn-block" id="rp-close">${esc(tr("Fermer"))}</button>
   </div></div>`);
   const sheet = $("#rp-sheet"), box = sheet.querySelector(".rp-list");
   let changed = false, parts = [];
@@ -492,7 +492,7 @@ async function replayParts(ev) {
   const paint = () => {
     const btn = $("#rp-del-sel");
     btn.disabled = !picked.size;
-    btn.textContent = picked.size ? `🗑️ Supprimer la sélection (${picked.size})` : "🗑️ Supprimer la sélection";
+    btn.textContent = picked.size ? `${tr("🗑️ Supprimer la sélection")} (${picked.size})` : tr("🗑️ Supprimer la sélection");
     box.querySelectorAll(".rp-row").forEach((r) => { const on = picked.has(r.dataset.key); r.classList.toggle("on", on); r.querySelector("input").checked = on; });
   };
   const render = () => {
@@ -501,7 +501,7 @@ async function replayParts(ev) {
       <video src="${esc(p.url)}#t=1" muted playsinline preload="metadata"></video>
       <div><b>${esc(hm(p.at))}</b><small class="muted"><i class="rp-cam" style="--c:${(cams.indexOf(p.camera) * 67) % 360}"></i>${esc(p.camera)}</small></div>
       <button type="button" class="rp-play" aria-label="Revoir">▶</button></label>`).join("")
-      : '<p class="muted">Plus aucune partie dans le replay.</p>';
+      : `<p class="muted">${esc(tr("Plus aucune partie dans le replay."))}</p>`;
     paint();
   };
   render();
@@ -515,19 +515,19 @@ async function replayParts(ev) {
   });
   $("#rp-pick").onclick = () => {
     const from = $("#rp-from").value, to = $("#rp-to").value;
-    if (!from || !to) return toast("Choisissez l'heure de début et de fin.");
+    if (!from || !to) return toast(tr("Choisissez l'heure de début et de fin."));
     picked.clear();
     // Une partie dure 1 minute : elle est retenue si elle chevauche le créneau.
     for (const p of parts) { const t = hm(p.at), end = hm((p.at || 0) + 50_000); if (end >= from && t <= to) picked.add(p.key); }
     paint();
-    toast(picked.size ? `${picked.size} partie(s) sélectionnée(s), toutes caméras` : "Aucune partie sur ce créneau.");
+    toast(picked.size ? tr("{n} partie(s) sélectionnée(s), toutes caméras").replace("{n}", picked.size) : tr("Aucune partie sur ce créneau."));
   };
   $("#rp-del-sel").onclick = async () => {
-    if (!picked.size || !confirm(`Supprimer définitivement ${picked.size} partie(s) du replay ?`)) return;
+    if (!picked.size || !confirm(tr("Supprimer définitivement {n} partie(s) du replay ?").replace("{n}", picked.size))) return;
     try {
       const r = await api(`/api/events/${ev.id}/replay/delete-parts`, { method: "POST", body: { keys: [...picked] } });
       parts = parts.filter((p) => !picked.has(p.key)); picked.clear(); changed = true; render();
-      toast(`${r.deleted} partie(s) supprimée(s) ✔`);
+      toast(tr("{n} partie(s) supprimée(s) ✔").replace("{n}", r.deleted));
     } catch (err) { toast(err.message); }
   };
 }
