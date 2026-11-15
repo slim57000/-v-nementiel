@@ -152,7 +152,7 @@ const closeAllTracks = () => { openTracks.forEach((t) => { try { t.stop(); } cat
 
 // --- Replay : le téléphone enregistre le direct par segments de 4 min, envoyés au fur et à mesure ---
 const SEGMENT_MS = 60 * 1000; // 1 min : petits fichiers, envoyés vite, rien de perdu si la page se ferme
-let recorder = null, segTimer = null, uploads = Promise.resolve(), recording = false;
+let recorder = null, segTimer = null, recording = false;
 const MIME = ["video/mp4;codecs=avc1,mp4a", "video/mp4", "video/webm;codecs=vp8,opus", "video/webm"]
   .find((m) => window.MediaRecorder?.isTypeSupported?.(m));
 
@@ -163,9 +163,10 @@ function localStream() {
 function startSegment() {
   if (!recording || !MIME) return;
   const chunks = [];
-  const rec = new MediaRecorder(localStream(), { mimeType: MIME, videoBitsPerSecond: 1_000_000, audioBitsPerSecond: 64_000 });
+  // Débit modéré (≈ 4,5 Mo par minute) : l'envoi suit le direct même avec le réseau d'une salle des fêtes.
+  const rec = new MediaRecorder(localStream(), { mimeType: MIME, videoBitsPerSecond: 550_000, audioBitsPerSecond: 64_000 });
   rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
-  rec.onstop = () => { const blob = new Blob(chunks, { type: MIME.split(";")[0] }); if (blob.size > 50_000) uploads = uploads.then(() => sendSegment(blob)); };
+  rec.onstop = () => { const blob = new Blob(chunks, { type: MIME.split(";")[0] }); if (blob.size > 50_000) queueSegment(blob); };
   rec.start(10_000);
   recorder = rec;
   segTimer = setTimeout(() => { rec.stop(); startSegment(); }, SEGMENT_MS);
@@ -179,13 +180,40 @@ function stopRecording() {
   if (rec?.state !== "recording") return Promise.resolve();
   return new Promise((done) => { rec.addEventListener("stop", () => setTimeout(done, 0), { once: true }); rec.stop(); });
 }
-let pending = 0; // segments en cours d'envoi
-async function sendSegment(blob) {
-  const s = encodeURIComponent(slug);
-  pending++;
-  for (let attempt = 1; attempt <= 3; attempt++) {
+// Envoi du replay : chaque morceau est d'abord gardé dans le téléphone (IndexedDB), puis envoyé (2 à la fois).
+// Page fermée, réseau coupé ou téléphone en veille : rien n'est perdu, l'envoi reprend à la réouverture de l'espace caméraman.
+let pending = 0; // morceaux pas encore envoyés
+const DB = () => new Promise((ok, ko) => { const r = indexedDB.open("mf-replay", 1); r.onupgradeneeded = () => r.result.createObjectStore("seg", { keyPath: "id" }); r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error); });
+const tx = async (mode, fn) => { const db = await DB(); return new Promise((ok, ko) => { const t = db.transaction("seg", mode); const out = fn(t.objectStore("seg")); t.oncomplete = () => ok(out?.result); t.onerror = () => ko(t.error); }); };
+const saveSeg = (seg) => tx("readwrite", (st) => st.put(seg)).catch(() => {});
+const dropSeg = (id) => tx("readwrite", (st) => st.delete(id)).catch(() => {});
+const allSegs = () => tx("readonly", (st) => st.getAll()).catch(() => []);
+const sending = new Set(), waiting = [];
+function paintPending() {
+  pending = sending.size + waiting.length;
+  let el = document.getElementById("rp-pending");
+  if (!el) { $("#live-status")?.insertAdjacentHTML("afterend", '<p id="rp-pending" class="small" style="text-align:center;margin:6px 0 0;font-weight:700"></p>'); el = document.getElementById("rp-pending"); }
+  if (el) { el.textContent = pending ? `📤 ${pending} morceau${pending > 1 ? "x" : ""} du replay en attente d'envoi — gardez cette page ouverte` : ""; el.hidden = !pending; }
+}
+function queueSegment(blob) {
+  const seg = { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, slug, room: roomName, at: Date.now(), type: blob.type, blob };
+  saveSeg(seg);
+  waiting.push(seg);
+  pump();
+}
+function pump() {
+  paintPending();
+  while (sending.size < 2 && waiting.length) {
+    const seg = waiting.shift();
+    sending.add(seg.id);
+    sendSegment(seg).finally(() => { sending.delete(seg.id); pump(); });
+  }
+}
+async function sendSegment(seg) {
+  const s = encodeURIComponent(seg.slug);
+  for (let attempt = 1; attempt <= 6; attempt++) {
     try {
-      const type = blob.type;
+      const { type, blob } = seg;
       const target = await api(`/api/cameraman/${s}/replay-url`, { method: "POST", body: { type, size: blob.size } });
       let url = target.publicUrl;
       if (target.mode === "local") {
@@ -193,15 +221,24 @@ async function sendSegment(blob) {
         if (!r.ok) throw new Error();
         url = (await r.json()).publicUrl;
       } else if (!(await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": type }, body: blob })).ok) throw new Error();
-      await api(`/api/cameraman/${s}/replay`, { method: "POST", body: { room: roomName, url } });
-      pending--;
+      await api(`/api/cameraman/${s}/replay`, { method: "POST", body: { room: seg.room, url, at: seg.at } });
+      await dropSeg(seg.id);
       return;
     } catch {
-      if (attempt === 3) { pending--; toast("Un morceau du replay n'a pas pu être enregistré."); }
-      else await new Promise((ok) => setTimeout(ok, 3000 * attempt)); // réseau instable : nouvel essai
+      if (attempt === 6) { toast("Réseau faible : un morceau du replay sera renvoyé plus tard."); return; } // gardé dans le téléphone
+      await new Promise((ok) => setTimeout(ok, 4000 * attempt)); // réseau instable : nouvel essai
     }
   }
 }
+// Morceaux restés dans le téléphone (page fermée avant la fin de l'envoi) : renvoyés automatiquement.
+async function resumePending() {
+  const list = (await allSegs()).filter((x) => x.slug === slug && !sending.has(x.id) && !waiting.some((w) => w.id === x.id));
+  if (!list.length) return;
+  waiting.push(...list.sort((a, b) => a.at - b.at));
+  pump();
+}
+setInterval(() => { if (slug) resumePending(); }, 60_000);
+setTimeout(() => { if (slug) resumePending(); }, 3000);
 const status = (t) => { $("#live-status").textContent = t; };
 
 async function startLive() {
@@ -266,9 +303,10 @@ async function stopLive(silent) {
   $("#go-live").classList.remove("hidden");
   $("#live-dot").classList.remove("on");
   if (wasLive && !silent) { toast("Direct arrêté"); status("⏳ Envoi du replay… gardez cette page ouverte quelques instants."); }
-  await uploads;
   if (wasLive && roomName) await api(`/api/cameraman/${encodeURIComponent(slug)}/stop-live`, { method: "POST", body: { room: roomName } }).catch(() => {});
-  if (wasLive && !silent) status("✅ Direct arrêté. Le replay est disponible pour les invités.");
+  // Fin de l'envoi des derniers morceaux (s'il reste du retard, il continue ici ou à la prochaine ouverture).
+  while (wasLive && (pending || waiting.length || sending.size)) await new Promise((ok) => setTimeout(ok, 1000));
+  if (wasLive && !silent) status("✅ Direct arrêté. Le replay complet est disponible pour les invités.");
 }
 
 // « 👋 Marie a rejoint » en surimpression sur l'image du caméraman.

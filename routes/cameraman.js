@@ -94,11 +94,15 @@ router.put("/:slug/replay-file", express.raw({ type: () => true, limit: REPLAY_M
 });
 router.post("/:slug/replay", async (req, res) => {
   const { room, url } = req.body || {};
+  // Heure réelle d'enregistrement (morceau renvoyé plus tard) : le replay reste dans l'ordre.
+  const at = Number(req.body?.at) > Date.now() - 3 * 864e5 && Number(req.body?.at) <= Date.now() + 60_000 ? Number(req.body.at) : Date.now();
   if (!isLkRoom(req.event, String(room)) || !isOwnUpload(url)) return res.status(400).json({ error: "Segment invalide." });
   const key = `replay:${req.event.id}`;
   const list = (await getSetting(key)) || [];
   if (list.length >= 720) return res.status(400).json({ error: "Replay trop long." }); // 12 h de segments d'1 min
-  list.push({ room, url, at: Date.now() });
+  if (list.some((x) => x.url === url)) return res.json({ ok: true, count: list.length }); // déjà enregistré (nouvel essai)
+  list.push({ room, url, at });
+  list.sort((x, y) => (x.at || 0) - (y.at || 0));
   await setSetting(key, list);
   if (list.length === 1) replayRecordedMail(req.event);
   if (await isLive(room)) await markLive(room, true); // signe de vie pendant le direct (jamais après l'arrêt)
