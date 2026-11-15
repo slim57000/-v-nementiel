@@ -1749,3 +1749,14 @@ h1, h2, h3 { overflow-wrap: break-word; hyphens: auto; }
 .mod-help p { margin: 4px 0 0; }
 .mod-help, .mod-help p { text-align: left; }
 .mod-card, .mod-card p, .mod-card small { text-align: left !important; }
+/* ✂️ Sélection de parties du replay (plusieurs caméras) */
+.rp-range { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 6px 0; }
+.rp-range label { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+.rp-range input { margin: 0; width: auto; padding: 8px; }
+.rp-range .btn { margin: 0; }
+.rp-row { grid-template-columns: 24px 72px 1fr auto; cursor: pointer; }
+.rp-row input { width: 20px; height: 20px; margin: 0; accent-color: #e11d48; }
+.rp-row.on { border-color: #e11d48; background: #fff1f2; }
+.rp-row video.big { grid-column: 1 / -1; }
+.rp-cam { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: hsl(var(--c) 70% 50%); }
+.rp-go:not(:disabled) { background: #e11d48 !important; }

@@ -182,7 +182,8 @@ router.get("/:id/replay", handle(async (req, res) => {
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
   const names = Object.fromEntries((event.cameras || []).map((c) => [c.url.replace(/^lk:/, ""), c.name]));
   const parts = (await getSetting(`replay:${event.id}`).catch(() => null)) || [];
-  res.json(parts.map((p) => ({ url: p.url, at: p.at, camera: names[p.room] || "Caméra" })));
+  // key : identifiant stable d'une partie (caméra + heure), indépendant de l'adresse de la vidéo.
+  res.json(parts.map((p, i) => ({ key: `${p.room}|${p.at || i}`, url: p.url, at: p.at, camera: names[p.room] || "Caméra" })));
 }));
 
 // Replay en ligne (par défaut) ou retiré temporairement par l'organisateur (réversible).
@@ -206,17 +207,18 @@ router.post("/:id/replay/send", handle(async (req, res) => {
   res.json({ sent });
 }));
 
-// Supprimer une seule partie du replay (organisateur) : le fichier vidéo est effacé, les autres parties restent.
-router.delete("/:id/replay/part", handle(async (req, res) => {
+// Supprimer des parties du replay (une ou plusieurs, toutes caméras confondues) : les fichiers vidéo sont effacés,
+// les autres parties restent. Parties repérées par leur clé « caméra|heure ».
+router.post("/:id/replay/delete-parts", handle(async (req, res) => {
   const event = await findOwnedOrAdmin(req);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
-  const url = String(req.body?.url || req.query.url || "");
+  const keys = new Set((Array.isArray(req.body?.keys) ? req.body.keys : []).map(String));
   const parts = (await getSetting(`replay:${event.id}`).catch(() => null)) || [];
-  const part = parts.find((p) => p.url === url);
-  if (!part) return res.status(404).json({ error: "Partie introuvable." });
-  await setSetting(`replay:${event.id}`, parts.filter((p) => p !== part));
-  await removeUpload(part.url);
-  res.json({ ok: true, left: parts.length - 1 });
+  const gone = parts.filter((p, i) => keys.has(`${p.room}|${p.at || i}`));
+  if (!gone.length) return res.status(404).json({ error: "Partie introuvable." });
+  await setSetting(`replay:${event.id}`, parts.filter((p) => !gone.includes(p)));
+  await Promise.all(gone.map((p) => removeUpload(p.url).catch(() => {})));
+  res.json({ ok: true, deleted: gone.length, left: parts.length - gone.length });
 }));
 
 // Supprimer le replay (organisateur) : vidéos enregistrées effacées et lecteur fermé aux invités.

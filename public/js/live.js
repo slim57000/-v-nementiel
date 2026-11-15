@@ -467,41 +467,67 @@ document.querySelector(".live-tabs").addEventListener("click", (e) => {
   }
 });
 
-// ✂️ Organisateur : liste des parties du replay (aperçu, heure, caméra) et suppression d'une partie.
+// ✂️ Organisateur / administrateur : parties du replay de toutes les caméras, classées par heure.
+// Choisir un moment (de … à …) coche toutes les parties de toutes les caméras dans ce créneau ; une seule confirmation.
 async function replayParts(ev) {
   document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="rp-sheet" role="dialog" aria-modal="true"><div class="card rp-card">
     <h2>✂️ Parties du replay</h2>
-    <p class="muted small">Touchez ▶ pour revoir une partie. 🗑️ la supprime définitivement (les autres parties restent).</p>
+    <div class="rp-range"><label>De <input type="time" id="rp-from"></label><label>à <input type="time" id="rp-to"></label>
+      <button type="button" class="btn btn-sm btn-light" id="rp-pick">Sélectionner ce moment</button></div>
+    <p class="muted small" style="margin:0">Toutes les caméras sont concernées. Vous pouvez aussi cocher les parties une par une (▶ pour revoir).</p>
     <div class="rp-list"><p class="muted">…</p></div>
+    <button type="button" class="btn btn-block rp-go" id="rp-del-sel" disabled>🗑️ Supprimer la sélection</button>
     <button type="button" class="btn btn-light btn-block" id="rp-close">Fermer</button>
   </div></div>`);
   const sheet = $("#rp-sheet"), box = sheet.querySelector(".rp-list");
-  let changed = false;
+  let changed = false, parts = [];
+  const picked = new Set();
   const close = () => { sheet.remove(); if (changed) location.reload(); };
   $("#rp-close").onclick = close;
   sheet.addEventListener("click", (e) => { if (e.target === sheet) close(); });
-  let parts = [];
-  try { parts = await api(`/api/events/${ev.id}/replay`); } catch (err) { box.innerHTML = `<p class="error">${esc(err.message)}</p>`; return; }
-  const hour = (at) => (at ? new Date(at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "");
+  try { parts = (await api(`/api/events/${ev.id}/replay`)).sort((a, b) => (a.at || 0) - (b.at || 0)); } catch (err) { box.innerHTML = `<p class="error">${esc(err.message)}</p>`; return; }
+  const hm = (at) => (at ? new Date(at).toTimeString().slice(0, 5) : "");
+  const cams = [...new Set(parts.map((p) => p.camera))];
+  if (parts.length) { $("#rp-from").value = hm(parts[0].at); $("#rp-to").value = hm(parts.at(-1).at); }
+  const paint = () => {
+    const btn = $("#rp-del-sel");
+    btn.disabled = !picked.size;
+    btn.textContent = picked.size ? `🗑️ Supprimer la sélection (${picked.size})` : "🗑️ Supprimer la sélection";
+    box.querySelectorAll(".rp-row").forEach((r) => { const on = picked.has(r.dataset.key); r.classList.toggle("on", on); r.querySelector("input").checked = on; });
+  };
   const render = () => {
-    box.innerHTML = parts.length ? parts.map((p, k) => `<div class="rp-row" data-k="${k}">
+    box.innerHTML = parts.length ? parts.map((p) => `<label class="rp-row" data-key="${esc(p.key)}">
+      <input type="checkbox">
       <video src="${esc(p.url)}#t=1" muted playsinline preload="metadata"></video>
-      <div><b>Partie ${k + 1}</b><small class="muted">${esc(hour(p.at))} · ${esc(p.camera)}</small></div>
-      <button type="button" class="rp-play" aria-label="Revoir">▶</button>
-      <button type="button" class="rp-del" aria-label="Supprimer cette partie">🗑️</button></div>`).join("")
+      <div><b>${esc(hm(p.at))}</b><small class="muted"><i class="rp-cam" style="--c:${(cams.indexOf(p.camera) * 67) % 360}"></i>${esc(p.camera)}</small></div>
+      <button type="button" class="rp-play" aria-label="Revoir">▶</button></label>`).join("")
       : '<p class="muted">Plus aucune partie dans le replay.</p>';
+    paint();
   };
   render();
-  box.addEventListener("click", async (e) => {
+  box.addEventListener("click", (e) => {
     const row = e.target.closest(".rp-row");
     if (!row) return;
-    const p = parts[Number(row.dataset.k)];
-    if (e.target.closest(".rp-play")) { const v = row.querySelector("video"); v.controls = true; v.muted = false; v.classList.add("big"); v.play().catch(() => {}); return; }
-    if (!e.target.closest(".rp-del")) return;
-    if (!confirm(`Supprimer définitivement la partie ${Number(row.dataset.k) + 1} (${hour(p.at)}) ?`)) return;
-    try {
-      await api(`/api/events/${ev.id}/replay/part?url=${encodeURIComponent(p.url)}`, { method: "DELETE" });
-      parts = parts.filter((x) => x !== p); changed = true; render(); toast("Partie supprimée ✔");
-    } catch (err) { toast(err.message); }
+    if (e.target.closest(".rp-play")) { e.preventDefault(); const v = row.querySelector("video"); v.controls = true; v.muted = false; v.classList.add("big"); v.play().catch(() => {}); return; }
+    if (e.target.tagName !== "INPUT") return;
+    picked.has(row.dataset.key) ? picked.delete(row.dataset.key) : picked.add(row.dataset.key);
+    paint();
   });
+  $("#rp-pick").onclick = () => {
+    const from = $("#rp-from").value, to = $("#rp-to").value;
+    if (!from || !to) return toast("Choisissez l'heure de début et de fin.");
+    picked.clear();
+    // Une partie dure 1 minute : elle est retenue si elle chevauche le créneau.
+    for (const p of parts) { const t = hm(p.at), end = hm((p.at || 0) + 50_000); if (end >= from && t <= to) picked.add(p.key); }
+    paint();
+    toast(picked.size ? `${picked.size} partie(s) sélectionnée(s), toutes caméras` : "Aucune partie sur ce créneau.");
+  };
+  $("#rp-del-sel").onclick = async () => {
+    if (!picked.size || !confirm(`Supprimer définitivement ${picked.size} partie(s) du replay ?`)) return;
+    try {
+      const r = await api(`/api/events/${ev.id}/replay/delete-parts`, { method: "POST", body: { keys: [...picked] } });
+      parts = parts.filter((p) => !picked.has(p.key)); picked.clear(); changed = true; render();
+      toast(`${r.deleted} partie(s) supprimée(s) ✔`);
+    } catch (err) { toast(err.message); }
+  };
 }
