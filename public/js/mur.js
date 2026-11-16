@@ -31,7 +31,7 @@ function next() {
 
 async function refresh() {
   let list;
-  try { list = await api(`/api/public/${encodeURIComponent(ev.slug)}/photos?limit=200`); } catch { return; }
+  try { list = await api(`/api/public/${encodeURIComponent(ev.slug)}/photos?limit=500`); } catch { return; }
   const fresh = list.filter((p) => !seen.has(p.id));
   fresh.forEach((p) => seen.add(p.id));
   items = list;

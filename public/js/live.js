@@ -433,7 +433,7 @@ $("#chat").addEventListener("submit", async (e) => {
 let photos = [];
 
 async function loadPhotos() {
-  try { photos = (await api(`${base}/photos`)).filter((p) => !isHidden(p.author)); } catch { return; }
+  try { photos = (await api(`${base}/photos?limit=2000`)).filter((p) => !isHidden(p.author)); } catch { return; }
   $("#photo-count").textContent = photos.length ? ` ${photos.length}` : "";
   const thumbs = photos.slice(0, 4).map((p, i) => (isVideo(p.url)
     ? `<div class="vid" data-i="${i}"><video src="${esc(p.url)}#t=0.1" muted playsinline preload="metadata"></video></div>`

@@ -169,8 +169,9 @@ router.get("/calendar.ics", (req, res) => {
 });
 
 router.get("/photos", async (req, res) => {
-  const limit = Math.min(Number(req.query.limit) || 60, 200);
-  res.json(visible(req, (await listPhotos(req.event.id, limit + 50)).filter((p) => !p.story).slice(0, limit), "photo"));
+  // Toutes les photos de l'événement (hors stories), les plus récentes d'abord ; jusqu'à 2 000 par appel.
+  const limit = Math.min(Number(req.query.limit) || 60, 2000);
+  res.json(visible(req, (await listPhotos(req.event.id, 100_000)).filter((p) => !p.story), "photo").slice(0, limit));
 });
 
 // Stories des dernières 24 h (les plus anciennes d'abord, comme sur Instagram).

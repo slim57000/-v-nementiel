@@ -7,7 +7,7 @@ $("#print").addEventListener("click", () => print());
 try {
   const ev = await api(`/api/events/${id}`);
   const base = `/api/public/${encodeURIComponent(ev.slug)}`;
-  const [photos, entries] = await Promise.all([api(`${base}/photos?limit=200`), api(`${base}/guestbook`)]);
+  const [photos, entries] = await Promise.all([api(`${base}/photos?limit=2000`), api(`${base}/guestbook`)]);
   document.title = `Album — ${ev.name}`;
   // L'organisateur peut aussi ajouter ses propres photos (même envoi que les invités).
   $("#add-photos").onclick = () => pickAndUploadPhoto(ev.slug).then(() => { toast("Photo ajoutée ✔"); setTimeout(() => location.reload(), 700); }, () => {});

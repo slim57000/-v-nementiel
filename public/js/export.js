@@ -16,7 +16,7 @@ const fetchBytes = async (url) => {
 export async function exportEvent(ev, onProgress = () => {}) {
   const base = `/api/public/${encodeURIComponent(ev.slug)}`;
   const [photos, entries, replay] = await Promise.all([
-    api(`${base}/photos?limit=200`), api(`${base}/guestbook`), api(`/api/events/${ev.id}/replay`).catch(() => []),
+    api(`${base}/photos?limit=2000`), api(`${base}/guestbook`), api(`/api/events/${ev.id}/replay`).catch(() => []),
   ]);
   const files = [];
   const enc = new TextEncoder();
