@@ -241,7 +241,28 @@ setInterval(() => { if (slug) resumePending(); }, 60_000);
 setTimeout(() => { if (slug) resumePending(); }, 3000);
 const status = (t) => { $("#live-status").textContent = t; };
 
+// Relance automatique après une coupure (jusqu'à ~20 min d'essais, de plus en plus espacés).
+let userStopped = false, restarting = false;
+async function autoRestart() {
+  if (restarting) return;
+  restarting = true;
+  status("⚠️ Connexion perdue : reconnexion automatique…");
+  await stopLive(true);
+  for (let attempt = 1; attempt <= 40 && !userStopped && !room; attempt++) {
+    await new Promise((ok) => setTimeout(ok, Math.min(30_000, 3000 * attempt)));
+    if (userStopped) break;
+    status("⚠️ Reconnexion en cours…");
+    await startLive();
+  }
+  restarting = false;
+}
+// Retour sur la page (après un appel, une autre appli…) : l'écran reste allumé.
+document.addEventListener("visibilitychange", async () => {
+  if (document.visibilityState === "visible" && room) { try { wakeLock = await navigator.wakeLock?.request("screen"); } catch { /* facultatif */ } }
+});
+
 async function startLive() {
+  userStopped = false;
   if (!navigator.mediaDevices?.getUserMedia || !window.LivekitClient) return toast("Ce navigateur ne permet pas de filmer. Utilisez Safari ou Chrome à jour.");
   const { Room, RoomEvent, createLocalTracks } = window.LivekitClient;
   $("#go-live").disabled = true;
@@ -259,7 +280,8 @@ async function startLive() {
     room = new Room({ dynacast: true });
     room.on(RoomEvent.Reconnecting, () => status("⚠️ Réseau instable, reconnexion…"));
     room.on(RoomEvent.Reconnected, () => status("Les invités vous voient. Gardez cet écran ouvert."));
-    room.on(RoomEvent.Disconnected, () => { if (room) status("⚠️ Connexion perdue : vérifiez le réseau puis relancez."); });
+    // Coupure longue (réseau, appel…) : le direct se relance tout seul, sans que le caméraman ait à intervenir.
+    room.on(RoomEvent.Disconnected, () => { if (room && !userStopped) autoRestart(); });
     await room.connect(url, token);
     for (const t of tracks) await room.localParticipant.publishTrack(t);
     roomName = rn;
@@ -277,7 +299,7 @@ async function startLive() {
   } catch (err) {
     await stopLive(true);
     status("");
-    toast(err.name === "NotAllowedError" ? "Autorisez la caméra et le micro dans les réglages du navigateur." : err.message);
+    if (!restarting) toast(err.name === "NotAllowedError" ? "Autorisez la caméra et le micro dans les réglages du navigateur." : err.message);
   }
   $("#go-live").disabled = false;
 }
@@ -305,7 +327,7 @@ async function stopLive(silent) {
   if (wasLive && !silent) { toast("Direct arrêté"); status("⏳ Envoi du replay… gardez cette page ouverte quelques instants."); }
   if (wasLive && roomName) await api(`/api/cameraman/${encodeURIComponent(slug)}/stop-live`, { method: "POST", body: { room: roomName } }).catch(() => {});
   // Fin de l'envoi des derniers morceaux (s'il reste du retard, il continue ici ou à la prochaine ouverture).
-  while (wasLive && (pending || waiting.length || sending.size)) await new Promise((ok) => setTimeout(ok, 1000));
+  while (wasLive && !silent && (pending || waiting.length || sending.size)) await new Promise((ok) => setTimeout(ok, 1000));
   if (wasLive && !silent) status("✅ Direct arrêté. Le replay complet est disponible pour les invités.");
 }
 
@@ -356,6 +378,7 @@ $("#go-live").addEventListener("click", startLive);
 $("#stop-live").addEventListener("click", () => {
   if (!room) return;
   // Mémorisé pour qu'un rechargement de la page ne reparte pas tout seul.
+  userStopped = true;
   try { sessionStorage.setItem(STOPPED, slug); } catch { /* ignoré */ }
   stopLive();
 });
