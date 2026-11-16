@@ -24,7 +24,7 @@ const head = `<p class="qp-kicker">${esc(kicker)}</p><h1 class="qp-name">${esc(t
 const qr = (src, label, sub) => `<figure class="qp-qr"><img src="${src}" alt=""><figcaption><b>${esc(label)}</b>${sub ? `<span>${esc(sub)}</span>` : ""}</figcaption></figure>`;
 const FORMATS = {
   // Affiche A4 : 1 par page.
-  a4: { label: "Affiche A4", per: 1, card: () => `<div class="qp-card qp-a4">${head}<div class="qp-two">${qr(qrPhotos, `📸 ${L.photos}`, L.photosSub)}${qr(qrBook, `✍️ ${L.book}`, L.bookSub)}</div><p class="qp-steps">${esc(L.steps)}</p>${brand}</div>` },
+  a4: { label: "Affiche A4", per: 1, card: () => `<div class="qp-card qp-a4">${head}${qr(qrPhotos, `📸 ${L.photos}`, L.photosSub)}${qr(qrBook, `✍️ ${L.book}`, L.bookSub)}<p class="qp-steps">${esc(L.steps)}</p>${brand}</div>` },
   // Cartes de table A6 : 4 par page.
   a6: { label: "Cartes de table ×4", per: 4, card: () => `<div class="qp-card qp-a6">${head}<div class="qp-two">${qr(qrPhotos, `📸 ${L.photos}`)}${qr(qrBook, `✍️ ${L.book}`)}</div><p class="qp-steps">${esc(L.steps)}</p>${brand}</div>` },
   // Marque-pages 50 × 148 mm : 8 par page.

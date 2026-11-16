@@ -1787,13 +1787,14 @@ h1, h2, h3 { overflow-wrap: break-word; hyphens: auto; }
 .qp-brand { margin: 0; display: inline-flex; align-items: center; gap: 1.5mm; color: #c20f68; font: 800 3.4mm system-ui, sans-serif; }
 .qp-brand img { width: 5mm; height: 5mm; }
 /* Affiche A4 */
-.qp-a4 { padding: 12mm 8mm; border: .6mm solid #f6cfe3; border-radius: 6mm; }
+.qp-a4 { padding: 6mm 8mm; }
 .qp-a4 .qp-kicker { font-size: 4.2mm; }
-.qp-a4 .qp-name { font-size: 15mm; }
+.qp-a4 .qp-name { font-size: 13mm; }
 .qp-a4 .qp-date { font-size: 6mm; }
 .qp-a4 .qp-two { gap: 10mm; }
-.qp-a4 .qp-qr img { width: 68mm; }
-.qp-a4 .qp-qr b { font-size: 6mm; }
+.qp-a4 .qp-qr img { width: 80mm; }
+.qp-a4 .qp-qr { padding: 4mm 10mm; border: .5mm solid #f6cfe3; border-radius: 5mm; }
+.qp-a4 .qp-qr b { font-size: 5.5mm; }
 .qp-a4 .qp-qr span { font-size: 4.2mm; }
 .qp-a4 .qp-steps { font-size: 4.4mm; max-width: 150mm; }
 .qp-a4 .qp-brand { font-size: 5mm; }
