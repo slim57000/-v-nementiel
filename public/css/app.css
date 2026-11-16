@@ -1760,3 +1760,62 @@ h1, h2, h3 { overflow-wrap: break-word; hyphens: auto; }
 .rp-row video.big { grid-column: 1 / -1; }
 .rp-cam { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: hsl(var(--c) 70% 50%); }
 .rp-go:not(:disabled) { background: #e11d48 !important; }
+/* 🖨️ Supports QR à imprimer (affiche A4, cartes de table A6, marque-pages) — toujours en clair, même en mode sombre */
+.qp-body { margin: 0; background: #ece7ef; color: #1d1a21; color-scheme: light; }
+.qp-bar { display: flex; align-items: center; gap: 8px; padding: 10px 12px; position: sticky; top: 0; z-index: 5; background: #ece7ef; }
+.qp-bar .btn { margin: 0; flex: none; }
+.qp-formats { flex: 1; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.qp-formats button { flex: none; border: 1px solid #ddd2e2; background: #fff; color: #4a4250; font: 600 .8rem system-ui, sans-serif; padding: 8px 10px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+.qp-formats button.on { background: #1d1a21; border-color: #1d1a21; color: #fff; }
+.qp-hint { text-align: center; color: #6b6170; font-size: .85rem; margin: 0 0 10px; }
+.qp-sheet { width: 210mm; height: 297mm; margin: 0 auto 24px; background: #fff; color: #1d1a21; box-shadow: 0 10px 30px rgba(0,0,0,.12); display: grid; box-sizing: border-box; zoom: var(--qp-zoom, 1); overflow: hidden; }
+.qp-sheet-a4 { grid-template: 1fr / 1fr; padding: 14mm; }
+.qp-sheet-a6 { grid-template: repeat(2, 1fr) / repeat(2, 1fr); }
+.qp-sheet-bm { grid-template: repeat(2, 1fr) / repeat(4, 1fr); }
+.qp-card { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-between; text-align: center; background: #fff; color: #1d1a21; min-width: 0; overflow: hidden; }
+.qp-sheet-a6 .qp-card, .qp-sheet-bm .qp-card { outline: 1px dashed #c9bfcf; outline-offset: -0.5px; }
+.qp-kicker { margin: 0; color: #c20f68; font: 700 3mm/1 system-ui, sans-serif; letter-spacing: .35em; }
+.qp-name { margin: 1.5mm 0 0; font-family: "DM Serif Display", Georgia, serif; font-weight: 400; line-height: 1.05; color: #1d1a21; overflow-wrap: anywhere; }
+.qp-date { margin: 1.5mm 0 0; color: #6b6170; }
+.qp-two { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+.qp-qr { margin: 0; display: grid; justify-items: center; gap: 1.5mm; }
+.qp-qr img { display: block; aspect-ratio: 1; height: auto; image-rendering: pixelated; }
+.qp-qr figcaption { display: grid; gap: .8mm; }
+.qp-qr b { color: #1d1a21; }
+.qp-qr span { color: #6b6170; }
+.qp-steps { margin: 0; color: #4a4250; }
+.qp-brand { margin: 0; display: inline-flex; align-items: center; gap: 1.5mm; color: #c20f68; font: 800 3.4mm system-ui, sans-serif; }
+.qp-brand img { width: 5mm; height: 5mm; }
+/* Affiche A4 */
+.qp-a4 { padding: 12mm 8mm; border: .6mm solid #f6cfe3; border-radius: 6mm; }
+.qp-a4 .qp-kicker { font-size: 4.2mm; }
+.qp-a4 .qp-name { font-size: 15mm; }
+.qp-a4 .qp-date { font-size: 6mm; }
+.qp-a4 .qp-two { gap: 10mm; }
+.qp-a4 .qp-qr img { width: 68mm; }
+.qp-a4 .qp-qr b { font-size: 6mm; }
+.qp-a4 .qp-qr span { font-size: 4.2mm; }
+.qp-a4 .qp-steps { font-size: 4.4mm; max-width: 150mm; }
+.qp-a4 .qp-brand { font-size: 5mm; }
+/* Cartes de table A6 (105 × 148 mm) */
+.qp-a6 { padding: 8mm 6mm 6mm; }
+.qp-a6 .qp-name { font-size: 9mm; }
+.qp-a6 .qp-date { font-size: 3.6mm; }
+.qp-a6 .qp-two { gap: 4mm; }
+.qp-a6 .qp-qr img { width: 40mm; }
+.qp-a6 .qp-qr b { font-size: 3.4mm; }
+.qp-a6 .qp-steps { font-size: 2.8mm; }
+/* Marque-pages (52 × 148 mm) */
+.qp-bm { padding: 7mm 4mm 5mm; }
+.qp-bm .qp-kicker { font-size: 2.4mm; letter-spacing: .25em; }
+.qp-bm .qp-name { font-size: 7mm; }
+.qp-bm .qp-date { font-size: 2.8mm; }
+.qp-bm .qp-qr img { width: 36mm; }
+.qp-bm .qp-qr b { font-size: 3mm; }
+.qp-bm .qp-brand { font-size: 2.8mm; }
+@media print {
+  @page { size: A4 portrait; margin: 0; }
+  .qp-body { background: #fff; }
+  .qp-sheet { margin: 0; box-shadow: none; zoom: 1; -webkit-print-color-adjust: exact; print-color-adjust: exact; break-after: page; }
+  .no-print { display: none !important; }
+}
