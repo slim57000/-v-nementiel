@@ -112,7 +112,7 @@ router.post("/:slug/replay", async (req, res) => {
 router.get("/:slug", (req, res) => res.json(view(req.event)));
 // 📸 Photo prise pendant le direct : ajoutée aux photos des invités (album, mur photo, film souvenir).
 router.post("/:slug/photo", async (req, res) => {
-  if (await tooFast(`camphoto:${req.event.id}`, 120, 3600_000)) return res.status(429).json({ error: "Trop de photos d'un coup, patientez un peu." });
+  if (await tooFast(`camphoto:${req.event.id}`, 1000, 3600_000)) return res.status(429).json({ error: "Trop de photos d'un coup, patientez un peu." });
   try {
     const url = await saveDataUrl(String(req.body?.image || ""));
     const name = String(req.body?.name || "Caméra").replace(/\s+/g, " ").trim().slice(0, 40) || "Caméra";

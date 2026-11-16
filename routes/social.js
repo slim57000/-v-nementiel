@@ -105,7 +105,7 @@ router.post("/messages", notBlocked, rejectAbuse("text"), async (req, res) => {
   const name = await authorName(req);
   const text = clean(req.body?.text, 200);
   if (!name || !text) return res.status(400).json({ error: "Prénom et message obligatoires." });
-  if (await tooFast(`${req.ip}:msg`, 5, 10_000)) return res.status(429).json({ error: "Doucement ! Attendez quelques secondes." });
+  if (await tooFast(`${req.author}:msg`, 5, 10_000) || await tooFast(`${req.ip}:msgall`, 300, 60_000)) return res.status(429).json({ error: "Doucement ! Attendez quelques secondes." });
   const msg = await addMessage(req.event.id, { kind: "chat", name, text, author: req.author });
   await ping(eventTopic(req.event.slug));
   res.status(201).json(msg);
@@ -114,7 +114,7 @@ router.post("/messages", notBlocked, rejectAbuse("text"), async (req, res) => {
 router.post("/reactions", notBlocked, async (req, res) => {
   const emoji = String(req.body?.emoji || "");
   if (!REACTIONS.includes(emoji)) return res.status(400).json({ error: "Réaction inconnue." });
-  if (await tooFast(`${req.ip}:reaction`, 10, 10_000)) return res.status(429).json({ error: "Trop de réactions d'un coup." });
+  if (await tooFast(`${req.author}:reaction`, 10, 10_000) || await tooFast(`${req.ip}:reactall`, 600, 60_000)) return res.status(429).json({ error: "Trop de réactions d'un coup." });
   const msg = await addMessage(req.event.id, { kind: "reaction", name: (await authorName(req)) || "Invité", text: emoji, author: req.author });
   await ping(eventTopic(req.event.slug));
   res.status(201).json(msg);
@@ -261,7 +261,8 @@ router.post("/event-react", async (req, res) => {
 router.post("/photos", notBlocked, rejectAbuse("caption"), async (req, res) => {
   const name = await authorName(req);
   if (!name) return res.status(400).json({ error: "Prénom obligatoire." });
-  if (await tooFast(`${req.ip}:photo`, 20, 3_600_000)) return res.status(429).json({ error: "Limite de photos atteinte, réessayez plus tard." });
+  // Par appareil (le Wi-Fi de la salle est partagé par tous les invités) + plafond large par connexion.
+  if (await tooFast(`${req.author}:photo`, 150, 3_600_000) || await tooFast(`${req.ip}:photoall`, 3000, 3_600_000)) return res.status(429).json({ error: "Limite de photos atteinte, réessayez plus tard." });
   // Stories : réservées au créateur de l'événement.
   if (req.body?.story && !(await isOwner(req))) return res.status(403).json({ error: "Seul l'organisateur peut publier des stories." });
   try {
