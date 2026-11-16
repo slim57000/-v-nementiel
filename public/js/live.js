@@ -121,6 +121,16 @@ async function load() {
     });
     if (new URLSearchParams(location.search).get("zip")) bar.scrollIntoView({ block: "center" });
   }
+  // Jour J (page encore en mode « direct ») : l'organisateur / l'administration peut déjà gérer les parties enregistrées.
+  if ((isOwner || ev.isAdmin) && state === "live" && cameras.some((c) => String(c.url).startsWith("lk:"))) {
+    api(`/api/events/${ev.id}/replay`).then((parts) => {
+      if (!parts?.length || $(".replay-bar")) return;
+      document.querySelector(".live-stage").insertAdjacentHTML("afterend", `<div class="replay-bar">
+        <span>${esc(tr("🎞️ Le replay s'enregistre au fur et à mesure."))}</span>
+        <button type="button" class="btn btn-sm btn-light" id="replay-parts">${esc(tr("✂️ Gérer les parties"))}</button></div>`);
+      $("#replay-parts").addEventListener("click", () => replayParts(ev));
+    }).catch(() => {});
+  }
   // Organisateur : mettre le replay en ligne (ou le retirer) et le supprimer.
   if ((isOwner || ev.isAdmin) && state === "replay" && cameras.length) {
     document.querySelector(".live-stage").insertAdjacentHTML("afterend", `<div class="replay-bar">
