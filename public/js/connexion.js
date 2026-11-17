@@ -2,6 +2,7 @@
 import { api, $, toast } from "./common.js";
 import { BRAND } from "./icons.js";
 import { hasNativeApple, appleNative, inAppView } from "./native.js";
+import { googleInApp } from "./google-app.js";
 
 // Page de retour après connexion (chemin interne uniquement).
 const next = new URLSearchParams(location.search).get("next");
@@ -90,12 +91,14 @@ fetch("/api/config").then((r) => r.json()).then((c) => {
   if (c.emailEnabled) $("#forgot").classList.remove("hidden");
   // Connexion Google (si configurée), masquée dans l'application iOS / Android.
   social = c.social || [];
+  // Appli : Google passe par le navigateur (google-app.js) ; bouton retiré si Google n'est pas configuré.
+  if (inAppView() && !social.includes("google")) document.querySelector('[data-social="Google"]')?.remove();
 }).catch(() => {});
 
-// Logos Apple / Google / Facebook : connexion si configurée, sinon « bientôt ». Masqués dans l'app iOS / Android.
+// Logos Apple / Google / Facebook : connexion si configurée, sinon « bientôt ». Dans l'app : Google via le navigateur, Facebook masqué.
 if (inAppView()) {
-  document.querySelectorAll('[data-social="Google"], [data-social="Facebook"]').forEach((b) => b.remove());
-  if (!hasNativeApple()) $("#social-block")?.remove();
+  document.querySelectorAll('[data-social="Facebook"]').forEach((b) => b.remove());
+  if (!hasNativeApple()) document.querySelector('[data-social="Apple"]')?.remove(); // Android : pas de connexion Apple native
 }
 document.querySelectorAll("[data-social]").forEach((b) => {
   b.innerHTML = BRAND[b.dataset.social.toLowerCase()];
@@ -103,6 +106,7 @@ document.querySelectorAll("[data-social]").forEach((b) => {
     const provider = b.dataset.social.toLowerCase();
     if (provider === "magic") return magicLink();
     if (provider === "apple" && hasNativeApple()) return appleNative(target, toast);
+    if (provider === "google" && inAppView() && social.includes("google")) return googleInApp(target, toast);
     if (social.includes(provider)) location.href = `/api/auth/${provider}?next=${encodeURIComponent(target)}`;
     else toast(`Connexion ${b.dataset.social} : bientôt disponible`);
   });

@@ -179,7 +179,38 @@ router.get("/google", (req, res) => {
   setSigned(res, "gstate", `${nonce}~${encodeURIComponent(safeNext(req.query.next))}`);
   res.redirect(googleAuthUrl(callbackUrl(req), nonce));
 });
+// Connexion Google depuis l'application iOS / Android : Google refuse les vues intégrées, la connexion se fait
+// donc dans le navigateur (Safari / Chrome). L'appli attend avec un identifiant + un secret qu'elle seule connaît ;
+// le navigateur affiche un code à 2 chiffres à comparer avec celui de l'appli avant de valider (anti-hameçonnage).
+const APP_TTL = 10 * 60_000;
+const appKey = (id) => `gapp:${String(id || "").replace(/[^a-f0-9]/g, "").slice(0, 32)}`;
+router.post("/google/app-start", async (req, res) => {
+  if (!GOOGLE_ENABLED) return res.status(503).json({ error: "Connexion Google indisponible." });
+  if (await tooFast(`gapp:${req.ip}`, 20, 600_000)) return res.status(429).json({ error: "Trop de tentatives." });
+  const id = randomBytes(16).toString("hex"), secret = randomBytes(24).toString("hex"), code = String(randomInt(10, 100));
+  await setSetting(appKey(id), { secret, code, next: safeNext(req.body?.next), exp: Date.now() + APP_TTL });
+  res.json({ id, secret, code, url: googleAuthUrl(callbackUrl(req), `app.${id}`) });
+});
+router.post("/google/app-confirm", express.urlencoded({ extended: false }), async (req, res) => {
+  const key = appKey(req.body?.id), rec = await getSetting(key).catch(() => null);
+  // Validation seulement depuis le navigateur qui vient de se connecter à Google (cookie posé au retour de Google) :
+  // quelqu'un qui connaît l'identifiant ne peut pas valider à la place de la personne.
+  if (!rec?.organizerId || rec.exp < Date.now() || getSigned(req, "gapp") !== key) return res.redirect("/connexion-appli?etat=expire");
+  res.clearCookie("gapp");
+  await setSetting(key, { ...rec, done: true });
+  res.redirect("/connexion-appli?etat=ok");
+});
+router.post("/google/app-poll", async (req, res) => {
+  const key = appKey(req.body?.id), rec = await getSetting(key).catch(() => null);
+  if (!rec || rec.exp < Date.now() || rec.secret !== String(req.body?.secret || "")) return res.status(410).json({ error: "Connexion expirée, réessayez." });
+  if (!rec.done) return res.json({ pending: true });
+  await setSetting(key, null);
+  logIn(res, rec.organizerId);
+  res.json({ ok: true, next: rec.next });
+});
+
 router.get("/google/callback", async (req, res) => {
+  if (String(req.query.state || "").startsWith("app.")) return googleAppCallback(req, res);
   const [nonce, next] = (getSigned(req, "gstate") || "").split("~");
   res.clearCookie("gstate");
   // Cookie « gstate » absent : le retour de Google arrive sur une autre adresse que le départ
@@ -203,6 +234,26 @@ router.get("/google/callback", async (req, res) => {
     res.redirect("/connexion?erreur=google-jeton");
   }
 });
+
+async function googleAppCallback(req, res) {
+  const id = String(req.query.state).slice(4), key = appKey(id), rec = await getSetting(key).catch(() => null);
+  if (!rec || rec.exp < Date.now() || !req.query.code) return res.redirect(`/connexion-appli?etat=${req.query.error ? "refus" : "expire"}`);
+  try {
+    const who = await googleIdentity(String(req.query.code), callbackUrl(req));
+    let organizer = await findOrganizerByEmail(who.email);
+    if (!organizer) {
+      organizer = await newAccount(req, who.email, loginCode());
+      organizer = await saveOrganizer({ ...organizer, displayName: who.name.slice(0, 40), avatar: who.avatar });
+    }
+    if (organizer.blocked && !(await unblockOldMinor(organizer))) return res.redirect("/connexion-appli?etat=suspendu");
+    await setSetting(key, { ...rec, organizerId: organizer.id });
+    setSigned(res, "gapp", key);
+    res.redirect(`/connexion-appli?id=${id}&c=${rec.code}`);
+  } catch (err) {
+    console.error("Google (appli) :", err.message);
+    res.redirect("/connexion-appli?etat=erreur");
+  }
+}
 
 // Connexion Facebook : même principe que Google.
 const fbCallbackUrl = (req) => `${origin(req)}/api/auth/facebook/callback`;

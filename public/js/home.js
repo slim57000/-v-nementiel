@@ -2,6 +2,7 @@
 import { api, $, esc, toast, dayBadge, coverOf, liveAttrs } from "./common.js";
 import { icon, BRAND } from "./icons.js";
 import { hasNativeApple, appleNative, inAppView } from "./native.js";
+import { googleInApp } from "./google-app.js";
 
 // Pictogrammes et logos des boutons de connexion.
 document.querySelectorAll("[data-icon]").forEach((el) => { el.innerHTML = icon(el.dataset.icon, 26); });
@@ -10,20 +11,25 @@ document.querySelectorAll("[data-social]").forEach((b) => { b.innerHTML = BRAND[
 // Déjà connecté : « Créer mon événement » mène directement au formulaire.
 api("/api/auth/me").then(() => { document.querySelectorAll("#create, [data-create-link]").forEach((a) => { a.href = "/edit"; }); }).catch(() => {});
 
-// Dans l'application iOS / Android, les connexions sociales sont masquées :
-// Apple refuse les boutons non fonctionnels et Google la connexion dans une vue intégrée.
+// Dans l'application iOS / Android : Facebook masqué (refusé dans une vue intégrée), Google passe par le navigateur
+// (Google refuse la connexion dans une vue intégrée) ; Apple seulement si la connexion Apple native existe.
 if (inAppView()) {
-  document.querySelectorAll('[data-social="Google"], [data-social="Facebook"]').forEach((b) => b.remove());
-  if (!hasNativeApple()) { document.querySelector(".socials")?.remove(); document.querySelector(".divider")?.remove(); }
+  document.querySelectorAll('[data-social="Facebook"]').forEach((b) => b.remove());
+  if (!hasNativeApple()) document.querySelector('[data-social="Apple"]')?.remove(); // Android : pas de connexion Apple native
 }
 
 // Connexions sociales : actives si configurées sur le serveur (Google pour l'instant), sinon « bientôt ».
 let social = [];
-fetch("/api/config").then((r) => r.json()).then((c) => { social = c.social || []; }).catch(() => {});
+fetch("/api/config").then((r) => r.json()).then((c) => {
+  social = c.social || [];
+  // Appli : Google passe par le navigateur (google-app.js) ; bouton retiré si Google n'est pas configuré.
+  if (inAppView() && !social.includes("google")) document.querySelector('[data-social="Google"]')?.remove();
+}).catch(() => {});
 document.querySelectorAll("[data-social]").forEach((b) => b.addEventListener("click", () => {
   const provider = b.dataset.social.toLowerCase();
   if (provider === "magic") { location.href = "/connexion?lien=1"; return; }
   if (provider === "apple" && hasNativeApple()) { appleNative("/dashboard", toast); return; }
+  if (provider === "google" && inAppView() && social.includes("google")) { googleInApp("/dashboard", toast); return; }
   if (social.includes(provider)) location.href = `/api/auth/${provider}?next=/dashboard`;
   else toast(`Connexion ${b.dataset.social} : bientôt disponible`);
 }));
