@@ -3,7 +3,7 @@ import express, { Router } from "express";
 import { replayRecordedMail, replayReadyMail } from "../lib/confirmations.js";
 import { addPhoto, countViewers, listMessages, findEventBySlug, findEventByCameramanCode, saveEvent, getSetting, setSetting, addHistory, clearLimit } from "../lib/store.js";
 import { currentOrganizer } from "./auth.js";
-import { saveDataUrl, videoUploadTarget, saveLocalVideo, isOwnUpload, HAS_STORAGE, MAX_VIDEO_BYTES } from "../lib/uploads.js";
+import { saveDataUrl, videoUploadTarget, saveLocalVideo, issueUpload, claimUpload, HAS_STORAGE, MAX_VIDEO_BYTES } from "../lib/uploads.js";
 import { parseCameras } from "../lib/events.js";
 import { LIVEKIT_ENABLED, LIVEKIT_URL, lkToken, newRoom, LK_PREFIX, isLkRoom, markLive, isLive } from "../lib/livekit.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
@@ -85,22 +85,25 @@ router.post("/:slug/replay-url", async (req, res) => {
   const type = String(req.body?.type || "");
   try {
     const target = await videoUploadTarget(type);
+    await issueUpload(target.publicUrl, `cam${req.event.id}`);
     res.json(target.mode === "inline" ? { mode: "local", uploadUrl: `/api/cameraman/${encodeURIComponent(req.event.slug)}/replay-file?type=${encodeURIComponent(type)}` } : target);
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
-router.put("/:slug/replay-file", express.raw({ type: () => true, limit: REPLAY_MAX }), (req, res) => {
-  try { res.json({ publicUrl: saveLocalVideo(req.body, String(req.query.type || "")) }); }
+router.put("/:slug/replay-file", express.raw({ type: () => true, limit: REPLAY_MAX }), async (req, res) => {
+  try { res.json({ publicUrl: await issueUpload(saveLocalVideo(req.body, String(req.query.type || "")), `cam${req.event.id}`) }); }
   catch (err) { res.status(400).json({ error: err.message }); }
 });
 router.post("/:slug/replay", async (req, res) => {
   const { room, url } = req.body || {};
   // Heure réelle d'enregistrement (morceau renvoyé plus tard) : le replay reste dans l'ordre.
   const at = Number(req.body?.at) > Date.now() - 3 * 864e5 && Number(req.body?.at) <= Date.now() + 60_000 ? Number(req.body.at) : Date.now();
-  if (!isLkRoom(req.event, String(room)) || !isOwnUpload(url)) return res.status(400).json({ error: "Segment invalide." });
+  if (!isLkRoom(req.event, String(room))) return res.status(400).json({ error: "Segment invalide." });
   const key = `replay:${req.event.id}`;
   const list = (await getSetting(key)) || [];
   if (list.length >= 720) return res.status(400).json({ error: "Replay trop long." }); // 12 h de segments d'1 min
   if (list.some((x) => x.url === url)) return res.json({ ok: true, count: list.length }); // déjà enregistré (nouvel essai)
+  // Seulement un fichier envoyé pour CET événement (pas celui d'un autre replay).
+  if (!(await claimUpload(url, `cam${req.event.id}`))) return res.status(400).json({ error: "Segment invalide." });
   list.push({ room, url, at });
   list.sort((x, y) => (x.at || 0) - (y.at || 0));
   await setSetting(key, list);

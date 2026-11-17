@@ -14,7 +14,7 @@ import { guestAuthor } from "../lib/guest.js";
 import { getSetting, setSetting } from "../lib/store.js";
 import { rejectAbuse } from "../lib/moderation.js";
 import { rsvpMail, guestbookMail } from "../lib/confirmations.js";
-import { saveDataUrl, removeUpload, isOwnUpload, isVideoUrl, videoUploadTarget, saveLocalVideo, MAX_VIDEO_BYTES } from "../lib/uploads.js";
+import { saveDataUrl, removeUpload, isVideoUrl, videoUploadTarget, saveLocalVideo, issueUpload, claimUpload, MAX_VIDEO_BYTES } from "../lib/uploads.js";
 import { hasAccess } from "./public.js";
 import { currentOrganizer, alertAdmins, isAdmin } from "./auth.js";
 import { LIVEKIT_ENABLED, LIVEKIT_URL, lkToken, isLkRoom, isLive } from "../lib/livekit.js";
@@ -266,7 +266,7 @@ router.post("/photos", notBlocked, rejectAbuse("caption"), async (req, res) => {
   // Stories : réservées au créateur de l'événement.
   if (req.body?.story && !(await isOwner(req))) return res.status(403).json({ error: "Seul l'organisateur peut publier des stories." });
   try {
-    const url = req.body?.image ? await saveDataUrl(req.body.image) : await videoFrom(req.body);
+    const url = req.body?.image ? await saveDataUrl(req.body.image) : await videoFrom(req);
     if (!url) return res.status(400).json({ error: "Ajoutez une photo ou une vidéo." });
     // Story : visible 24 h dans les stories, jamais dans l'album.
     const story = Boolean(req.body?.story);
@@ -277,10 +277,12 @@ router.post("/photos", notBlocked, rejectAbuse("caption"), async (req, res) => {
 });
 
 // Vidéo courte : envoyée en base64 (`video`, sans Supabase) ou déjà déposée via URL signée (`videoUrl`).
-async function videoFrom(body) {
+const uploader = (req) => `ev${req.event.id}:${req.author}`;
+async function videoFrom(req) {
+  const body = req.body;
   if (body?.video) return saveDataUrl(body.video, "video");
   if (body?.videoUrl) {
-    if (!isOwnUpload(body.videoUrl) || !isVideoUrl(body.videoUrl)) throw new Error("Vidéo invalide.");
+    if (!isVideoUrl(body.videoUrl) || !(await claimUpload(body.videoUrl, uploader(req)))) throw new Error("Vidéo invalide.");
     return body.videoUrl;
   }
   return null;
@@ -294,6 +296,7 @@ router.post("/upload-url", notBlocked, async (req, res) => {
     const target = await videoUploadTarget(String(req.body?.type || ""));
     // Sans Supabase (VPS) : la vidéo est envoyée telle quelle au serveur (50 Mo max), et non en base64 limité à 4 Mo.
     if (target.mode === "inline") return res.json({ mode: "direct", uploadUrl: `/api/public/${encodeURIComponent(req.event.slug)}/video-file?type=${encodeURIComponent(String(req.body?.type || ""))}` });
+    await issueUpload(target.publicUrl, uploader(req));
     res.json(target);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -303,7 +306,7 @@ router.put("/video-file", notBlocked, express.raw({ type: () => true, limit: MAX
   if (await tooFast(`${req.ip}:videofile`, 10, 3_600_000) || await tooFast(`videofile:${req.event.id}`, 300, 24 * 3_600_000)) {
     return res.status(429).json({ error: "Limite de vidéos atteinte, réessayez plus tard." });
   }
-  try { res.json({ publicUrl: saveLocalVideo(req.body, String(req.query.type || "")) }); }
+  try { res.json({ publicUrl: await issueUpload(saveLocalVideo(req.body, String(req.query.type || "")), uploader(req)) }); }
   catch (err) { res.status(400).json({ error: err.message }); }
 });
 
@@ -337,7 +340,7 @@ router.post("/guestbook", notBlocked, rejectAbuse("text"), async (req, res) => {
   if (await tooFast(`${req.ip}:gb`, 5, 600_000)) return res.status(429).json({ error: "Merci ! Réessayez dans quelques minutes." });
   try {
     // La vidéo courte éventuelle est rangée dans le champ « photo » (détectée par son extension).
-    const photoUrl = req.body?.image ? await saveDataUrl(req.body.image) : await videoFrom(req.body);
+    const photoUrl = req.body?.image ? await saveDataUrl(req.body.image) : await videoFrom(req);
     const audioUrl = req.body?.audio ? await saveDataUrl(req.body.audio, "audio") : null;
     // Capsule : date d'ouverture valide (demain à 30 ans), sinon message normal.
     const cap = String(req.body?.capsuleDate || "");

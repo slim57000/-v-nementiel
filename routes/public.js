@@ -6,7 +6,7 @@ import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers, rollDemoDates } from "../lib/demo.js";
 import { Router } from "express";
 import { publicView } from "../lib/events.js";
-import { listRecentPhotos, getSetting as readSetting, setSetting as writeSetting, dataVersion, listHistoryIds, listPendingIds, listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory,  listFriendIds, clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
+import { listRecentPhotos, getSetting as readSetting, setSetting as writeSetting, dataVersion, listHistoryIds, listPendingIds, listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory,  clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
 import { currentOrganizer, isAdmin } from "./auth.js";
 import { listUserReels } from "./reels.js";
@@ -20,13 +20,13 @@ export const hasAccess = async (req, event) =>
   (event.cameramanCode && getSigned(req, `cam${event.id}`) === codeFingerprint(`cam:${event.cameramanCode}`)) ||
   await ownerOrFriend(req, event);
 
-// Le créateur et ses amis (proches de confiance) accèdent à ses événements privés sans code.
+// Le créateur (et l'administration) accède à ses événements privés sans code. Les amis passent par le code :
+// un code ami s'ajoute sans l'accord de l'autre, il ne doit donc pas ouvrir ses événements privés.
 async function ownerOrFriend(req, event) {
   const me = await currentOrganizer(req).catch(() => null);
   if (!me) return false;
   if (me.id === event.organizerId) return true;
-  if (await isAdmin(me).catch(() => false)) return true; // administration : accès à tous les événements (modération)
-  return (await listFriendIds(me.id).catch(() => [])).includes(event.organizerId);
+  return isAdmin(me).catch(() => false); // administration : accès à tous les événements (modération)
 }
 
 // Événements publics à venir : cartes de la page d'accueil et de « Découvrir ».
@@ -88,7 +88,8 @@ router.get("/", async (req, res) => {
     // Privé : la carte montre la photo, la date et le nom (« Mariage de Léa & Tom »), mais ni l'adresse
     // (ville seule), ni les caméras. Le clic mène à l'écran « entrez votre code » : l'accès passe par le code.
     const city = String(e.location || "").split(",").map((x) => x.trim()).filter((x) => x && !COUNTRIES.test(x)).pop()?.replace(/\b[A-Z]{0,2}\d[\dA-Z -]*\b/g, "").replace(/\s+/g, " ").trim() || null;
-    if (e.visibility === "private") return { ...card, city, time: "", location: "", cameras: [], viewers: 0 };
+    // Photo de couverture d'un événement privé : seulement pour son organisateur ou qui l'a déjà ouvert (emoji sinon).
+    if (e.visibility === "private") return { ...card, ...(!(String(e.organizerId) === String(viewer?.id) || opened.has(Number(e.id))) && { cover: null }), city, time: "", location: "", cameras: [], viewers: 0 };
     // Non répertorié : affiché comme un privé, et sans son lien (seul le lien reçu par SMS / WhatsApp y donne accès).
     if (e.visibility === "unlisted" && (String(e.organizerId) === String(viewer?.id) || opened.has(Number(e.id)))) card.visibility = "unlisted";
     else if (e.visibility === "unlisted") {
@@ -207,7 +208,7 @@ router.post("/translate", async (req, res) => {
   const lang = /^[a-z]{2}$/.test(req.body?.lang) ? req.body.lang : "fr";
   const texts = (Array.isArray(req.body?.texts) ? req.body.texts : []).slice(0, 20).map((t) => String(t).slice(0, 2000));
   // any : messages écrits par les invités (chat du live), à traduire même vers le français.
-  if ((lang === "fr" && !req.body?.any) || !texts.length || tooFast(`tr:${req.ip}`, 60, 60 * 1000)) return res.json({ texts });
+  if ((lang === "fr" && !req.body?.any) || !texts.length || await tooFast(`tr:${req.ip}`, 60, 60 * 1000)) return res.json({ texts });
   res.json({ texts: await translateTexts(texts, lang) });
 });
 

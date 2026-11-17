@@ -33,8 +33,11 @@ import { tooFast } from "../lib/limits.js";
 import { isPremium } from "../lib/premium.js";
 
 // Connexion ouverte : cookie de session + marqueur lisible par la page d'accueil pour afficher le tuto.
-function logIn(res, id) {
-  setSigned(res, "org", String(id));
+// Cookie de session « id:version » : la version change quand le mot de passe change (ou « déconnecter partout »),
+// ce qui invalide les sessions ouvertes sur les autres appareils (cookie volé compris).
+async function logIn(res, id) {
+  const o = await findOrganizer(id).catch(() => null);
+  setSigned(res, "org", `${id}:${o?.sessionVersion || 0}`);
   res.cookie("em-tuto", "1", { path: "/", maxAge: 3_600_000, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
 }
 
@@ -57,9 +60,11 @@ router.post("/login", async (req, res) => {
     if (!password) return res.status(401).json({ needPassword: true, isNew: true });
     const bad = passwordError(password);
     if (bad) return res.status(400).json({ needPassword: true, isNew: true, error: bad });
+    // Création de comptes en masse (spam, contournement des limites par compte) : 10 inscriptions par heure et par adresse IP.
+    if (await tooFast(`signup:${req.ip}`, 10, 3_600_000)) return res.status(429).json({ error: "Trop d'inscriptions depuis cette connexion, réessayez plus tard." });
     const created = await newAccount(req, email, loginCode());
     await setPassword(created.id, password);
-    logIn(res, created.id);
+    await logIn(res, created.id);
     return res.json({ created: true });
   }
 
@@ -84,7 +89,7 @@ router.post("/login", async (req, res) => {
       : "Email ou mot de passe incorrect." });
   }
   await clearLimit(`login:${email}`).catch(() => {});
-  logIn(res, organizer.id);
+  await logIn(res, organizer.id);
   res.json({ created: false });
 });
 
@@ -104,10 +109,9 @@ router.post("/forgot", async (req, res) => {
       setSetting(`resetcode:${email}`, { id: organizer.id, code, exp, tries: 0 }),
     ]);
     if (!(await resetEmail(email, `${origin(req)}/reinitialiser?token=${token}`, code, reqLang(req)))) {
-      const unverified = /own email address|verify a domain|not verified/i.test(lastEmailError);
-      return res.status(502).json({ error: unverified
-        ? "L'envoi d'emails est en cours d'activation (domaine mafeliza.com à vérifier dans Resend). Réessayez plus tard ou connectez-vous avec Google."
-        : `L'email n'a pas pu être envoyé (${lastEmailError || "erreur inconnue"}). Réessayez dans quelques minutes ou connectez-vous avec Google.` });
+      // Détail technique dans les journaux du serveur seulement (jamais affiché au public).
+      console.error("Mot de passe oublié : envoi impossible :", lastEmailError);
+      return res.status(502).json({ error: "L'email n'a pas pu être envoyé. Réessayez dans quelques minutes ou connectez-vous avec Google." });
     }
   }
   res.json({ ok: true });
@@ -122,8 +126,9 @@ router.post("/reset", async (req, res) => {
   const organizer = await findOrganizer(entry.id);
   if (!organizer || organizer.blocked) return res.status(400).json({ error: "Compte indisponible." });
   await setPassword(organizer.id, req.body.password);
+  await bumpSessions(organizer);
   await setSetting(`reset:${token}`, null);
-  logIn(res, organizer.id);
+  await logIn(res, organizer.id);
   res.json({ ok: true });
 });
 
@@ -141,8 +146,9 @@ router.post("/reset-code", async (req, res) => {
   const organizer = await findOrganizer(entry.id);
   if (!organizer || organizer.blocked) return res.status(400).json({ error: "Compte indisponible." });
   await setPassword(organizer.id, req.body.password);
+  await bumpSessions(organizer);
   await setSetting(`resetcode:${email}`, null);
-  logIn(res, organizer.id);
+  await logIn(res, organizer.id);
   res.json({ ok: true });
 });
 
@@ -156,11 +162,14 @@ router.post("/password", async (req, res) => {
     return res.status(400).json({ error: "Mot de passe actuel incorrect." });
   }
   await setPassword(organizer.id, req.body.password);
+  await bumpSessions(organizer);
+  await logIn(res, organizer.id); // cet appareil reste connecté, les autres sont déconnectés
   res.json({ ok: true });
 });
 
 // Connexion Google : redirection vers Google, puis retour ici (le compte est créé à la première connexion).
-const safeNext = (n) => (typeof n === "string" && n.startsWith("/") && !n.startsWith("//") ? n : "/dashboard");
+// Redirection interne seulement : « //site » et « /\site » (lus comme une autre adresse par les navigateurs) refusés.
+const safeNext = (n) => (typeof n === "string" && /^\/(?![\/\\])/.test(n) && !/[\\\s]/.test(n) ? n : "/dashboard");
 // Adresse publique fixe (PUBLIC_URL) si définie : évite les « redirect_uri_mismatch » quand le site est ouvert
 // par une autre adresse (aperçu Vercel, ancien domaine…). Sinon, l'adresse de la requête.
 const origin = (req) => (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
@@ -205,7 +214,7 @@ router.post("/google/app-poll", async (req, res) => {
   if (!rec || rec.exp < Date.now() || rec.secret !== String(req.body?.secret || "")) return res.status(410).json({ error: "Connexion expirée, réessayez." });
   if (!rec.done) return res.json({ pending: true });
   await setSetting(key, null);
-  logIn(res, rec.organizerId);
+  await logIn(res, rec.organizerId);
   res.json({ ok: true, next: rec.next });
 });
 
@@ -227,7 +236,7 @@ router.get("/google/callback", async (req, res) => {
       organizer = await saveOrganizer({ ...organizer, displayName: who.name.slice(0, 40), avatar: who.avatar });
     }
     if (organizer.blocked && !(await unblockOldMinor(organizer))) return res.redirect("/connexion?erreur=suspendu");
-    logIn(res, organizer.id);
+    await logIn(res, organizer.id);
     res.redirect(safeNext(decodeURIComponent(next || "")));
   } catch (err) {
     console.error("Google :", err.message);
@@ -275,7 +284,7 @@ router.get("/facebook/callback", async (req, res) => {
       organizer = await saveOrganizer({ ...organizer, displayName: who.name.slice(0, 40), avatar: who.avatar });
     }
     if (organizer.blocked && !(await unblockOldMinor(organizer))) return res.redirect("/connexion?erreur=suspendu");
-    logIn(res, organizer.id);
+    await logIn(res, organizer.id);
     res.redirect(safeNext(decodeURIComponent(next || "")));
   } catch (err) {
     console.error("Facebook :", err.message);
@@ -311,7 +320,7 @@ router.get("/apple/finish", async (req, res) => {
       if (who.name) organizer = await saveOrganizer({ ...organizer, displayName: who.name.slice(0, 40) });
     }
     if (organizer.blocked && !(await unblockOldMinor(organizer))) return res.redirect("/connexion?erreur=suspendu");
-    logIn(res, organizer.id);
+    await logIn(res, organizer.id);
     res.redirect(safeNext(decodeURIComponent(next || "")));
   } catch (err) {
     console.error("Apple :", err.message);
@@ -335,7 +344,7 @@ router.post("/apple/native", async (req, res) => {
       if (name) organizer = await saveOrganizer({ ...organizer, displayName: name });
     }
     if (organizer.blocked) return res.status(403).json({ error: "Compte suspendu." });
-    logIn(res, organizer.id);
+    await logIn(res, organizer.id);
     res.json({ ok: true, next: safeNext(String(req.body?.next || "")) });
   } catch (err) {
     console.error("Apple (app) :", err.message);
@@ -364,7 +373,7 @@ router.get("/magic/:token", async (req, res) => {
   let organizer = await findOrganizerByEmail(link.email);
   if (!organizer) organizer = await newAccount(req, link.email, loginCode());
   if (organizer.blocked && !(await unblockOldMinor(organizer))) return res.redirect("/connexion?erreur=suspendu");
-  logIn(res, organizer.id);
+  await logIn(res, organizer.id);
   res.redirect(safeNext(link.next));
 });
 
@@ -437,7 +446,10 @@ router.post("/birthdate", async (req, res) => {
   res.json({ ok: true });
 });
 
-router.post("/logout", (req, res) => {
+// Ferme toutes les sessions ouvertes du compte (autres téléphones, ordinateurs, cookie volé).
+const bumpSessions = async (o) => saveOrganizer({ ...(await findOrganizer(o.id)), sessionVersion: (Number(o.sessionVersion) || 0) + 1 });
+router.post("/logout", async (req, res) => {
+  if (req.body?.all) { const me = await currentOrganizer(req); if (me) await bumpSessions(me); }
   res.clearCookie("org");
   res.json({ ok: true });
 });
@@ -466,9 +478,10 @@ router.delete("/me", async (req, res) => {
 });
 
 export async function currentOrganizer(req) {
-  const id = getSigned(req, "org");
+  const [id, v = "0"] = String(getSigned(req, "org") || "").split(":");
   const organizer = id ? await findOrganizer(id) : null;
-  return organizer?.blocked ? null : organizer;
+  if (!organizer || organizer.blocked || String(organizer.sessionVersion || 0) !== v) return null;
+  return organizer;
 }
 
 // Administrateurs : emails listés dans ADMIN_EMAILS (séparés par des virgules).

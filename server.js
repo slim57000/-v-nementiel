@@ -53,6 +53,9 @@ app.use((req, res, next) => {
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "camera=(self), microphone=(self), geolocation=()",
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    // Politique de sécurité minimale (sans gêner scripts, vidéos et polices) : pas de plugins, pas de <base> détourné,
+    // formulaires envoyés seulement au site, page intégrable seulement par MaFeliza.
+    "Content-Security-Policy": "object-src 'none'; base-uri 'self'; form-action 'self' https://appleid.apple.com https://accounts.google.com https://www.facebook.com; frame-ancestors 'self'",
   });
   if (req.path.startsWith("/api/")) res.set("Cache-Control", "no-store");
   next();
@@ -107,7 +110,7 @@ app.post("/api/push/subscribe", async (req, res) => {
 // Formulaire de contact du site : message rangé dans la boîte « Contact » de l'administration.
 // Statistiques de fréquentation (sans cookie) : une page vue envoyée par chaque page du site.
 app.post("/api/hit", async (req, res) => {
-  ping(req, getSigned(req, "org"), req.body?.path);
+  ping(req, String(getSigned(req, "org") || "").split(":")[0] || null, req.body?.path);
   if (req.body?.ping) return res.status(204).end();
   if (!(await tooFast(`hit:${req.ip}`, 120, 60_000))) recordHit(req, { path: String(req.body?.path || ""), ref: String(req.body?.ref || ""), lang: req.body?.lang });
   res.status(204).end();
