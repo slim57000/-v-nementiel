@@ -129,15 +129,31 @@ async function listMemberReels() {
 router.get("/reels", async (req, res) => {
   const [members, insp, likes, users] = await Promise.all([listMemberReels(), inspirations(reqLangFull(req)).catch(() => []), readSetting("reellikes").catch(() => null), listUserReels()]);
   // Réels publiés par les membres (bouton « Créer → Un réel ») : les plus récents d'abord, masqués après 3 signalements.
-  const mine = [...users.filter((r) => (r.reports || 0) < 3).slice(0, 200).map((r) => ({ id: `u${r.id}`, reel: r.id, by: r.by, src: r.src, thumb: r.thumb,
-    channel: r.name, title: r.caption, member: true, event: r.event || undefined })), ...members];
+  const mine = [...users.filter((r) => (r.reports || 0) < 3 && !r.private).slice(0, 200).map((r) => ({ id: `u${r.id}`, reel: r.id, by: r.by, src: r.src, thumb: r.thumb,
+    channel: r.name, title: r.caption, member: true, nc: r.nc || 0, event: r.event || undefined })), ...members];
   // Une vidéo de membre toutes les 3 vidéos d'inspiration (les membres d'abord tant qu'il y en a peu).
   // Ordre mélangé à chaque chargement (verticales toujours avant horizontales) : actualiser = nouvelles vidéos en tête.
   const shuffle = (a) => { for (let k = a.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [a[k], a[j]] = [a[j], a[k]]; } return a; };
   const out = [], m = [...mine], i = [...shuffle(insp.filter((v) => v.portrait !== false)), ...shuffle(insp.filter((v) => v.portrait === false))];
   while (m.length || i.length) { if (m.length) out.push(m.shift()); for (let k = 0; k < 3 && i.length; k++) out.push(i.shift()); }
   res.set("Cache-Control", "no-store");
-  res.json(out.map((v) => ({ ...v, likes: (likes || {})[v.id] || 0 })));
+  const views = (await readSetting("reelviews").catch(() => null)) || {};
+  res.json(out.map((v) => ({ ...v, likes: (likes || {})[v.id] || 0, views: (views[v.id] || 0) + (pendingViews.get(v.id) || 0) })));
+});
+// 👁 Vues des réels : une par personne et par réel toutes les 6 h (après 2 s de visionnage, côté appli).
+// Regroupées en mémoire puis enregistrées toutes les 15 s (pas une écriture en base par vue).
+const pendingViews = new Map();
+setInterval(async () => {
+  if (!pendingViews.size) return;
+  const batch = new Map(pendingViews); pendingViews.clear();
+  const views = (await readSetting("reelviews").catch(() => null)) || {};
+  for (const [id, n] of batch) views[id] = (views[id] || 0) + n;
+  await writeSetting("reelviews", views).catch(() => { for (const [id, n] of batch) pendingViews.set(id, (pendingViews.get(id) || 0) + n); });
+}, 15_000).unref();
+router.post("/reels/:id/view", async (req, res) => {
+  const id = String(req.params.id).slice(0, 40);
+  if (/^[\w-]+$/.test(id) && !(await tooFast(`reelview:${req.ip}:${req.get("user-agent")?.slice(0, 60)}:${id}`, 1, 6 * 3600 * 1000))) pendingViews.set(id, (pendingViews.get(id) || 0) + 1);
+  res.json({ ok: true });
 });
 router.post("/reels/:id/like", async (req, res) => {
   const id = String(req.params.id).slice(0, 40);

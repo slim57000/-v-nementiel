@@ -87,8 +87,12 @@ export function openReelComposer(file) {
     <h2>🎬 ${t("Nouveau réel")}</h2>
     <video src="${url}" playsinline muted autoplay loop></video>
     <textarea id="rn-caption" maxlength="150" rows="2" placeholder="${esc(t("Ajoutez une légende…"))}"></textarea>
+    <div class="rn-vis" role="radiogroup" aria-label="${esc(t("Visibilité"))}">
+      <label><input type="radio" name="rn-vis" value="public" checked><span>🌍 ${t("Public")}<small>${t("Visible par tous dans Réels")}</small></span></label>
+      <label><input type="radio" name="rn-vis" value="private"><span>🔒 ${t("Privé")}<small>${t("Visible seulement par moi")}</small></span></label>
+    </div>
     <select id="rn-event" hidden><option value="">${t("Lier à un événement (facultatif)")}</option></select>
-    <p class="muted small">${t("60 secondes maximum · visible par tous dans Réels")}</p>
+    <p class="muted small">${t("60 secondes maximum")}</p>
     <div class="rn-bar" hidden><i></i></div><p class="rn-status muted small" hidden></p>
     <button class="btn btn-block" id="rn-go">${t("Publier")}</button>
     <button class="btn btn-light btn-block" id="rn-cancel">${t("Annuler")}</button>
@@ -110,7 +114,7 @@ export function openReelComposer(file) {
       step(t("Préparation de la vidéo…"), 0);
       const out = await compress(file, (p) => step(t("Préparation de la vidéo…"), p));
       const u = await upload(out.blob, (p) => step(t("Envoi…"), p));
-      await api("/api/reels", { method: "POST", body: { u, type: out.type, thumb: out.thumb, caption: $("#rn-caption").value, slug: $("#rn-event").value } });
+      await api("/api/reels", { method: "POST", body: { u, type: out.type, thumb: out.thumb, caption: $("#rn-caption").value, slug: $("#rn-event").value, private: sheet.querySelector('[name="rn-vis"]:checked')?.value === "private" } });
       close();
       toast(t("Réel publié 🎉"));
       setTimeout(() => { location.href = "/dashboard#reels"; }, 700);
