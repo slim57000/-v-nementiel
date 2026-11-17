@@ -834,7 +834,16 @@ export async function openByCode(text) {
   catch { return false; }
 }
 
-export function shareSheet({ title, text, url, image }) {
+// Logos blancs des services de partage (dessinés en SVG, sans dépendance externe).
+const SVG = (d, extra = "") => `<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" ${extra}>${d}</svg>`;
+const SHARE_LOGOS = {
+  WhatsApp: SVG('<path fill="#fff" d="M12 2.2A9.8 9.8 0 0 0 3.6 17l-1.4 5 5.2-1.4A9.8 9.8 0 1 0 12 2.2zm0 17.8a8 8 0 0 1-4.1-1.1l-.3-.2-3 .8.8-3-.2-.3A8 8 0 1 1 12 20z"/><path fill="#fff" d="M16.4 14.1c-.2-.1-1.4-.7-1.7-.8-.2-.1-.4-.1-.5.1l-.8 1c-.1.2-.3.2-.5.1a6.6 6.6 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.5-.4h-.5a.9.9 0 0 0-.7.3 2.8 2.8 0 0 0-.9 2.1 4.9 4.9 0 0 0 1 2.6 11.2 11.2 0 0 0 4.3 3.8c1.6.7 2.2.7 3 .6a2.6 2.6 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .2-1.2c-.1-.1-.2-.2-.5-.3z"/>'),
+  Facebook: SVG('<path fill="#fff" d="M13.6 21.5v-8.1h2.7l.4-3.2h-3.1V8.2c0-.9.3-1.5 1.6-1.5h1.6V3.8a22 22 0 0 0-2.4-.1c-2.4 0-4 1.4-4 4.1v2.4H7.7v3.2h2.7v8.1z"/>'),
+  SMS: SVG('<path fill="#fff" d="M12 3C6.5 3 2 6.7 2 11.2c0 2.6 1.5 4.9 3.8 6.4L5 21l3.9-2.2c1 .3 2 .4 3.1.4 5.5 0 10-3.7 10-8.2S17.5 3 12 3z"/>'),
+  Email: SVG('<rect x="3" y="5" width="18" height="14" rx="2.5" fill="none" stroke="#fff" stroke-width="2"/><path d="m3.8 6.5 8.2 6.3 8.2-6.3" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>'),
+  Instagram: SVG('<rect x="3.5" y="3.5" width="17" height="17" rx="5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="#fff" stroke-width="2"/><circle cx="17.3" cy="6.7" r="1.2" fill="#fff"/>'),
+};
+export function shareSheet({ title, text, url, image, story }) {
   text = tr(text); title = tr(title);
   if (isNativeApp && !image) { nativeShare({ title, text, url }); return; } // application : feuille de partage du téléphone
   const msg = `${text} ${url}`;
@@ -850,9 +859,10 @@ export function shareSheet({ title, text, url, image }) {
       <div class="card">
         <h2 id="share-title" style="font-size:1.1rem">Partager</h2>
         <div class="share-grid">
-          ${links.map(([n, c, href]) => `<a class="share-opt" href="${esc(href)}" target="_blank" rel="noopener"><i style="background:${c}">${n[0]}</i>${n}</a>`).join("")}
+          ${links.map(([n, c, href]) => `<a class="share-opt" href="${esc(href)}" target="_blank" rel="noopener"><i style="background:${c}">${SHARE_LOGOS[n] || n[0]}</i>${n}</a>`).join("")}
           ${image ? `<button class="share-opt" data-s="image"><i style="background:linear-gradient(135deg,#fd1a85,#c60bd2)">🖼</i>${esc(tr("Image du faire-part"))}</button>` : ""}
-          <button class="share-opt" data-s="instagram"><i style="background:linear-gradient(45deg,#f58529,#dd2a7b,#8134af)">I</i>Instagram</button>
+          ${story ? `<button class="share-opt" data-s="story"><i style="background:linear-gradient(135deg,#feda75,#d62976,#4f5bd5)">📱</i>${esc(tr("Format story (Instagram, WhatsApp)"))}</button>` : ""}
+          <button class="share-opt" data-s="instagram"><i style="background:linear-gradient(45deg,#f58529,#dd2a7b,#8134af)">${SHARE_LOGOS.Instagram}</i>Instagram</button>
           <button class="share-opt" data-s="copy"><i style="background:var(--primary)">🔗</i>Copier le lien</button>
           ${navigator.share || isNativeApp ? '<button class="share-opt" data-s="native"><i style="background:#1d1a20">⋯</i>Plus…</button>' : ""}
         </div>
@@ -870,6 +880,7 @@ export function shareSheet({ title, text, url, image }) {
     if (s === "copy") copy(url, "Lien copié !");
     if (s === "native") isNativeApp ? nativeShare({ title, text, url }) : share({ title, text, url });
     if (s === "image") image();
+    if (s === "story") story();
   });
 }
 
