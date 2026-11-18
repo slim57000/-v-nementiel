@@ -112,6 +112,13 @@ set_plist NSSpeechRecognitionUsageDescription string "MaFeliza n'utilise pas la 
 set_plist NSMotionUsageDescription string "MaFeliza n'utilise pas les capteurs de mouvement."
 set_plist NSAppleMusicUsageDescription string "MaFeliza n'accède pas à votre bibliothèque musicale."
 set_plist CFBundleDisplayName string "MaFeliza"
+# Langues de l'appli (affichées sur l'App Store) : les 15 langues du site, français par défaut.
+set_plist CFBundleDevelopmentRegion string "fr"
+/usr/libexec/PlistBuddy -c "Delete :CFBundleLocalizations" "$PL" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c "Add :CFBundleLocalizations array" "$PL"
+for L in fr en de es it pt nl pl ro ru uk tr ar hi zh-Hans; do
+  /usr/libexec/PlistBuddy -c "Add :CFBundleLocalizations: string $L" "$PL"
+done
 set_plist ITSAppUsesNonExemptEncryption bool false
 
 flutter pub get
