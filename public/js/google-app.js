@@ -34,3 +34,22 @@ export async function googleInApp(next, toast) {
   sheet.querySelector("[data-open]").onclick = () => { location.href = start.url; };
   location.href = start.url; // lien externe : l'appli l'ouvre dans le navigateur
 }
+
+// Appli récente : fenêtre Google native du téléphone (2 touches, sans navigateur ni code).
+// Si elle n'est pas disponible (identifiant iPhone non configuré, ancienne version), parcours par le navigateur.
+export const hasNativeGoogle = () => typeof window.MaFelizaGoogle?.postMessage === "function";
+export function googleSignIn(next, toast) {
+  if (!hasNativeGoogle()) return googleInApp(next, toast);
+  window.mafelizaGoogleDone = async (data) => {
+    try {
+      const r = await api("/api/auth/google/native", { method: "POST", body: { idToken: data.idToken, next } });
+      location.href = r.next || next || "/dashboard";
+    } catch (err) { toast(err.message); }
+  };
+  window.mafelizaGoogleError = (msg) => {
+    if (msg === "canceled") return;
+    if (msg === "unavailable") return googleInApp(next, toast);
+    toast(tr("Connexion Google impossible. Réessayez ou utilisez votre email."));
+  };
+  window.MaFelizaGoogle.postMessage("signin");
+}

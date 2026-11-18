@@ -119,6 +119,15 @@ set_plist CFBundleDevelopmentRegion string "fr"
 for L in fr en de es it pt nl pl ro ru uk tr ar hi zh-Hans; do
   /usr/libexec/PlistBuddy -c "Add :CFBundleLocalizations: string $L" "$PL"
 done
+# Connexion Google native : identifiant OAuth « iOS » (variable GitHub GOOGLE_IOS_CLIENT_ID) et son adresse de retour.
+# Sans cette variable, l'appli garde la connexion Google par le navigateur.
+if [ -n "${GOOGLE_IOS_CLIENT_ID:-}" ]; then
+  set_plist GIDClientID string "$GOOGLE_IOS_CLIENT_ID"
+  REV="com.googleusercontent.apps.${GOOGLE_IOS_CLIENT_ID%.apps.googleusercontent.com}"
+  /usr/libexec/PlistBuddy -c "Delete :CFBundleURLTypes" "$PL" 2>/dev/null || true
+  /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" -c "Add :CFBundleURLTypes:0 dict" \
+    -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $REV" "$PL"
+fi
 set_plist ITSAppUsesNonExemptEncryption bool false
 
 flutter pub get

@@ -17,6 +17,8 @@ jobs:
       IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
       KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
       ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      # Identifiant OAuth Google « iOS » (public) : Settings → Secrets and variables → Actions → Variables
+      GOOGLE_IOS_CLIENT_ID: ${{ vars.GOOGLE_IOS_CLIENT_ID }}
     steps:
       - uses: actions/checkout@v4
       # Apple exige le SDK iOS 26 (Xcode 26 ou plus) : on prend le plus récent installé sur le Mac.
@@ -51,7 +53,7 @@ jobs:
           python3 asc_signing.py capabilities
 
       - name: Compiler (Flutter)
-        run: flutter build ios --release --no-codesign --build-number=${{ github.run_number }}
+        run: flutter build ios --release --no-codesign --build-number=${{ github.run_number }} --dart-define=GOOGLE_IOS_CLIENT_ID=$GOOGLE_IOS_CLIENT_ID
 
       - name: Archiver et signer (signature automatique Apple)
         run: |

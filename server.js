@@ -86,6 +86,8 @@ app.get("/api/config", async (req, res) => {
     realtime: REALTIME,
     social: [GOOGLE_ENABLED && "google", FACEBOOK_ENABLED && "facebook", APPLE_ENABLED && "apple"].filter(Boolean),
     defaultLivePlatform: platform || "youtube",
+    // Identifiants publics (non secrets) de la connexion Google native de l'appli.
+    ...(GOOGLE_ENABLED && { googleWebClientId: process.env.GOOGLE_CLIENT_ID }),
   });
 });
 

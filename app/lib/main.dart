@@ -2,7 +2,7 @@
 // Affiche la plateforme en ligne (mafeliza.com) : toute mise à jour du site est visible
 // immédiatement, sans republier sur les stores. Fonctions du téléphone : appareil photo et micro
 // (live, stories), bouton retour Android, liens externes (WhatsApp, cagnotte…) ouverts hors de
-// l'application, écran hors connexion, connexion Apple native (iPhone), notifications push
+// l'application, écran hors connexion, connexions Apple (iPhone) et Google natives, notifications push
 // (APNs sur iPhone, Firebase sur Android : code natif ajouté par ios-setup.sh et compiler.ps1).
 import 'dart:convert';
 import 'dart:io';
@@ -11,6 +11,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -126,6 +127,9 @@ class _HomePageState extends State<HomePage> {
     });
     _registerPush();
 
+    // Bouton Google du site : fenêtre Google native du téléphone, jeton renvoyé au site.
+    _web.addJavaScriptChannel('MaFelizaGoogle', onMessageReceived: (_) => _googleSignIn());
+
     // Bouton Apple du site (iPhone) : fenêtre système « Se connecter avec Apple », jeton renvoyé au site.
     if (Platform.isIOS) {
       _web.addJavaScriptChannel('MaFelizaApple', onMessageReceived: (_) => _appleSignIn());
@@ -200,6 +204,41 @@ class _HomePageState extends State<HomePage> {
       js += "fetch('/api/push/native',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:${jsonEncode(body)}}).catch(function(){});";
     }
     _web.runJavaScript(js);
+  }
+
+  // Connexion Google native. Identifiant « Web » lu sur le site (/api/config, serverClientId) ; sur iPhone, identifiant
+  // « iOS » fixé à la compilation (--dart-define), le même que celui déclaré dans Info.plist par ios-setup.sh.
+  static const _googleIos = String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
+  Future<void>? _googleReady;
+  Future<void> _initGoogle() async {
+    final client = HttpClient();
+    try {
+      final res = await (await client.getUrl(Uri.parse('$site/api/config'))).close();
+      final cfg = jsonDecode(await res.transform(utf8.decoder).join()) as Map<String, dynamic>;
+      final web = (cfg['googleWebClientId'] ?? '') as String;
+      if (web.isEmpty || (Platform.isIOS && _googleIos.isEmpty)) throw 'unavailable';
+      await GoogleSignIn.instance.initialize(clientId: Platform.isIOS ? _googleIos : null, serverClientId: web);
+    } finally {
+      client.close();
+    }
+  }
+
+  Future<void> _googleSignIn() async {
+    try {
+      _googleReady ??= _initGoogle();
+      await _googleReady;
+      final account = await GoogleSignIn.instance.authenticate();
+      final token = account.authentication.idToken;
+      if (token == null) throw 'unavailable';
+      await _web.runJavaScript('window.mafelizaGoogleDone && window.mafelizaGoogleDone(${jsonEncode({'idToken': token})})');
+    } on GoogleSignInException catch (e) {
+      final msg = e.code == GoogleSignInExceptionCode.canceled ? 'canceled' : (e.description ?? e.code.name);
+      await _web.runJavaScript('window.mafelizaGoogleError && window.mafelizaGoogleError(${jsonEncode(msg)})');
+    } catch (e) {
+      _googleReady = null; // nouvel essai possible (réseau)
+      final msg = e == 'unavailable' ? 'unavailable' : e.toString();
+      await _web.runJavaScript('window.mafelizaGoogleError && window.mafelizaGoogleError(${jsonEncode(msg)})');
+    }
   }
 
   // Bouton retour Android : page précédente du site, sinon fermeture de l'application.

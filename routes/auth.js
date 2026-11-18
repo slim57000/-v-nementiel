@@ -25,7 +25,7 @@ async function recordReferral(req, organizer) {
   if (!list.includes(organizer.id)) await setSetting(key, [...list, organizer.id]);
 }
 import { setPassword, hasPassword, checkPassword, passwordError } from "../lib/password.js";
-import { GOOGLE_ENABLED, googleAuthUrl, googleIdentity } from "../lib/google.js";
+import { GOOGLE_ENABLED, googleAuthUrl, googleIdentity, googleNativeIdentity } from "../lib/google.js";
 import { FACEBOOK_ENABLED, facebookAuthUrl, facebookIdentity } from "../lib/facebook.js";
 import { APPLE_ENABLED, appleAuthUrl, appleIdentity, appleNativeIdentity } from "../lib/apple.js";
 import { randomBytes, randomInt } from "node:crypto";
@@ -330,6 +330,26 @@ router.get("/apple/finish", async (req, res) => {
 
 // Connexion Apple native (application iPhone) : jeton vérifié, compte retrouvé par email ou par l'identifiant Apple
 // (Apple ne donne pas toujours l'email après la 1re connexion : on mémorise l'association « applesub »).
+// Connexion Google native (appli iPhone / Android) : fenêtre Google du téléphone, jeton vérifié ici.
+router.post("/google/native", async (req, res) => {
+  if (!GOOGLE_ENABLED) return res.status(503).json({ error: "Connexion Google indisponible." });
+  if (await tooFast(`googlenative:${req.ip}`, 20, 600_000)) return res.status(429).json({ error: "Trop de tentatives." });
+  try {
+    const who = await googleNativeIdentity(req.body?.idToken);
+    let organizer = await findOrganizerByEmail(who.email);
+    if (!organizer) {
+      organizer = await newAccount(req, who.email, loginCode());
+      organizer = await saveOrganizer({ ...organizer, displayName: who.name.slice(0, 40), avatar: who.avatar });
+    }
+    if (organizer.blocked && !(await unblockOldMinor(organizer))) return res.status(403).json({ error: "Compte suspendu." });
+    await logIn(res, organizer.id);
+    res.json({ ok: true, next: safeNext(String(req.body?.next || "")) });
+  } catch (err) {
+    console.error("Google (app) :", err.message);
+    res.status(401).json({ error: "Connexion Google refusée. Réessayez ou utilisez votre email." });
+  }
+});
+
 router.post("/apple/native", async (req, res) => {
   if (await tooFast(`applenative:${req.ip}`, 20, 600_000)) return res.status(429).json({ error: "Trop de tentatives." });
   try {
