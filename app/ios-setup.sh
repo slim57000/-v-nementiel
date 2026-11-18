@@ -8,7 +8,7 @@ set -euo pipefail
 PBX=ios/Runner.xcodeproj/project.pbxproj
 sed -i '' "s/PRODUCT_BUNDLE_IDENTIFIER = fr\.mafeliza\.mafeliza;/PRODUCT_BUNDLE_IDENTIFIER = ${IOS_BUNDLE_ID}; DEVELOPMENT_TEAM = ${APPLE_TEAM_ID}; CODE_SIGN_STYLE = Automatic; CODE_SIGN_ENTITLEMENTS = Runner\/Runner.entitlements;/g" "$PBX"
 
-# Autorisation « Sign in with Apple » (doit aussi être cochée sur l'identifiant de l'app chez Apple)
+# Autorisations « Sign in with Apple » et notifications push (activées sur l'identifiant de l'app par asc_signing.py)
 cat > ios/Runner/Runner.entitlements <<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -16,9 +16,82 @@ cat > ios/Runner/Runner.entitlements <<'XML'
 <dict>
   <key>com.apple.developer.applesignin</key>
   <array><string>Default</string></array>
+  <key>aps-environment</key>
+  <string>production</string>
 </dict>
 </plist>
 XML
+
+# Notifications push (APNs) : code natif ajouté à AppDelegate.swift (une seule fois). Canal « mafeliza/push » :
+#   register → demande l'autorisation, renvoie l'adresse d'une notification touchée au lancement ;
+#   token / open → envoyés à l'appli Flutter (jeton de l'appareil, notification touchée).
+AD=ios/Runner/AppDelegate.swift
+if ! grep -q "MaFelizaPush" "$AD"; then
+  # Enregistrement à côté des modules Flutter (style classique « with: self » ou moteur implicite récent).
+  sed -i '' -E 's/^([[:space:]]*)GeneratedPluginRegistrant\.register\(with: ([A-Za-z.]+)\)/&\
+\1MaFelizaPush.register(with: \2.registrar(forPlugin: "MaFelizaPush")!)/' "$AD"
+  grep -q 'MaFelizaPush.register' "$AD" || { echo "AppDelegate.swift : enregistrement des notifications impossible"; cat "$AD"; exit 1; }
+  sed -i '' '1s/^/import UserNotifications\
+/' "$AD"
+  cat >> "$AD" <<'SWIFT'
+
+// Notifications push MaFeliza (APNs). Le jeton de l'appareil est transmis au site par l'appli Flutter.
+class MaFelizaPush: NSObject, FlutterPlugin, UNUserNotificationCenterDelegate {
+  static let shared = MaFelizaPush()
+  static var channel: FlutterMethodChannel?
+  static var ready = false
+  static var pendingUrl: String?
+
+  static func register(with registrar: FlutterPluginRegistrar) {
+    let ch = FlutterMethodChannel(name: "mafeliza/push", binaryMessenger: registrar.messenger())
+    channel = ch
+    registrar.addMethodCallDelegate(shared, channel: ch)
+    registrar.addApplicationDelegate(shared)
+    UNUserNotificationCenter.current().delegate = shared
+  }
+
+  func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+    guard call.method == "register" else { return result(FlutterMethodNotImplemented) }
+    MaFelizaPush.ready = true
+    let openSettings = ((call.arguments as? [String: Any])?["settings"] as? Bool) ?? false
+    let center = UNUserNotificationCenter.current()
+    center.getNotificationSettings { settings in
+      if settings.authorizationStatus == .denied {
+        if openSettings, let url = URL(string: UIApplication.openSettingsURLString) {
+          DispatchQueue.main.async { UIApplication.shared.open(url) }
+        }
+        return
+      }
+      center.requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
+        if granted { DispatchQueue.main.async { UIApplication.shared.registerForRemoteNotifications() } }
+      }
+    }
+    result(MaFelizaPush.pendingUrl)
+    MaFelizaPush.pendingUrl = nil
+  }
+
+  func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+    MaFelizaPush.channel?.invokeMethod("token", arguments: deviceToken.map { String(format: "%02x", $0) }.joined())
+  }
+
+  // Application ouverte : la notification s'affiche quand même en bannière.
+  func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
+                              withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+    completionHandler([.banner, .list, .sound])
+  }
+
+  // Notification touchée : ouvre la page concernée (message, événement, live…).
+  func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
+                              withCompletionHandler completionHandler: @escaping () -> Void) {
+    if let url = response.notification.request.content.userInfo["url"] as? String {
+      if MaFelizaPush.ready, let ch = MaFelizaPush.channel { ch.invokeMethod("open", arguments: url) }
+      else { MaFelizaPush.pendingUrl = url }
+    }
+    completionHandler()
+  }
+}
+SWIFT
+fi
 
 # Textes des autorisations, nom affiché, pas de chiffrement spécial (évite la question d'export à chaque build)
 PL=ios/Runner/Info.plist

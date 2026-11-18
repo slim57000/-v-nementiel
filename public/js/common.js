@@ -917,6 +917,8 @@ addEventListener("unhandledrejection", (e) => reportClientError(e.reason?.messag
 
 // Notifications push : abonnement de cet appareil (service worker + clé VAPID du serveur).
 export async function enablePush() {
+  // Application iPhone / Android : notifications natives (autorisation du téléphone, ou ses réglages si refusées).
+  if (window.MaFelizaPush?.postMessage) { window.MaFelizaPush.postMessage("settings"); return "native"; }
   const { vapidPublicKey } = await fetch("/api/config").then((r) => r.json());
   if (!vapidPublicKey) throw new Error("Les notifications ne sont pas encore activées sur la plateforme.");
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
@@ -929,7 +931,8 @@ export async function enablePush() {
   const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key }));
   await api("/api/push/subscribe", { method: "POST", body: { subscription: sub.toJSON() } });
 }
-export const pushState = () => (typeof Notification === "undefined" ? "unsupported" : Notification.permission);
+export const pushState = () => (window.MaFelizaPush?.postMessage ? (window.mafelizaPushOn ? "granted" : "default")
+  : typeof Notification === "undefined" ? "unsupported" : Notification.permission);
 
 // Temps réel : appelle `onPing` dès qu'un signal arrive sur `topic` (Supabase Realtime, si activé).
 // Renvoie vrai si l'abonnement est actif (la page peut alors espacer ses rafraîchissements).

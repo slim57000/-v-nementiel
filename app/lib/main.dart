@@ -2,7 +2,8 @@
 // Affiche la plateforme en ligne (mafeliza.com) : toute mise à jour du site est visible
 // immédiatement, sans republier sur les stores. Fonctions du téléphone : appareil photo et micro
 // (live, stories), bouton retour Android, liens externes (WhatsApp, cagnotte…) ouverts hors de
-// l'application, écran hors connexion, connexion Apple native (iPhone).
+// l'application, écran hors connexion, connexion Apple native (iPhone), notifications push
+// (APNs sur iPhone, Firebase sur Android : code natif ajouté par ios-setup.sh et compiler.ps1).
 import 'dart:convert';
 import 'dart:io';
 
@@ -48,6 +49,11 @@ class _HomePageState extends State<HomePage> {
   bool _loading = true;
   bool _offline = false;
 
+  // Notifications push : canal vers le code natif (jeton de l'appareil, notification touchée).
+  static const _push = MethodChannel('mafeliza/push');
+  String? _pushToken;
+  DateTime _pushSent = DateTime(2000);
+
   @override
   void initState() {
     super.initState();
@@ -68,7 +74,11 @@ class _HomePageState extends State<HomePage> {
       ..setBackgroundColor(Colors.white)
       ..setNavigationDelegate(NavigationDelegate(
         onPageStarted: (_) => setState(() => _loading = true),
-        onPageFinished: (_) => setState(() => _loading = false),
+        onPageFinished: (url) {
+          setState(() => _loading = false);
+          // Jeton envoyé au site (lié au compte connecté) ; tout de suite après une connexion (tableau de bord).
+          _sendPushToken(force: url.contains('/dashboard'));
+        },
         // Écran « Pas de connexion » seulement pour une vraie coupure réseau de la page principale.
         // (Une image, une vidéo intégrée ou un lien annulé qui échoue ne doit jamais bloquer l'app.)
         onWebResourceError: (e) {
@@ -103,6 +113,18 @@ class _HomePageState extends State<HomePage> {
       final ok = await _dialog(req.message, input: field);
       return ok ? field.text : '';
     });
+
+    // Notifications : bouton « Activer les notifications » du site, jeton reçu, notification touchée.
+    _web.addJavaScriptChannel('MaFelizaPush', onMessageReceived: (_) => _registerPush(settings: true));
+    _push.setMethodCallHandler((call) async {
+      if (call.method == 'token' && call.arguments is String) {
+        _pushToken = call.arguments as String;
+        _sendPushToken(force: true);
+      } else if (call.method == 'open' && call.arguments is String) {
+        _openPath(call.arguments as String);
+      }
+    });
+    _registerPush();
 
     // Bouton Apple du site (iPhone) : fenêtre système « Se connecter avec Apple », jeton renvoyé au site.
     if (Platform.isIOS) {
@@ -147,6 +169,37 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       await _web.runJavaScript('window.mafelizaAppleError && window.mafelizaAppleError(${jsonEncode(e.toString())})');
     }
+  }
+
+  // Demande l'autorisation (Android 13+ : permission du système ; iPhone : fenêtre d'iOS dans le code natif).
+  // settings : depuis le bouton du site, ouvre les réglages du téléphone si les notifications ont été refusées.
+  Future<void> _registerPush({bool settings = false}) async {
+    try {
+      if (Platform.isAndroid) {
+        final st = await Permission.notification.request();
+        if (st.isPermanentlyDenied && settings) await openAppSettings();
+      }
+      final initial = await _push.invokeMethod<String>('register', {'settings': settings});
+      if (initial != null) _openPath(initial); // application ouverte en touchant une notification
+    } catch (_) {/* code natif absent (ancienne compilation) : rien à faire */}
+  }
+
+  void _openPath(String path) {
+    if (path.startsWith('/')) _web.loadRequest(Uri.parse('$site$path'));
+  }
+
+  // Page chargée : le site sait que les notifications sont actives ; le jeton est renvoyé au plus toutes les
+  // 10 min (et aussitôt après une connexion), pour le rattacher au compte connecté.
+  void _sendPushToken({bool force = false}) {
+    final t = _pushToken;
+    if (t == null || _loading) return;
+    var js = "window.mafelizaPushOn=true;dispatchEvent(new Event('mafeliza-push'));";
+    if (force || DateTime.now().difference(_pushSent).inMinutes >= 10) {
+      _pushSent = DateTime.now();
+      final body = jsonEncode({'token': t, 'platform': Platform.isIOS ? 'ios' : 'android'});
+      js += "fetch('/api/push/native',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:${jsonEncode(body)}}).catch(function(){});";
+    }
+    _web.runJavaScript(js);
   }
 
   // Bouton retour Android : page précédente du site, sinon fermeture de l'application.

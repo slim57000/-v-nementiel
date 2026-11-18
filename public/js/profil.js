@@ -119,8 +119,9 @@ $("#delete-account")?.addEventListener("click", () => deleteAccount());
 // Notifications push de cet appareil.
 const paintPush = () => { if (pushState() === "granted") { $("#push-btn").textContent = "🔔 Notifications activées ✔"; } };
 paintPush();
+addEventListener("mafeliza-push", paintPush); // application : le téléphone confirme l'activation
 $("#push-btn").addEventListener("click", async () => {
-  try { await enablePush(); paintPush(); toast("Notifications activées 🔔"); } catch (err) { toast(err.message); }
+  try { if ((await enablePush()) !== "native") { paintPush(); toast("Notifications activées 🔔"); } } catch (err) { toast(err.message); }
 });
 
 // Définir / changer le mot de passe.

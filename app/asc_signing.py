@@ -28,6 +28,22 @@ def api(method, path, body=None, allow=()):
 def run(*cmd):
     subprocess.run(cmd, check=True)
 
+def bundle_id():
+    found = api("GET", f"/bundleIds?filter[identifier]={BUNDLE}&filter[platform]=IOS")["data"]
+    bundle = next((b for b in found if b["attributes"]["identifier"] == BUNDLE), None)
+    if not bundle:
+        bundle = api("POST", "/bundleIds", {"data": {"type": "bundleIds", "attributes": {"identifier": BUNDLE, "name": "MaFeliza", "platform": "IOS"}}})["data"]
+    return bundle
+
+def capabilities():
+    # Notifications push activées sur l'identifiant de l'app (409 : déjà activées). Avant la compilation,
+    # pour que le profil de distribution contienne l'autorisation « aps-environment ».
+    bundle = bundle_id()
+    for cap in ("PUSH_NOTIFICATIONS",):
+        r = api("POST", "/bundleIdCapabilities", {"data": {"type": "bundleIdCapabilities", "attributes": {"capabilityType": cap},
+            "relationships": {"bundleId": {"data": {"type": "bundleIds", "id": bundle["id"]}}}}}, allow=(409,))
+        print(f"{cap} : {'déjà activé' if r.get('error') == 409 else 'activé'}")
+
 def setup():
     # 1. Clé + demande de certificat, puis certificat de distribution
     run("openssl", "genrsa", "-out", f"{TMP}/dist.key", "2048")
@@ -47,10 +63,7 @@ def setup():
     cert = cert["data"]
     open(f"{TMP}/dist.cer", "wb").write(base64.b64decode(cert["attributes"]["certificateContent"]))
     # 2. Identifiant de l'app (créé s'il n'existe pas encore)
-    found = api("GET", f"/bundleIds?filter[identifier]={BUNDLE}&filter[platform]=IOS")["data"]
-    bundle = next((b for b in found if b["attributes"]["identifier"] == BUNDLE), None)
-    if not bundle:
-        bundle = api("POST", "/bundleIds", {"data": {"type": "bundleIds", "attributes": {"identifier": BUNDLE, "name": "MaFeliza", "platform": "IOS"}}})["data"]
+    bundle = bundle_id()
     # 3. Profil App Store lié à ce certificat (les profils CI des envois précédents sont supprimés)
     for old in api("GET", "/profiles?filter[name]=MaFeliza%20CI&limit=50")["data"]:
         if old["attributes"].get("name", "").startswith("MaFeliza CI "):
@@ -99,4 +112,4 @@ def cleanup():
     # quand la limite Apple est atteinte. Seuls les anciens profils CI sont supprimés.
     print("Certificat conservé (vérification Apple en cours).")
 
-{"setup": setup, "cleanup": cleanup}[sys.argv[1]]()
+{"setup": setup, "cleanup": cleanup, "capabilities": capabilities}[sys.argv[1]]()

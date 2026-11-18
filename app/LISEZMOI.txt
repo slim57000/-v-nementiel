@@ -14,3 +14,14 @@ iPhone : compilé et envoyé sur TestFlight par GitHub (onglet Actions → « iP
 
 L'application affiche mafeliza.com : toute mise à jour du site apparaît
 immédiatement dans l'application, sans republier sur les stores.
+
+Notifications push
+------------------
+Android (Firebase) : google-services.json (projet Firebase « mafeliza-47422 », appli fr.mafeliza.app) dans ce dossier,
+  puis compiler.ps1 : il ajoute Firebase Messaging et le code natif (MainActivity.kt, PushService.kt) tout seul.
+  Serveur : FCM_SERVICE_ACCOUNT = contenu JSON (sur une ligne) du compte de service Firebase
+  (Firebase → Paramètres du projet → Comptes de service → Générer une nouvelle clé privée).
+iPhone (APNs) : ios-setup.sh ajoute le code natif et l'autorisation ; le workflow GitHub active
+  « Push Notifications » sur l'identifiant de l'app. Serveur : APNS_KEY (contenu du .p8), APNS_KEY_ID,
+  APNS_TEAM_ID, APNS_TOPIC (identifiant de l'app, ex. fr.mafeliza.app)
+  (developer.apple.com → Certificates, IDs & Profiles → Keys → + → Apple Push Notifications service).
