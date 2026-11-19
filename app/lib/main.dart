@@ -4,20 +4,28 @@
 // (live, stories), bouton retour Android, liens externes (WhatsApp, cagnotte…) ouverts hors de
 // l'application, écran hors connexion, connexions Apple (iPhone) et Google natives, notifications push
 // (APNs sur iPhone, Firebase sur Android : code natif ajouté par ios-setup.sh et compiler.ps1).
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:battery_plus/battery_plus.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:thermal/thermal.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
+
+import 'bridge.dart';
+import 'reels.dart';
+import 'uploads.dart';
 
 const site = 'https://mafeliza.com';
 const pink = Color(0xFFE8137A);
@@ -47,6 +55,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late final WebViewController _web;
+  late final WebBridge _bridge; // appels au serveur des écrans natifs, avec la session du site
+  late final MediaUploader _uploader; // photos et vidéos des invités, envoyées en arrière-plan
   bool _loading = true;
   bool _offline = false;
 
@@ -115,6 +125,19 @@ class _HomePageState extends State<HomePage> {
       return ok ? field.text : '';
     });
 
+    _bridge = WebBridge(_web);
+    _uploader = MediaUploader(_bridge);
+    // Caméraman en direct : écran toujours allumé (garanti par le téléphone) et niveau de batterie envoyé à la page.
+    _web.addJavaScriptChannel('MaFelizaCamera', onMessageReceived: (m) => _cameraMode(m.message));
+    // Appli mise en arrière-plan pendant le live (appel, autre appli) : iOS coupe la caméra → rappel immédiat.
+    _lifecycle = AppLifecycleListener(onHide: () {
+      if (_cameraOn) _push.invokeMethod('localNotify', {'title': _camLabel('Le live est en pause'), 'body': _camLabel('Revenez dans MaFeliza pour reprendre le direct.')}).catchError((_) {});
+    });
+    // Photos / vidéos des invités : galerie du téléphone (plusieurs à la fois), envoi qui continue appli fermée.
+    _web.addJavaScriptChannel('MaFelizaUpload', onMessageReceived: (m) => _uploader.pickAndSend(m.message));
+    // Réels : lecteur natif (défilement fluide) ouvert par le site avec la liste et les textes traduits.
+    _web.addJavaScriptChannel('MaFelizaReels', onMessageReceived: (m) => _openReels(m.message));
+
     // Notifications : bouton « Activer les notifications » du site, jeton reçu, notification touchée.
     _web.addJavaScriptChannel('MaFelizaPush', onMessageReceived: (_) => _registerPush(settings: true));
     _push.setMethodCallHandler((call) async {
@@ -160,6 +183,14 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  @override
+  void dispose() {
+    _lifecycle?.dispose();
+    _batteryTimer?.cancel();
+    _thermal?.cancel();
+    super.dispose();
+  }
+
   Future<void> _appleSignIn() async {
     try {
       final c = await SignInWithApple.getAppleIDCredential(
@@ -186,6 +217,58 @@ class _HomePageState extends State<HomePage> {
       final initial = await _push.invokeMethod<String>('register', {'settings': settings});
       if (initial != null) _openPath(initial); // application ouverte en touchant une notification
     } catch (_) {/* code natif absent (ancienne compilation) : rien à faire */}
+  }
+
+  Timer? _batteryTimer;
+  StreamSubscription<ThermalStatus>? _thermal;
+  AppLifecycleListener? _lifecycle;
+  bool _cameraOn = false;
+  Map<String, dynamic> _camLabels = {};
+  String _camLabel(String k) => (_camLabels[k] ?? k).toString();
+
+  // Mode caméraman (page du live) : écran allumé, batterie, chaleur du téléphone, rappel si l'appli est quittée,
+  // confirmation avant de quitter la page avec le bouton retour.
+  Future<void> _cameraMode(String message) async {
+    _batteryTimer?.cancel();
+    _batteryTimer = null;
+    await _thermal?.cancel();
+    _thermal = null;
+    _cameraOn = message != 'off';
+    if (!_cameraOn) return WakelockPlus.disable();
+    try {
+      _camLabels = ((jsonDecode(message) as Map)['labels'] ?? {}) as Map<String, dynamic>;
+    } catch (_) {/* ancien format « on » */}
+    await WakelockPlus.enable();
+    _thermal = Thermal().onThermalStatusChanged.listen((s) {
+      _web.runJavaScript('window.mafelizaThermal && window.mafelizaThermal(${jsonEncode(s.name)})');
+    }, onError: (_) {});
+    final battery = Battery();
+    Future<void> report() async {
+      try {
+        final level = await battery.batteryLevel;
+        final state = await battery.batteryState;
+        final charging = state == BatteryState.charging || state == BatteryState.full;
+        await _web.runJavaScript('window.mafelizaBattery && window.mafelizaBattery(${jsonEncode({'level': level, 'charging': charging})})');
+      } catch (_) {/* batterie indisponible */}
+    }
+    await report();
+    _batteryTimer = Timer.periodic(const Duration(minutes: 1), (_) => report());
+  }
+
+  void _openReels(String json) {
+    final data = jsonDecode(json) as Map<String, dynamic>;
+    final items = (data['items'] as List).cast<Map<String, dynamic>>();
+    if (items.isEmpty || !mounted) return;
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      fullscreenDialog: true,
+      builder: (_) => ReelsScreen(
+        items: items,
+        start: ((data['start'] ?? 0) as num).toInt().clamp(0, items.length - 1),
+        labels: (data['labels'] ?? {}) as Map<String, dynamic>,
+        bridge: _bridge,
+        openPath: _openPath,
+      ),
+    ));
   }
 
   void _openPath(String path) {
@@ -244,6 +327,7 @@ class _HomePageState extends State<HomePage> {
   // Bouton retour Android : page précédente du site, sinon fermeture de l'application.
   Future<void> _back(bool didPop, Object? _) async {
     if (didPop) return;
+    if (_cameraOn && !await _dialog(_camLabel('Le live est en cours. Quitter cette page arrêtera le direct.'))) return;
     if (await _web.canGoBack()) {
       _web.goBack();
     } else {

@@ -4,10 +4,12 @@ import { translateTexts, reqLangFull } from "../lib/translate.js";
 import { inspirations } from "../lib/inspirations.js";
 import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers, rollDemoDates } from "../lib/demo.js";
-import { Router } from "express";
+import express, { Router } from "express";
+import { saveRawFile, MAX_VIDEO_BYTES } from "../lib/uploads.js";
+import { addPhoto } from "../lib/store.js";
 import { publicView } from "../lib/events.js";
 import { listRecentPhotos, getSetting as readSetting, setSetting as writeSetting, dataVersion, listHistoryIds, listPendingIds, listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory,  clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
-import { setSigned, getSigned, codeFingerprint } from "../lib/session.js";
+import { setSigned, getSigned, codeFingerprint, readToken } from "../lib/session.js";
 import { currentOrganizer, isAdmin } from "./auth.js";
 import { listUserReels } from "./reels.js";
 import { camerasWithLive } from "../lib/livekit.js";
@@ -163,6 +165,26 @@ router.post("/reels/:id/like", async (req, res) => {
   likes[id] = (likes[id] || 0) + 1;
   await writeSetting("reellikes", likes);
   res.json({ ok: true, likes: likes[id] });
+});
+
+// Application : photo ou vidéo envoyée en arrière-plan (même appli fermée), sans cookie, avec le jeton délivré par
+// /upload-token (événement, invité et prénom signés, 24 h). Mêmes limites que l'envoi depuis la page.
+router.put("/:slug/media", express.raw({ type: () => true, limit: MAX_VIDEO_BYTES }), async (req, res) => {
+  const tok = readToken(req.query.t);
+  const event = tok && await findEventBySlug(req.params.slug);
+  if (!event || event.suspended || event.id !== tok.e) return res.status(403).json({ error: "Envoi expiré : rouvrez l'événement dans l'application." });
+  if (((await getSetting("bannedAuthors").catch(() => null)) || []).includes(tok.a)) return res.status(403).json({ error: "Envoi impossible." });
+  const video = String(req.get("content-type") || "").startsWith("video/");
+  if (await tooFast(`${tok.a}:photo`, 150, 3_600_000) || await tooFast(`${req.ip}:photoall`, 3000, 3_600_000)
+    || (video && (await tooFast(`${tok.a}:videofile`, 20, 3_600_000) || await tooFast(`videofile:${event.id}`, 300, 24 * 3_600_000)))) {
+    return res.status(429).json({ error: "Limite de photos atteinte, réessayez plus tard." });
+  }
+  try {
+    const url = await saveRawFile(Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0), req.get("content-type"));
+    res.status(201).json(await addPhoto(event.id, { name: String(tok.n).slice(0, 30), url, author: tok.a }));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 router.get("/pot-check", async (req, res) => res.json({ embeddable: await embeddable(String(req.query.url || "")) }));

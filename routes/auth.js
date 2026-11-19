@@ -60,6 +60,28 @@ router.post("/login", async (req, res) => {
     if (!password) return res.status(401).json({ needPassword: true, isNew: true });
     const bad = passwordError(password);
     if (bad) return res.status(400).json({ needPassword: true, isNew: true, error: bad });
+    // Adresse vérifiée avant de créer le compte : code à 6 chiffres envoyé par email (15 min, 5 essais).
+    // Sans cela, n'importe qui pourrait ouvrir un compte au nom de l'adresse de quelqu'un d'autre.
+    if (EMAIL_ENABLED) {
+      const key = `signup:${email}`, entry = await getSetting(key).catch(() => null);
+      if (!code || !entry || entry.exp < Date.now() || entry.tries >= 5) {
+        if (await tooFast(`signupcode:${email}`, 5, 3_600_000) || await tooFast(`signupcodeip:${req.ip}`, 30, 3_600_000)) {
+          return res.status(429).json({ error: "Trop de demandes de code : réessayez dans un moment." });
+        }
+        const fresh = String(randomInt(0, 1_000_000)).padStart(6, "0");
+        await setSetting(key, { code: fresh, exp: Date.now() + 15 * 60_000, tries: 0 });
+        if (!(await codeEmail(email, fresh, true, reqLang(req)).catch(() => false))) {
+          console.error("Inscription : envoi du code impossible :", lastEmailError);
+          return res.status(502).json({ error: "L'email n'a pas pu être envoyé. Vérifiez l'adresse ou réessayez dans quelques minutes." });
+        }
+        return res.status(401).json({ needCode: true, isNew: true, error: code ? "Code expiré : un nouveau code vient de vous être envoyé." : undefined });
+      }
+      if (code !== entry.code) {
+        await setSetting(key, { ...entry, tries: entry.tries + 1 });
+        return res.status(400).json({ needCode: true, isNew: true, error: "Code incorrect." });
+      }
+      await setSetting(key, null);
+    }
     // Création de comptes en masse (spam, contournement des limites par compte) : 10 inscriptions par heure et par adresse IP.
     if (await tooFast(`signup:${req.ip}`, 10, 3_600_000)) return res.status(429).json({ error: "Trop d'inscriptions depuis cette connexion, réessayez plus tard." });
     const created = await newAccount(req, email, loginCode());

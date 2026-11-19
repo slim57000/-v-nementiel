@@ -12,7 +12,7 @@ if (-not (Test-Path "android")) {
 # 2. Identifiant de l'application : fr.mafeliza.app (celui du projet Firebase)
 foreach ($f in @("android/app/build.gradle.kts", "android/app/build.gradle")) {
   if (Test-Path $f) {
-    (Get-Content $f -Raw) -replace 'applicationId\s*=?\s*"fr\.mafeliza\.mafeliza"', 'applicationId = "fr.mafeliza.app"' -replace 'minSdk\s*=\s*flutter\.minSdkVersion', 'minSdk = 23' | Set-Content $f -Encoding UTF8
+    (Get-Content $f -Raw) -replace 'applicationId\s*=?\s*"fr\.mafeliza\.mafeliza"', 'applicationId = "fr.mafeliza.app"' -replace 'minSdk\s*=\s*(flutter\.minSdkVersion|2[0-3])\b', 'minSdk = 24' | Set-Content $f -Encoding UTF8
   }
 }
 
@@ -137,7 +137,17 @@ class MainActivity : FlutterActivity() {
         val ch = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "mafeliza/push")
         channel = ch
         ch.setMethodCallHandler { call, result ->
-            if (call.method == "register") {
+            if (call.method == "localNotify") {
+                createChannel(this)
+                @Suppress("DEPRECATION")
+                val b = if (Build.VERSION.SDK_INT >= 26) android.app.Notification.Builder(this, "mafeliza") else android.app.Notification.Builder(this)
+                val open = android.app.PendingIntent.getActivity(this, 1, Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                    android.app.PendingIntent.FLAG_IMMUTABLE)
+                b.setSmallIcon(applicationInfo.icon).setContentTitle(call.argument<String>("title") ?: "MaFeliza")
+                    .setContentText(call.argument<String>("body") ?: "").setAutoCancel(true).setContentIntent(open)
+                getSystemService(NotificationManager::class.java).notify(4242, b.build())
+                result.success(null)
+            } else if (call.method == "register") {
                 ready = true
                 FirebaseMessaging.getInstance().token.addOnSuccessListener { t -> ch.invokeMethod("token", t) }
                 result.success(pendingUrl)

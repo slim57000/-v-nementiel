@@ -1,5 +1,6 @@
 // Espace caméraman : lancer le live depuis le téléphone (LiveKit) et enregistrer le replay par segments.
 import { api, $, toast, formatDate, pickAndUploadPhoto, livePlaceholder, shareSheet } from "./common.js";
+import { t as tr } from "./i18n.js";
 
 const params = new URLSearchParams(location.search);
 let slug = params.get("e") || "";
@@ -243,6 +244,24 @@ const status = (t) => { $("#live-status").textContent = t; };
 
 // Relance automatique après une coupure (jusqu'à ~20 min d'essais, de plus en plus espacés).
 let userStopped = false, restarting = false;
+// Application : niveau de batterie (chaque minute pendant le direct). Alerte à 20 % puis 10 % si le téléphone n'est pas branché.
+let batteryWarned = 100;
+window.mafelizaBattery = ({ level, charging }) => {
+  if (charging) { batteryWarned = 100; return; }
+  const step = level <= 10 ? 10 : level <= 20 ? 20 : 100;
+  if (step < batteryWarned) { batteryWarned = step; toast(`🔋 ${level} % · ${tr("Batterie faible : branchez le téléphone pour continuer le live.")}`); }
+};
+
+// Application : chaleur du téléphone (fréquent l'été ou en charge rapide pendant un long live).
+let thermalWarned = 0;
+window.mafelizaThermal = (status) => {
+  const level = { moderate: 1, severe: 2, critical: 2, emergency: 2, shutdown: 2 }[status] || 0;
+  if (level <= thermalWarned) { if (!level) thermalWarned = 0; return; }
+  thermalWarned = level;
+  toast(level === 1 ? `🌡️ ${tr("Le téléphone chauffe : retirez la coque et évitez le soleil direct.")}`
+    : `🔥 ${tr("Téléphone très chaud : le live risque de couper. Mettez-le à l'ombre.")}`);
+};
+
 async function autoRestart() {
   if (restarting) return;
   restarting = true;
@@ -288,6 +307,9 @@ async function startLive() {
     recording = Boolean(record);
     startSegment();
     try { wakeLock = await navigator.wakeLock?.request("screen"); } catch { /* facultatif */ }
+    // Application : écran toujours allumé, batterie, chaleur, rappel si l'appli est quittée, confirmation avant de quitter.
+    window.MaFelizaCamera?.postMessage(JSON.stringify({ labels: Object.fromEntries(["Le live est en pause", "Revenez dans MaFeliza pour reprendre le direct.",
+      "Le live est en cours. Quitter cette page arrêtera le direct."].map((k) => [k, tr(k)])) }));
     // Le nom choisi devient celui de cet appareil : il ne change plus au prochain rechargement.
     try { sessionStorage.removeItem(STOPPED); localStorage.setItem(nameStore(current), name); } catch { /* ignoré */ }
     if (!current.cameras.some((c) => c.name === name && c.url.startsWith("lk:"))) current = await api(`/api/cameraman/${encodeURIComponent(slug)}`);
@@ -317,6 +339,7 @@ async function stopLive(silent) {
   closeAllTracks();
   wakeLock?.release?.().catch(() => {});
   wakeLock = null;
+  window.MaFelizaCamera?.postMessage("off");
   clearInterval(viewersTimer);
   document.body.classList.remove("cam-full");
   $("#cam-viewers")?.classList.add("hidden");

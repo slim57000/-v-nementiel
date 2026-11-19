@@ -422,6 +422,7 @@ async function profileMenu() {
         ${me?.isAdmin ? '<a class="me-row" href="/admin"><span>🛠️</span>Administration<i>›</i></a>' : ""}
         <a class="me-row" href="/contact"><span>✉️</span>Nous contacter<i>›</i></a>
         <button type="button" class="me-row me-logout" data-me="logout"><span>🚪</span>Se déconnecter<i>›</i></button>
+        <button type="button" class="me-row me-logout" data-me="logout-all"><span>📵</span>Déconnecter tous mes appareils<i>›</i></button>
         <button type="button" class="me-row me-logout" data-me="delete"><span>🗑️</span>Supprimer mon compte<i>›</i></button>
         <button class="btn btn-light btn-block" type="button" data-me="close" style="margin-top:10px">Fermer</button>
       </div></div>`);
@@ -440,6 +441,15 @@ async function profileMenu() {
           if (!yes) return;
           try { localStorage.removeItem("em-dash"); } catch { /* ignoré */ }
           api("/api/auth/logout", { method: "POST" }).catch(() => {}).finally(() => location.replace("/"));
+        });
+      }
+      // Téléphone perdu, compte utilisé ailleurs : ferme toutes les sessions (celle-ci comprise).
+      if (act === "logout-all") {
+        sheet.remove();
+        confirmSheet(tr("Vous serez déconnecté sur tous vos téléphones, tablettes et ordinateurs, y compris celui-ci."), { ok: `📵 ${tr("Tout déconnecter")}`, danger: true }).then((yes) => {
+          if (!yes) return;
+          try { localStorage.removeItem("em-dash"); } catch { /* ignoré */ }
+          api("/api/auth/logout", { method: "POST", body: { all: true } }).catch(() => {}).finally(() => location.replace("/"));
         });
       }
     });
@@ -743,8 +753,30 @@ export async function uploadVideo(slug, file) {
   return { video: await readAsDataUrl(file) };
 }
 
+// Application : galerie du téléphone (plusieurs photos / vidéos), envoi en arrière-plan qui continue appli fermée.
+// Se termine quand tout est envoyé (la page se met alors à jour) ; l'envoi continue même si on quitte la page.
+async function nativeUpload(slug) {
+  const name = await guestName();
+  const { token, url } = await api(`/api/public/${encodeURIComponent(slug)}/upload-token`, { method: "POST", body: { name } });
+  return new Promise((resolve, reject) => {
+    window.mafelizaUploadCanceled = () => reject(new Error("canceled"));
+    window.mafelizaUploadQueued = ({ queued, skipped }) => {
+      if (skipped) toast(tr("Certains fichiers ne sont pas acceptés (format ou plus de 50 Mo)."));
+      if (queued) toast(`${tr("Envoi en cours")} : ${queued} 📤`);
+    };
+    window.mafelizaUploadProgress = ({ done, failed, total }) => toast(`${tr("Envoi des photos")} ${done + failed}/${total}`);
+    window.mafelizaUploadFinished = ({ done, failed }) => {
+      if (failed) toast(tr("Une photo n'a pas pu être envoyée"));
+      done ? resolve({ native: true, done }) : reject(new Error("failed"));
+    };
+    const labels = Object.fromEntries(["Envoi des photos", "Photos envoyées ✔", "Une photo n'a pas pu être envoyée"].map((k) => [k, tr(k)]));
+    window.MaFelizaUpload.postMessage(JSON.stringify({ url: location.origin + url, token, labels }));
+  });
+}
+
 // Choisit une photo ou une vidéo courte et l'envoie comme média d'invité. Renvoie le média créé.
 export function pickAndUploadPhoto(slug, { story = false } = {}) {
+  if (!story && window.MaFelizaUpload?.postMessage) return nativeUpload(slug).catch((err) => { if (!/^(canceled|failed)$/.test(err.message)) toast(err.message); throw err; });
   return new Promise((resolve, reject) => {
     const input = Object.assign(document.createElement("input"), { type: "file", accept: "image/*,video/*" });
     input.addEventListener("change", async () => {
@@ -1214,6 +1246,16 @@ async function reelComments(it, counter) {
 }
 
 function openVideoReels(list, start) {
+  // Application récente : lecteur natif (défilement fluide), avec la liste et les textes traduits.
+  if (window.MaFelizaReels?.postMessage) {
+    const liked = likedReels();
+    const labels = Object.fromEntries(["Fermer", "Partager", "Événement", "Cagnotte", "Commentaires", "Ajouter un commentaire…",
+      "Soyez le premier à commenter.", "Connectez-vous pour commenter.", "vue", "vues", "Créez le vôtre"].map((k) => [k, tr(k)]));
+    window.MaFelizaReels.postMessage(JSON.stringify({ start, labels, items: list.map((v) => ({
+      id: v.id, reel: v.reel || null, src: v.src, thumb: v.thumb || "", title: v.member ? v.title || "" : "", channel: v.channel || "",
+      likes: v.likes || 0, views: v.views || 0, nc: v.nc || 0, liked: liked.has(v.id), event: v.event || null, portrait: v.portrait !== false })) }));
+    return;
+  }
   document.body.insertAdjacentHTML("beforeend", `<div class="reels-viewer" id="reels-viewer" role="dialog" aria-modal="true">
     ${list.map((v, i) => `<section class="reel ${v.portrait === false ? "landscape" : ""}" data-i="${i}"><video playsinline muted loop preload="none" poster="${esc(v.thumb || "")}"></video>
       <div class="reel-side">

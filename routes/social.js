@@ -11,6 +11,7 @@ import {
   findEventMessage, deleteMessage, addReport, listReports, saveEvent, touchPresence,
 } from "../lib/store.js";
 import { guestAuthor } from "../lib/guest.js";
+import { signToken } from "../lib/session.js";
 import { getSetting, setSetting } from "../lib/store.js";
 import { rejectAbuse } from "../lib/moderation.js";
 import { rsvpMail, guestbookMail } from "../lib/confirmations.js";
@@ -274,6 +275,14 @@ router.post("/photos", notBlocked, rejectAbuse("caption"), async (req, res) => {
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
+});
+
+// Application : jeton d'envoi (24 h) pour envoyer photos et vidéos en arrière-plan, même appli fermée
+// (PUT /api/public/:slug/media, sans cookie). Accès à l'événement et prénom vérifiés ici, une fois.
+router.post("/upload-token", notBlocked, async (req, res) => {
+  const name = await authorName(req);
+  if (!name) return res.status(400).json({ error: "Prénom obligatoire." });
+  res.json({ token: signToken({ e: req.event.id, a: req.author, n: name }, 24 * 3600_000), url: `/api/public/${encodeURIComponent(req.event.slug)}/media` });
 });
 
 // Vidéo courte : envoyée en base64 (`video`, sans Supabase) ou déjà déposée via URL signée (`videoUrl`).

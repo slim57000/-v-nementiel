@@ -8,6 +8,9 @@ set -euo pipefail
 PBX=ios/Runner.xcodeproj/project.pbxproj
 sed -i '' "s/PRODUCT_BUNDLE_IDENTIFIER = fr\.mafeliza\.mafeliza;/PRODUCT_BUNDLE_IDENTIFIER = ${IOS_BUNDLE_ID}; DEVELOPMENT_TEAM = ${APPLE_TEAM_ID}; CODE_SIGN_STYLE = Automatic; CODE_SIGN_ENTITLEMENTS = Runner\/Runner.entitlements;/g" "$PBX"
 
+# iOS 15 minimum (modules d'envoi en arrière-plan, connexion Google)
+sed -i '' -E 's/IPHONEOS_DEPLOYMENT_TARGET = 1[0-4]\.[0-9]+;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g' "$PBX"
+
 # Autorisations « Sign in with Apple » et notifications push (activées sur l'identifiant de l'app par asc_signing.py)
 cat > ios/Runner/Runner.entitlements <<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -51,6 +54,15 @@ class MaFelizaPush: NSObject, FlutterPlugin, UNUserNotificationCenterDelegate {
   }
 
   func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+    // Notification locale immédiate (ex. caméraman : « le live est en pause, revenez dans MaFeliza »).
+    if call.method == "localNotify", let a = call.arguments as? [String: Any] {
+      let c = UNMutableNotificationContent()
+      c.title = a["title"] as? String ?? "MaFeliza"
+      c.body = a["body"] as? String ?? ""
+      c.sound = .default
+      UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "mafeliza-local", content: c, trigger: nil))
+      return result(nil)
+    }
     guard call.method == "register" else { return result(FlutterMethodNotImplemented) }
     MaFelizaPush.ready = true
     let openSettings = ((call.arguments as? [String: Any])?["settings"] as? Bool) ?? false

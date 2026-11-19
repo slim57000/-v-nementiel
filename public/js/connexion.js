@@ -1,5 +1,6 @@
 // Écran de connexion / inscription : email + mot de passe, connexion sociale, mot de passe oublié (code à 6 chiffres).
 import { api, $, toast } from "./common.js";
+import { t as tr } from "./i18n.js";
 import { BRAND } from "./icons.js";
 import { hasNativeApple, appleNative, inAppView } from "./native.js";
 import { googleSignIn } from "./google-app.js";
@@ -25,7 +26,14 @@ $("#login").addEventListener("submit", async (e) => {
   } catch (err) {
     // Ancien compte sans mot de passe : le code organisateur reste accepté.
     if (err.data?.legacy) $("#code-block").classList.remove("hidden");
-    if (err.data?.needPassword && !err.data.error) {
+    // Nouveau compte : code de vérification envoyé par email (le compte est créé une fois le code saisi).
+    if (err.data?.needCode) {
+      $("#code-block").classList.remove("hidden");
+      $("#code-label").textContent = tr("Code reçu par email (6 chiffres)");
+      $("#forgot")?.classList.add("hidden");
+      $("#code").focus();
+      $("#error").textContent = err.data.error || tr("Un code à 6 chiffres vient de vous être envoyé par email. Saisissez-le pour créer votre compte.");
+    } else if (err.data?.needPassword && !err.data.error) {
       $("#password").focus();
       $("#error").textContent = err.data.isNew ? "Nouveau compte : choisissez un mot de passe (8 caractères minimum)." : "Saisissez votre mot de passe.";
     } else {
