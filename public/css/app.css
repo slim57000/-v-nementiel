@@ -1851,3 +1851,28 @@ h1, h2, h3 { overflow-wrap: break-word; hyphens: auto; }
 .my-reel-vis.is-private { color: #6b6170; }
 .my-reel-acts { display: grid; gap: 4px; }
 .my-reel-acts .btn { margin: 0; padding: 6px 4px; font-size: .72rem; }
+
+/* Pages d'atterrissage (référencement) : même haut de page que l'accueil, puis cartes, étapes, FAQ et appel final. */
+.lp .lp-crumbs { color: rgba(255,255,255,.6); margin: 0 0 10px; }
+.lp .lp-crumbs a { color: rgba(255,255,255,.75); }
+.lp .lp-h1 { font-size: clamp(1.55rem, 7vw, 2rem); line-height: 1.12; letter-spacing: -.02em; margin: 0 0 12px; text-wrap: balance; }
+.lp .hx-sub { max-width: 34ch; }
+.lp-nosignup { margin: 12px 0 0; font-size: .8rem; color: rgba(255,255,255,.7); text-align: center; }
+.lp .lp-hero { margin: 22px 0 6px; box-shadow: 0 10px 30px rgba(60,10,60,.18); }
+.lp-cards { display: grid; gap: 12px; margin: 14px 0; }
+.lp-card { background: var(--card); border-radius: 18px; padding: 16px 16px 16px 64px; position: relative; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+.lp-card .lp-ic { position: absolute; left: 14px; top: 14px; width: 38px; height: 38px; display: grid; place-items: center; font-size: 1.3rem; border-radius: 12px; background: linear-gradient(135deg, #ffe1ef, #f1e2ff); }
+.lp-card h2 { font-size: 1.02rem; margin: 0 0 4px; }
+.lp-card p { margin: 0; color: var(--muted); line-height: 1.5; }
+.lp .lp-steps ol { counter-reset: s; list-style: none; padding: 0; margin: 4px 0 14px; }
+.lp .lp-steps li { counter-increment: s; position: relative; padding: 6px 0 6px 40px; }
+.lp .lp-steps li::before { content: counter(s); position: absolute; left: 0; top: 4px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: .85rem; color: #fff; background: linear-gradient(135deg, #e8137a, #b31fd6); }
+.lp-final { text-align: center; color: #fff; border-radius: 22px; padding: 24px 18px; margin: 16px 0; background: linear-gradient(135deg, #ff6a3d, #e8137a 45%, #8b2bd9); box-shadow: 0 12px 30px rgba(232,19,122,.28); }
+.lp-final h2 { font-size: 1.3rem; margin: 6px 0 16px; text-wrap: balance; }
+.lp-final .btn { background: #fff !important; color: #c2126b !important; box-shadow: 0 6px 18px rgba(0,0,0,.15); }
+.lp a.hx-brand { color: inherit; text-decoration: none; }
+.lp-final-ic { font-size: 1.6rem; margin: 0; letter-spacing: .2em; }
+.lp-sticky { position: fixed; left: max(16px, env(safe-area-inset-left)); right: max(16px, env(safe-area-inset-right)); bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 30; max-width: 448px; margin: 0 auto;
+  box-shadow: 0 10px 28px rgba(232,19,122,.4); transform: translateY(160%); transition: transform .3s ease; }
+.lp-sticky.show { transform: none; }
+@media (prefers-reduced-motion: reduce) { .lp-sticky { transition: none; } }

@@ -1,4 +1,10 @@
-// Pages d'atterrissage (référencement) : bannière cookies, statistiques et bouton « Créer » adapté si déjà connecté.
-import { api } from "./common.js";
+// Pages d'atterrissage (référencement) : bannière cookies, statistiques, bouton « Créer » collant une fois le haut de page dépassé.
+import "./common.js";
 
-api("/api/auth/me").then(() => document.querySelectorAll('a[href="/connexion?next=/edit"]').forEach((a) => { a.href = "/edit"; })).catch(() => {});
+const sticky = document.getElementById("lp-sticky"), hero = document.querySelector(".hx"), final = document.querySelector(".lp-final");
+if (sticky && hero && "IntersectionObserver" in window) {
+  let heroVisible = true, finalVisible = false;
+  const paint = () => sticky.classList.toggle("show", !heroVisible && !finalVisible);
+  new IntersectionObserver(([e]) => { heroVisible = e.isIntersecting; paint(); }).observe(hero);
+  if (final) new IntersectionObserver(([e]) => { finalVisible = e.isIntersecting; paint(); }).observe(final);
+}

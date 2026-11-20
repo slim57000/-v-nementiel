@@ -12,6 +12,13 @@ let social = []; // connexions sociales configurées sur le serveur
 
 api("/api/auth/me").then(() => location.replace(target)).catch(() => {});
 
+// Arrivée depuis « Créer mon événement » sans compte : l'événement est prêt, il ne manque que le compte.
+if (new URLSearchParams(location.search).has("creer")) {
+  const h = document.querySelector("main h1"), sub = h?.nextElementSibling;
+  if (h) h.textContent = tr("Dernière étape : votre compte");
+  if (sub) sub.textContent = tr("Votre événement est prêt. Il sera publié dès que votre compte gratuit sera créé.");
+}
+
 $("#login").addEventListener("submit", async (e) => {
   e.preventDefault();
   const button = e.submitter;

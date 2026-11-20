@@ -163,6 +163,8 @@ form.addEventListener("submit", async (e) => {
     removeCover: state.removeCover,
     regenerateCode: $("#regenerate").checked,
   };
+  // Pas encore de compte : l'événement préparé est gardé sur l'appareil, le compte se crée, puis il est publié.
+  if (!id && !loggedIn) return saveDraftAndSignup(body);
   const btn = $("#save"), label = btn.innerHTML;
   btn.disabled = true;
   btn.textContent = tr("⏳ Enregistrement…");
@@ -173,7 +175,7 @@ form.addEventListener("submit", async (e) => {
     // Nouvel événement : on montre directement ses faire-part à partager.
     location.href = id ? "/dashboard?saved=1" : `/faire-part?id=${saved.id}&new=1`;
   } catch (err) {
-    if (err.status === 401) return goLogin();
+    if (err.status === 401) return id ? goLogin() : saveDraftAndSignup(body);
     // Pas de réponse mais l'événement a peut-être bien été créé : on le retrouve et on redirige quand même.
     if (!id) {
       const mine = await api("/api/events").catch(() => null);
@@ -210,9 +212,39 @@ $("#cameras").addEventListener("click", (e) => {
   if (e.target.matches("[data-remove]")) e.target.closest(".camera-row").remove();
 });
 
+// « Créer d'abord, compte ensuite » : depuis l'accueil ou Google, on prépare son événement sans compte.
+let loggedIn = true;
+const DRAFT = "em-draft-event";
+function saveDraftAndSignup(body) {
+  try { localStorage.setItem(DRAFT, JSON.stringify(body)); }
+  catch { // photos trop lourdes pour l'appareil : on garde le reste, la photo se remet ensuite
+    try { localStorage.setItem(DRAFT, JSON.stringify({ ...body, coverData: undefined, invite: { ...body.invite, photo: "cover" } })); } catch { /* stockage indisponible */ }
+  }
+  location.href = `/connexion?creer=1&next=${encodeURIComponent("/edit?brouillon=1")}`;
+}
+async function publishDraft() {
+  let body = null;
+  try { body = JSON.parse(localStorage.getItem(DRAFT) || "null"); } catch { /* ignoré */ }
+  if (!body) return false;
+  document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="draft-wait"><div class="card" style="text-align:center"><p style="font-size:2.4rem;margin:0">✨</p>
+    <h2>${esc(tr("Publication de votre événement…"))}</h2></div></div>`);
+  try {
+    const saved = await api("/api/events", { method: "POST", body });
+    try { localStorage.removeItem(DRAFT); } catch { /* ignoré */ }
+    location.replace(`/faire-part?id=${saved.id}&new=1`);
+    return true;
+  } catch (err) {
+    document.getElementById("draft-wait")?.remove();
+    toast(err.message);
+    return false;
+  }
+}
+
 async function init() {
   if (!id) {
-    try { await api("/api/auth/me"); } catch { return goLogin(); }
+    try { await api("/api/auth/me"); } catch { loggedIn = false; }
+    if (loggedIn && new URLSearchParams(location.search).has("brouillon") && await publishDraft()) return;
+    if (!loggedIn) $("#page-title").insertAdjacentHTML("afterend", `<p class="muted" style="text-align:center;margin-top:-6px">${esc(tr("Préparez votre événement : votre compte gratuit se crée à la fin, en 30 secondes."))}</p>`);
     return refresh();
   }
   $("#page-title").textContent = "Modifier l'événement";
