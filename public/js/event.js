@@ -43,6 +43,8 @@ async function load() {
 function showLocked(ev) {
   $("#locked-name").textContent = ev.name;
   $("#locked").classList.remove("hidden");
+  // Croix de fermeture : page précédente du site, sinon Découvrir.
+  $("#locked-close").onclick = (e) => { if (document.referrer.startsWith(location.origin) && history.length > 1) { e.preventDefault(); history.back(); } };
   $("#code").focus();
 }
 

@@ -129,6 +129,8 @@ input::-webkit-date-and-time-value { text-align: center; }
 .share-bar { position: sticky; bottom: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: rgba(250,248,245,.95); backdrop-filter: blur(8px); border-top: 1px solid var(--border); }
 .share-bar .row { max-width: 720px; margin: 0 auto; }
 .locked-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; background: linear-gradient(135deg, #e8137a, #3b0a4a); }
+.locked-screen { position: relative; }
+.locked-close { position: absolute; top: calc(12px + env(safe-area-inset-top)); left: 12px; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: rgba(0,0,0,.35); color: #fff; font-size: 1.3rem; text-decoration: none; z-index: 2; }
 .locked-screen .card { width: 100%; max-width: 400px; text-align: center; }
 .big-lock { font-size: 3rem; }
 .code-input { text-align: center; text-transform: uppercase; letter-spacing: .3em; font-size: 1.4rem; font-weight: 700; }
