@@ -3,6 +3,23 @@
 import { api, toast, LOCALE } from "./common.js";
 import { makeZip } from "./zip.js";
 
+// Enregistre le fichier : téléchargement sur le site ; dans l'appli, envoyé par morceaux au téléphone,
+// qui ouvre « Enregistrer dans Fichiers / Partager » (la vue web afficherait le zip comme du texte).
+async function saveFile(blob, name) {
+  const ch = window.MaFelizaFile;
+  if (typeof ch?.postMessage !== "function") {
+    const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: name });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
+    return;
+  }
+  const send = (msg) => new Promise((ok) => { window.mafelizaFileAck = ok; ch.postMessage(JSON.stringify(msg)); });
+  const b64 = (part) => new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1] || ""); r.onerror = ko; r.readAsDataURL(part); });
+  await send({ op: "start", name });
+  for (let i = 0; i < blob.size; i += 768 * 1024) await send({ op: "chunk", data: await b64(blob.slice(i, i + 768 * 1024)) });
+  await send({ op: "end" });
+}
+
 // Date de l'événement (jour + heure) : date des fichiers du replay dans le zip.
 const evDate = (ev) => (ev.date ? `${ev.date}T${ev.time || "12:00"}` : undefined);
 
@@ -47,11 +64,7 @@ export async function exportEvent(ev, onProgress = () => {}) {
     onProgress(++done, media.length);
   }
   const blob = makeZip(files);
-  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `${ev.slug}-souvenirs.zip` });
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
+  await saveFile(blob, `${ev.slug}-souvenirs.zip`);
   toast(failed ? `Archive créée (${failed} fichier(s) indisponible(s))` : `Archive créée : ${media.length} fichier(s) ✔`);
 }
 
@@ -65,11 +78,7 @@ export async function exportReplay(ev) {
     try { files.push({ name: `replay/${r.camera}-partie-${String(n).padStart(2, "0")}.${ext(r.url)}`.replace(/[\\:*?"<>|]/g, "_"), data: await fetchBytes(r.url), date: r.createdAt || r.at || evDate(ev) }); } catch { /* partie indisponible */ }
   }
   if (!files.length) return false;
-  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(makeZip(files)), download: `${ev.slug}-replay.zip` });
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
+  await saveFile(makeZip(files), `${ev.slug}-replay.zip`);
   return true;
 }
 
@@ -85,10 +94,6 @@ export async function exportPublicReplay(ev, cameras) {
     }
   }
   if (!files.length) return false;
-  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(makeZip(files)), download: `${ev.slug}-replay.zip` });
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
+  await saveFile(makeZip(files), `${ev.slug}-replay.zip`);
   return true;
 }

@@ -17,6 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:thermal/thermal.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -137,6 +138,8 @@ class _HomePageState extends State<HomePage> {
       if (_cameraOn) _push.invokeMethod('localNotify', {'title': _camLabel('Le live est en pause'), 'body': _camLabel('Revenez dans MaFeliza pour reprendre le direct.')}).catchError((_) {});
     });
     // Photos / vidéos des invités : galerie du téléphone (plusieurs à la fois), envoi qui continue appli fermée.
+    // Fichiers créés par le site (zip des souvenirs, replay) : reçus par morceaux puis « Enregistrer / Partager ».
+    _web.addJavaScriptChannel('MaFelizaFile', onMessageReceived: (m) => _receiveFile(m.message));
     _web.addJavaScriptChannel('MaFelizaUpload', onMessageReceived: (m) => _uploader.pickAndSend(m.message));
     // Réels : lecteur natif (défilement fluide) ouvert par le site avec la liste et les textes traduits.
     _web.addJavaScriptChannel('MaFelizaReels', onMessageReceived: (m) => _openReels(m.message));
@@ -238,6 +241,31 @@ class _HomePageState extends State<HomePage> {
 
   // Mode caméraman (page du live) : écran allumé, batterie, chaleur du téléphone, rappel si l'appli est quittée,
   // confirmation avant de quitter la page avec le bouton retour.
+  IOSink? _fileSink;
+  File? _file;
+  Future<void> _receiveFile(String json) async {
+    final m = jsonDecode(json) as Map<String, dynamic>;
+    try {
+      switch (m['op']) {
+        case 'start':
+          final name = m['name'].toString().replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+          final dir = await Directory.systemTemp.createTemp('mafeliza');
+          _file = File('${dir.path}/$name');
+          _fileSink = _file!.openWrite();
+        case 'chunk':
+          _fileSink?.add(base64Decode(m['data'].toString()));
+        case 'end':
+          await _fileSink?.close();
+          _fileSink = null;
+          final size = MediaQuery.of(context).size;
+          if (_file != null) {
+            await SharePlus.instance.share(ShareParams(files: [XFile(_file!.path)], sharePositionOrigin: Rect.fromLTWH(size.width / 2, size.height / 2, 1, 1)));
+          }
+      }
+    } catch (_) {/* fichier incomplet : rien à partager */}
+    await _web.runJavaScript('window.mafelizaFileAck && window.mafelizaFileAck()');
+  }
+
   Future<void> _cameraMode(String message) async {
     _batteryTimer?.cancel();
     _batteryTimer = null;
