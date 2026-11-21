@@ -76,8 +76,13 @@ export async function copy(text, message = "Copié !") {
   toast(message);
 }
 
+// Appli (1.0.6+) : feuille de partage du téléphone. Impression : fenêtre d'impression du téléphone.
+const appShare = () => typeof window.MaFelizaShare?.postMessage === "function";
+export const printPage = () => (window.MaFelizaPrint?.postMessage ? window.MaFelizaPrint.postMessage(document.title) : print());
+
 // Partage natif si disponible (mobile), sinon copie du lien.
 export async function share({ title, text, url }) {
+  if (appShare()) return window.MaFelizaShare.postMessage(JSON.stringify({ text: [text, url].filter(Boolean).join("\n") }));
   if (navigator.share) {
     try { return await navigator.share({ title, text, url }); } catch (e) { if (e.name === "AbortError") return; }
   }
@@ -672,8 +677,9 @@ export function contentMenu({ slug, kind, item, isOwner, onDelete, onChange }) {
     sheet.remove();
     try {
       if (a === "report") {
-        const reason = prompt("Pourquoi signalez-vous ce contenu ? (facultatif)") ?? null;
-        if (reason === null) return;
+        // Confirmation d'abord : dans l'appli, « Annuler » sur la question suivante renvoie un texte vide.
+        if (!confirm("Signaler ce contenu à l'équipe MaFeliza ?")) return;
+        const reason = (prompt("Pourquoi signalez-vous ce contenu ? (facultatif)") || "").trim();
         await api(`${base}/reports`, { method: "POST", body: { kind, itemId: item.id, reason } });
         toast("Merci, le signalement a été transmis.");
       }
@@ -896,7 +902,7 @@ export function shareSheet({ title, text, url, image, story }) {
           ${story ? `<button class="share-opt" data-s="story"><i style="background:linear-gradient(135deg,#feda75,#d62976,#4f5bd5)">📱</i>${esc(tr("Format story (Instagram, WhatsApp)"))}</button>` : ""}
           <button class="share-opt" data-s="instagram"><i style="background:linear-gradient(45deg,#f58529,#dd2a7b,#8134af)">${SHARE_LOGOS.Instagram}</i>Instagram</button>
           <button class="share-opt" data-s="copy"><i style="background:var(--primary)">🔗</i>Copier le lien</button>
-          ${navigator.share || isNativeApp ? '<button class="share-opt" data-s="native"><i style="background:#1d1a20">⋯</i>Plus…</button>' : ""}
+          ${navigator.share || isNativeApp || appShare() ? '<button class="share-opt" data-s="native"><i style="background:#1d1a20">⋯</i>Plus…</button>' : ""}
         </div>
         <button class="btn btn-light btn-block" data-s="close" style="margin-top:12px">Fermer</button>
       </div>
@@ -1491,7 +1497,7 @@ document.addEventListener("click", async (e) => {
 
 // Enregistre le fichier : téléchargement sur le site ; dans l'appli, envoyé par morceaux au téléphone,
 // qui ouvre « Enregistrer dans Fichiers / Partager » (la vue web afficherait le zip comme du texte).
-export async function saveFile(blob, name) {
+export async function saveFile(blob, name, text = "") {
   const ch = window.MaFelizaFile;
   if (typeof ch?.postMessage !== "function") {
     const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: name });
@@ -1503,5 +1509,5 @@ export async function saveFile(blob, name) {
   const b64 = (part) => new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1] || ""); r.onerror = ko; r.readAsDataURL(part); });
   await send({ op: "start", name });
   for (let i = 0; i < blob.size; i += 768 * 1024) await send({ op: "chunk", data: await b64(blob.slice(i, i + 768 * 1024)) });
-  await send({ op: "end" });
+  await send({ op: "end", text });
 }

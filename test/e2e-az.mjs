@@ -60,6 +60,11 @@ ok('Organisateur : voit le livre d\'or', await o.locator('#gb-list .gb-entry').c
 ok('Organisateur : carte film souvenir', await o.locator('.film-card').count() === 1);
 await o.goto(B+'/e/'+ev.slug+'?film=1'); await o.waitForTimeout(2500); await o.click('.film-start').catch(()=>{}); await o.waitForTimeout(5000);
 ok('Film souvenir : se lance et défile', (await o.locator('#film .film-bars b[style*="100%"]').count()) >= 1);
+// Export vidéo du film (bouton « ⬇️ Vidéo » de la fin) : la vidéo doit être créée.
+await o.locator('[data-film="video"]').waitFor({ state: 'visible', timeout: 60000 }).catch(()=>{});
+await o.locator('[data-film="video"]').click().catch(()=>{});
+await o.locator('.film-export video').waitFor({ timeout: 90000 }).catch(()=>{});
+ok('Film souvenir : export vidéo', await o.locator('.film-export video').count() === 1, await o.locator('.film-export b').first().innerText().catch(()=>''));
 await o.goto(B+'/mur?id='+ev.id); await o.waitForTimeout(2500);
 ok('Mur photo : photos affichées', (await o.locator('.wall-slide').count()) >= 1, await o.locator('#w-count').innerText().catch(()=>''));
 await o.goto(B+'/album?id='+ev.id); await o.waitForTimeout(2000);

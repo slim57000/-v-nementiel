@@ -1,7 +1,7 @@
 // « Mes faire-part » : le faire-part de l'événement et l'invitation au live (générée automatiquement),
 // chacun avec QR code, lien, code et boutons de partage.
 import { inviteImage, shareBlob } from "./share-card.js";
-import { api, $, copy, shareSheet, qrUrl, tabbar, goLogin, formatDate, EVENT_TYPES, EN, toast } from "./common.js";
+import { api, $, copy, shareSheet, qrUrl, tabbar, goLogin, formatDate, EVENT_TYPES, EN, toast, printPage } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 import { lang, tr } from "./i18n.js";
 
@@ -152,7 +152,7 @@ form.addEventListener("submit", async (e) => {
     toast(tr("Texte enregistré ✓"));
   } catch (err) { toast(err.message); }
 });
-$("#print").addEventListener("click", () => print());
+$("#print").addEventListener("click", printPage);
 
 try {
   ev = await api(`/api/events/${encodeURIComponent(id)}`);

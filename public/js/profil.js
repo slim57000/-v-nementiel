@@ -44,7 +44,7 @@ try {
 
 $("#edit-name").addEventListener("click", async () => {
   const name = prompt("Votre nom (affiché à vos amis) :", me.displayName || me.name);
-  if (name === null) return;
+  if (name === null || !name.trim()) return; // appli : « Annuler » renvoie un texte vide
   try {
     const p = await api("/api/me/profile", { method: "PUT", body: { displayName: name } });
     me = { ...me, ...p, displayName: name };

@@ -1,8 +1,8 @@
 // Album souvenir imprimable (ou enregistrable en PDF) : couverture, photos et vidéos des invités, livre d'or.
-import { api, $, esc, goLogin, coverOf, isVideo, formatDate, EVENT_TYPES, pickAndUploadPhoto, toast } from "./common.js";
+import { api, $, esc, goLogin, coverOf, isVideo, formatDate, EVENT_TYPES, pickAndUploadPhoto, toast, printPage } from "./common.js";
 
 const id = new URLSearchParams(location.search).get("id");
-$("#print").addEventListener("click", () => print());
+$("#print").addEventListener("click", printPage);
 
 try {
   const ev = await api(`/api/events/${id}`);

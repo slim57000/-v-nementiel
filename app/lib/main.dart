@@ -110,7 +110,9 @@ class _HomePageState extends State<HomePage> {
           final uri = Uri.parse(req.url);
           if (uri.scheme == 'about' || uri.scheme == 'blob' || uri.scheme == 'data') return NavigationDecision.navigate;
           final internal = uri.host.endsWith('mafeliza.com') || uri.host.endsWith('livekit.cloud') || uri.host.endsWith('supabase.co');
-          if ((uri.scheme == 'http' || uri.scheme == 'https') && internal) return NavigationDecision.navigate;
+          // Fichier agenda (.ics) : ouvert par le navigateur du téléphone, qui propose « Ajouter au calendrier ».
+          final ics = uri.path.endsWith('.ics');
+          if ((uri.scheme == 'http' || uri.scheme == 'https') && internal && !ics) return NavigationDecision.navigate;
           launchUrl(uri, mode: LaunchMode.externalApplication);
           return NavigationDecision.prevent;
         },
@@ -140,6 +142,12 @@ class _HomePageState extends State<HomePage> {
     // Photos / vidéos des invités : galerie du téléphone (plusieurs à la fois), envoi qui continue appli fermée.
     // Fichiers créés par le site (zip des souvenirs, replay) : reçus par morceaux puis « Enregistrer / Partager ».
     _web.addJavaScriptChannel('MaFelizaFile', onMessageReceived: (m) => _receiveFile(m.message));
+    // Partage d'un lien / texte : feuille de partage du téléphone (WhatsApp, Messages, AirDrop…).
+    _web.addJavaScriptChannel('MaFelizaShare', onMessageReceived: (m) {
+      final size = MediaQuery.of(context).size;
+      final text = (jsonDecode(m.message) as Map<String, dynamic>)['text']?.toString() ?? '';
+      SharePlus.instance.share(ShareParams(text: text, sharePositionOrigin: Rect.fromLTWH(size.width / 2, size.height / 2, 1, 1)));
+    });
     _web.addJavaScriptChannel('MaFelizaUpload', onMessageReceived: (m) => _uploader.pickAndSend(m.message));
     // Réels : lecteur natif (défilement fluide) ouvert par le site avec la liste et les textes traduits.
     _web.addJavaScriptChannel('MaFelizaReels', onMessageReceived: (m) => _openReels(m.message));
@@ -259,7 +267,8 @@ class _HomePageState extends State<HomePage> {
           _fileSink = null;
           final size = MediaQuery.of(context).size;
           if (_file != null) {
-            await SharePlus.instance.share(ShareParams(files: [XFile(_file!.path)], sharePositionOrigin: Rect.fromLTWH(size.width / 2, size.height / 2, 1, 1)));
+            final text = m['text']?.toString() ?? '';
+            await SharePlus.instance.share(ShareParams(files: [XFile(_file!.path)], text: text.isEmpty ? null : text, sharePositionOrigin: Rect.fromLTWH(size.width / 2, size.height / 2, 1, 1)));
           }
       }
     } catch (_) {/* fichier incomplet : rien à partager */}

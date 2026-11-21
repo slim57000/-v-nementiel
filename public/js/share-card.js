@@ -1,6 +1,6 @@
 // Image du faire-part (PNG 1080×1350) pour le partager sur WhatsApp, SMS… avec le lien en dessous.
 // Dessinée sur un canvas aux couleurs du style choisi : titre, photo ronde, texte, date, lieu, lien et QR code.
-import { formatDate, qrUrl, EVENT_TYPES } from "./common.js";
+import { formatDate, qrUrl, EVENT_TYPES, saveFile } from "./common.js";
 import { tr } from "./i18n.js";
 
 const THEMES = {
@@ -105,6 +105,7 @@ export async function inviteImage(ev, invite, style, photoUrl, link, story = fal
 // Partage une image déjà prête (Blob) + texte + lien. Appelé directement dans le toucher (exigence iPhone).
 export async function shareBlob(blob, name, text, link) {
   try {
+    if (window.MaFelizaFile) { await saveFile(blob, name, `${text}\n${link}`); return true; } // appli : partage du téléphone
     const file = new File([blob], name, { type: "image/png" });
     if (!navigator.canShare?.({ files: [file] })) {
       // Ordinateur / navigateur sans partage de fichiers : l'image est téléchargée.

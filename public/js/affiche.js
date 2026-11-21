@@ -1,6 +1,6 @@
 // Supports à imprimer pour la salle : QR « photos » (album + mur photo) et QR « livre d'or ».
 // 3 formats sur feuille A4 : affiche (1), cartes de table A6 (4), marque-pages 5 × 14,8 cm (8), avec traits de coupe.
-import { api, $, esc, qrUrl, goLogin, formatDate, EVENT_TYPES } from "./common.js";
+import { api, $, esc, qrUrl, goLogin, formatDate, EVENT_TYPES, printPage } from "./common.js";
 import { t } from "./i18n.js";
 
 const id = new URLSearchParams(location.search).get("id");
@@ -52,5 +52,5 @@ $("#p-formats").addEventListener("click", (e) => {
 });
 $("#p-print").textContent = `🖨️ ${t("Imprimer")}`;
 // Application : l'impression passe par le téléphone (AirPrint, imprimante Android ou « Enregistrer en PDF »).
-$("#p-print").onclick = () => (window.MaFelizaPrint?.postMessage ? window.MaFelizaPrint.postMessage(document.title) : print());
+$("#p-print").onclick = printPage;
 render();

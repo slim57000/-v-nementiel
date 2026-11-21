@@ -322,6 +322,7 @@ document.addEventListener("click", async (e) => {
   if (e.target.id !== "report-event" || !current) return;
   const reason = prompt("Pourquoi signalez-vous cet événement ?");
   if (reason === null) return;
+  if (!reason.trim()) return toast("Indiquez la raison du signalement.");
   try { await api(`/api/public/${encodeURIComponent(current.slug)}/reports`, { method: "POST", body: { kind: "event", itemId: current.id, reason } }); toast("Merci, l'équipe MaFeliza va vérifier 🙏"); }
   catch (err) { toast(err.message); }
 });
