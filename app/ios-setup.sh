@@ -21,6 +21,8 @@ cat > ios/Runner/Runner.entitlements <<'XML'
   <array><string>Default</string></array>
   <key>aps-environment</key>
   <string>production</string>
+  <key>com.apple.developer.associated-domains</key>
+  <array><string>applinks:mafeliza.com</string></array>
 </dict>
 </plist>
 XML
@@ -35,6 +37,7 @@ if ! grep -q "MaFelizaPush" "$AD"; then
 \1MaFelizaPush.register(with: \2.registrar(forPlugin: "MaFelizaPush")!)/' "$AD"
   grep -q 'MaFelizaPush.register' "$AD" || { echo "AppDelegate.swift : enregistrement des notifications impossible"; cat "$AD"; exit 1; }
   sed -i '' '1s/^/import UserNotifications\
+import WebKit\
 /' "$AD"
   cat >> "$AD" <<'SWIFT'
 
@@ -61,6 +64,21 @@ class MaFelizaPush: NSObject, FlutterPlugin, UNUserNotificationCenterDelegate {
       c.body = a["body"] as? String ?? ""
       c.sound = .default
       UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: "mafeliza-local", content: c, trigger: nil))
+      return result(nil)
+    }
+    // Impression de la page affichée (affiches QR) : fenêtre d'impression iOS (AirPrint, PDF).
+    if call.method == "print" {
+      func find(_ v: UIView) -> WKWebView? { if let w = v as? WKWebView { return w }; for s in v.subviews { if let w = find(s) { return w } }; return nil }
+      let root = UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.first
+      if let web = root.flatMap({ find($0) }) {
+        let info = UIPrintInfo(dictionary: nil)
+        info.outputType = .general
+        info.jobName = ((call.arguments as? [String: Any])?["title"] as? String) ?? "MaFeliza"
+        let pc = UIPrintInteractionController.shared
+        pc.printInfo = info
+        pc.printFormatter = web.viewPrintFormatter()
+        pc.present(animated: true)
+      }
       return result(nil)
     }
     guard call.method == "register" else { return result(FlutterMethodNotImplemented) }
@@ -124,6 +142,8 @@ set_plist NSSpeechRecognitionUsageDescription string "MaFeliza n'utilise pas la 
 set_plist NSMotionUsageDescription string "MaFeliza n'utilise pas les capteurs de mouvement."
 set_plist NSAppleMusicUsageDescription string "MaFeliza n'accède pas à votre bibliothèque musicale."
 set_plist CFBundleDisplayName string "MaFeliza"
+# Liens mafeliza.com ouverts dans l'appli : reçus par le module app_links (pas par le routage de Flutter)
+set_plist FlutterDeepLinkingEnabled bool false
 # Langues de l'appli (affichées sur l'App Store) : les 15 langues du site, français par défaut.
 set_plist CFBundleDevelopmentRegion string "fr"
 /usr/libexec/PlistBuddy -c "Delete :CFBundleLocalizations" "$PL" 2>/dev/null || true
@@ -141,6 +161,27 @@ if [ -n "${GOOGLE_IOS_CLIENT_ID:-}" ]; then
     -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $REV" "$PL"
 fi
 set_plist ITSAppUsesNonExemptEncryption bool false
+
+# Dossiers de langue (fr.lproj, de.lproj…) : c'est ce que l'App Store lit pour afficher les 15 langues de la fiche.
+LANGS="fr en de es it pt nl pl ro ru uk tr ar hi zh-Hans"
+for L in $LANGS; do mkdir -p "ios/Runner/$L.lproj"; printf '"CFBundleDisplayName" = "MaFeliza";\n' > "ios/Runner/$L.lproj/InfoPlist.strings"; done
+cat > /tmp/lproj.rb <<'RUBY'
+require "xcodeproj"
+langs = ARGV
+p = Xcodeproj::Project.open("ios/Runner.xcodeproj")
+t = p.targets.find { |x| x.name == "Runner" }
+g = p.main_group["Runner"]
+unless g.children.any? { |c| c.display_name == "InfoPlist.strings" }
+  vg = g.new_variant_group("InfoPlist.strings")
+  langs.each { |l| r = vg.new_reference("#{l}.lproj/InfoPlist.strings"); r.name = l; r.last_known_file_type = "text.plist.strings" }
+  t.resources_build_phase.add_file_reference(vg)
+end
+p.root_object.known_regions = (p.root_object.known_regions + langs).uniq
+p.save
+puts "Langues de l'appli : #{langs.join(', ')}"
+RUBY
+gem list -i xcodeproj >/dev/null 2>&1 || gem install xcodeproj --user-install --no-document || true
+ruby /tmp/lproj.rb $LANGS || echo "Langues : étape ignorée (xcodeproj indisponible)"
 
 flutter pub get
 # Icône et écran de démarrage pour iPhone seulement (le dossier android/ n'existe pas sur ce Mac)

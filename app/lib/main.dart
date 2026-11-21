@@ -8,6 +8,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:app_links/app_links.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:file_picker/file_picker.dart';
@@ -127,6 +128,8 @@ class _HomePageState extends State<HomePage> {
 
     _bridge = WebBridge(_web);
     _uploader = MediaUploader(_bridge);
+    // Impression (affiches QR) : la vue web est imprimée par le téléphone (WebView ne gère pas window.print).
+    _web.addJavaScriptChannel('MaFelizaPrint', onMessageReceived: (m) => _push.invokeMethod('print', {'title': m.message}).catchError((_) {}));
     // Caméraman en direct : écran toujours allumé (garanti par le téléphone) et niveau de batterie envoyé à la page.
     _web.addJavaScriptChannel('MaFelizaCamera', onMessageReceived: (m) => _cameraMode(m.message));
     // Appli mise en arrière-plan pendant le live (appel, autre appli) : iOS coupe la caméra → rappel immédiat.
@@ -149,6 +152,11 @@ class _HomePageState extends State<HomePage> {
       }
     });
     _registerPush();
+
+    // Lien mafeliza.com touché (WhatsApp, email, bandeau du site…) : la page s'ouvre directement dans l'appli.
+    _linkSub = AppLinks().uriLinkStream.listen((uri) {
+      if (uri.host.endsWith('mafeliza.com')) _openPath(uri.path.isEmpty ? '/' : '${uri.path}${uri.hasQuery ? '?${uri.query}' : ''}');
+    }, onError: (_) {});
 
     // Bouton Google du site : fenêtre Google native du téléphone, jeton renvoyé au site.
     _web.addJavaScriptChannel('MaFelizaGoogle', onMessageReceived: (_) => _googleSignIn());
@@ -186,6 +194,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     _lifecycle?.dispose();
+    _linkSub?.cancel();
     _batteryTimer?.cancel();
     _thermal?.cancel();
     super.dispose();
@@ -223,6 +232,7 @@ class _HomePageState extends State<HomePage> {
   StreamSubscription<ThermalStatus>? _thermal;
   AppLifecycleListener? _lifecycle;
   bool _cameraOn = false;
+  StreamSubscription<Uri>? _linkSub;
   Map<String, dynamic> _camLabels = {};
   String _camLabel(String k) => (_camLabels[k] ?? k).toString();
 

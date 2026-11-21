@@ -51,5 +51,6 @@ $("#p-formats").addEventListener("click", (e) => {
   render();
 });
 $("#p-print").textContent = `🖨️ ${t("Imprimer")}`;
-$("#p-print").onclick = () => print();
+// Application : l'impression passe par le téléphone (AirPrint, imprimante Android ou « Enregistrer en PDF »).
+$("#p-print").onclick = () => (window.MaFelizaPrint?.postMessage ? window.MaFelizaPrint.postMessage(document.title) : print());
 render();

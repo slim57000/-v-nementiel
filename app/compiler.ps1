@@ -49,6 +49,30 @@ if ($x -notmatch "android.permission.CAMERA") {
   Set-Content $m $x -Encoding UTF8
 }
 
+# 3 bis. Liens mafeliza.com ouverts directement dans l'appli (App Links vérifiés par /.well-known/assetlinks.json)
+$m = "android/app/src/main/AndroidManifest.xml"
+$x = Get-Content $m -Raw
+if ($x -notmatch "MaFeliza-links") {
+  $paths = @("/e/", "/live", "/simple", "/mur", "/album", "/faire-part", "/dashboard", "/decouvrir", "/messages", "/profil", "/edit", "/cameraman", "/amis", "/fil") |
+    ForEach-Object { "                <data android:pathPrefix=`"$_`"/>" }
+  $filter = @"
+            <!-- MaFeliza-links -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="mafeliza.com"/>
+                <data android:path="/"/>
+$($paths -join "`n")
+            </intent-filter>
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false"/>
+        </activity>
+"@
+  $i = $x.IndexOf("</activity>")
+  $x = $x.Substring(0, $i) + $filter + $x.Substring($i + "</activity>".Length)
+  Set-Content $m $x -Encoding UTF8
+}
+
 # 4. Autorisations iPhone (textes affichés par iOS)
 $p = "ios/Runner/Info.plist"
 $y = Get-Content $p -Raw
@@ -137,7 +161,20 @@ class MainActivity : FlutterActivity() {
         val ch = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "mafeliza/push")
         channel = ch
         ch.setMethodCallHandler { call, result ->
-            if (call.method == "localNotify") {
+            if (call.method == "print") {
+                fun find(v: android.view.View): android.webkit.WebView? {
+                    if (v is android.webkit.WebView) return v
+                    if (v is android.view.ViewGroup) for (i in 0 until v.childCount) find(v.getChildAt(i))?.let { return it }
+                    return null
+                }
+                val web = find(window.decorView)
+                if (web != null) {
+                    val name = call.argument<String>("title") ?: "MaFeliza"
+                    (getSystemService(android.content.Context.PRINT_SERVICE) as android.print.PrintManager)
+                        .print(name, web.createPrintDocumentAdapter(name), android.print.PrintAttributes.Builder().setMediaSize(android.print.PrintAttributes.MediaSize.ISO_A4).build())
+                }
+                result.success(null)
+            } else if (call.method == "localNotify") {
                 createChannel(this)
                 @Suppress("DEPRECATION")
                 val b = if (Build.VERSION.SDK_INT >= 26) android.app.Notification.Builder(this, "mafeliza") else android.app.Notification.Builder(this)

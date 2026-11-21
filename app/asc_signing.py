@@ -39,7 +39,7 @@ def capabilities():
     # Notifications push activées sur l'identifiant de l'app (409 : déjà activées). Avant la compilation,
     # pour que le profil de distribution contienne l'autorisation « aps-environment ».
     bundle = bundle_id()
-    for cap in ("PUSH_NOTIFICATIONS",):
+    for cap in ("PUSH_NOTIFICATIONS", "ASSOCIATED_DOMAINS"):
         r = api("POST", "/bundleIdCapabilities", {"data": {"type": "bundleIdCapabilities", "attributes": {"capabilityType": cap},
             "relationships": {"bundleId": {"data": {"type": "bundleIds", "id": bundle["id"]}}}}}, allow=(409,))
         print(f"{cap} : {'déjà activé' if r.get('error') == 409 else 'activé'}")

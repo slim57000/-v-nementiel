@@ -1876,3 +1876,12 @@ h1, h2, h3 { overflow-wrap: break-word; hyphens: auto; }
   box-shadow: 0 10px 28px rgba(232,19,122,.4); transform: translateY(160%); transition: transform .3s ease; }
 .lp-sticky.show { transform: none; }
 @media (prefers-reduced-motion: reduce) { .lp-sticky { transition: none; } }
+
+/* Bandeau « Ouvrir dans l'appli » (Android, navigateur) */
+.app-banner { position: sticky; top: 0; z-index: 60; display: flex; align-items: center; gap: 10px; padding: 8px 12px; padding-top: calc(8px + env(safe-area-inset-top));
+  background: var(--card); border-bottom: 1px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+.app-banner img { border-radius: 10px; flex: none; }
+.app-banner span { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
+.app-banner small { color: var(--muted); font-size: .78rem; }
+.app-banner-x { background: none; border: 0; color: var(--muted); font-size: 1rem; padding: 4px; cursor: pointer; }
+.app-banner-go { background: linear-gradient(135deg, #e8137a, #b31fd6); color: #fff !important; font-weight: 800; padding: 8px 16px; border-radius: 999px; text-decoration: none; }

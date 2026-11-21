@@ -77,6 +77,21 @@ if (missingConfig.length) {
 }
 
 // Réglages publics lus par le navigateur (identifiant Google Analytics, facultatif).
+// Liens qui s'ouvrent directement dans l'application installée (iPhone : liens universels ; Android : App Links).
+// Seules les pages d'événement et de l'espace personnel : jamais l'API, les fichiers ni la page de connexion Google.
+const APP_PATHS = ["/e/", "/live", "/simple", "/mur", "/album", "/faire-part", "/dashboard", "/decouvrir", "/messages", "/profil", "/edit", "/cameraman", "/amis", "/fil"];
+app.get("/.well-known/apple-app-site-association", (req, res) => res.type("application/json").json({
+  applinks: { details: [{ appIDs: [`${process.env.APPLE_TEAM_ID || "8BRT65D9VF"}.fr.mafeliza.app`],
+    components: [{ "/": "/" }, ...APP_PATHS.map((p) => ({ "/": p.endsWith("/") ? `${p}*` : `${p}*` }))] }] },
+}));
+app.get("/.well-known/assetlinks.json", (req, res) => res.json([{
+  relation: ["delegate_permission/common.handle_all_urls"],
+  target: { namespace: "android_app", package_name: "fr.mafeliza.app",
+    // Clé d'envoi + clé de signature Google Play (Play Console → Intégrité de l'appli → SHA-256), dans ANDROID_SHA256.
+    sha256_cert_fingerprints: ["85:4A:80:2D:24:75:85:A2:C4:37:47:16:48:FA:B7:C7:24:48:3C:EE:F3:D1:94:63:30:D8:FC:BE:E2:EA:3A:6C",
+      ...String(process.env.ANDROID_SHA256 || "").split(",").map((s) => s.trim().toUpperCase()).filter(Boolean)] },
+}]));
+
 app.get("/api/config", async (req, res) => {
   const [vapidPublicKey, platform] = await Promise.all([vapidKey(), getSetting("defaultLivePlatform").catch(() => null)]);
   res.json({
@@ -281,6 +296,7 @@ computeAssets();
 // Nom du site pour Google (sinon il le devine) : « MaFeliza » dans chaque page.
 // + fiche « Organisation » (logo affiché par Google) et « Application web ».
 const SITE_NAME = `<meta property="og:site_name" content="MaFeliza"><meta name="application-name" content="MaFeliza">
+<meta name="apple-itunes-app" content="app-id=6818968509">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"WebSite","name":"MaFeliza","alternateName":["Ma Feliza","mafeliza.com"],"url":"https://mafeliza.com/","inLanguage":["fr","en","de","es","it","pt","nl","tr","ar","pl","ro","ru","uk","zh","hi"]},
 {"@context":"https://schema.org","@type":"Organization","name":"MaFeliza","url":"https://mafeliza.com/","logo":"https://mafeliza.com/img/icon-512.png","email":"contact@mafeliza.com","sameAs":["https://play.google.com/store/apps/details?id=fr.mafeliza.app","https://apps.apple.com/app/id6818968509"]},
 {"@context":"https://schema.org","@type":"MobileApplication","name":"MaFeliza","operatingSystem":"Android, iOS","applicationCategory":"LifestyleApplication","installUrl":"https://play.google.com/store/apps/details?id=fr.mafeliza.app","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"}},
