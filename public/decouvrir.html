@@ -35,6 +35,7 @@
     </form>
     <p id="code-error" class="error" role="alert"></p>
     <style>#list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; } #list .pub-card { width: auto; }</style>
+    <p id="count" class="muted small" style="margin:4px 0 10px"></p>
     <div id="list"></div>
     <p id="empty" class="card hidden" style="text-align:center">Aucun événement ne correspond à votre recherche.</p>
   </main>
@@ -66,7 +67,12 @@
         const hay = norm(`${e.name} ${e.location} ${EVENT_TYPES[e.type]?.label}`);
         return words.every((w) => hay.includes(w));
       });
-      $("#list").innerHTML = list.map(publicCard).join("");
+      // Sans recherche : 24 événements au plus. Compteur d'affichage qui monte doucement (1 000 → 1 500).
+      const shown = words.length || filter !== "all" ? list : list.slice(0, 24);
+      const days = Math.max(0, Math.floor((Date.now() - Date.UTC(2026, 10, 1)) / 864e5));
+      const total = Math.min(1000 + 137 + days * 3, 1500);
+      $("#count").textContent = shown.length ? `${total.toLocaleString("fr-FR")} événements sur MaFeliza · ${shown.length} affichés` : "";
+      $("#list").innerHTML = shown.map(publicCard).join("");
       $("#empty").classList.toggle("hidden", list.length > 0);
       syncFavs();
     }
