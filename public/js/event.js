@@ -1,5 +1,5 @@
 // Page publique d'un événement : faire-part, compte à rebours, stories, réponses, livre d'or, cagnotte.
-import { api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, EN, guestName, LOCALE, placeholderCover, tabbar, createSheet, openPot, coverOf } from "./common.js";
+import { enablePush, pushState, api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, EN, guestName, LOCALE, placeholderCover, tabbar, createSheet, openPot, coverOf } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 import { t as tr } from "./i18n.js";
 import { initGuestbook } from "./guestbook.js";
@@ -115,6 +115,20 @@ function showEvent(ev) {
     $("#live-link").href = `/live?e=${encodeURIComponent(ev.slug)}`;
     $("#live-link").textContent = state === "replay" ? "▶ Voir le replay" : "📺 Regarder le live";
     $("#live-link").classList.remove("hidden");
+  }
+  // Live à venir : l'invité (même sans compte) active les notifications pour être prévenu au démarrage.
+  // iPhone dans Safari (notifications web impossibles hors écran d'accueil) : on propose l'appli.
+  if (state !== "live" && ev.date >= new Date().toISOString().slice(0, 10) && pushState() !== "granted") {
+    const b = $("#live-notify");
+    const ios = pushState() === "unsupported" && /iPhone|iPad/.test(navigator.userAgent);
+    if (ios) b.textContent = `📲 ${tr("Être prévenu du live : installer l'appli")}`;
+    b.onclick = async () => {
+      if (ios) { location.href = "https://apps.apple.com/app/id6818968509"; return; }
+      try {
+        if ((await enablePush()) !== "native") { b.classList.add("hidden"); toast(tr("C'est noté : vous serez prévenu dès que le live commence 🔔")); }
+      } catch (err) { toast(err.message); }
+    };
+    b.classList.remove("hidden");
   }
   if (ev.cagnotteUrl) {
     $("#qa-pot").href = ev.cagnotteUrl;

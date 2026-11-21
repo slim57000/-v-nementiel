@@ -12,7 +12,7 @@ import {
 } from "../lib/store.js";
 import { guestAuthor } from "../lib/guest.js";
 import { signToken } from "../lib/session.js";
-import { getSetting, setSetting } from "../lib/store.js";
+import { getSetting, setSetting, addEventGuest } from "../lib/store.js";
 import { rejectAbuse } from "../lib/moderation.js";
 import { rsvpMail, guestbookMail } from "../lib/confirmations.js";
 import { saveDataUrl, removeUpload, isVideoUrl, videoUploadTarget, saveLocalVideo, issueUpload, claimUpload, MAX_VIDEO_BYTES } from "../lib/uploads.js";
@@ -26,6 +26,16 @@ export const REACTIONS = ["❤️", "👏", "😍", "🎆", "🍾"];
 const clean = (v, max) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, max);
 
 
+// Invités de l'événement (appareils, sans compte) : notés une fois, pour les prévenir quand le live démarre.
+const seenGuests = new Set();
+function rememberGuest(eventId, author) {
+  const k = `${eventId}:${author}`;
+  if (!author || seenGuests.has(k) || !addEventGuest) return;
+  if (seenGuests.size > 50_000) seenGuests.clear();
+  seenGuests.add(k);
+  addEventGuest(eventId, author).catch(() => seenGuests.delete(k));
+}
+
 // Charge l'événement et vérifie l'accès (public, code saisi ou organisateur).
 router.use(async (req, res, next) => {
   const event = await findEventBySlug(req.params.slug);
@@ -33,6 +43,7 @@ router.use(async (req, res, next) => {
   if (!(await hasAccess(req, event))) return res.status(403).json({ error: "Accès réservé aux invités." });
   req.event = event;
   req.author = guestAuthor(req, res);
+  rememberGuest(event.id, req.author);
   // Modération : auteurs bloqués sur tout le site et contenus masqués (3 signalements), lus une fois par requête.
   const [banned, hidden] = await Promise.all([getSetting("bannedAuthors").catch(() => null), getSetting("modhidden").catch(() => null)]);
   req.mod = { banned: new Set(banned || []), hidden: new Set(hidden || []) };

@@ -1,8 +1,9 @@
 // Espace caméraman : accès par un code dédié, gestion des liens du live et consignes.
 import express, { Router } from "express";
 import { replayRecordedMail, replayReadyMail } from "../lib/confirmations.js";
-import { addPhoto, countViewers, listMessages, findEventBySlug, findEventByCameramanCode, saveEvent, getSetting, setSetting, addHistory, clearLimit } from "../lib/store.js";
+import { listFollowerIds, listEventGuests, addPhoto, countViewers, listMessages, findEventBySlug, findEventByCameramanCode, saveEvent, getSetting, setSetting, addHistory, clearLimit } from "../lib/store.js";
 import { currentOrganizer } from "./auth.js";
+import { notify, orgOwner } from "../lib/push.js";
 import { saveDataUrl, videoUploadTarget, saveLocalVideo, issueUpload, claimUpload, HAS_STORAGE, MAX_VIDEO_BYTES } from "../lib/uploads.js";
 import { parseCameras } from "../lib/events.js";
 import { LIVEKIT_ENABLED, LIVEKIT_URL, lkToken, newRoom, LK_PREFIX, isLkRoom, markLive, isLive } from "../lib/livekit.js";
@@ -68,8 +69,20 @@ router.post("/:slug/go-live", async (req, res) => {
   }
   const room = cam.url.slice(LK_PREFIX.length);
   await Promise.all([markLive(room, true), setSetting(`replayoff:${req.event.id}`, null)]); // nouveau direct : nouveau replay
+  liveStarted(req.event).catch((err) => console.error("Notification live :", err.message));
   res.json({ url: LIVEKIT_URL, token: lkToken({ room, identity: `cam-${room}`, name, publish: true }), name, room, record: HAS_STORAGE });
 });
+
+// 🔴 Le live démarre (vraiment) : notification à tous ceux qui suivent l'événement, comptes et invités sans compte
+// (téléphone ou navigateur avec notifications activées). Une fois toutes les 2 h par événement (relances, 2e caméra).
+async function liveStarted(event) {
+  const last = Number(await getSetting(`livestart:${event.id}`).catch(() => 0)) || 0;
+  if (Date.now() - last < 2 * 3600_000) return;
+  await setSetting(`livestart:${event.id}`, Date.now());
+  const [followers, guests] = await Promise.all([listFollowerIds(event.id).catch(() => []), (listEventGuests?.(event.id) ?? Promise.resolve([])).catch(() => [])]);
+  const owners = [...followers.filter((id) => id !== event.organizerId).map(orgOwner), ...guests.slice(0, 5000).map((a) => `gid:${a}`)];
+  if (owners.length) await notify(owners, { title: `🔴 « ${event.name} » est en direct !`, body: "Rejoignez le live maintenant.", url: `/live?e=${event.slug}` });
+}
 
 // Fin du direct : les invités voient ensuite le replay.
 router.post("/:slug/stop-live", async (req, res) => {
