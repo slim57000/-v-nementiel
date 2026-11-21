@@ -1,4 +1,5 @@
 // Espace personnel d'un utilisateur connecté : profil, favoris, historique, amis, messages privés, blocages.
+import { blurredCover } from "./public.js";
 import { Router } from "express";
 import { reqLang } from "../lib/email.js";
 import { randomCode } from "../lib/codes.js";
@@ -207,7 +208,10 @@ router.get("/circle", async (req, res) => {
   const friends = (await Promise.all(friendIds.slice(0, 50).map((id) => listEvents(id).catch(() => [])))).flat()
     .filter((e) => e.date >= today).map((e) => withVisibility(e, hidden));
   const all = visibleEvents([...invited, ...friends]).filter((e, i, arr) => arr.findIndex((x) => x.id === e.id) === i);
-  res.json(all.map(card));
+  // Événement privé d'un ami jamais ouvert : photo floutée (la vraie photo n'est pas envoyée).
+  const opened = new Set((await listHistoryIds(me.id).catch(() => [])).map(Number));
+  const invitedIds = new Set(invited.map((e) => e.id));
+  res.json(all.map((e) => (e.visibility === "private" && e.organizerId !== me.id && !opened.has(Number(e.id)) && !invitedIds.has(e.id) ? { ...card(e), cover: blurredCover(e) } : card(e))));
 });
 
 router.get("/history", async (req, res) => {

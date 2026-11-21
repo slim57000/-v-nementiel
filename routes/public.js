@@ -5,8 +5,10 @@ import { inspirations } from "../lib/inspirations.js";
 import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers, rollDemoDates } from "../lib/demo.js";
 import express, { Router } from "express";
-import { saveRawFile, MAX_VIDEO_BYTES } from "../lib/uploads.js";
-import { addPhoto } from "../lib/store.js";
+import { saveRawFile, MAX_VIDEO_BYTES, UPLOAD_DIR, SAFE_NAME, isOwnUpload } from "../lib/uploads.js";
+import { addPhoto, findEvent } from "../lib/store.js";
+import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { publicView } from "../lib/events.js";
 import { listRecentPhotos, getSetting as readSetting, setSetting as writeSetting, dataVersion, listHistoryIds, listPendingIds, listUnlistedIds, listAllUpcoming, findEventsByIds, withVisibility, findEventBySlug, findEventByAccessCode, listPublicUpcoming, countViewers, addHistory,  clearLimit, findInvite, saveInvite, getSetting } from "../lib/store.js";
 import { setSigned, getSigned, codeFingerprint, readToken } from "../lib/session.js";
@@ -91,7 +93,7 @@ router.get("/", async (req, res) => {
     // (ville seule), ni les caméras. Le clic mène à l'écran « entrez votre code » : l'accès passe par le code.
     const city = String(e.location || "").split(",").map((x) => x.trim()).filter((x) => x && !COUNTRIES.test(x)).pop()?.replace(/\b[A-Z]{0,2}\d[\dA-Z -]*\b/g, "").replace(/\s+/g, " ").trim() || null;
     // Photo de couverture d'un événement privé : seulement pour son organisateur ou qui l'a déjà ouvert (emoji sinon).
-    if (e.visibility === "private") return { ...card, ...(!(String(e.organizerId) === String(viewer?.id) || opened.has(Number(e.id))) && { cover: null }), city, time: "", location: "", cameras: [], viewers: 0 };
+    if (e.visibility === "private") return { ...card, ...(!(String(e.organizerId) === String(viewer?.id) || opened.has(Number(e.id))) && { cover: blurredCover(e) }), city, time: "", location: "", cameras: [], viewers: 0 };
     // Non répertorié : affiché comme un privé, et sans son lien (seul le lien reçu par SMS / WhatsApp y donne accès).
     if (e.visibility === "unlisted" && (String(e.organizerId) === String(viewer?.id) || opened.has(Number(e.id)))) card.visibility = "unlisted";
     else if (e.visibility === "unlisted") {
@@ -185,6 +187,36 @@ router.put("/:slug/media", express.raw({ type: () => true, limit: MAX_VIDEO_BYTE
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
+});
+
+// Photo de couverture floutée (événement privé, pour qui n'y a pas accès) : fabriquée ici, en tout petit puis floutée,
+// pour que la vraie photo ne soit jamais envoyée. Gardée en mémoire (recalculée si la couverture change).
+export const blurredCover = (e) => (e.cover ? `/api/public/cover-blur/${e.id}.jpg?v=${createHash("sha1").update(e.cover).digest("hex").slice(0, 8)}` : null);
+const blurCache = new Map();
+const sharpLib = import("sharp").then((m) => m.default).catch(() => null);
+const PUBLIC_DIR = new URL("../public", import.meta.url).pathname;
+async function coverBytes(cover) {
+  if (cover.startsWith("/uploads/") && SAFE_NAME.test(cover.slice(9))) return readFile(`${UPLOAD_DIR}/${cover.slice(9)}`);
+  if (/^\/img\/[\w/.-]+$/.test(cover) && !cover.includes("..")) return readFile(`${PUBLIC_DIR}${cover}`);
+  if (/^https:\/\//.test(cover) && isOwnUpload(cover)) return Buffer.from(await (await fetch(cover, { signal: AbortSignal.timeout(8000) })).arrayBuffer());
+  return null;
+}
+router.get("/cover-blur/:file", async (req, res) => {
+  const event = await findEvent(Number(String(req.params.file).replace(/\.jpg$/, ""))).catch(() => null);
+  const sharp = await sharpLib;
+  if (!event?.cover || event.suspended || !sharp) return res.status(404).end();
+  const key = `${event.id}:${event.cover}`;
+  let out = blurCache.get(key);
+  if (!out) {
+    try {
+      const src = await coverBytes(event.cover);
+      if (!src) return res.status(404).end();
+      out = await sharp(src).rotate().resize(40, 40, { fit: "cover" }).blur(2.5).jpeg({ quality: 60 }).toBuffer();
+      if (blurCache.size > 2000) blurCache.clear();
+      blurCache.set(key, out);
+    } catch { return res.status(404).end(); }
+  }
+  res.type("jpg").set("Cache-Control", "public, max-age=604800, immutable").send(out);
 });
 
 router.get("/pot-check", async (req, res) => res.json({ embeddable: await embeddable(String(req.query.url || "")) }));

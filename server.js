@@ -296,7 +296,7 @@ computeAssets();
 // Nom du site pour Google (sinon il le devine) : « MaFeliza » dans chaque page.
 // + fiche « Organisation » (logo affiché par Google) et « Application web ».
 const SITE_NAME = `<meta property="og:site_name" content="MaFeliza"><meta name="application-name" content="MaFeliza">
-<meta name="apple-itunes-app" content="app-id=6818968509">
+<meta name="apple-itunes-app" content="app-id=6818968509"><meta name="format-detection" content="telephone=no, address=no, email=no, date=no">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"WebSite","name":"MaFeliza","alternateName":["Ma Feliza","mafeliza.com"],"url":"https://mafeliza.com/","inLanguage":["fr","en","de","es","it","pt","nl","tr","ar","pl","ro","ru","uk","zh","hi"]},
 {"@context":"https://schema.org","@type":"Organization","name":"MaFeliza","url":"https://mafeliza.com/","logo":"https://mafeliza.com/img/icon-512.png","email":"contact@mafeliza.com","sameAs":["https://play.google.com/store/apps/details?id=fr.mafeliza.app","https://apps.apple.com/app/id6818968509"]},
 {"@context":"https://schema.org","@type":"MobileApplication","name":"MaFeliza","operatingSystem":"Android, iOS","applicationCategory":"LifestyleApplication","installUrl":"https://play.google.com/store/apps/details?id=fr.mafeliza.app","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"}},
