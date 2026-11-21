@@ -1,6 +1,6 @@
 // ✨ « Revivez l'événement » : film souvenir de 30 à 60 s monté automatiquement dans le navigateur,
 // avec les photos et vidéos des invités, quelques mots du livre d'or et une musique douce générée (sans droits).
-import { api, esc, formatDate, coverOf, isVideo, isHidden, shareSheet } from "./common.js";
+import { api, esc, formatDate, coverOf, isVideo, isHidden, shareSheet, saveFile } from "./common.js";
 import { tr } from "./i18n.js";
 
 // Textes du film dans la langue du visiteur (dictionnaire du site).
@@ -260,5 +260,7 @@ export async function exportFilm(ev, scenes, root) {
   const sh = box.querySelector('[data-x="share"]');
   if (!navigator.canShare?.({ files: [file] })) sh.remove();
   else sh.onclick = () => navigator.share({ files: [file], title: ev.name }).catch(() => {});
+  // Appli : la vidéo passe par le téléphone (Enregistrer la vidéo / Partager), le lien direct n'y fonctionne pas.
+  if (window.MaFelizaFile) { sh.remove(); box.querySelector(".film-save").onclick = (e) => { e.preventDefault(); saveFile(blob, file.name); }; }
   box.querySelector('[data-x="close"]').onclick = () => { URL.revokeObjectURL(url); box.remove(); };
 }

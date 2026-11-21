@@ -1488,3 +1488,20 @@ document.addEventListener("click", async (e) => {
   };
   document.readyState === "loading" ? addEventListener("DOMContentLoaded", show) : show();
 })();
+
+// Enregistre le fichier : téléchargement sur le site ; dans l'appli, envoyé par morceaux au téléphone,
+// qui ouvre « Enregistrer dans Fichiers / Partager » (la vue web afficherait le zip comme du texte).
+export async function saveFile(blob, name) {
+  const ch = window.MaFelizaFile;
+  if (typeof ch?.postMessage !== "function") {
+    const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: name });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
+    return;
+  }
+  const send = (msg) => new Promise((ok) => { window.mafelizaFileAck = ok; ch.postMessage(JSON.stringify(msg)); });
+  const b64 = (part) => new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1] || ""); r.onerror = ko; r.readAsDataURL(part); });
+  await send({ op: "start", name });
+  for (let i = 0; i < blob.size; i += 768 * 1024) await send({ op: "chunk", data: await b64(blob.slice(i, i + 768 * 1024)) });
+  await send({ op: "end" });
+}
