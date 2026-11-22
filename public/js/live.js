@@ -66,8 +66,9 @@ async function load() {
   else $("#live-promo").classList.remove("hidden");
   document.title = `Live — ${ev.name}`;
   $("#title").textContent = ev.name;
-  // Croix : retour à la page précédente du site (accueil, découvrir, tableau de bord…), sinon à l'accueil.
-  $("#close").href = "/";
+  // Croix : retour à la page précédente du site (accueil, découvrir, tableau de bord…), sinon à l'accueil du compte
+  // (connecté) ou à la page de l'événement (invité) — jamais la page de présentation du site.
+  $("#close").href = ev.loggedIn ? "/dashboard" : `/e/${encodeURIComponent(ev.slug || slug)}`;
   $("#close").onclick = (e) => {
     if (document.referrer.startsWith(location.origin) && history.length > 1) { e.preventDefault(); history.back(); }
   };
