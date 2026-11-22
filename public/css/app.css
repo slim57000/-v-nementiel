@@ -1889,10 +1889,10 @@ h1, h2, h3 { overflow-wrap: break-word; hyphens: auto; }
 .app-banner-go { background: linear-gradient(135deg, #e8137a, #b31fd6); color: #fff !important; font-weight: 800; padding: 8px 16px; border-radius: 999px; text-decoration: none; }
 
 /* Flux choisi : 👥 Amis · ✨ Pour vous · 🌍 Tout le monde (onglets soulignés, au-dessus des ronds) */
-.scope-tabs { display: flex; justify-content: center; gap: 22px; margin: 2px 0 10px; border-bottom: 1px solid var(--border); }
-.scope-tabs button { font: inherit; font-size: .95rem; font-weight: 700; color: var(--muted); background: none; border: 0; padding: 8px 2px 10px; cursor: pointer; position: relative; white-space: nowrap; }
+.scope-tabs { display: flex; justify-content: space-evenly; gap: 4px; margin: 2px 0 10px; border-bottom: 1px solid var(--border); }
+.scope-tabs button { font: inherit; font-size: clamp(.78rem, 3.6vw, .95rem); font-weight: 700; color: var(--muted); background: none; border: 0; padding: 8px 4px 10px; flex: 0 1 auto; cursor: pointer; position: relative; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .scope-tabs button.active { color: var(--text); }
-.scope-tabs button.active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, #fd1a85, #c60bd2); }
+.scope-tabs button.active::after { content: ""; position: absolute; left: 8%; right: 8%; bottom: 0; height: 3px; border-radius: 3px; background: linear-gradient(90deg, #fd1a85, #c60bd2); }
 .scope-empty { text-align: center; margin-top: 8px; } .scope-empty p { margin: 6px 0 12px; }
 
 /* Bouton 🌍 Découvrir à côté de la cloche */
