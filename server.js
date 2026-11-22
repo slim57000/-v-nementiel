@@ -101,6 +101,8 @@ app.get("/api/config", async (req, res) => {
     realtime: REALTIME,
     social: [GOOGLE_ENABLED && "google", FACEBOOK_ENABLED && "facebook", APPLE_ENABLED && "apple"].filter(Boolean),
     defaultLivePlatform: platform || "youtube",
+    // Mise à jour obligatoire de l'appli (ex. MIN_APP_VERSION=1.0.6 dans .env), à activer une fois la version en ligne sur les stores.
+    minAppVersion: process.env.MIN_APP_VERSION || "",
     // Identifiants publics (non secrets) de la connexion Google native de l'appli.
     ...(GOOGLE_ENABLED && { googleWebClientId: process.env.GOOGLE_CLIENT_ID }),
   });

@@ -1526,3 +1526,24 @@ export function calendarHref(ev) {
     action: "TEMPLATE", text: ev.name, dates: `${d}T${t}00/${d}T${endH}${t.slice(2)}00`, location: ev.location || "", details: `${location.origin}/e/${ev.slug}`,
   })}`;
 }
+
+// 📲 Mise à jour obligatoire de l'appli : version reconnue à ses fonctions (1.0.6 = partage natif MaFelizaShare).
+// Écran bloquant avec le lien vers l'App Store / Google Play (ouvert hors de l'appli).
+const appVersion = () => window.MaFelizaAppVersion || (window.MaFelizaShare ? "1.0.6" : "1.0.0");
+const older = (a, b) => { const x = a.split(".").map(Number), y = b.split(".").map(Number); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); return false; };
+if (inAppView() && !isNativeApp) {
+  fetch("/api/config").then((r) => r.json()).then(({ minAppVersion: min }) => {
+    if (!min || !older(appVersion(), min) || document.getElementById("force-update")) return;
+    const android = /android/i.test(navigator.userAgent);
+    const store = android ? "https://play.google.com/store/apps/details?id=fr.mafeliza.app" : "https://apps.apple.com/app/id6818968509";
+    const box = document.createElement("div");
+    box.id = "force-update";
+    box.setAttribute("role", "dialog");
+    box.style.cssText = "position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px;text-align:center;color:#fff;background:linear-gradient(135deg,#e8137a,#3b0a4a)";
+    box.innerHTML = `<img src="/img/icon-192.png" alt="" style="width:88px;height:88px;border-radius:22px">
+      <h1 style="margin:0;font-size:1.5rem">${esc(tr("Mise à jour nécessaire"))}</h1>
+      <p style="margin:0;max-width:320px;opacity:.9">${esc(tr("Une nouvelle version de MaFeliza est disponible. Mettez l'application à jour pour continuer."))}</p>
+      <a href="${store}" class="btn" style="background:#fff;color:#c20f68;min-width:220px">${esc(tr(android ? "Mettre à jour sur Google Play" : "Mettre à jour sur l'App Store"))}</a>`;
+    document.body.append(box);
+  }).catch(() => {});
+}
