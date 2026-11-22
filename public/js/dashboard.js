@@ -106,9 +106,12 @@ function renderStories() {
   const order = (a, b) => withStory.has(b.slug) - withStory.has(a.slug) || byDate(a, b);
   const key = (e) => e.slug || `ref:${e.ref}`;
   const rest = [...extra, ...all].filter((e, i, arr) => (e.slug || e.ref) && arr.findIndex((x) => key(x) === key(e)) === i);
-  const pub = rest.filter((e) => !isLive(e) && !isPriv(e)).sort(order), priv = rest.filter((e) => !isLive(e) && isPriv(e)).sort(order);
-  // En direct d'abord, puis un public, un privé, un public… (les publics ne sont jamais repoussés au bout).
-  const upcoming = rest.filter(isLive);
+  // En direct d'abord, puis mes événements, ceux de mes amis et ceux où je suis invité, puis les autres
+  // (un public, un privé, un public…).
+  const near = new Set([...events, ...guest].map((e) => e.slug).filter(Boolean));
+  const far = rest.filter((e) => !isLive(e) && !near.has(e.slug));
+  const pub = far.filter((e) => !isPriv(e)).sort(order), priv = far.filter(isPriv).sort(order);
+  const upcoming = [...rest.filter(isLive), ...rest.filter((e) => !isLive(e) && near.has(e.slug)).sort(order)];
   while (pub.length || priv.length) { if (pub.length) upcoming.push(pub.shift()); if (priv.length) upcoming.push(priv.shift()); }
   $("#stories").innerHTML = `
     <a class="story new" href="/edit" data-create><div class="story-img">+</div><span>Créer</span></a>
@@ -235,7 +238,7 @@ function render() {
     : "Vous n'avez pas encore d'événement.<br>Créez le premier en quelques minutes !";
   $("#list").innerHTML = camReminder() + shown.map(card).join("") + (others.length
     ? `<div class="section-title"><h2>Événements à venir</h2><a href="/decouvrir" class="see-all">Voir tout</a></div>
-       ${((up) => `${upFeatured(up[0])}<div class="up-list">${mixFeed(up.slice(1).map(upRow), new Set(up.map((e) => e.slug)))}</div>`)(alternate(others))}`
+       ${((up) => `${upFeatured(up[0])}<div class="up-list">${mixFeed(up.slice(1).map(upRow), new Set(up.map((e) => e.slug)))}</div>`)(circleFirst(others))}`
     : "");
   syncFavs();
 }
@@ -255,6 +258,13 @@ function mixFeed(rows, listed = new Set()) {
   const out = [];
   rows.forEach((r, k) => { out.push(r); if (k % 2 === 1 && posts.length) out.push(posts.shift()); });
   return out.concat(posts).join("");
+}
+
+// Mes événements, ceux de mes amis et ceux où je suis invité d'abord (par date) ; les publics des autres ensuite.
+function circleFirst(list) {
+  const near = new Set([...events, ...joined].map((e) => e.slug).filter(Boolean));
+  const byDate = (a, b) => `${a.date}${a.time || ""}`.localeCompare(`${b.date}${b.time || ""}`);
+  return [...list.filter((e) => near.has(e.slug)).sort(byDate), ...alternate(list.filter((e) => !near.has(e.slug)))];
 }
 
 // Publics et privés en alternance, chacun par date (la grande carte : le prochain public s'il y en a un).

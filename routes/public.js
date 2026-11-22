@@ -6,7 +6,7 @@ import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers, rollDemoDates } from "../lib/demo.js";
 import express, { Router } from "express";
 import { saveRawFile, MAX_VIDEO_BYTES, UPLOAD_DIR, SAFE_NAME, isOwnUpload } from "../lib/uploads.js";
-import { addPhoto, findEvent } from "../lib/store.js";
+import { addPhoto, findEvent, listFriendIds } from "../lib/store.js";
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { publicView } from "../lib/events.js";
@@ -132,14 +132,17 @@ async function listMemberReels() {
   return list;
 }
 router.get("/reels", async (req, res) => {
-  const [members, insp, likes, users] = await Promise.all([listMemberReels(), inspirations(reqLangFull(req)).catch(() => []), readSetting("reellikes").catch(() => null), listUserReels()]);
+  const [members, insp, likes, users, viewer] = await Promise.all([listMemberReels(), inspirations(reqLangFull(req)).catch(() => []), readSetting("reellikes").catch(() => null), listUserReels(), currentOrganizer(req).catch(() => null)]);
+  const friends = new Set(viewer ? await listFriendIds(viewer.id).catch(() => []) : []);
   // Réels publiés par les membres (bouton « Créer → Un réel ») : les plus récents d'abord, masqués après 3 signalements.
   const mine = [...users.filter((r) => (r.reports || 0) < 3 && !r.private).slice(0, 200).map((r) => ({ id: `u${r.id}`, reel: r.id, by: r.by, src: r.src, thumb: r.thumb,
     channel: r.name, title: r.caption, member: true, nc: r.nc || 0, event: r.event || undefined })), ...members];
   // Une vidéo de membre toutes les 3 vidéos d'inspiration (les membres d'abord tant qu'il y en a peu).
   // Ordre mélangé à chaque chargement (verticales toujours avant horizontales) : actualiser = nouvelles vidéos en tête.
   const shuffle = (a) => { for (let k = a.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [a[k], a[j]] = [a[j], a[k]]; } return a; };
-  const out = [], m = [...mine], i = [...shuffle(insp.filter((v) => v.portrait !== false)), ...shuffle(insp.filter((v) => v.portrait === false))];
+  // Réels de mes amis en premier (les plus récents d'abord), puis le mélange habituel.
+  const out = mine.filter((v) => friends.has(Number(v.by))), m = mine.filter((v) => !friends.has(Number(v.by)));
+  const i = [...shuffle(insp.filter((v) => v.portrait !== false)), ...shuffle(insp.filter((v) => v.portrait === false))];
   while (m.length || i.length) { if (m.length) out.push(m.shift()); for (let k = 0; k < 3 && i.length; k++) out.push(i.shift()); }
   res.set("Cache-Control", "no-store");
   const views = (await readSetting("reelviews").catch(() => null)) || {};
