@@ -35,6 +35,9 @@ if (new URLSearchParams(location.search).has("saved")) {
 
 let events = [];
 let discover = []; // événements publics des autres organisateurs
+// Flux choisi (👥 Amis · ✨ Pour vous · 🌍 Tout le monde), mémorisé sur l'appareil.
+let scope = "foryou";
+try { scope = ["friends", "foryou", "world"].includes(localStorage.getItem("em-scope")) ? localStorage.getItem("em-scope") : "foryou"; } catch { /* ignoré */ }
 let joined = []; // événements où je suis invité + ceux de mes amis (privés compris)
 let stories = []; // stories des dernières 24 h, par événement
 let filter = "all";
@@ -111,7 +114,11 @@ function renderStories() {
   const near = new Set([...events, ...guest].map((e) => e.slug).filter(Boolean));
   const far = rest.filter((e) => !isLive(e) && !near.has(e.slug));
   const pub = far.filter((e) => !isPriv(e)).sort(order), priv = far.filter(isPriv).sort(order);
-  const upcoming = [...rest.filter(isLive), ...rest.filter((e) => !isLive(e) && near.has(e.slug)).sort(order)];
+  if (scope === "world") near.clear();
+  const part = partSet();
+  const upcoming = [...rest.filter((e) => isLive(e) && (scope !== "friends" || near.has(e.slug))),
+    ...rest.filter((e) => !isLive(e) && near.has(e.slug) && part.has(e.slug)).sort(order), ...rest.filter((e) => !isLive(e) && near.has(e.slug) && !part.has(e.slug)).sort(order)];
+  if (scope === "friends") { pub.length = 0; priv.length = 0; }
   while (pub.length || priv.length) { if (pub.length) upcoming.push(pub.shift()); if (priv.length) upcoming.push(priv.shift()); }
   $("#stories").innerHTML = `
     <a class="story new" href="/edit" data-create><div class="story-img">+</div><span>Créer</span></a>
@@ -236,10 +243,13 @@ function render() {
   $("#empty-text").innerHTML = events.length
     ? "Aucun événement dans cette catégorie."
     : "Vous n'avez pas encore d'événement.<br>Créez le premier en quelques minutes !";
-  $("#list").innerHTML = camReminder() + shown.map(card).join("") + (others.length
+  const up = circleFirst(others);
+  $("#list").innerHTML = camReminder() + shown.map(card).join("") + (up.length
     ? `<div class="section-title"><h2>Événements à venir</h2><a href="/decouvrir" class="see-all">Voir tout</a></div>
-       ${((up) => `${upFeatured(up[0])}<div class="up-list">${mixFeed(up.slice(1).map(upRow), new Set(up.map((e) => e.slug)))}</div>`)(circleFirst(others))}`
-    : "");
+       ${upFeatured(up[0])}<div class="up-list">${mixFeed(up.slice(1).map(upRow), new Set(up.map((e) => e.slug)))}</div>`
+    : scope === "friends" && filter === "all" ? `<div class="card scope-empty"><b>👥 ${esc(t("Rien de vos amis pour l'instant"))}</b>
+       <p class="muted small">${esc(t("Ajoutez vos amis avec leur code ami : leurs événements s'afficheront ici."))}</p>
+       <a class="btn btn-sm" href="/amis">${esc(t("Ajouter des amis"))}</a></div>` : "");
   syncFavs();
 }
 
@@ -260,11 +270,29 @@ function mixFeed(rows, listed = new Set()) {
   return out.concat(posts).join("");
 }
 
+// Flux choisi par la personne (mémorisé) : 👥 Amis (mon cercle seulement), ✨ Pour vous (cercle d'abord), 🌍 Tout le monde.
+const nearSet = () => new Set([...events, ...joined].map((e) => e.slug).filter(Boolean));
+const partSet = () => new Set([...events, ...joined.filter((e) => e.going)].map((e) => e.slug).filter(Boolean));
+function paintScope() { document.querySelectorAll("#scope [data-scope]").forEach((b) => b.classList.toggle("active", b.dataset.scope === scope)); }
+document.getElementById("scope").addEventListener("click", (e) => {
+  const s = e.target.closest("[data-scope]")?.dataset.scope;
+  if (!s || s === scope) return;
+  scope = s;
+  try { localStorage.setItem("em-scope", s); } catch { /* ignoré */ }
+  paintScope(); render(); syncFavs();
+});
+paintScope();
+
 // Mes événements, ceux de mes amis et ceux où je suis invité d'abord (par date) ; les publics des autres ensuite.
 function circleFirst(list) {
-  const near = new Set([...events, ...joined].map((e) => e.slug).filter(Boolean));
+  const near = nearSet();
   const byDate = (a, b) => `${a.date}${a.time || ""}`.localeCompare(`${b.date}${b.time || ""}`);
-  return [...list.filter((e) => near.has(e.slug)).sort(byDate), ...alternate(list.filter((e) => !near.has(e.slug)))];
+  // 1. Ceux auxquels je participe (les miens, « Je viens », invité), 2. ceux de mes amis, 3. les autres.
+  const part = partSet();
+  const mine = [...list.filter((e) => part.has(e.slug)).sort(byDate), ...list.filter((e) => near.has(e.slug) && !part.has(e.slug)).sort(byDate)];
+  if (scope === "friends") return mine;
+  if (scope === "world") return alternate(list);
+  return [...mine, ...alternate(list.filter((e) => !near.has(e.slug)))];
 }
 
 // Publics et privés en alternance, chacun par date (la grande carte : le prochain public s'il y en a un).

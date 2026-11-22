@@ -17,6 +17,26 @@ function show() {
   $("#count").textContent = friends.length ? `(${friends.length})` : "";
 }
 
+// Demandes d'ami reçues (bouton « Ajouter l'organisateur ») : accepter ou refuser.
+async function showRequests() {
+  const reqs = await api("/api/me/friends/requests").catch(() => []);
+  $("#requests").innerHTML = reqs.length ? `<h2 style="font-size:1.05rem;margin:4px 0 8px">👋 Demandes d'ami (${reqs.length})</h2>` + reqs.map((f) => `<div class="friend-row">
+    ${avatar(f)}<span class="friend-main" style="flex:1;min-width:0"><b>${esc(f.name)}</b></span>
+    <button class="btn btn-sm" data-req="${f.id}" data-answer="accept">Accepter</button>
+    <button class="btn btn-ghost btn-sm" data-req="${f.id}" data-answer="decline" aria-label="Refuser">✕</button></div>`).join("") + `<h2 style="font-size:1.05rem;margin:16px 0 8px">Mes amis</h2>` : "";
+}
+$("#requests").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-req]");
+  if (!b) return;
+  b.disabled = true;
+  try {
+    await api(`/api/me/friends/requests/${b.dataset.req}/${b.dataset.answer}`, { method: "POST" });
+    if (b.dataset.answer === "accept") { toast("Vous êtes maintenant amis 🎉"); friends = (await api("/api/me/friends")).sort((a, c) => a.name.localeCompare(c.name)); show(); }
+    showRequests();
+  } catch (err) { toast(err.message); b.disabled = false; }
+});
+showRequests();
+
 try {
   friends = (await api("/api/me/friends")).sort((a, b) => a.name.localeCompare(b.name));
   show();

@@ -1887,3 +1887,15 @@ h1, h2, h3 { overflow-wrap: break-word; hyphens: auto; }
 .app-banner small { color: var(--muted); font-size: .78rem; }
 .app-banner-x { background: none; border: 0; color: var(--muted); font-size: 1rem; padding: 4px; cursor: pointer; }
 .app-banner-go { background: linear-gradient(135deg, #e8137a, #b31fd6); color: #fff !important; font-weight: 800; padding: 8px 16px; border-radius: 999px; text-decoration: none; }
+
+/* Flux choisi : 👥 Amis · ✨ Pour vous · 🌍 Tout le monde (onglets soulignés, au-dessus des ronds) */
+.scope-tabs { display: flex; justify-content: center; gap: 22px; margin: 2px 0 10px; border-bottom: 1px solid var(--border); }
+.scope-tabs button { font: inherit; font-size: .95rem; font-weight: 700; color: var(--muted); background: none; border: 0; padding: 8px 2px 10px; cursor: pointer; position: relative; white-space: nowrap; }
+.scope-tabs button.active { color: var(--text); }
+.scope-tabs button.active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, #fd1a85, #c60bd2); }
+.scope-empty { text-align: center; margin-top: 8px; } .scope-empty p { margin: 6px 0 12px; }
+
+/* Bouton 🌍 Découvrir à côté de la cloche */
+.topbar .disc { display: grid; place-items: center; text-decoration: none; }
+.topbar .disc + .bell { margin-left: 8px; }
+.topbar .disc.on { border-color: var(--primary); }

@@ -1,5 +1,5 @@
 // Page publique d'un événement : faire-part, compte à rebours, stories, réponses, livre d'or, cagnotte.
-import { enablePush, pushState, api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, EN, guestName, LOCALE, placeholderCover, tabbar, createSheet, openPot, coverOf } from "./common.js";
+import { enablePush, pushState, api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, EN, guestName, LOCALE, placeholderCover, tabbar, createSheet, openPot, coverOf, goLogin } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 import { t as tr } from "./i18n.js";
 import { initGuestbook } from "./guestbook.js";
@@ -67,6 +67,7 @@ let current = null;
 function showEvent(ev) {
   current = ev;
   $("#report-event").classList.toggle("hidden", Boolean(ev.isOwner));
+  hostButton(ev);
   const type = EVENT_TYPES[ev.type];
   document.title = ev.name;
   $("#name").textContent = ev.name;
@@ -315,6 +316,25 @@ async function liveToday(ev) {
       box.querySelector("a").href = `/cameraman?code=${encodeURIComponent(own.cameramanCode)}`;
     }
   }
+}
+
+// 👋 Demande d'ami à l'organisateur (il accepte ou refuse) ; sans compte : connexion puis retour ici.
+async function hostButton(ev) {
+  const b = $("#add-host");
+  if (ev.isOwner) return b.classList.add("hidden");
+  const paint = (state) => {
+    b.classList.toggle("hidden", state === "self" || state === "friend");
+    b.disabled = state === "pending";
+    b.textContent = state === "pending" ? "⏳ Demande d'ami envoyée" : "👋 Ajouter l'organisateur en ami";
+  };
+  let logged = true;
+  try { paint((await api(`/api/me/friends/status?slug=${encodeURIComponent(ev.slug)}`)).state); }
+  catch { logged = false; paint("none"); }
+  b.onclick = async () => {
+    if (!logged) return goLogin();
+    try { paint((await api("/api/me/friends/request", { method: "POST", body: { slug: ev.slug } })).state); toast("Demande envoyée 👋 L'organisateur doit l'accepter."); }
+    catch (err) { toast(err.message); }
+  };
 }
 
 // Signaler l'événement à l'administration (contenu choquant, arnaque…).

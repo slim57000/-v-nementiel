@@ -207,11 +207,15 @@ router.get("/circle", async (req, res) => {
   const today = new Date().toISOString().slice(0, 10);
   const friends = (await Promise.all(friendIds.slice(0, 50).map((id) => listEvents(id).catch(() => [])))).flat()
     .filter((e) => e.date >= today).map((e) => withVisibility(e, hidden));
-  const all = visibleEvents([...invited, ...friends]).filter((e, i, arr) => arr.findIndex((x) => x.id === e.id) === i);
+  // Événements où j'ai répondu « Je viens » / « Peut-être » (going) : affichés en premier sur l'accueil.
+  const goingIds = new Set((await getSetting(`going:${me.id}`).catch(() => null)) || []);
+  const going = (await withAccess(req, await findEventsByIds([...goingIds]).catch(() => []))).filter((e) => e && e.date >= today).map((e) => withVisibility(e, hidden));
+  const all = visibleEvents([...going, ...invited, ...friends]).filter((e, i, arr) => arr.findIndex((x) => x.id === e.id) === i);
   // Événement privé d'un ami jamais ouvert : photo floutée (la vraie photo n'est pas envoyée).
   const opened = new Set((await listHistoryIds(me.id).catch(() => [])).map(Number));
   const invitedIds = new Set(invited.map((e) => e.id));
-  res.json(all.map((e) => (e.visibility === "private" && e.organizerId !== me.id && !opened.has(Number(e.id)) && !invitedIds.has(e.id) ? { ...card(e), cover: blurredCover(e) } : card(e))));
+  const tag = (e, c) => (goingIds.has(e.id) || invitedIds.has(e.id) ? { ...c, going: true } : c);
+  res.json(all.map((e) => tag(e, e.visibility === "private" && e.organizerId !== me.id && !opened.has(Number(e.id)) && !invitedIds.has(e.id) ? { ...card(e), cover: blurredCover(e) } : card(e))));
 });
 
 router.get("/history", async (req, res) => {
@@ -240,6 +244,50 @@ router.post("/friends/add", async (req, res) => {
   await addFriends(req.organizer.id, other);
   notify([orgOwner(other)], { title: `👋 ${displayName(req.organizer)} vous a ajouté en ami`, body: "Vous pouvez maintenant vous écrire.", url: `/messages?u=${req.organizer.id}` }).catch(() => {});
   res.json({ ok: true, id: other });
+});
+
+// Demandes d'ami à l'organisateur d'un événement (bouton « 👋 Ajouter l'organisateur ») : il accepte ou refuse.
+// Liste gardée dans le réglage friendreq:{organisateur} = [{ id, at }] (30 demandes en attente au plus).
+const reqKey = (id) => `friendreq:${id}`;
+async function friendState(me, other) {
+  if (!other || other === me) return "self";
+  if ((await listFriendIds(me)).includes(other)) return "friend";
+  return ((await getSetting(reqKey(other))) || []).some((r) => r.id === me) ? "pending" : "none";
+}
+router.get("/friends/status", async (req, res) => {
+  const ev = await findEventBySlug(String(req.query.slug || "")).catch(() => null);
+  if (!ev) return res.json({ state: "none" });
+  res.json({ state: await friendState(req.organizer.id, Number(ev.organizerId)) });
+});
+router.post("/friends/request", async (req, res) => {
+  const me = req.organizer.id;
+  if (await tooFast(`friendreq:${me}`, 20, 3_600_000)) return res.status(429).json({ error: "Trop d'essais, réessayez plus tard." });
+  const ev = await findEventBySlug(String(req.body?.slug || "")).catch(() => null);
+  if (!ev || ev.suspended || (ev.visibility === "private" && !(await hasAccess(req, ev).catch(() => false)))) return res.status(404).json({ error: "Événement introuvable." });
+  const other = Number(ev.organizerId), state = await friendState(me, other);
+  if (state !== "none") return res.json({ state });
+  const [mine, theirs] = await Promise.all([listBlockIds(me), listBlockIds(other)]);
+  if (mine.includes(other) || theirs.includes(me)) return res.status(403).json({ error: "Demande impossible." });
+  const list = ((await getSetting(reqKey(other))) || []).filter((r) => r.id !== me);
+  await setSetting(reqKey(other), [{ id: me, at: Date.now() }, ...list].slice(0, 30));
+  notify([orgOwner(other)], { title: `👋 ${displayName(req.organizer)} veut vous ajouter en ami`, body: "Touchez pour accepter ou refuser.", url: "/amis" }).catch(() => {});
+  res.json({ state: "pending" });
+});
+router.get("/friends/requests", async (req, res) => {
+  const list = (await getSetting(reqKey(req.organizer.id))) || [];
+  const users = await findOrganizersByIds(list.map((r) => r.id));
+  res.json(users.filter((u) => !u.blocked).map(person));
+});
+router.post("/friends/requests/:id/:answer", async (req, res) => {
+  const me = req.organizer.id, id = Number(req.params.id);
+  const list = (await getSetting(reqKey(me))) || [];
+  if (!list.some((r) => r.id === id)) return res.status(404).json({ error: "Demande introuvable." });
+  await setSetting(reqKey(me), list.filter((r) => r.id !== id));
+  if (req.params.answer === "accept") {
+    await addFriends(me, id);
+    notify([orgOwner(id)], { title: `🎉 ${displayName(req.organizer)} a accepté votre demande d'ami`, body: "Vous pouvez maintenant vous écrire.", url: `/messages?u=${me}` }).catch(() => {});
+  }
+  res.json({ ok: true });
 });
 
 router.get("/friends", async (req, res) => {

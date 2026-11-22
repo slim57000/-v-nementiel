@@ -160,6 +160,12 @@ router.post("/rsvp", notBlocked, async (req, res) => {
   if (isNew && status !== "no") {
     notify([orgOwner(req.event.organizerId)], { title: `✅ ${name} ${status === "yes" ? "vient" : "viendra peut-être"}`, body: `${req.event.name}${count > 1 ? ` · ${count} personnes` : ""}`, url: `/e/${req.event.slug}` }).catch(() => {});
   }
+  // Compte connecté : événement noté « j'y participe » (affiché en premier sur son accueil), retiré si « Non ».
+  const me = await currentOrganizer(req).catch(() => null);
+  if (me) {
+    const k = `going:${me.id}`, list = ((await getSetting(k).catch(() => null)) || []).filter((id) => id !== req.event.id);
+    await setSetting(k, status === "no" ? list : [req.event.id, ...list].slice(0, 200)).catch(() => {});
+  }
   res.json({ ok: true });
 });
 
