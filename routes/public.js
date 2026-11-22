@@ -194,7 +194,9 @@ router.put("/:slug/media", express.raw({ type: () => true, limit: MAX_VIDEO_BYTE
 
 // Photo de couverture floutée (événement privé, pour qui n'y a pas accès) : fabriquée ici, en tout petit puis floutée,
 // pour que la vraie photo ne soit jamais envoyée. Gardée en mémoire (recalculée si la couverture change).
-export const blurredCover = (e) => (e.cover ? `/api/public/cover-blur/${e.id}.jpg?v=${createHash("sha1").update(e.cover).digest("hex").slice(0, 8)}` : null);
+// Sans couverture, la photo du faire-part sert (comme pour la carte de partage).
+const photoSrc = (e) => e.cover || (e.invite?.photo && !["none", "cover"].includes(e.invite.photo) && !String(e.invite.photo).startsWith("data:") ? e.invite.photo : "");
+export const blurredCover = (e) => (photoSrc(e) ? `/api/public/cover-blur/${e.id}.jpg?v=${createHash("sha1").update(photoSrc(e)).digest("hex").slice(0, 8)}` : null);
 const blurCache = new Map();
 const sharpLib = import("sharp").then((m) => m.default).catch(() => null);
 const PUBLIC_DIR = new URL("../public", import.meta.url).pathname;
@@ -207,12 +209,13 @@ async function coverBytes(cover) {
 router.get("/cover-blur/:file", async (req, res) => {
   const event = await findEvent(Number(String(req.params.file).replace(/\.jpg$/, ""))).catch(() => null);
   const sharp = await sharpLib;
-  if (!event?.cover || event.suspended || !sharp) return res.status(404).end();
-  const key = `${event.id}:${event.cover}`;
+  const photo = event && photoSrc(event);
+  if (!photo || event.suspended || !sharp) return res.status(404).end();
+  const key = `${event.id}:${photo}`;
   let out = blurCache.get(key);
   if (!out) {
     try {
-      const src = await coverBytes(event.cover);
+      const src = await coverBytes(photo);
       if (!src) return res.status(404).end();
       out = await sharp(src).rotate().resize(40, 40, { fit: "cover" }).blur(2.5).jpeg({ quality: 60 }).toBuffer();
       if (blurCache.size > 2000) blurCache.clear();
