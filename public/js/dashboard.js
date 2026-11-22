@@ -164,7 +164,11 @@ function card(ev) {
     ${ev.cagnotteUrl ? `<div class="ev-pot"><span style="color:var(--primary)">${icon("gift")}</span><span><b>Cagnotte</b><span class="muted small">Plateforme externe</span></span>
       <a class="btn btn-sm" href="${esc(ev.cagnotteUrl)}" target="_blank" rel="noopener">Voir la cagnotte</a></div>` : ""}
     <div class="ev-tools">
-      <a class="btn btn-sm tool-main btn-golive" href="/cameraman?code=${esc(ev.cameramanCode)}">🔴 Lancer le live</a>
+      ${ev.date < new Date().toISOString().slice(0, 10)
+        // Événement passé : replay du live et film souvenir à la place de « Lancer le live ».
+        ? `<a class="btn btn-sm tool-main btn-golive" href="/live?e=${encodeURIComponent(ev.slug)}">▶️ Voir le replay</a>
+           <a class="btn btn-sm tool-main" href="/e/${encodeURIComponent(ev.slug)}?film=1">✨ Film souvenir</a>`
+        : `<a class="btn btn-sm tool-main btn-golive" href="/cameraman?code=${esc(ev.cameramanCode)}">🔴 Lancer le live</a>`}
       <a class="btn btn-sm tool-main" href="/faire-part?id=${ev.id}">💌 Mes faire-part</a>
       <p class="tools-title">Partager & inviter</p>
       <div class="tools-grid">
