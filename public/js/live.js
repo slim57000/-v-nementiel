@@ -1,5 +1,5 @@
 // Page du live : lecteur vidéo, chat, réactions, photos des invités, cagnotte, replay.
-import { api, $, esc, shareSheet, toast, guestName, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, coverOf, onRealtime, embedUrl, thumbnailUrl, openPot } from "./common.js";
+import { api, $, esc, shareSheet, toast, guestName, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, coverOf, onRealtime, embedUrl, thumbnailUrl, openPot, calendarHref } from "./common.js";
 import { icon } from "./icons.js";
 import { t as tr, lang } from "./i18n.js";
 
@@ -191,7 +191,7 @@ async function load() {
     if (!on && !cameras.length) {
       $("#empty").innerHTML = `<span style="font-size:2rem">📡</span>Le direct n'a pas encore commencé.
         ${ev.time ? `<small>${tr("Début prévu à")} ${esc(lang === "fr" ? ev.time.replace(":", "h") : ev.time)}</small>` : ""}
-        <a class="btn btn-sm" href="/api/public/${encodeURIComponent(ev.slug)}/calendar.ics" style="margin-top:10px">📅 Ajouter à mon agenda</a>`;
+        <a class="btn btn-sm" href="${esc(calendarHref(ev))}" style="margin-top:10px">📅 Ajouter à mon agenda</a>`;
     }
   };
   paintBadge();

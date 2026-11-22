@@ -1515,3 +1515,14 @@ export async function saveFile(blob, name, text = "") {
   for (let i = 0; i < blob.size; i += 768 * 1024) await send({ op: "chunk", data: await b64(blob.slice(i, i + 768 * 1024)) });
   await send({ op: "end", text });
 }
+
+// « Ajouter à mon agenda » : fichier .ics (Safari, Chrome, appli 1.0.6+ qui l'ouvre dans le navigateur).
+// Appli plus ancienne : le .ics s'afficherait en texte, on passe donc par Google Agenda (ouvert hors de l'appli).
+export function calendarHref(ev) {
+  if (!(inAppView() && !window.MaFelizaShare)) return `/api/public/${encodeURIComponent(ev.slug)}/calendar.ics`;
+  const d = ev.date.replace(/-/g, ""), t = (ev.time || "12:00").replace(":", "");
+  const endH = String(Math.min(23, Number(t.slice(0, 2)) + 5)).padStart(2, "0");
+  return `https://calendar.google.com/calendar/render?${new URLSearchParams({
+    action: "TEMPLATE", text: ev.name, dates: `${d}T${t}00/${d}T${endH}${t.slice(2)}00`, location: ev.location || "", details: `${location.origin}/e/${ev.slug}`,
+  })}`;
+}

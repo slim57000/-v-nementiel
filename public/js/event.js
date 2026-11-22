@@ -1,5 +1,5 @@
 // Page publique d'un événement : faire-part, compte à rebours, stories, réponses, livre d'or, cagnotte.
-import { enablePush, pushState, api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, EN, guestName, LOCALE, placeholderCover, tabbar, createSheet, openPot, coverOf, goLogin } from "./common.js";
+import { enablePush, pushState, api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, EN, guestName, LOCALE, placeholderCover, tabbar, createSheet, openPot, coverOf, goLogin, calendarHref } from "./common.js";
 import { renderInvite, invitePhotoUrl } from "./invitation.js";
 import { t as tr } from "./i18n.js";
 import { initGuestbook } from "./guestbook.js";
@@ -90,7 +90,7 @@ function showEvent(ev) {
   $("#where").textContent = ev.location;
   $("#map").href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.location)}`;
   // Ajouter au calendrier : fichier .ics (iPhone, Android, Outlook) ou Google Agenda.
-  $("#cal-ics").href = `/api/public/${encodeURIComponent(ev.slug)}/calendar.ics`;
+  $("#cal-ics").href = calendarHref(ev);
   const d = ev.date.replace(/-/g, ""), t = (ev.time || "12:00").replace(":", "");
   const endH = String(Math.min(23, Number(t.slice(0, 2)) + 5)).padStart(2, "0");
   $("#cal-google").href = `https://calendar.google.com/calendar/render?${new URLSearchParams({
