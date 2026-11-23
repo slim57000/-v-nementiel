@@ -1909,3 +1909,17 @@ h1, h2, h3 { overflow-wrap: break-word; hyphens: auto; }
 /* Grille des Réels : rendu différé des vignettes hors écran (défilement fluide) */
 .reels-grid .insp-card { content-visibility: auto; contain-intrinsic-size: auto 280px; }
 .reels-more { grid-column: 1 / -1; height: 1px; }
+
+/* « Que voulez-vous créer ? » : trois choix de même forme (icône, titre, explication), l'événement en premier */
+.create-opt { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; border: 1px solid var(--border); border-radius: 18px;
+  background: var(--card); color: var(--text); font: inherit; text-align: left; text-decoration: none; cursor: pointer; transition: transform .12s, border-color .15s; }
+.create-opt:active { transform: scale(.98); }
+.create-opt:hover { border-color: var(--primary); }
+.create-opt .co-ico { flex: none; width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; font-size: 1.5rem; background: var(--primary-light); }
+.create-opt .co-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.create-opt b { font-size: 1.05rem; }
+.create-opt small { color: var(--muted); font-size: .85rem; line-height: 1.3; }
+.create-opt .co-go { color: var(--muted); font-size: 1.5rem; }
+.create-opt.main { border: 0; color: #fff; background: linear-gradient(135deg, #fd1a85, #c60bd2); box-shadow: 0 10px 24px rgba(253,26,133,.3); }
+.create-opt.main .co-ico { background: rgba(255,255,255,.22); }
+.create-opt.main small, .create-opt.main .co-go { color: rgba(255,255,255,.88); }

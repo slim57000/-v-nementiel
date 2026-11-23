@@ -298,10 +298,10 @@ export function createSheet(e) {
   document.body.insertAdjacentHTML("beforeend", `<div class="sheet" id="create-sheet" role="dialog" aria-modal="true">
     <div class="card"><h2 style="margin-top:0">Que voulez-vous créer ?</h2>
       <div id="create-body" style="display:grid;gap:10px">
-        <button class="btn btn-block create-big" type="button" id="create-story">Une story</button>
-        <button class="btn btn-block create-big create-reel" type="button" id="create-reel">${t("Un réel")}</button>
+        <a class="create-opt main" href="/edit"><span class="co-ico">🎉</span><span class="co-txt"><b>${t("Un événement")}</b><small>${t("Mariage, anniversaire… faire-part, live et photos")}</small></span><span class="co-go" aria-hidden="true">›</span></a>
+        <button class="create-opt" type="button" id="create-story"><span class="co-ico">📸</span><span class="co-txt"><b>${t("Une story")}</b><small>${t("Une photo ou vidéo sur votre événement, 24 h")}</small></span><span class="co-go" aria-hidden="true">›</span></button>
+        <button class="create-opt" type="button" id="create-reel"><span class="co-ico">🎬</span><span class="co-txt"><b>${t("Un réel")}</b><small>${t("Une vidéo courte, visible dans Réels")}</small></span><span class="co-go" aria-hidden="true">›</span></button>
         <input type="file" id="create-reel-file" accept="video/*" hidden>
-        <a class="btn btn-light btn-block create-big" href="/edit">Un événement</a>
       </div></div></div>`);
   const sheet = $("#create-sheet");
   const close = () => sheet.remove();
