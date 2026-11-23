@@ -1531,7 +1531,9 @@ document.addEventListener("click", async (e) => {
   const play = "https://play.google.com/store/apps/details?id=fr.mafeliza.app";
   const href = ios ? "https://apps.apple.com/app/id6818968509"
     : `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=fr.mafeliza.app;S.browser_fallback_url=${encodeURIComponent(play)};end`;
-  const show = () => {
+  const show = async () => {
+    // Compte qui utilise déjà l'appli : pas de bandeau (le bandeau d'Apple « OUVRIR » suffit).
+    if ((await api("/api/auth/me").catch(() => null))?.hasApp) return;
     document.body.insertAdjacentHTML("afterbegin", `<div class="app-banner" id="app-banner">
       <button type="button" class="app-banner-x" aria-label="${esc(tr("Fermer"))}">✕</button>
       <img src="/img/icon-192.png" alt="" width="40" height="40">
@@ -1596,4 +1598,14 @@ if (inAppView() && !isNativeApp) {
       <a href="${store}" class="btn" style="background:#fff;color:#c20f68;min-width:220px">${esc(tr(android ? "Mettre à jour sur Google Play" : "Mettre à jour sur l'App Store"))}</a>`;
     document.body.append(box);
   }).catch(() => {});
+}
+
+// Dans l'appli : le compte est noté « appli installée » (une fois par jour au plus).
+if (inAppView() && !isNativeApp) {
+  try {
+    if (Date.now() - Number(localStorage.getItem("em-appseen") || 0) > 864e5) {
+      fetch("/api/auth/app-seen", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ os: /android/i.test(navigator.userAgent) ? "android" : "ios" }) })
+        .then((r) => r.ok && localStorage.setItem("em-appseen", String(Date.now()))).catch(() => {});
+    }
+  } catch { /* ignoré */ }
 }

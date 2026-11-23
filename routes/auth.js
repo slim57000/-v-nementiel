@@ -505,7 +505,15 @@ router.get("/me", async (req, res) => {
     needBirth: !(await getSetting(`birth:${organizer.id}`).catch(() => null)), // vérification de l'âge à faire
     referrals: ((await getSetting(`refs:${organizer.id}`).catch(() => null)) || []).length, // 🎁 comptes créés grâce à ses événements
     minorUntil: await minorUntil(organizer.id), // date de moins de 15 ans saisie : nouvel essai possible après cette heure
+    hasApp: Boolean(await getSetting(`hasapp:${organizer.id}`).catch(() => null)), // compte déjà utilisé dans l'appli
   });
+});
+// L'appli signale qu'elle est installée (ouverte avec ce compte) : plus de bandeau « Télécharger » dans Safari.
+router.post("/app-seen", async (req, res) => {
+  const organizer = await currentOrganizer(req);
+  if (!organizer) return res.status(401).json({ error: "Non connecté." }); // réessayé après la connexion
+  await setSetting(`hasapp:${organizer.id}`, String(req.body?.os || "app").slice(0, 10)).catch(() => {});
+  res.json({ ok: true });
 });
 
 // Suppression du compte (RGPD / exigence App Store et Play Store) : compte, événements et fichiers.
