@@ -141,6 +141,8 @@ class _HomePageState extends State<HomePage> {
     });
     // Photos / vidéos des invités : galerie du téléphone (plusieurs à la fois), envoi qui continue appli fermée.
     // Fichiers créés par le site (zip des souvenirs, replay) : reçus par morceaux puis « Enregistrer / Partager ».
+    // Version de l'appli demandée par le site (mise à jour obligatoire). ⚠️ À changer avec « version » de pubspec.yaml.
+    _web.addJavaScriptChannel('MaFelizaVersion', onMessageReceived: (_) => _web.runJavaScript("window.mafelizaVersion && window.mafelizaVersion('1.0.7')"));
     _web.addJavaScriptChannel('MaFelizaFile', onMessageReceived: (m) => _receiveFile(m.message));
     // Partage d'un lien / texte : feuille de partage du téléphone (WhatsApp, Messages, AirDrop…).
     _web.addJavaScriptChannel('MaFelizaShare', onMessageReceived: (m) {
@@ -178,6 +180,8 @@ class _HomePageState extends State<HomePage> {
     }
 
     final platform = _web.platform;
+    // iPhone : glisser depuis le bord gauche = page précédente (et bord droit = page suivante), comme dans Safari.
+    if (platform is WebKitWebViewController) platform.setAllowsBackForwardNavigationGestures(true);
     if (platform is AndroidWebViewController) {
       platform.setMediaPlaybackRequiresUserGesture(false);
       // Choix de photos / vidéos (stories, couverture, livre d'or).
