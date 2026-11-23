@@ -1524,16 +1524,19 @@ document.addEventListener("click", async (e) => {
 // 📱 Android (navigateur) : bandeau « Ouvrir dans l'appli ». L'appli s'ouvre sur la même page si elle est installée,
 // sinon le Play Store. (iPhone : bandeau natif de Safari, balise apple-itunes-app.) Masquable, revient après 14 jours.
 (function appBanner() {
-  if (!/Android/i.test(navigator.userAgent) || inAppView() || /MaFeliza/.test(navigator.userAgent)) return;
+  // Android et iPhone/iPad (Safari) : le bandeau d'Apple ne s'affiche pas toujours quand l'appli n'est pas installée.
+  const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if ((!/Android/i.test(navigator.userAgent) && !ios) || inAppView() || /MaFeliza/.test(navigator.userAgent)) return;
   try { if (Date.now() - Number(localStorage.getItem("em-appbanner") || 0) < 14 * 864e5) return; } catch { /* ignoré */ }
   const play = "https://play.google.com/store/apps/details?id=fr.mafeliza.app";
-  const href = `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=fr.mafeliza.app;S.browser_fallback_url=${encodeURIComponent(play)};end`;
+  const href = ios ? "https://apps.apple.com/app/id6818968509"
+    : `intent://${location.host}${location.pathname}${location.search}#Intent;scheme=https;package=fr.mafeliza.app;S.browser_fallback_url=${encodeURIComponent(play)};end`;
   const show = () => {
     document.body.insertAdjacentHTML("afterbegin", `<div class="app-banner" id="app-banner">
       <button type="button" class="app-banner-x" aria-label="${esc(tr("Fermer"))}">✕</button>
       <img src="/img/icon-192.png" alt="" width="40" height="40">
       <span><b>MaFeliza</b><small>${esc(tr("Plus rapide dans l'application"))}</small></span>
-      <a class="app-banner-go" href="${esc(href)}">${esc(tr("Ouvrir"))}</a></div>`);
+      <a class="app-banner-go" href="${esc(href)}">${esc(tr(ios ? "Télécharger" : "Ouvrir"))}</a></div>`);
     document.querySelector("#app-banner .app-banner-x").onclick = () => {
       document.getElementById("app-banner")?.remove();
       try { localStorage.setItem("em-appbanner", String(Date.now())); } catch { /* ignoré */ }
