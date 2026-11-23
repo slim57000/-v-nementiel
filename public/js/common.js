@@ -411,7 +411,8 @@ async function profileMenu() {
   const disc = Object.assign(document.createElement("a"), { href: "/decouvrir", className: "bell disc", textContent: "🔍" });
   disc.setAttribute("aria-label", "Découvrir les événements");
   if (location.pathname === "/decouvrir") disc.classList.add("on");
-  bar.append(disc, bellBtn, btn);
+  // Accueil : la barre de recherche et l'onglet « Tous » suffisent, pas de 🔍 en plus.
+  bar.append(...(location.pathname === "/dashboard" ? [] : [disc]), bellBtn, btn);
   bellBtn.addEventListener("click", () => { openNotifs(data); data.seen = Date.now(); paintAll(); });
 
   btn.addEventListener("click", () => {
