@@ -413,7 +413,11 @@ async function profileMenu() {
   disc.setAttribute("aria-label", "Découvrir les événements");
   if (location.pathname === "/decouvrir") disc.classList.add("on");
   // Accueil : la barre de recherche et l'onglet « Tous » suffisent, pas de 🔍 en plus.
-  bar.append(...(document.querySelector(".tabbar") || location.pathname === "/dashboard" ? [] : [disc]), bellBtn, btn);
+  // 💬 Messages à côté de la cloche (sans barre en bas).
+  const msg = Object.assign(document.createElement("a"), { href: "/messages", className: "bell disc", textContent: "💬" });
+  msg.setAttribute("aria-label", "Messages");
+  if (location.pathname === "/messages") msg.classList.add("on");
+  bar.append(msg, bellBtn, btn); // Découvrir : recherche et onglet « Tous » de l'accueil
   bellBtn.addEventListener("click", () => { openNotifs(data); data.seen = Date.now(); paintAll(); });
 
   btn.addEventListener("click", () => {

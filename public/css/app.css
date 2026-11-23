@@ -1897,7 +1897,7 @@ h1, h2, h3 { overflow-wrap: break-word; hyphens: auto; }
 
 /* Bouton 🌍 Découvrir à côté de la cloche */
 .topbar .disc { display: grid; place-items: center; text-decoration: none; }
-.topbar .disc + .bell { margin-left: 8px; }
+.topbar .bell + .bell, .topbar .bell + .disc { margin-left: 8px; }
 .topbar .disc.on { border-color: var(--primary); }
 
 /* Boutons de thème des Réels (défilement horizontal) */
