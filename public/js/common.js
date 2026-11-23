@@ -1516,7 +1516,7 @@ document.addEventListener("click", async (e) => {
 // sinon le Play Store. (iPhone : bandeau natif de Safari, balise apple-itunes-app.) Masquable, revient après 14 jours.
 (function appBanner() {
   // Android et iPhone/iPad (Safari) : le bandeau d'Apple ne s'affiche pas toujours quand l'appli n'est pas installée.
-  const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const ios = false; // iPhone : bandeau d'Apple seulement (le nôtre faisait doublon)
   if ((!/Android/i.test(navigator.userAgent) && !ios) || inAppView() || /MaFeliza/.test(navigator.userAgent)) return;
   try { if (Date.now() - Number(localStorage.getItem("em-appbanner") || 0) < 14 * 864e5) return; } catch { /* ignoré */ }
   const play = "https://play.google.com/store/apps/details?id=fr.mafeliza.app";
