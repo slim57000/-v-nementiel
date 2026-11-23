@@ -244,22 +244,10 @@ export function publicCard(ev) {
 export function tabbar(active) {
   // Plus de dock en bas : retour en haut à gauche (sauf accueil) et bouton profil 👤 en haut à droite
   // (Mon profil, Mes likes, Notifications). Les raccourcis de navigation sont sur l'accueil.
-  if (!["/dashboard", "/decouvrir", "/messages", "/profil"].includes(location.pathname)) backButton();
+  if (location.pathname !== "/dashboard") backButton();
   profileMenu();
-  navBar(active);
 }
 
-// Barre de navigation du bas (pages principales du compte) : Accueil · Découvrir · + · Messages · Profil.
-function navBar(active) {
-  if (!["home", "discover", "messages", "profile"].includes(active) || document.querySelector(".tabbar")) return;
-  const tab = (key, href, ico, label) => `<a href="${href}" class="${active === key ? "active" : ""}"${active === key ? ' aria-current="page"' : ""}><span class="ico">${icon(ico)}</span>${esc(tr(label))}</a>`;
-  document.body.classList.add("has-tabbar");
-  document.body.insertAdjacentHTML("beforeend", `<nav class="tabbar" aria-label="Navigation">
-    ${tab("home", "/dashboard", "home", "Accueil")}${tab("discover", "/decouvrir", "search", "Découvrir")}
-    <a href="/edit" aria-label="${esc(tr("Créer"))}" id="tab-create"><span class="plus">+</span></a>
-    ${tab("messages", "/messages", "chat", "Messages")}${tab("profile", "/profil", "user", "Profil")}</nav>`);
-  document.getElementById("tab-create").addEventListener("click", createSheet);
-}
 
 // Bouton « ‹ » en haut à gauche des pages secondaires : page précédente du site, sinon l'accueil.
 export function backButton(fallback = "/dashboard") {
