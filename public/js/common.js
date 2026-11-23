@@ -408,16 +408,7 @@ async function profileMenu() {
   const paintBell = () => { const n = unread(); bellBtn.innerHTML = `🔔${n ? `<span class="bell-count">${n > 9 ? "9+" : n}</span>` : ""}`; };
   const paintAll = () => { paint(); paintBell(); };
   paintAll();
-  // 🔍 Découvrir : tous les événements publics, à un toucher depuis n'importe quelle page connectée.
-  const disc = Object.assign(document.createElement("a"), { href: "/decouvrir", className: "bell disc", textContent: "🔍" });
-  disc.setAttribute("aria-label", "Découvrir les événements");
-  if (location.pathname === "/decouvrir") disc.classList.add("on");
-  // Accueil : la barre de recherche et l'onglet « Tous » suffisent, pas de 🔍 en plus.
-  // 💬 Messages à côté de la cloche (sans barre en bas).
-  const msg = Object.assign(document.createElement("a"), { href: "/messages", className: "bell disc", textContent: "💬" });
-  msg.setAttribute("aria-label", "Messages");
-  if (location.pathname === "/messages") msg.classList.add("on");
-  bar.append(msg, bellBtn, btn); // Découvrir : recherche et onglet « Tous » de l'accueil
+  bar.append(bellBtn, btn); // Messages : menu du profil ; Découvrir : recherche et onglet « Tous » de l'accueil
   bellBtn.addEventListener("click", () => { openNotifs(data); data.seen = Date.now(); paintAll(); });
 
   btn.addEventListener("click", () => {
