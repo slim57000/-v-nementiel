@@ -114,11 +114,10 @@ function renderStories() {
   const near = new Set([...events, ...guest].map((e) => e.slug).filter(Boolean));
   const far = rest.filter((e) => !isLive(e) && !near.has(e.slug));
   const pub = far.filter((e) => !isPriv(e)).sort(order), priv = far.filter(isPriv).sort(order);
-  if (scope === "world") near.clear();
   const part = partSet();
-  const upcoming = [...rest.filter((e) => isLive(e) && (scope !== "friends" || near.has(e.slug))),
+  // Les ronds montrent toujours tout (participations et amis d'abord), quel que soit l'onglet Amis / Pour vous / Tous.
+  const upcoming = [...rest.filter(isLive),
     ...rest.filter((e) => !isLive(e) && near.has(e.slug) && part.has(e.slug)).sort(order), ...rest.filter((e) => !isLive(e) && near.has(e.slug) && !part.has(e.slug)).sort(order)];
-  if (scope === "friends") { pub.length = 0; priv.length = 0; }
   while (pub.length || priv.length) { if (pub.length) upcoming.push(pub.shift()); if (priv.length) upcoming.push(priv.shift()); }
   $("#stories").innerHTML = `
     <a class="story new" href="/edit" data-create><div class="story-img">+</div><span>Créer</span></a>
