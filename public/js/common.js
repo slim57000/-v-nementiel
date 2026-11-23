@@ -1220,12 +1220,13 @@ export function loadInspirations(section, row, showEmpty = false) {
   api("/api/public/reels").then((list) => {
     if (!list?.length) { if (showEmpty) row.innerHTML = `<p class="muted reels-empty">${esc(tr("Aucune vidéo pour le moment."))}</p>`; return; }
     // Boutons de thème (💍 Mariage, 🎂 Anniversaire…) : le lecteur enchaîne ensuite sur les vidéos du thème choisi.
-    const THEMES = [["", "✨ Tout"], ["members", "👥 Membres"], ["mariage", "💍 Mariage"], ["amour", "💕 Fiançailles & henné"], ["anniversaire", "🎂 Anniversaire"],
-      ["bebe", "👶 Bébé & baptême"], ["diplome", "🎓 Diplôme & retraite"], ["fete", "🥂 Soirées"], ["saisons", "🎆 Fêtes de l'année"]]
+    // Par type d'événement (💍 Mariage, 🎂 Anniversaire, 🕊️ Baptême…), comme les événements de MaFeliza.
+    const THEMES = [["", "✨ Tout"], ["members", "👥 Membres"],
+      ...Object.entries(EVENT_TYPES).map(([k, ty]) => [k, `${ty.icon} ${k === "autre" ? "Soirées" : ty.label}`])]
       .filter(([k]) => !k || list.some((v) => (k === "members" ? v.member : v.theme === k)));
     let chips = section.previousElementSibling?.classList.contains("reel-themes") ? section.previousElementSibling : null;
     if (!chips && THEMES.length > 2) {
-      section.insertAdjacentHTML("beforebegin", `<div class="chips reel-themes" role="tablist" aria-label="${esc(tr("Thèmes"))}">${THEMES.map(([k, l], i) => `<button type="button" data-theme-k="${k}" class="${i ? "" : "active"}">${esc(tr(l))}</button>`).join("")}</div>`);
+      section.insertAdjacentHTML("beforebegin", `<div class="chips reel-themes" role="tablist" aria-label="${esc(tr("Thèmes"))}">${THEMES.map(([k, l], i) => `<button type="button" data-theme-k="${k}" class="${i ? "" : "active"}">${esc(l.replace(/^(\S+) (.*)$/, (m, ic, t) => `${ic} ${tr(t)}`))}</button>`).join("")}</div>`);
       chips = section.previousElementSibling;
     }
     const show = (k) => {
