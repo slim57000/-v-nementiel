@@ -1219,9 +1219,28 @@ export function loadInspirations(section, row, showEmpty = false) {
       ${v.thumb ? `<img src="${esc(v.thumb)}" alt="" loading="lazy">` : `<video src="${esc(v.src)}#t=0.3" muted playsinline preload="metadata"></video>`}<span class="insp-play">▶</span><small>${esc(v.channel)}</small></button>`;
   api("/api/public/reels").then((list) => {
     if (!list?.length) { if (showEmpty) row.innerHTML = `<p class="muted reels-empty">${esc(tr("Aucune vidéo pour le moment."))}</p>`; return; }
-    row._reels = list; // liste complète : le lecteur enchaîne sur toutes les vidéos
-    // Toutes les vignettes d'un coup (images chargées au fil du défilement) : rien ne dépend d'un « charger plus ».
-    row.innerHTML = list.map(card).join("");
+    // Boutons de thème (💍 Mariage, 🎂 Anniversaire…) : le lecteur enchaîne ensuite sur les vidéos du thème choisi.
+    const THEMES = [["", "✨ Tout"], ["members", "👥 Membres"], ["mariage", "💍 Mariage"], ["amour", "💕 Fiançailles & henné"], ["anniversaire", "🎂 Anniversaire"],
+      ["bebe", "👶 Bébé & baptême"], ["diplome", "🎓 Diplôme & retraite"], ["fete", "🥂 Soirées"], ["saisons", "🎆 Fêtes de l'année"]]
+      .filter(([k]) => !k || list.some((v) => (k === "members" ? v.member : v.theme === k)));
+    let chips = section.previousElementSibling?.classList.contains("reel-themes") ? section.previousElementSibling : null;
+    if (!chips && THEMES.length > 2) {
+      section.insertAdjacentHTML("beforebegin", `<div class="chips reel-themes" role="tablist" aria-label="${esc(tr("Thèmes"))}">${THEMES.map(([k, l], i) => `<button type="button" data-theme-k="${k}" class="${i ? "" : "active"}">${esc(tr(l))}</button>`).join("")}</div>`);
+      chips = section.previousElementSibling;
+    }
+    const show = (k) => {
+      const shown = !k ? list : list.filter((v) => (k === "members" ? v.member : v.theme === k));
+      row._reels = shown; // le lecteur enchaîne sur les vidéos affichées
+      // Toutes les vignettes d'un coup (images chargées au fil du défilement) : rien ne dépend d'un « charger plus ».
+      row.innerHTML = shown.map(card).join("");
+    };
+    chips?.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-theme-k]");
+      if (!b) return;
+      chips.querySelectorAll("button").forEach((x) => x.classList.toggle("active", x === b));
+      show(b.dataset.themeK);
+    });
+    show("");
     section.classList.remove("hidden");
   }).catch(() => {});
 }

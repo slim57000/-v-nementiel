@@ -1899,3 +1899,9 @@ h1, h2, h3 { overflow-wrap: break-word; hyphens: auto; }
 .topbar .disc { display: grid; place-items: center; text-decoration: none; }
 .topbar .disc + .bell { margin-left: 8px; }
 .topbar .disc.on { border-color: var(--primary); }
+
+/* Boutons de thème des Réels (défilement horizontal) */
+.reel-themes { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 0 10px; padding-bottom: 2px; }
+.reel-themes::-webkit-scrollbar { display: none; }
+.reel-themes button { flex: none; white-space: nowrap; }
+.reel-themes:has(+ .hidden) { display: none; }
