@@ -45,6 +45,19 @@ const PUBLIC_DIR = fileURLToPath(new URL("./public", import.meta.url));
 const app = express();
 app.set("trust proxy", 1);
 app.disable("x-powered-by");
+// Bandeau d'Apple (Safari) : « OUVRIR » ouvre l'appli sur la page affichée (app-argument), pas sur l'accueil.
+app.use((req, res, next) => {
+  if (req.method !== "GET" || req.path.startsWith("/api/")) return next();
+  const send = res.send.bind(res);
+  res.send = (body) => {
+    if (typeof body === "string" && body.includes('content="app-id=6818968509"')) {
+      const url = `${(process.env.PUBLIC_URL || "https://mafeliza.com").replace(/\/$/, "")}${req.originalUrl}`.replace(/["<>\s]/g, encodeURIComponent);
+      body = body.replace('content="app-id=6818968509"', `content="app-id=6818968509, app-argument=${url}"`);
+    }
+    return send(body);
+  };
+  next();
+});
 // En-têtes de sécurité (aussi appliqués aux fichiers statiques par vercel.json).
 app.use((req, res, next) => {
   res.set({
