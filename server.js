@@ -131,7 +131,7 @@ app.post("/api/push/subscribe", async (req, res) => {
 app.post("/api/hit", async (req, res) => {
   ping(req, String(getSigned(req, "org") || "").split(":")[0] || null, req.body?.path);
   if (req.body?.ping) return res.status(204).end();
-  if (!(await tooFast(`hit:${req.ip}`, 120, 60_000))) recordHit(req, { path: String(req.body?.path || ""), ref: String(req.body?.ref || ""), lang: req.body?.lang });
+  if (!(await tooFast(`hit:${req.ip}`, 120, 60_000))) recordHit(req, { path: String(req.body?.path || ""), ref: String(req.body?.ref || ""), lang: req.body?.lang, tz: String(req.body?.tz || "").slice(0, 40) });
   res.status(204).end();
 });
 

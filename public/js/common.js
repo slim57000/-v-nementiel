@@ -867,7 +867,8 @@ else if (!readConsent() && !inAppView()) addEventListener("DOMContentLoaded", co
 try {
   if (!sessionStorage.getItem(`hit:${location.pathname}`)) {
     sessionStorage.setItem(`hit:${location.pathname}`, "1");
-    const body = JSON.stringify({ path: location.pathname, ref: document.referrer, lang });
+    let tz = ""; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { /* ancien navigateur */ }
+    const body = JSON.stringify({ path: location.pathname, ref: document.referrer, lang, tz });
     navigator.sendBeacon?.("/api/hit", new Blob([body], { type: "application/json" })) || fetch("/api/hit", { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true });
   }
   // Signe de vie dès l'ouverture puis toutes les 30 s tant que la page est visible : compteur « en ligne maintenant ».

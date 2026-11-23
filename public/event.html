@@ -128,6 +128,11 @@
       </section>
       <section id="welcome" class="card welcome-card hidden"></section>
       <p style="text-align:center;margin:18px 0 0"><button type="button" id="add-host" class="btn btn-light hidden">👋 Ajouter l'organisateur en ami</button></p>
+      <div id="admin-bar" class="card hidden" style="margin-top:18px;text-align:center"><b>🛡️ Administration</b>
+        <p class="muted small" id="admin-info" style="margin:6px 0 10px"></p>
+        <button type="button" class="btn btn-light btn-sm" data-adm="suspend"></button>
+        <button type="button" class="btn btn-danger btn-sm" data-adm="delete">🗑️ Supprimer l'événement</button>
+        <a class="btn btn-ghost btn-sm" href="/admin">Ouvrir l'admin</a></div>
       <p style="text-align:center;margin:18px 0"><button type="button" id="report-event" class="btn btn-ghost btn-sm">🚩 Signaler cet événement</button></p>
       <section id="promo" class="card welcome-card hidden" style="text-align:center">
         <img src="/img/logo.png" alt="" style="width:44px;height:44px">

@@ -17,7 +17,7 @@ import {
   searchEvents, searchOrganizers, findEvent, findOrganizer, saveOrganizer, saveEvent, listEvents,
   listReports, deleteReport, countReports, getSetting, setSetting, findOrganizersByIds,
   findEventMessage, deleteMessage, findPhoto, deletePhoto, findGuestbookEntry, deleteGuestbookEntry,
-  moderationMode, listPendingIds, setPending, setUnlisted, findEventsByIds,
+  moderationMode, listPendingIds, setPending, setUnlisted, findEventsByIds, deleteOrganizer,
 } from "../lib/store.js";
 import { statfs } from "node:fs/promises";
 import os from "node:os";
@@ -186,6 +186,18 @@ router.post("/organizers/:id/block", async (req, res) => {
   await saveOrganizer({ ...organizer, blocked });
   if (!blocked) await clearAgeLock(organizer.id).catch(() => {}); // débloquer lève aussi un éventuel verrou d'âge
   for (const event of await listEvents(organizer.id)) await saveEvent({ ...event, suspended: blocked });
+  res.json({ ok: true });
+});
+
+// Supprimer un compte (et tous ses événements, photos, replays) : comme « Supprimer mon compte », fait par l'administration.
+router.delete("/organizers/:id", async (req, res) => {
+  const organizer = await findOrganizer(Number(req.params.id));
+  if (!organizer) return res.status(404).json({ error: "Utilisateur introuvable." });
+  if (organizer.id === (await currentOrganizer(req)).id) return res.status(400).json({ error: "Utilisez « Supprimer mon compte » pour votre propre compte." });
+  if (await isAdmin(organizer)) return res.status(400).json({ error: "Retirez d'abord ses droits d'administration." });
+  for (const event of await listEvents(organizer.id)) await destroyEvent(event);
+  await deleteOrganizer(organizer);
+  console.log(`[admin] compte ${organizer.id} supprimé`);
   res.json({ ok: true });
 });
 

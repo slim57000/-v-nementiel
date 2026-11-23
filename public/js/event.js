@@ -68,6 +68,7 @@ function showEvent(ev) {
   current = ev;
   $("#report-event").classList.toggle("hidden", Boolean(ev.isOwner));
   hostButton(ev);
+  adminBar(ev);
   const type = EVENT_TYPES[ev.type];
   document.title = ev.name;
   $("#name").textContent = ev.name;
@@ -316,6 +317,32 @@ async function liveToday(ev) {
       box.querySelector("a").href = `/cameraman?code=${encodeURIComponent(own.cameramanCode)}`;
     }
   }
+}
+
+// 🛡️ Administrateur (pas organisateur) : suspendre ou supprimer l'événement directement depuis sa page.
+function adminBar(ev) {
+  const bar = $("#admin-bar");
+  if (!ev.isAdmin) return bar.classList.add("hidden");
+  bar.classList.remove("hidden");
+  $("#admin-info").textContent = `Événement n° ${ev.id} · ${ev.visibility === "private" ? "privé" : ev.visibility === "unlisted" ? "non répertorié" : "public"}`;
+  let suspended = Boolean(ev.suspended);
+  const paint = () => { bar.querySelector('[data-adm="suspend"]').textContent = suspended ? "✅ Réactiver" : "⏸️ Suspendre"; };
+  paint();
+  bar.onclick = async (e) => {
+    const a = e.target.dataset.adm;
+    try {
+      if (a === "suspend") {
+        if (!suspended && !confirm("Suspendre cet événement ? Il ne sera plus visible.")) return;
+        await api(`/api/admin/events/${ev.id}/suspend`, { method: "POST", body: { suspended: !suspended } });
+        suspended = !suspended; paint(); toast(suspended ? "Événement suspendu" : "Événement réactivé");
+      }
+      if (a === "delete") {
+        if (!confirm(`Supprimer définitivement « ${ev.name} » et tous ses contenus ?`)) return;
+        await api(`/api/admin/events/${ev.id}`, { method: "DELETE" });
+        toast("Événement supprimé"); setTimeout(() => location.replace("/admin"), 800);
+      }
+    } catch (err) { toast(err.message); }
+  };
 }
 
 // 👋 Demande d'ami à l'organisateur (il accepte ou refuse) ; sans compte : connexion puis retour ici.

@@ -47,7 +47,8 @@ const views = {
       (o.superAdmin ? "" : `<button class="btn btn-light btn-sm" data-act="admin" data-id="${o.id}" data-on="${!o.admin}">${o.admin ? "Retirer admin" : "👑 Passer admin"}</button> ${o.admin ? `<button class="btn btn-ghost btn-sm" data-act="admin-dur" data-id="${o.id}">⏱ Durée admin</button> ` : ""}`)
       + `<button class="btn btn-light btn-sm" data-act="premium" data-id="${o.id}" data-on="${!o.premium}">${o.premium ? "Retirer Premium" : "✨ Passer Premium"}</button>${o.premium ? ` <button class="btn btn-ghost btn-sm" data-act="premium-dur" data-id="${o.id}">⏱ Durée Premium</button>` : ""}`
       + (o.ageLock ? ` <span class="badge" style="background:#fef3c7;color:#92400e">🔒 Âge (moins de 15 ans saisi)</span> <button class="btn btn-sm" data-act="age-unlock" data-id="${o.id}">Lever le verrou d'âge</button>` : "")
-      + (o.admin ? "" : ` <button class="btn ${o.blocked ? "btn-light" : "btn-danger"} btn-sm" data-act="block" data-id="${o.id}" data-on="${!o.blocked}">${o.blocked ? "Débloquer" : "Bloquer"}</button>`),
+      + (o.admin ? "" : ` <button class="btn ${o.blocked ? "btn-light" : "btn-danger"} btn-sm" data-act="block" data-id="${o.id}" data-on="${!o.blocked}">${o.blocked ? "Débloquer" : "Bloquer"}</button>`
+        + ` <button class="btn btn-danger btn-sm" data-act="del-user" data-id="${o.id}" data-email="${esc(o.email)}">🗑️ Supprimer</button>`),
     )).join("") || "<p class='muted'>Aucun utilisateur.</p>";
   },
   async reports() {
@@ -97,7 +98,7 @@ const views = {
       <div class="admin-stats">${[["Pages vues", sum("views")], ["Visiteurs", sum("visitors")], ["Aujourd'hui", a.days.at(-1).visitors]].map(([l, n]) => `<div><b>${n}</b><small>${l}</small></div>`).join("")}</div>
       <div style="display:flex;align-items:flex-end;gap:3px;height:120px;margin:16px 0 4px">${a.days.map((d) => `<i title="${d.date} : ${d.views} vues, ${d.visitors} visiteurs" style="flex:1;background:linear-gradient(#fd1a85,#c60bd2);border-radius:4px 4px 0 0;height:${Math.max(2, (d.views / max) * 100)}%"></i>`).join("")}</div>
       <p class="muted small" style="margin:0">Pages vues par jour · sans cookie, aucune donnée personnelle conservée</p>
-      ${list(a.pages, "Pages les plus vues")}${list(a.sources, "D'où viennent les visiteurs")}${list(a.devices, "Appareils")}${list(a.langs, "Langue")}
+      ${list(a.pages, "Pages les plus vues")}${list(a.sources, "D'où viennent les visiteurs")}${list(a.devices, "Appareils")}${list(a.countries || [], "Pays (fuseau horaire)")}${list(a.langs, "Langue")}
     </section>`;
   },
   async notifs() {
@@ -424,6 +425,11 @@ $("#content").addEventListener("click", async (e) => {
       await api(`/api/admin/organizers/${id}/premium`, { method: "POST", body: { premium: on === "true", days } });
       toast(on === "true" ? "Compte passé en Premium ✨" : "Premium retiré");
       render();
+    }
+    if (act === "del-user") {
+      if (!confirm(`Supprimer définitivement le compte ${e.target.dataset.email} ?\nSes événements, photos, messages et replays seront effacés. C'est irréversible.`)) return;
+      await api(`/api/admin/organizers/${id}`, { method: "DELETE" });
+      toast("Compte supprimé ✔");
     }
     if (act === "age-unlock") {
       await api(`/api/admin/organizers/${id}/age-unlock`, { method: "POST" });
