@@ -344,7 +344,7 @@ document.querySelector(".segments").addEventListener("click", (e) => {
   $("#list").classList.toggle("hidden", feed || reels);
   if (feed || reels) $("#empty").classList.add("hidden");
   if (feed) { import("./fil.js"); return; }
-  if (reels) { if (!$("#reels").children.length) loadInspirations($("#reels"), $("#reels"), true); return; }
+  if (reels) { if (!$("#reels").children.length) loadInspirations($("#reels"), $("#reels"), true, true); return; }
   filter = e.target.dataset.filter;
   render();
 });

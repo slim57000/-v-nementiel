@@ -1905,3 +1905,7 @@ h1, h2, h3 { overflow-wrap: break-word; hyphens: auto; }
 .reel-themes::-webkit-scrollbar { display: none; }
 .reel-themes button { flex: none; white-space: nowrap; }
 .reel-themes:has(+ .hidden) { display: none; }
+
+/* Grille des Réels : rendu différé des vignettes hors écran (défilement fluide) */
+.reels-grid .insp-card { content-visibility: auto; contain-intrinsic-size: auto 280px; }
+.reels-more { grid-column: 1 / -1; height: 1px; }

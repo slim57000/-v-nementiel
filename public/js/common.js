@@ -1204,11 +1204,13 @@ export async function openPot(slug, url) {
 
 // « ✨ Inspirations » : YouTube Shorts de fêtes (intégration officielle), dans la langue du visiteur.
 // Section masquée tant qu'il n'y a aucune vidéo (pas de clé YouTube, quota…).
-export function loadInspirations(section, row, showEmpty = false) {
+// Vignettes Pexels : version réduite (360 px) plutôt que l'image pleine taille (défilement bien plus fluide).
+const smallThumb = (u) => (/^https:\/\/images\.pexels\.com\//.test(u || "") ? `${u.split("?")[0]}?auto=compress&cs=tinysrgb&w=360` : u);
+export function loadInspirations(section, row, showEmpty = false, fullscreen = false) {
   if (!section || !row) return;
   if (showEmpty) row.innerHTML = '<div class="reels-skel"></div>'.repeat(4);
   const card = (v) => `<button type="button" class="insp-card" data-yt="${esc(v.id)}" aria-label="${esc(v.title)}">
-      ${v.thumb ? `<img src="${esc(v.thumb)}" alt="" loading="lazy">` : `<video src="${esc(v.src)}#t=0.3" muted playsinline preload="metadata"></video>`}<span class="insp-play">▶</span><small>${esc(v.channel)}</small></button>`;
+      ${v.thumb ? `<img src="${esc(smallThumb(v.thumb))}" alt="" loading="lazy" decoding="async">` : `<video src="${esc(v.src)}#t=0.3" muted playsinline preload="metadata"></video>`}<span class="insp-play">▶</span><small>${esc(v.channel)}</small></button>`;
   api("/api/public/reels").then((list) => {
     if (!list?.length) { if (showEmpty) row.innerHTML = `<p class="muted reels-empty">${esc(tr("Aucune vidéo pour le moment."))}</p>`; return; }
     // Boutons de thème (💍 Mariage, 🎂 Anniversaire…) : le lecteur enchaîne ensuite sur les vidéos du thème choisi.
@@ -1224,8 +1226,20 @@ export function loadInspirations(section, row, showEmpty = false) {
     const show = (k) => {
       const shown = !k ? list : list.filter((v) => (k === "members" ? v.member : v.theme === k));
       row._reels = shown; // le lecteur enchaîne sur les vidéos affichées
-      // Toutes les vignettes d'un coup (images chargées au fil du défilement) : rien ne dépend d'un « charger plus ».
-      row.innerHTML = shown.map(card).join("");
+      // Vignettes par paquets de 24, ajoutées en approchant du bas : la page reste légère et fluide.
+      let n = 0;
+      row.innerHTML = "";
+      const more = () => {
+        row.querySelector(".reels-more")?.remove();
+        row.insertAdjacentHTML("beforeend", shown.slice(n, n + 24).map(card).join(""));
+        n += 24;
+        if (n < shown.length) {
+          row.insertAdjacentHTML("beforeend", '<span class="reels-more" aria-hidden="true"></span>');
+          const io = new IntersectionObserver((es) => { if (es[0].isIntersecting) { io.disconnect(); more(); } }, { rootMargin: "800px" });
+          io.observe(row.querySelector(".reels-more"));
+        }
+      };
+      more();
     };
     chips?.addEventListener("click", (e) => {
       const b = e.target.closest("[data-theme-k]");
@@ -1234,6 +1248,8 @@ export function loadInspirations(section, row, showEmpty = false) {
       show(b.dataset.themeK);
     });
     show("");
+    // Onglet Réels : ouverture directe en plein écran, comme Instagram (la grille par thème reste derrière).
+    if (fullscreen) { const files = list.filter((x) => x.src); if (files.length) openVideoReels(files, 0); }
     section.classList.remove("hidden");
   }).catch(() => {});
 }
