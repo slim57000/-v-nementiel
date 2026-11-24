@@ -264,6 +264,7 @@ function visitorHero(ev) {
   if (ev.isOwner || document.getElementById("ev-hero")) return;
   const start = new Date(`${ev.date}T${ev.time || "12:00"}`);
   const future = start > new Date();
+  const today = ev.date === new Date().toISOString().slice(0, 10); // jour J : « Regarder le live » en premier
   const when = start.toLocaleDateString(LOCALE, { weekday: "long", day: "numeric", month: "long", year: "numeric" }).replace(/^./, (c) => c.toUpperCase());
   const city = ev.visibility === "public" ? String(ev.location || "").split(",").slice(-2).join(",").trim() : "";
   const title = ev.invite?.title || ev.name;
@@ -276,8 +277,10 @@ function visitorHero(ev) {
       <p>${esc(when)}${ev.time ? ` · ${esc(ev.time.replace(":", "h"))}` : ""}${city ? `<br>${esc(city)}` : ""}</p>
       ${future ? '<div class="ev-hero-cd" id="hero-cd"></div>' : ""}
       <div class="ev-hero-cta">
-        <button type="button" class="btn" data-hero="invite">💌 ${esc(tr("Voir le faire-part"))}</button>
-        <button type="button" class="btn ev-hero-ghost" data-hero="rsvp">${future ? `✅ ${esc(tr("Je réponds"))}` : `✍️ ${esc(tr("Livre d'or"))}`}</button>
+        ${today ? `<a class="btn" href="/live?e=${encodeURIComponent(ev.slug)}">🔴 ${esc(tr("Regarder le live"))}</a>
+        <button type="button" class="btn ev-hero-ghost" data-hero="invite">💌 ${esc(tr("Voir le faire-part"))}</button>`
+        : `<button type="button" class="btn" data-hero="invite">💌 ${esc(tr("Voir le faire-part"))}</button>
+        <button type="button" class="btn ev-hero-ghost" data-hero="rsvp">${future ? `✅ ${esc(tr("Je réponds"))}` : `✍️ ${esc(tr("Livre d'or"))}`}</button>`}
       </div>
       <small>🎥 ${esc(tr("Live, photos des invités et livre d'or sur cette page"))}</small>
     </div>
