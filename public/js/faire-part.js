@@ -76,9 +76,9 @@ function render() {
   const base = `${location.origin}/e/${encodeURIComponent(ev.slug)}`;
   const withCode = ev.visibility === "private" ? `?code=${ev.accessCode}` : "";
   const isLive = tab === "live";
-  // Invitation au live : ouvre la page de l'événement (faire-part + « Rejoindre le live » / « Me prévenir »),
-  // pas directement le lecteur, qui n'affiche rien avant le début du direct.
-  const link = `${base}${withCode}`;
+  const link = isLive
+    ? `${location.origin}/live?e=${encodeURIComponent(ev.slug)}${ev.visibility === "private" ? `&code=${ev.accessCode}` : ""}`
+    : `${base}${withCode}`;
   const invite = isLive ? liveCard(ev) : ev.invite;
   const style = isLive ? "moderne" : ev.inviteStyle;
   const photo = invitePhotoUrl(ev.invite, ev.cover);
