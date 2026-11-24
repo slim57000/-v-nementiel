@@ -125,7 +125,9 @@ class _HomePageState extends State<HomePage> {
           // Fichier agenda (.ics) : ouvert par le navigateur du téléphone, qui propose « Ajouter au calendrier ».
           final ics = uri.path.endsWith('.ics');
           if ((uri.scheme == 'http' || uri.scheme == 'https') && internal && !ics) return NavigationDecision.navigate;
-          launchUrl(uri, mode: LaunchMode.externalApplication);
+          // .ics : fenêtre Safari intégrée, qui propose « Ajouter au calendrier » (ouvert à part, iOS le prenait
+          // pour un abonnement de calendrier).
+          launchUrl(uri, mode: ics ? LaunchMode.inAppBrowserView : LaunchMode.externalApplication);
           return NavigationDecision.prevent;
         },
       ))
@@ -155,6 +157,8 @@ class _HomePageState extends State<HomePage> {
     // Fichiers créés par le site (zip des souvenirs, replay) : reçus par morceaux puis « Enregistrer / Partager ».
     // Version de l'appli demandée par le site (mise à jour obligatoire). ⚠️ À changer avec « version » de pubspec.yaml.
     _web.addJavaScriptChannel('MaFelizaVersion', onMessageReceived: (_) => _web.runJavaScript("window.mafelizaVersion && window.mafelizaVersion('1.0.8')"));
+    // Repère pour le site : cette version ouvre les fichiers agenda (.ics) correctement.
+    _web.addJavaScriptChannel('MaFelizaCal', onMessageReceived: (_) {});
     _web.addJavaScriptChannel('MaFelizaFile', onMessageReceived: (m) => _receiveFile(m.message));
     // Partage d'un lien / texte : feuille de partage du téléphone (WhatsApp, Messages, AirDrop…).
     _web.addJavaScriptChannel('MaFelizaShare', onMessageReceived: (m) {

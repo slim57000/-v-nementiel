@@ -1572,7 +1572,9 @@ export async function saveFile(blob, name, text = "") {
 // « Ajouter à mon agenda » : fichier .ics (Safari, Chrome, appli 1.0.6+ qui l'ouvre dans le navigateur).
 // Appli plus ancienne : le .ics s'afficherait en texte, on passe donc par Google Agenda (ouvert hors de l'appli).
 export function calendarHref(ev) {
-  if (!(inAppView() && !window.MaFelizaShare)) return `/api/public/${encodeURIComponent(ev.slug)}/calendar.ics`;
+  // Appli 1.0.8+ (repère MaFelizaCal) : le .ics s'ouvre dans une fenêtre Safari intégrée (« Ajouter au calendrier »).
+  // Appli plus ancienne : Google Agenda (le .ics s'y affichait en texte, ou comme un abonnement de calendrier).
+  if (!inAppView() || window.MaFelizaCal) return `/api/public/${encodeURIComponent(ev.slug)}/calendar.ics`;
   const d = ev.date.replace(/-/g, ""), t = (ev.time || "12:00").replace(":", "");
   const endH = String(Math.min(23, Number(t.slice(0, 2)) + 5)).padStart(2, "0");
   return `https://calendar.google.com/calendar/render?${new URLSearchParams({
