@@ -1,6 +1,6 @@
 // Rendu du faire-part selon le style choisi (classique, élégant, fleuri, moderne).
-import { esc, formatDate } from "./common.js";
-import { lang, t } from "./i18n.js";
+import { esc, formatDate, EN } from "./common.js";
+import { lang, t, tr } from "./i18n.js";
 
 // Textes préenregistrés par type d'événement : [accroche, texte]. Le premier est proposé par défaut (le texte « en petit comité / en direct » est réservé au faire-part du live, et proposé en dernier).
 export const TEMPLATES = {
@@ -134,3 +134,32 @@ export function renderInvite(container, event, invite, style, photoUrl) {
 // Résout l'image du faire-part à partir du choix enregistré.
 export const invitePhotoUrl = (invite, coverUrl) =>
   invite.photo === "none" ? null : invite.photo === "cover" || !invite.photo ? coverUrl : invite.photo;
+
+// Texte prêt à l'emploi de l'invitation au live, selon le type d'événement.
+export function liveInvite(ev) {
+  if (EN) {
+    return {
+      kicker: lang === "en" ? "Live invitation" : tr("Invitation au live"), title: ev.name,
+      // Textes écrits pour chaque langue (dictionnaire), avec la date et l'heure de l'événement.
+      text: `${tr("live.p1").replace("{date}", ["en", "de"].includes(lang) ? formatDate(ev.date) : formatDate(ev.date).toLowerCase())}\n\n${tr("live.p2")}\n\n${ev.time ? tr("live.p3t").replace("{time}", ev.time) : tr("live.p3")}`,
+    };
+  }
+  const what = { mariage: "notre mariage", bapteme: "le baptême", communion: "la communion", fiancailles: "nos fiançailles",
+    anniversaire: "l'anniversaire", "baby-shower": "la baby shower", diplome: "la remise de diplôme",
+    retraite: "le départ en retraite", inauguration: "l'inauguration" }[ev.type] || "l'événement";
+  return {
+    kicker: "Invitation au live",
+    title: ev.name,
+    // Formulation par défaut : « en petit comité… suivre notre cérémonie en direct », avec l'heure de diffusion.
+    text: `Nous avons la joie de vous annoncer ${what} qui se déroulera en petit comité le ${formatDate(ev.date).toLowerCase()}.\n\nParce que vous comptez pour nous et que nous souhaitons partager ce moment malgré la distance, nous vous invitons à suivre notre cérémonie en direct !\n\nLien du site ou QR code ci-dessous${ev.time ? ` : la diffusion commence à ${ev.time.replace(":", "h")}` : ""}.`,
+  };
+}
+
+
+// Invitation au live : texte personnalisé par l'organisateur, sinon le texte proposé.
+export const liveCard = (ev) => {
+  const auto = liveInvite(ev);
+  // Ancien texte proposé en anglais (enregistré tel quel) : remplacé par le texte dans la langue du visiteur.
+  const oldAuto = /^(We are delighted to announce our celebration|Can't make it\? Watch it live|Save the date: )/.test(ev.invite?.liveText || "") && lang !== "en";
+  return ev.invite?.liveText && !oldAuto ? { ...auto, text: ev.invite.liveText } : auto;
+};

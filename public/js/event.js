@@ -1,6 +1,6 @@
 // Page publique d'un événement : faire-part, compte à rebours, stories, réponses, livre d'or, cagnotte.
 import { enablePush, pushState, api, $, esc, copy, shareSheet, formatDate, eventUrl, viewPhoto, pickAndUploadPhoto, contentMenu, isHidden, isVideo, liveState, EVENT_TYPES, openStories, toast, EN, guestName, LOCALE, placeholderCover, tabbar, createSheet, openPot, coverOf, goLogin, calendarHref } from "./common.js";
-import { renderInvite, invitePhotoUrl } from "./invitation.js";
+import { renderInvite, invitePhotoUrl, liveCard } from "./invitation.js";
 import { t as tr } from "./i18n.js";
 import { initGuestbook } from "./guestbook.js";
 
@@ -161,7 +161,9 @@ function showEvent(ev) {
 
   // Premium : page sans marque MaFeliza.
   if (ev.premium) document.querySelector(".invite-hero-heart")?.remove();
-  renderInvite($("#invite"), ev, ev.invite, ev.inviteStyle, invitePhotoUrl(ev.invite, ev.cover));
+  // Lien de l'« invitation au live » (?invite=live) : l'invitation à suivre le direct, pas le faire-part « venez ».
+  const liveInv = new URLSearchParams(location.search).get("invite") === "live";
+  renderInvite($("#invite"), ev, liveInv ? liveCard(ev) : ev.invite, liveInv ? "moderne" : ev.inviteStyle, invitePhotoUrl(ev.invite, ev.cover));
   $("#invite").append($("#invite-extra")); // compte à rebours et mention du live dans la carte du faire-part
   startCountdown(new Date(`${ev.date}T${ev.time}`));
 
