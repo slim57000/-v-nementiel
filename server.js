@@ -45,19 +45,6 @@ const PUBLIC_DIR = fileURLToPath(new URL("./public", import.meta.url));
 const app = express();
 app.set("trust proxy", 1);
 app.disable("x-powered-by");
-// Bandeau d'Apple (Safari) : « OUVRIR » ouvre l'appli sur la page affichée (app-argument), pas sur l'accueil.
-app.use((req, res, next) => {
-  if (req.method !== "GET" || req.path.startsWith("/api/")) return next();
-  const send = res.send.bind(res);
-  res.send = (body) => {
-    if (typeof body === "string" && body.includes('content="app-id=6818968509"')) {
-      const url = `${(process.env.PUBLIC_URL || "https://mafeliza.com").replace(/\/$/, "")}${req.originalUrl}`.replace(/["<>\s]/g, encodeURIComponent);
-      body = body.replace('content="app-id=6818968509"', `content="app-id=6818968509, app-argument=${url}"`);
-    }
-    return send(body);
-  };
-  next();
-});
 // En-têtes de sécurité (aussi appliqués aux fichiers statiques par vercel.json).
 app.use((req, res, next) => {
   res.set({
@@ -317,7 +304,7 @@ computeAssets();
 // Nom du site pour Google (sinon il le devine) : « MaFeliza » dans chaque page.
 // + fiche « Organisation » (logo affiché par Google) et « Application web ».
 const SITE_NAME = `<meta property="og:site_name" content="MaFeliza"><meta name="application-name" content="MaFeliza">
-<meta name="apple-itunes-app" content="app-id=6818968509"><meta name="format-detection" content="telephone=no, address=no, email=no, date=no">
+<meta name="format-detection" content="telephone=no, address=no, email=no, date=no">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"WebSite","name":"MaFeliza","alternateName":["Ma Feliza","mafeliza.com"],"url":"https://mafeliza.com/","inLanguage":["fr","en","de","es","it","pt","nl","tr","ar","pl","ro","ru","uk","zh","hi"]},
 {"@context":"https://schema.org","@type":"Organization","name":"MaFeliza","url":"https://mafeliza.com/","logo":"https://mafeliza.com/img/icon-512.png","email":"contact@mafeliza.com","sameAs":["https://play.google.com/store/apps/details?id=fr.mafeliza.app","https://apps.apple.com/app/id6818968509"]},
 {"@context":"https://schema.org","@type":"MobileApplication","name":"MaFeliza","operatingSystem":"Android, iOS","applicationCategory":"LifestyleApplication","installUrl":"https://play.google.com/store/apps/details?id=fr.mafeliza.app","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"}},
