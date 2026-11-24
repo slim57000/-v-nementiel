@@ -232,7 +232,7 @@ export function publicCard(ev) {
     <span>${sub}</span>
   </a>`;
   const live = ev.date === new Date().toISOString().slice(0, 10); // jour J : la miniature ouvre le live
-  return `<a class="pub-card" href="${live ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`}" ${liveAttrs(ev)}>
+  return `<a class="pub-card" href="/e/${esc(ev.slug)}" ${liveAttrs(ev)}>
     <span class="tag">${live ? "▶ Voir le live" : esc(dayBadge(ev.date))}${ev.visibility === "private" ? " · 🔒" : ev.visibility === "unlisted" ? " · 🔗" : ""}</span>
     <button type="button" class="card-fav" data-fav="${esc(ev.slug)}" aria-label="Ajouter aux favoris">♡</button>
     <b>${esc(title)}</b>

@@ -126,7 +126,7 @@ function renderStories() {
       const live = isLive(ev);
       if (!ev.slug) return `<a class="story" href="#" data-invite-only><div class="story-img" ${liveAttrs(ev)}><span class="story-badge">${badge}</span></div>
         <span>${esc(evTitle(ev))}</span><small class="story-vis unlisted">${VIS.unlisted[0]}</small></a>`; // sur invitation : lien reçu nécessaire
-      return `<a class="story" href="${live ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`}">
+      return `<a class="story" href="/e/${esc(ev.slug)}">
         <div class="story-img ${live ? "live" : ""} ${withStory.has(ev.slug) ? "has-story" : ""}" data-story="${withStory.has(ev.slug) ? esc(ev.slug) : ""}" ${liveAttrs(ev)}>
           <span class="story-badge ${live || badge === "Aujourd'hui" ? "today" : ""}">${live ? "● En direct" : badge}</span>
           </div>
@@ -306,7 +306,8 @@ function alternate(list) {
 }
 
 // « Événements à venir » : le prochain en grande carte, puis une liste façon agenda.
-const upHref = (ev) => (!ev.slug ? "#" : ev.date === new Date().toISOString().slice(0, 10) ? `/live?e=${encodeURIComponent(ev.slug)}` : `/e/${esc(ev.slug)}`);
+// Toujours la page de l'événement (faire-part, infos) ; le jour J, son bouton « ● Rejoindre le live » mène au direct.
+const upHref = (ev) => (!ev.slug ? "#" : `/e/${esc(ev.slug)}`);
 const upLock = (ev) => (ev.visibility === "private" ? " 🔒" : ev.visibility === "unlisted" || !ev.slug ? " 🔗" : "");
 const upDate = (ev) => { const d = new Date(`${ev.date}T12:00`); return { day: d.getDate(), mon: d.toLocaleDateString(LOCALE, { month: "short" }).replace(".", "") }; };
 const upWhere = (ev) => { const ty = EVENT_TYPES[ev.type] || EVENT_TYPES.autre || { icon: "🎉", label: "" }; // Toujours « ville · visibilité » (privé : ville seule, jamais l'adresse).
