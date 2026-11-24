@@ -165,10 +165,7 @@ function card(ev) {
     <div class="ev-tools">
       ${ev.date < new Date().toISOString().slice(0, 10)
         // Événement passé : replay du live et film souvenir à la place de « Lancer le live ».
-        ? `<a class="btn btn-block" href="/live?e=${encodeURIComponent(ev.slug)}">▶ Voir le replay</a>
-           <a class="film-card" href="/e/${encodeURIComponent(ev.slug)}?film=1" style="margin:10px 0;text-decoration:none">
-             <span class="film-card-bg" style="background-image:url('${esc(ev.cover || "")}')"></span>
-             <span class="film-card-txt"><b>${t("✨ Revivez l'événement")}</b><small>${t("Le film souvenir")}</small></span><span class="film-card-play">▶</span></a>`
+        ? `<a class="btn btn-block" href="/live?e=${encodeURIComponent(ev.slug)}">▶ Voir le replay</a>`
         : `<a class="btn btn-sm tool-main btn-golive" href="/cameraman?code=${esc(ev.cameramanCode)}">🔴 Lancer le live</a>`}
       <a class="btn btn-sm tool-main" href="/faire-part?id=${ev.id}">💌 Mes faire-part</a>
       <p class="tools-title">Partager & inviter</p>
