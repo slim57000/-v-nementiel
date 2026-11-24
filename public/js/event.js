@@ -458,7 +458,11 @@ async function filmCard(ev) {
   const card = document.createElement("button");
   card.type = "button";
   card.className = "film-card";
-  card.innerHTML = `<span class="film-card-bg" style="background-image:url('${esc(scenes.find((s) => s.kind === "photo")?.url || "")}')"></span>
+  // Fond animé : une photo des invités, sinon un extrait vidéo (lu en boucle, sans son), sinon la couverture.
+  const photo = scenes.find((s) => s.kind === "photo")?.url, clip = scenes.find((s) => s.kind === "video")?.url;
+  const bg = photo || !clip ? `<span class="film-card-bg" style="background-image:url('${esc(photo || coverOf(ev))}')"></span>`
+    : `<video class="film-card-bg" src="${esc(clip.split("#")[0])}#t=2" muted autoplay loop playsinline preload="metadata"></video>`;
+  card.innerHTML = `${bg}
     <span class="film-card-txt"><b>${tr("✨ Revivez l'événement")}</b><small>${tr("Le film souvenir")}${count ? ` · ${count} 📷🎬` : ""}${quotes ? ` · ${quotes} 💬` : ""}</small></span><span class="film-card-play">▶</span>`;
   card.onclick = () => playFilm(ev, scenes);
   $("#ev-react")?.before(card);
