@@ -21,7 +21,7 @@ import { readFileSync, readdirSync, existsSync, watch, statSync } from "node:fs"
 import { gzipSync } from "node:zlib";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import authRoutes, { currentOrganizer } from "./routes/auth.js";
+import authRoutes, { currentOrganizer, alertAdmins } from "./routes/auth.js";
 import eventRoutes from "./routes/events.js";
 import reelRoutes from "./routes/reels.js";
 import publicRoutes, { eventPayload } from "./routes/public.js";
@@ -160,6 +160,8 @@ app.post("/api/contact", async (req, res) => {
   if (await tooFast(`${req.ip}:contact`, 5, 3_600_000)) return res.status(429).json({ error: "Trop de messages, réessayez plus tard." });
   const list = (await getSetting("contact").catch(() => null)) || [];
   await setSetting("contact", [msg, ...list].slice(0, 500));
+  // 🔔 Notification aux administrateurs (appli + site) : nouveau message à lire dans Admin → Contact.
+  alertAdmins({ title: `✉️ Nouveau message de ${msg.name || msg.email}`, body: (msg.subject ? `${msg.subject} — ` : "") + msg.message.slice(0, 120), url: "/admin#contact" }).catch(() => {});
   res.status(201).json({ ok: true });
 });
 

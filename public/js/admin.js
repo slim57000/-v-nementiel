@@ -472,3 +472,4 @@ async function modHistory() {
 }
 // Lien des notifications de signalement (/admin#reports) : onglet Signalements ouvert directement.
 if (location.hash === "#reports") setTimeout(() => document.querySelector('[data-tab="reports"]')?.click(), 600);
+if (location.hash === "#contact") setTimeout(() => document.querySelector('[data-tab="contact"]')?.click(), 600);
