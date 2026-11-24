@@ -36,8 +36,8 @@ ok('Invité : affiche d\'accueil', await g.locator('#ev-hero').count() > 0);
 // RSVP
 await g.click('[data-hero="rsvp"]').catch(()=>{}); await g.waitForTimeout(800); await g.click('[data-rsvp="yes"]'); await g.waitForTimeout(800);
 if (await g.locator('#name-sheet').count()) { await g.fill('#name-sheet input', 'Tata Marie'); await g.click('#name-sheet button'); await g.waitForTimeout(1500); }
-const rs = await (await o.request.get(B+`/api/events/${ev.id}/rsvp`).catch(()=>null))?.json?.().catch(()=>null);
-ok('Invité : réponse « Je viens »', (await g.locator('[data-rsvp="yes"].active, [data-rsvp="yes"].on, [data-rsvp="yes"][aria-pressed="true"]').count()) > 0 || JSON.stringify(rs||'').includes('Tata'), rs ? JSON.stringify(rs).slice(0,60) : '');
+const rs = await (await o.request.get(B+`/api/public/${ev.slug}/rsvp`).catch(()=>null))?.json?.().catch(()=>null);
+ok('Invité : réponse « Je viens » enregistrée', JSON.stringify(rs||'').includes('yes'), rs ? JSON.stringify(rs).slice(0,80) : '');
 // Livre d'or (texte + photo)
 await g.click('#gb-open'); await g.waitForTimeout(500); await g.fill('#gb-text', 'Félicitations aux mariés ! 💛'); await g.setInputFiles('#gb-photo', IMG+'alliances.jpg'); await g.waitForTimeout(1000);
 await g.click('#gb-form button.btn-block:not(#gb-cancel)'); await g.waitForTimeout(500);
@@ -54,6 +54,28 @@ if (fc) { await fc.setFiles(IMG+'live-mariage.jpg'); await g.waitForTimeout(3000
 const photos = await (await g.request.get(B+`/api/public/${ev.slug}/photos`)).json();
 ok('Invité : photo ajoutée depuis le live', photos.length === 1, `${photos.length} photo(s)`);
 ok('Live : photos des invités affichées', (await g.locator('#photo-strip img, #photo-strip .vid').count()) >= 1);
+// 4b. Faire-part, invitation au live, live YouTube, bouton du jour J
+const evFull = (await (await o.request.get(B+'/api/events')).json()).find((x) => x.id === ev.id);
+await o.goto(B+'/faire-part?id='+ev.id); await o.waitForTimeout(2500); await closeDialogs(o);
+ok('Faire-part : affiché', (await o.locator('#card').innerText().catch(()=>'')).includes('Mariage Test A-Z'));
+await o.click('[data-tab="live"]').catch(()=>{}); await o.waitForTimeout(1000);
+const liveLink = await o.locator('#qr-link').innerText().catch(()=>'');
+ok('Invitation au live : lien vers l\'invitation (?invite=live)', liveLink.includes('invite=live'), liveLink);
+ok('Invitation au live : texte « Invitation au live »', /invitation au live/i.test(await o.locator('#card').innerText().catch(()=>'')));
+const gl = await mk('invité-live'); await gl.goto(B+'/e/'+ev.slug+'?invite=live'); await gl.waitForTimeout(3000);
+ok('Invité (lien du live) : voit l\'invitation au live', /invitation au live/i.test(await gl.locator('#invite').innerText().catch(()=>'')));
+ok('Invité (jour J) : bouton « Regarder le live » en haut', await gl.locator('#ev-hero a[href^="/live"]').count() === 1);
+await gl.goto(B+'/e/'+ev.slug); await gl.waitForTimeout(2500);
+ok('Invité (lien du faire-part) : voit le faire-part', !/invitation au live/i.test(await gl.locator('#invite').innerText().catch(()=>'')) && (await gl.locator('#invite').innerText().catch(()=>'')).includes('Mariage Test A-Z'));
+ok('Ajouter à l\'agenda : fichier .ics', (await gl.request.get(B+`/api/public/${ev.slug}/calendar.ics`)).headers()['content-type']?.includes('text/calendar'));
+// Caméraman : connexion par code puis lien YouTube → le live l'affiche
+const cam = await mk('caméraman');
+const lg = await cam.request.post(B+'/api/cameraman/login', { data: { code: evFull.cameramanCode } });
+ok('Caméraman : connexion avec le code', lg.ok());
+const put = await cam.request.put(B+`/api/cameraman/${ev.slug}/cameras`, { data: { cameras: [{ name: 'Caméra 1', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' }] } });
+ok('Caméraman : lien YouTube enregistré', put.ok(), put.ok() ? '' : (await put.text()).slice(0, 80));
+await gl.goto(B+'/live?e='+ev.slug); await gl.waitForTimeout(3500);
+ok('Live : lecteur YouTube affiché aux invités', await gl.locator('#stage iframe[src*="youtube"]').count() >= 1);
 // 5. Organisateur : livre d'or, film, mur, album, stats
 await o.goto(B+'/e/'+ev.slug+'#livre-dor'); await o.waitForTimeout(3000);
 ok('Organisateur : voit le livre d\'or', await o.locator('#gb-list .gb-entry').count() === 1);
@@ -86,6 +108,36 @@ const og = await o.request.get(B+`/og/${ev.slug}.png`); ok('Carte de partage Fac
 const entries = await (await o.request.get(B+`/api/public/${ev.slug}/guestbook`)).json();
 ok('Suppression d\'une photo (organisateur)', (await o.request.delete(B+`/api/public/${ev.slug}/photos/${photos[0]?.id}`)).ok());
 ok('Suppression d\'un message (organisateur)', (await o.request.delete(B+`/api/public/${ev.slug}/guestbook/${entries[0]?.id}`)).ok());
+// 6b. Deuxième compte : demande d'ami à l'organisateur, recherche
+const p2 = await mk('ami'); const email2 = `test-az2-${Date.now()}@mafeliza.com`;
+await p2.goto(B+'/connexion'); await p2.fill('#email', email2); await p2.fill('#password', 'TestClaude123!'); await p2.locator('#login button.btn-block').first().click(); await p2.waitForTimeout(2500);
+if (await p2.locator('input[type=date]').count()) { await p2.fill('input[type=date]', '1990-05-12'); await p2.click('button:has-text("Confirmer")'); await p2.waitForTimeout(800); await p2.click('button:has-text("Oui")').catch(()=>{}); await p2.waitForTimeout(1200); }
+await p2.goto(B+'/e/'+ev.slug); await p2.waitForTimeout(3000); await closeDialogs(p2);
+ok('Bouton « Ajouter l\'organisateur en ami » visible', await p2.locator('#add-host').isVisible().catch(()=>false));
+await p2.click('#add-host').catch(()=>{}); await p2.waitForTimeout(1200);
+const reqs = await (await o.request.get(B+'/api/me/friends/requests')).json();
+ok('Demande d\'ami reçue par l\'organisateur', reqs.length === 1);
+await o.request.post(B+`/api/me/friends/requests/${reqs[0]?.id}/accept`);
+ok('Demande acceptée : amis', (await (await p2.request.get(B+'/api/me/friends')).json()).length === 1);
+await o.goto(B+'/decouvrir?q=Mariage%20Test'); await o.waitForTimeout(3000);
+ok('Recherche : retrouve son propre événement', await o.locator(`#list a[href="/e/${ev.slug}"]`).count() >= 1);
+await p2.request.delete(B+'/api/auth/me');
+// 6c. Créer un événement sans compte : formulaire d'abord, compte à la fin, événement publié
+const n = await mk('nouveau'); const email3 = `test-az3-${Date.now()}@mafeliza.com`;
+await n.goto(B+'/'); await n.waitForTimeout(1500);
+await n.goto(B+'/edit'); await n.waitForTimeout(2000); await closeDialogs(n);
+ok('Créer sans compte : le formulaire s\'ouvre', n.url().includes('/edit') && await n.locator('#name').count() === 1);
+await n.check('input[name=type][value=anniversaire]').catch(()=>{});
+await n.fill('#name', 'Les 30 ans de Test'); await n.fill('#date', '2027-05-20'); await n.fill('#time', '20:00'); await n.fill('#location', 'Lyon');
+await n.click('#save'); await n.waitForURL(/connexion/, { timeout: 10000 }).catch(()=>{});
+ok('Créer sans compte : compte demandé à la fin', n.url().includes('/connexion'));
+await n.fill('#email', email3); await n.fill('#password', 'TestClaude123!'); await n.locator('#login button.btn-block').first().click(); await n.waitForTimeout(3000);
+if (await n.locator('input[type=date]').count()) { await n.fill('input[type=date]', '1990-05-12'); await n.click('button:has-text("Confirmer")'); await n.waitForTimeout(800); await n.click('button:has-text("Oui")').catch(()=>{}); }
+await n.waitForTimeout(5000);
+const nEvs = await (await n.request.get(B+'/api/events')).json();
+ok('Créer sans compte : événement publié après l\'inscription', nEvs.some((x) => x.name === 'Les 30 ans de Test'), n.url().replace(B, ''));
+for (const x of nEvs) await n.request.delete(B+'/api/events/'+x.id);
+await n.request.delete(B+'/api/auth/me');
 // 7. Nettoyage
 ok('Suppression de l\'événement', (await o.request.delete(B+'/api/events/'+ev.id)).ok());
 ok('Suppression du compte', (await o.request.delete(B+'/api/auth/me')).ok());
