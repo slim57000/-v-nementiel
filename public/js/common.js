@@ -816,7 +816,8 @@ const readConsent = () => { try { return localStorage.getItem(CONSENT_KEY); } ca
 // Identifiant GA4 fourni par le serveur (variable GA_MEASUREMENT_ID) ; rien n'est chargé sans lui.
 async function loadAnalytics() {
   if (window.gtag || inAppView()) return; // application : aucune mesure d'audience tierce
-  const { gaId: GA_ID } = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
+  const { gaId: GA_ID, metaPixelId } = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
+  if (metaPixelId) loadMetaPixel(metaPixelId);
   if (!GA_ID) return;
   const script = Object.assign(document.createElement("script"), { async: true, src: `https://www.googletagmanager.com/gtag/js?id=${GA_ID}` });
   document.head.append(script);
@@ -826,11 +827,24 @@ async function loadAnalytics() {
   window.gtag("config", GA_ID, { anonymize_ip: true });
 }
 
+// 📣 Pixel Meta (publicités Facebook / Instagram) : chargé seulement après « Accepter » sur le bandeau cookies,
+// jamais dans l'appli. Mesure les visites et les créations d'événement (pour les campagnes publicitaires).
+function loadMetaPixel(id) {
+  if (window.fbq) return;
+  const f = window.fbq = function fbq() { f.callMethod ? f.callMethod.apply(f, arguments) : f.queue.push(arguments); };
+  window._fbq = f; f.push = f; f.loaded = true; f.version = "2.0"; f.queue = [];
+  document.head.append(Object.assign(document.createElement("script"), { async: true, src: "https://connect.facebook.net/en_US/fbevents.js" }));
+  window.fbq("init", id);
+  window.fbq("track", "PageView");
+}
+// Événement publicitaire (« Lead » = événement créé…) : envoyé seulement si le pixel est chargé (consentement donné).
+export const trackAd = (name, data) => { try { window.fbq?.("track", name, data); } catch { /* ignoré */ } };
+
 export function cookieBanner() {
   document.getElementById("cookie-banner")?.remove();
   document.body.insertAdjacentHTML("beforeend", `
     <div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="Cookies">
-      <p><b>🍪 Cookies</b> — Nous utilisons des cookies indispensables au fonctionnement du site (connexion, accès aux événements privés) et, avec votre accord, des cookies de mesure d'audience. <a href="/confidentialite#cookies">En savoir plus</a></p>
+      <p><b>🍪 Cookies</b> — Nous utilisons des cookies indispensables au fonctionnement du site (connexion, accès aux événements privés) et, avec votre accord, des cookies de mesure d'audience et de publicité (Google, Meta). <a href="/confidentialite#cookies">En savoir plus</a></p>
       <div class="row"><button class="btn btn-ghost btn-sm" data-consent="refused">Refuser</button><button class="btn btn-sm" data-consent="accepted">Accepter</button></div>
     </div>`);
   document.getElementById("cookie-banner").addEventListener("click", (e) => {

@@ -109,6 +109,7 @@ app.get("/api/config", async (req, res) => {
   const [vapidPublicKey, platform] = await Promise.all([vapidKey(), getSetting("defaultLivePlatform").catch(() => null)]);
   res.json({
     gaId: process.env.GA_MEASUREMENT_ID || "",
+    metaPixelId: /^\d{5,20}$/.test(process.env.META_PIXEL_ID || "") ? process.env.META_PIXEL_ID : "", // pixel Meta (publicités Facebook / Instagram)
     emailEnabled: EMAIL_ENABLED,
     vapidPublicKey,
     realtime: REALTIME,

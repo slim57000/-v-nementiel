@@ -1,5 +1,5 @@
 // Création et modification d'un événement : infos, accès, faire-part, live, cagnotte, programme.
-import { api, $, esc, toast, resizeImage, goLogin, EVENT_TYPES, livePlaceholder, tabbar, createPot } from "./common.js";
+import { api, $, esc, toast, resizeImage, goLogin, EVENT_TYPES, livePlaceholder, tabbar, createPot, trackAd } from "./common.js";
 import { tr } from "./i18n.js";
 import { defaultInvite, renderInvite, invitePhotoUrl, templatesFor } from "./invitation.js";
 tabbar("");
@@ -230,6 +230,7 @@ async function publishDraft() {
     <h2>${esc(tr("Publication de votre événement…"))}</h2></div></div>`);
   try {
     const saved = await api("/api/events", { method: "POST", body });
+    trackAd("Lead", { content_name: body.type || "evenement" }); // pixel Meta : événement créé
     try { localStorage.removeItem(DRAFT); } catch { /* ignoré */ }
     location.replace(`/faire-part?id=${saved.id}&new=1`);
     return true;
