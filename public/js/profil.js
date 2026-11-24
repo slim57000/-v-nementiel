@@ -1,6 +1,7 @@
 // Profil : photo, nom, statistiques, amis, favoris, participations, thème, mot de passe.
-import { pickAvatar, deleteAccount, confirmSheet, api, $, esc, toast, tabbar, goLogin, resizeImage, publicCard, viewPhoto, enablePush, pushState } from "./common.js";
-import { lang, setLang, themePref, setTheme, bigText, setBigText } from "./i18n.js";
+import { pickAvatar, deleteAccount, confirmSheet, api, $, esc, toast, tabbar, goLogin, resizeImage, publicCard, viewPhoto, enablePush, pushState, appVersion, older } from "./common.js";
+import { inAppView } from "./native.js";
+import { lang, setLang, themePref, setTheme, bigText, setBigText, tr } from "./i18n.js";
 
 // Page « /reglages » (ou /profil?reglages) : mot de passe, notifications, apparence, langue, compte.
 if (location.pathname === "/reglages" || new URLSearchParams(location.search).has("reglages")) { document.body.classList.add("settings-mode"); document.title = "Réglages — MaFeliza"; }
@@ -143,3 +144,20 @@ async function showFriends() {
         <span>${esc(f.name)}</span></a>`).join("")
     : '<p class="muted small" style="margin:8px 0 0">Pas encore d\'amis. Touchez « + » et envoyez votre lien à vos proches.</p>';
 }
+
+// Réglages : version de l'application installée (ou « site web »), avec un lien de mise à jour si besoin.
+(async () => {
+  const box = document.getElementById("app-version");
+  if (!box) return;
+  const android = /android/i.test(navigator.userAgent);
+  const store = android ? "https://play.google.com/store/apps/details?id=fr.mafeliza.app" : "https://apps.apple.com/app/id6818968509";
+  if (!inAppView()) {
+    box.innerHTML = `${esc(tr("Version : site web"))} · <a href="https://apps.apple.com/app/id6818968509">App Store</a> · <a href="https://play.google.com/store/apps/details?id=fr.mafeliza.app">Google Play</a>`;
+    return;
+  }
+  const v = await appVersion();
+  const { latestAppVersion: latest } = await fetch("/api/config").then((r) => r.json()).catch(() => ({}));
+  const label = v === "1.0.0" ? tr("ancienne version") : v;
+  box.innerHTML = `${esc(tr("Application MaFeliza"))} ${esc(label)}${latest && older(v, latest)
+    ? ` · <a href="${store}" style="font-weight:700">${esc(tr("Mettre à jour"))} (${esc(latest)})</a>` : latest ? ` · ✓ ${esc(tr("À jour"))}` : ""}`;
+})();

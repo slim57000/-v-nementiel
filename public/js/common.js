@@ -1583,11 +1583,11 @@ export function calendarHref(ev) {
 // 📲 Mise à jour obligatoire de l'appli : version reconnue à ses fonctions (1.0.6 = partage natif MaFelizaShare).
 // Écran bloquant avec le lien vers l'App Store / Google Play (ouvert hors de l'appli).
 // 1.0.7+ : l'appli donne son numéro (MaFelizaVersion) ; avant, on la reconnaît à ses fonctions.
-const appVersion = () => new Promise((ok) => {
-  if (typeof window.MaFelizaVersion?.postMessage !== "function") return ok(window.MaFelizaShare ? "1.0.6" : "1.0.0");
+export const appVersion = () => new Promise((ok) => {
+  if (typeof window.MaFelizaVersion?.postMessage !== "function") return ok(window.MaFelizaShare ? "1.0.6" : window.MaFelizaFile ? "1.0.5" : "1.0.0");
   window.mafelizaVersion = ok; window.MaFelizaVersion.postMessage("get"); setTimeout(() => ok("1.0.7"), 3000);
 });
-const older = (a, b) => { const x = a.split(".").map(Number), y = b.split(".").map(Number); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); return false; };
+export const older = (a, b) => { const x = a.split(".").map(Number), y = b.split(".").map(Number); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); return false; };
 if (inAppView() && !isNativeApp) {
   fetch("/api/config").then((r) => r.json()).then(async ({ minAppVersion: min }) => {
     if (!min || !older(await appVersion(), min) || document.getElementById("force-update")) return;
