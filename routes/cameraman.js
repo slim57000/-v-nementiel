@@ -77,10 +77,12 @@ router.post("/:slug/go-live", async (req, res) => {
 // (téléphone ou navigateur avec notifications activées). Une fois toutes les 2 h par événement (relances, 2e caméra).
 async function liveStarted(event) {
   const last = Number(await getSetting(`livestart:${event.id}`).catch(() => 0)) || 0;
-  if (Date.now() - last < 2 * 3600_000) return;
+  if (Date.now() - last < 30 * 60_000) return; // une fois par demi-heure au plus (relances, 2e caméra)
   await setSetting(`livestart:${event.id}`, Date.now());
   const [followers, guests] = await Promise.all([listFollowerIds(event.id).catch(() => []), (listEventGuests?.(event.id) ?? Promise.resolve([])).catch(() => [])]);
-  const owners = [...followers.filter((id) => id !== event.organizerId).map(orgOwner), ...guests.slice(0, 5000).map((a) => `gid:${a}`)];
+  // Invités : appareils sans compte (gid:…) et comptes connectés qui ont ouvert l'événement (org:…).
+  const owners = [...followers.filter((id) => id !== event.organizerId).map(orgOwner),
+    ...guests.slice(0, 5000).map((a) => (String(a).startsWith("org:") ? a : `gid:${a}`)).filter((o) => o !== orgOwner(event.organizerId))];
   if (owners.length) await notify(owners, { title: `🔴 « ${event.name} » est en direct !`, body: "Rejoignez le live maintenant.", url: `/live?e=${event.slug}` });
 }
 
@@ -147,6 +149,12 @@ router.get("/:slug/viewers", async (req, res) => {
 router.put("/:slug/cameras", async (req, res) => {
   try {
     const cameras = parseCameras(req.body?.cameras);
+    // Nouveau lien YouTube / Twitch ajouté le jour J : le live commence, on prévient les invités.
+    const before = new Set((req.event.cameras || []).map((c) => c.url));
+    const today = new Date().toISOString().slice(0, 10);
+    if (req.event.date === today && cameras.some((c) => !before.has(c.url) && !c.url.startsWith(LK_PREFIX))) {
+      liveStarted(req.event).catch((err) => console.error("Notification live :", err.message));
+    }
     res.json(view(await saveEvent({ ...req.event, cameras })));
   } catch (err) {
     res.status(400).json({ error: err.message });

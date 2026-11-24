@@ -48,7 +48,14 @@
     // Code d'invitation tapé dans la recherche (Entrée) : ouverture directe de l'événement.
     $("#q").addEventListener("keydown", (e) => { if (e.key === "Enter") openByCode($("#q").value); });
     // La barre d'onglets n'est utile qu'aux organisateurs connectés.
-    api("/api/auth/me").then(() => tabbar("discover")).catch(() => {});
+    // Connecté : la recherche trouve aussi mes événements, ceux de mes amis et ceux où je suis invité (même privés).
+    let mine = [];
+    api("/api/auth/me").then(async () => {
+      tabbar("discover");
+      const [own, circle] = await Promise.all([api("/api/events").catch(() => []), api("/api/me/circle").catch(() => [])]);
+      mine = [...own, ...circle].filter((e) => e.slug);
+      if ($("#q").value.trim()) show();
+    }).catch(() => {});
     let events = [], filter = "all";
     try { events = await api("/api/public?limit=50"); }
     catch (err) { $("#empty").textContent = "Chargement impossible : " + err.message; }
@@ -61,7 +68,8 @@
 
     function show() {
       const words = norm($("#q").value).split(/\s+/).filter(Boolean);
-      const list = events.filter((e) => {
+      const pool = words.length ? [...events, ...mine.filter((m) => !events.some((e) => e.slug === m.slug))] : events;
+      const list = pool.filter((e) => {
         if (filter === "live" && !isLiveNow(e)) return false;
         if (filter !== "all" && filter !== "live" && e.type !== filter) return false;
         const hay = norm(`${e.name} ${e.location} ${EVENT_TYPES[e.type]?.label}`);

@@ -526,7 +526,7 @@ function inviteToCreate(ev) {
   const card = document.createElement("a");
   card.id = "ref-card";
   card.className = "ref-card";
-  card.href = `/connexion?next=/edit&ref=${encodeURIComponent(ev.slug)}`;
+  card.href = `/edit?ref=${encodeURIComponent(ev.slug)}`; // on crée d'abord, le compte est demandé à la fin
   card.innerHTML = `<span>🎉</span><span><b>${tr("Vous aussi, partagez votre événement")}</b><small>${tr("Faire-part, live et souvenirs : gratuit, en 2 minutes")}</small></span><i>›</i>`;
   (document.querySelector("main.container") || document.querySelector("main") || document.body).append(card);
 }

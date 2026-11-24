@@ -48,7 +48,7 @@
   <div id="page" class="hidden">
     <header class="topbar">
       <a class="logo" href="/" id="brand-link"><img src="/img/logo.png" alt=""><span>MaFel<b>i</b>za</span></a>
-      <a class="btn btn-sm" href="/" id="brand-cta">✨ Créer le mien</a>
+      <a class="btn btn-sm" href="/edit" id="brand-cta">✨ Créer le mien</a>
     </header>
     <main class="container" style="padding-top:12px">
       <!-- Une seule carte : le faire-part, avec compte à rebours et mention du live -->
@@ -79,6 +79,7 @@
         <a id="qa-pot" class="qa hidden"><span>🎁</span>Cagnotte</a>
         <button type="button" id="qa-comment" class="qa"><span>💬</span>Commenter</button>
       </nav>
+      <p style="text-align:center;margin:10px 0 0"><button type="button" id="add-host" class="btn btn-light btn-sm hidden">👋 Ajouter l'organisateur en ami</button></p>
       <div class="ev-react" id="ev-react" aria-label="Réagir à l'événement"></div>
       <section class="card event-facts">
         <div class="fact"><span class="ico">📅</span><div><small>Date</small><b id="when"></b></div></div>
@@ -127,7 +128,6 @@
         <div id="gb-list"></div>
       </section>
       <section id="welcome" class="card welcome-card hidden"></section>
-      <p style="text-align:center;margin:18px 0 0"><button type="button" id="add-host" class="btn btn-light hidden">👋 Ajouter l'organisateur en ami</button></p>
       <div id="admin-bar" class="card hidden" style="margin-top:18px;text-align:center"><b>🛡️ Administration</b>
         <p class="muted small" id="admin-info" style="margin:6px 0 10px"></p>
         <button type="button" class="btn btn-light btn-sm" data-adm="suspend"></button>
@@ -138,7 +138,7 @@
         <img src="/img/logo.png" alt="" style="width:44px;height:44px">
         <h2>Créé avec MaFeliza</h2>
         <p class="muted small">Faire-part, live, photos des invités et replay : réunissez tous vos proches autour de vos plus beaux moments.</p>
-        <a class="btn btn-block" href="/">✨ Créer mon événement gratuitement</a>
+        <a class="btn btn-block" href="/edit">✨ Créer mon événement gratuitement</a>
       </section>
     </main>
 

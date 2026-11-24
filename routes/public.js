@@ -6,7 +6,7 @@ import { isPremium, replayDays, bumpViews } from "../lib/premium.js";
 import { autoSeedDemo, upgradeDemoCovers, outdatedDemo, varyDemoCovers, rollDemoDates } from "../lib/demo.js";
 import express, { Router } from "express";
 import { saveRawFile, MAX_VIDEO_BYTES, UPLOAD_DIR, SAFE_NAME, isOwnUpload } from "../lib/uploads.js";
-import { addPhoto, findEvent, listFriendIds } from "../lib/store.js";
+import { addPhoto, findEvent, listFriendIds, addEventGuest } from "../lib/store.js";
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { publicView } from "../lib/events.js";
@@ -235,7 +235,10 @@ export async function eventPayload(req, slug) {
   const me = await currentOrganizer(req);
   const isOwner = me?.id === event.organizerId;
   // Écritures sans attendre (la page s'affiche tout de suite) : participation mémorisée, compteur de vues.
-  if (me && !isOwner) addHistory(me.id, event.id).catch(() => {});
+  if (me && !isOwner) {
+    addHistory(me.id, event.id).catch(() => {});
+    addEventGuest?.(event.id, `org:${me.id}`).catch?.(() => {}); // prévenu quand le live commence (notification du compte)
+  }
   if (!isOwner) bumpViews(event.id).catch(() => {});
   // Lectures en parallèle plutôt qu'à la suite (chaque aller-retour vers la base compte).
   const [premium, program, replayDeleted, replayHidden, pot, reactions, unlisted, cameras] = await Promise.all([

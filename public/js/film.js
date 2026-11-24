@@ -103,7 +103,7 @@ export function playFilm(ev, scenes) {
       <div class="film-text film-end"><h2>${T.thanks}</h2><p>${esc(ev.name)}</p>
       <div class="film-actions"><button type="button" data-film="again">${T.replay}</button><button type="button" data-film="share">↗ ${T.share}</button></div>
       <button type="button" class="film-dl" data-film="video">${T.video}</button>
-      ${ev.premium ? "" : `<a class="film-made" href="/?ref=${encodeURIComponent(ev.slug)}"><img src="/img/logo.png" alt=""> ${T.made} · <b>${T.create}</b></a>`}</div>`;
+      ${ev.premium ? "" : `<a class="film-made" href="/edit?ref=${encodeURIComponent(ev.slug)}"><img src="/img/logo.png" alt=""> ${T.made} · <b>${T.create}</b></a>`}</div>`;
   };
   const next = () => {
     i++;
