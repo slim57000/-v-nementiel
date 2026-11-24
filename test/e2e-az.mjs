@@ -65,6 +65,12 @@ await o.locator('[data-film="video"]').waitFor({ state: 'visible', timeout: 6000
 await o.locator('[data-film="video"]').click().catch(()=>{});
 await o.locator('.film-export video').waitFor({ timeout: 90000 }).catch(()=>{});
 ok('Film souvenir : export vidéo', await o.locator('.film-export video').count() === 1, await o.locator('.film-export b').first().innerText().catch(()=>''));
+// Zip des souvenirs avec le film (confirmation acceptée) : le fichier film-souvenir.* doit être dans l'archive.
+await o.goto(B+'/dashboard'); await o.waitForTimeout(2500); await closeDialogs(o);
+o.once('dialog', (d) => d.accept());
+const [dl] = await Promise.all([o.waitForEvent('download', { timeout: 150000 }).catch(()=>null), o.locator('[data-action="export"]').first().click()]);
+const zipBuf = dl ? await (await import('node:fs/promises')).readFile(await dl.path()) : Buffer.alloc(0);
+ok('Zip des souvenirs avec le film', zipBuf.includes(Buffer.from('film-souvenir.')), dl ? `${Math.round(zipBuf.length/1024)} Ko` : 'pas de téléchargement');
 await o.goto(B+'/mur?id='+ev.id); await o.waitForTimeout(2500);
 ok('Mur photo : photos affichées', (await o.locator('.wall-slide').count()) >= 1, await o.locator('#w-count').innerText().catch(()=>''));
 await o.goto(B+'/album?id='+ev.id); await o.waitForTimeout(2000);

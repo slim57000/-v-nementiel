@@ -13,7 +13,7 @@ const fetchBytes = async (url) => {
   return new Uint8Array(await res.arrayBuffer());
 };
 
-export async function exportEvent(ev, onProgress = () => {}) {
+export async function exportEvent(ev, onProgress = () => {}, withFilm = false) {
   const base = `/api/public/${encodeURIComponent(ev.slug)}`;
   const [photos, entries, replay] = await Promise.all([
     api(`${base}/photos?limit=2000`), api(`${base}/guestbook`), api(`/api/events/${ev.id}/replay`).catch(() => []),
@@ -45,6 +45,13 @@ export async function exportEvent(ev, onProgress = () => {}) {
   for (const m of media) {
     try { files.push({ name: m.name.replace(/[\\:*?"<>|]/g, "_"), data: await fetchBytes(m.url), date: m.date }); } catch { failed++; }
     onProgress(++done, media.length);
+  }
+  // 🎬 Film souvenir (si demandé) : enregistré en direct (environ 1 min), ajouté au zip.
+  if (withFilm) {
+    const { filmForZip } = await import("./film.js");
+    const film = await filmForZip(ev).catch(() => null);
+    if (film) files.push({ name: `film-souvenir.${film.ext}`, data: new Uint8Array(await film.blob.arrayBuffer()), date: evDate(ev) });
+    else toast("Film souvenir indisponible (pas assez de photos ou navigateur trop ancien) : le zip est créé sans lui.");
   }
   const blob = makeZip(files);
   await saveFile(blob, `${ev.slug}-souvenirs.zip`);

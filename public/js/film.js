@@ -159,11 +159,12 @@ function wrap(g, text, x, y, maxW, lh) {
   lines.forEach((l, k) => g.fillText(l, x, y + (k - (lines.length - 1) / 2) * lh));
 }
 
-export async function exportFilm(ev, scenes, root) {
+// opts.blob : renvoie la vidéo ({ blob, ext }) au lieu de l'afficher (film ajouté au zip des souvenirs).
+export async function exportFilm(ev, scenes, root, opts = {}) {
   const types = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9", "video/webm"];
   const mime = window.MediaRecorder && types.find((t) => MediaRecorder.isTypeSupported?.(t));
   const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
-  if (!mime || !cv.captureStream) return alert(T.nosupport);
+  if (!mime || !cv.captureStream) return opts.blob ? null : alert(T.nosupport);
   root.insertAdjacentHTML("beforeend", `<div class="film-export"><canvas></canvas><b>${T.making} <span>0%</span></b><small>${T.keep}</small></div>`);
   const box = root.querySelector(".film-export"), pct = box.querySelector("span");
   box.querySelector("canvas").replaceWith(cv);
@@ -252,6 +253,7 @@ export async function exportFilm(ev, scenes, root) {
   if (!root.isConnected) return;
   const ext = mime.includes("mp4") ? "mp4" : "webm";
   const blob = new Blob(chunks, { type: mime.split(";")[0] });
+  if (opts.blob) { box.remove(); return { blob, ext }; }
   const file = new File([blob], `${(ev.slug || "film").slice(0, 40)}.${ext}`, { type: blob.type });
   const url = URL.createObjectURL(blob);
   box.innerHTML = `<video src="${url}" controls playsinline autoplay></video><b>${T.ready}</b>
@@ -263,4 +265,15 @@ export async function exportFilm(ev, scenes, root) {
   // Appli : la vidéo passe par le téléphone (Enregistrer la vidéo / Partager), le lien direct n'y fonctionne pas.
   if (window.MaFelizaFile) { sh.remove(); box.querySelector(".film-save").onclick = (e) => { e.preventDefault(); saveFile(blob, file.name); }; }
   box.querySelector('[data-x="close"]').onclick = () => { URL.revokeObjectURL(url); box.remove(); };
+}
+
+// 📦 Film souvenir pour le zip : enregistré dans une fenêtre plein écran (progression), puis renvoyé ({ blob, ext }).
+// null si pas assez de contenu, si le navigateur ne sait pas l'enregistrer ou si la fenêtre est fermée.
+export async function filmForZip(ev) {
+  const data = await filmScenes(ev).catch(() => null);
+  if (!data || data.scenes.length < 3) return null;
+  const root = Object.assign(document.createElement("div"), { className: "film", id: "film-zip" });
+  root.setAttribute("role", "dialog");
+  document.body.append(root);
+  try { return await exportFilm(ev, data.scenes, root, { blob: true }); } finally { root.remove(); }
 }

@@ -375,7 +375,10 @@ $("#list").addEventListener("click", async (e) => {
     btn.disabled = true;
     try {
       const { exportEvent } = await import("./export.js");
-      await exportEvent(ev, (n, total) => { btn.textContent = `📦 ${n} / ${total}…`; });
+      // Film souvenir dans le zip : proposé pour un événement passé (il s'enregistre en direct, environ 1 min).
+      const withFilm = ev.date <= new Date().toISOString().slice(0, 10)
+        && confirm("Ajouter le film souvenir au zip ?\nIl se crée en direct (environ 1 minute) : gardez l'écran ouvert.");
+      await exportEvent(ev, (n, total) => { btn.textContent = `📦 ${n} / ${total}…`; }, withFilm);
     } catch (err) {
       toast(err.message || "Export impossible.");
     }

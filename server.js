@@ -30,7 +30,7 @@ import socialRoutes from "./routes/social.js";
 import cameramanRoutes from "./routes/cameraman.js";
 import adminRoutes from "./routes/admin.js";
 import meRoutes from "./routes/me.js";
-import { getSetting, setSetting, listEventsOnDate, findOrganizer, listPublicUpcoming, listUnlistedIds, listPendingIds } from "./lib/store.js";
+import { getSetting, setSetting, listEventsOnDate, findOrganizer, listPublicUpcoming, listUnlistedIds, listPendingIds, listPhotos } from "./lib/store.js";
 import { EMAIL_ENABLED, sendEmail } from "./lib/email.js";
 import { eventLang } from "./lib/invites.js";
 import { UPLOAD_DIR } from "./lib/uploads.js";
@@ -194,7 +194,8 @@ async function dailyJob() {
   ];
   for (const event of ending) {
     if ((await isPremium(event.organizerId)) !== (event.date === dayPremium)) continue;
-    if (!event.cameras?.length) continue;
+    // Rappel s'il y a quelque chose à récupérer : un live (replay) ou des photos / vidéos des invités.
+    if (!event.cameras?.length && !(await listPhotos(event.id, 1).catch(() => [])).length) continue;
     const organizer = await findOrganizer(event.organizerId);
     if (!organizer) continue;
     const L = await eventLang(event), en = L !== "fr";
@@ -203,8 +204,9 @@ async function dailyJob() {
       subject: `The replay of “${event.name}” expires in 2 days`,
       title: "Remember to save your replay",
       body: `<p>The replay of <b>${event.name.replace(/</g, "&lt;")}</b> will no longer be offered to guests in 2 days.</p>
-        <p>The replay, photos, videos, voice messages and guest messages can be downloaded as one .zip file from
-        your home page → 📦 Download (zip).</p>`,
+        <p>The replay, photos, videos, voice messages, guest messages and the memory film can be downloaded as one .zip file from
+        your home page → 📦 Download (zip).</p>
+        <p><a href="${SITE_URL}/dashboard" style="display:inline-block;background:#e8137a;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:700">📦 Download my memories</a></p>`,
     } : {
       to: organizer.email,
       subject: `Le replay de « ${event.name} » expire dans 2 jours`,
@@ -212,8 +214,9 @@ async function dailyJob() {
       body: `<p>Le replay de <b>${event.name.replace(/</g, "&lt;")}</b> ne sera plus proposé aux invités dans 2 jours.</p>
         <p>Vos vidéos restent disponibles sur vos comptes YouTube / Twitch, d'où vous pouvez les télécharger :
         YouTube Studio → Contenu → ⋮ → Télécharger.</p>
-        <p>Le replay, les photos, vidéos, vocaux et messages de vos invités se téléchargent en un fichier .zip depuis
-        votre tableau de bord → 📦 Télécharger (zip).</p>`,
+        <p>Le replay, les photos, vidéos, vocaux et messages de vos invités, ainsi que le film souvenir, se téléchargent en un fichier .zip depuis
+        votre tableau de bord → 📦 Télécharger (zip).</p>
+        <p><a href="${SITE_URL}/dashboard" style="display:inline-block;background:#e8137a;color:#fff;padding:12px 20px;border-radius:12px;text-decoration:none;font-weight:700">📦 Télécharger mes souvenirs</a></p>`,
     });
     if (ok) sent++;
   }
