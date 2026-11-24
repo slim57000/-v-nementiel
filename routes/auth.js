@@ -259,7 +259,7 @@ router.get("/google/callback", async (req, res) => {
     }
     if (organizer.blocked && !(await unblockOldMinor(organizer))) return res.redirect("/connexion?erreur=suspendu");
     await logIn(res, organizer.id);
-    res.redirect(safeNext(decodeURIComponent(next || "")));
+    landAt(res, safeNext(decodeURIComponent(next || "")));
   } catch (err) {
     console.error("Google :", err.message);
     res.redirect("/connexion?erreur=google-jeton");
@@ -307,7 +307,7 @@ router.get("/facebook/callback", async (req, res) => {
     }
     if (organizer.blocked && !(await unblockOldMinor(organizer))) return res.redirect("/connexion?erreur=suspendu");
     await logIn(res, organizer.id);
-    res.redirect(safeNext(decodeURIComponent(next || "")));
+    landAt(res, safeNext(decodeURIComponent(next || "")));
   } catch (err) {
     console.error("Facebook :", err.message);
     res.redirect("/connexion");
@@ -316,6 +316,15 @@ router.get("/facebook/callback", async (req, res) => {
 
 // Connexion Apple : Apple revient en POST (form_post) depuis son domaine ; les cookies « Lax » n'y sont pas
 // envoyés, donc on redirige d'abord vers une adresse GET du site (où le cookie d'état est bien lu).
+// Fin d'une connexion (Apple, Google, Facebook, lien email) : page d'atterrissage qui continue en JavaScript.
+// Une redirection directe vers /dashboard, juste après le passage par Apple ou Google, fait ouvrir l'application
+// iPhone (lien universel) sans la session du navigateur : il fallait alors se reconnecter une 2e fois.
+function landAt(res, url) {
+  const safe = JSON.stringify(url).replace(/</g, "\\u003c");
+  res.set("Cache-Control", "no-store").type("html").send(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>MaFeliza</title><body style="font-family:system-ui;text-align:center;padding:40px;color:#555">Connexion réussie ✔ <a href=${safe}>Continuer</a>
+<script>location.replace(${safe})</script></body>`);
+}
 const appleCallbackUrl = (req) => `${origin(req)}/api/auth/apple/callback`;
 router.get("/apple", (req, res) => {
   if (!APPLE_ENABLED) return res.redirect("/connexion");
@@ -343,7 +352,7 @@ router.get("/apple/finish", async (req, res) => {
     }
     if (organizer.blocked && !(await unblockOldMinor(organizer))) return res.redirect("/connexion?erreur=suspendu");
     await logIn(res, organizer.id);
-    res.redirect(safeNext(decodeURIComponent(next || "")));
+    landAt(res, safeNext(decodeURIComponent(next || "")));
   } catch (err) {
     console.error("Apple :", err.message);
     res.redirect("/connexion?erreur=apple-jeton");
@@ -416,7 +425,7 @@ router.get("/magic/:token", async (req, res) => {
   if (!organizer) organizer = await newAccount(req, link.email, loginCode());
   if (organizer.blocked && !(await unblockOldMinor(organizer))) return res.redirect("/connexion?erreur=suspendu");
   await logIn(res, organizer.id);
-  res.redirect(safeNext(link.next));
+  landAt(res, safeNext(link.next));
 });
 
 // « Code oublié » : renvoie le code organisateur par email (réponse identique que le compte existe ou non).
