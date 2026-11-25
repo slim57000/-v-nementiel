@@ -61,16 +61,6 @@ class _HomePageState extends State<HomePage> {
   late final MediaUploader _uploader; // photos et vidéos des invités, envoyées en arrière-plan
   bool _loading = true;
   bool _offline = false;
-  // Barre de navigation façon Safari (bas de l'écran) : retour, suivant, accueil, recharger, partager.
-  bool _canBack = false, _canForward = false;
-  String _url = '';
-  Future<void> _navState([String? url]) async {
-    final b = await _web.canGoBack(), f = await _web.canGoForward();
-    if (!mounted) return;
-    setState(() { _canBack = b; _canForward = f; if (url != null) _url = url; });
-  }
-  // Pages plein écran (live, mur photo, caméraman) : pas de barre, elles ont leurs propres boutons.
-  bool get _showNav => !_cameraOn && !RegExp(r'/(live|mur|cameraman|lk)(\?|$|/)').hasMatch(Uri.tryParse(_url)?.path ?? '');
 
   // Notifications push : canal vers le code natif (jeton de l'appareil, notification touchée).
   static const _push = MethodChannel('mafeliza/push');
@@ -97,10 +87,8 @@ class _HomePageState extends State<HomePage> {
       ..setBackgroundColor(Colors.white)
       ..setNavigationDelegate(NavigationDelegate(
         onPageStarted: (_) => setState(() => _loading = true),
-        onUrlChange: (change) => _navState(change.url),
         onPageFinished: (url) {
           setState(() => _loading = false);
-          _navState(url);
           // Jeton envoyé au site (lié au compte connecté) ; tout de suite après une connexion (tableau de bord).
           _sendPushToken(force: url.contains('/dashboard'));
         },
@@ -156,7 +144,7 @@ class _HomePageState extends State<HomePage> {
     // Photos / vidéos des invités : galerie du téléphone (plusieurs à la fois), envoi qui continue appli fermée.
     // Fichiers créés par le site (zip des souvenirs, replay) : reçus par morceaux puis « Enregistrer / Partager ».
     // Version de l'appli demandée par le site (mise à jour obligatoire). ⚠️ À changer avec « version » de pubspec.yaml.
-    _web.addJavaScriptChannel('MaFelizaVersion', onMessageReceived: (_) => _web.runJavaScript("window.mafelizaVersion && window.mafelizaVersion('1.0.8')"));
+    _web.addJavaScriptChannel('MaFelizaVersion', onMessageReceived: (_) => _web.runJavaScript("window.mafelizaVersion && window.mafelizaVersion('1.0.9')"));
     // Repère pour le site : cette version ouvre les fichiers agenda (.ics) correctement.
     _web.addJavaScriptChannel('MaFelizaCal', onMessageReceived: (_) {});
     _web.addJavaScriptChannel('MaFelizaFile', onMessageReceived: (m) => _receiveFile(m.message));
@@ -438,41 +426,9 @@ class _HomePageState extends State<HomePage> {
                     if (_loading) const LinearProgressIndicator(color: pink, minHeight: 3),
                   ]),
           ),
-          bottomNavigationBar: _offline || !_showNav ? null : _navBar(),
         ),
       );
 
-  Widget _navBar() {
-    Widget b(IconData icon, String label, VoidCallback? onTap) => Expanded(
-          child: IconButton(
-            onPressed: onTap,
-            tooltip: label,
-            icon: Icon(icon, size: 26),
-            color: const Color(0xFF3A2F3D),
-            disabledColor: const Color(0x553A2F3D),
-          ),
-        );
-    return Container(
-      decoration: const BoxDecoration(color: Color(0xFFFAF7FA), border: Border(top: BorderSide(color: Color(0xFFEADFE8)))),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 48,
-          child: Row(children: [
-            b(Icons.arrow_back_ios_new_rounded, 'Retour', _canBack ? () => _web.goBack() : null),
-            b(Icons.arrow_forward_ios_rounded, 'Suivant', _canForward ? () => _web.goForward() : null),
-            b(Icons.home_rounded, 'Accueil', () => _web.loadRequest(Uri.parse('$site/dashboard'))),
-            b(Icons.refresh_rounded, 'Recharger', () => _web.reload()),
-            b(Icons.ios_share_rounded, 'Partager', () {
-              final size = MediaQuery.of(context).size;
-              final url = _url.isNotEmpty ? _url : site;
-              SharePlus.instance.share(ShareParams(text: url, sharePositionOrigin: Rect.fromLTWH(size.width / 2, size.height - 60, 1, 1)));
-            }),
-          ]),
-        ),
-      ),
-    );
-  }
 }
 
 class _OfflineScreen extends StatelessWidget {
