@@ -1634,3 +1634,16 @@ if (inAppView() && !isNativeApp) {
   const later = () => setTimeout(add, 400);
   document.readyState === "loading" ? addEventListener("DOMContentLoaded", later) : later();
 })();
+
+// 🔄 Actualisation automatique d'une page (accueil, fil) : au retour dans l'appli ou l'onglet (après 20 s d'absence)
+// et toutes les 60 s tant qu'elle est affichée. `refresh` ne redessine que si quelque chose a changé.
+export function autoRefresh(refresh) {
+  let hiddenAt = 0, busy = false;
+  const run = async () => { if (busy || document.hidden) return; busy = true; try { await refresh(); } catch { /* réseau : prochain essai */ } busy = false; };
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) hiddenAt = Date.now();
+    else if (Date.now() - hiddenAt > 20_000) run();
+  });
+  addEventListener("pageshow", (e) => { if (e.persisted) run(); }); // retour arrière (page gardée en mémoire)
+  setInterval(run, 60_000);
+}

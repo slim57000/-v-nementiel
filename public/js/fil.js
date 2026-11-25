@@ -1,6 +1,6 @@
 import { t as tr } from "./i18n.js";
 // Fil d'actualité façon Instagram : nouveaux événements, photos/vidéos des invités, messages du livre d'or.
-import { api, $, esc, toast, tabbar, goLogin, coverOf, isLiveNow, dayBadge, relAgo, isVideo, viewPhoto, EVENT_TYPES, LOCALE, shareSheet, liveState, syncFavs } from "./common.js";
+import { api, $, esc, toast, tabbar, goLogin, coverOf, isLiveNow, dayBadge, relAgo, isVideo, viewPhoto, EVENT_TYPES, LOCALE, shareSheet, liveState, syncFavs, autoRefresh } from "./common.js";
 
 if (location.pathname === "/fil") tabbar("home"); // sur l'accueil, le fil est un onglet (menu déjà en place)
 
@@ -44,12 +44,22 @@ export function post(it, i) {
 
 // Chargé une fois ; l'accueil s'en sert aussi pour mêler le fil aux événements (onglet « Tout »).
 export const feedLoaded = api("/api/me/feed").then((r) => { items = r; return r; });
-feedLoaded.then(() => {
+const paintFeed = () => {
   if (!$("#feed")) return;
   $("#feed").innerHTML = items.map(post).join("");
   syncFavs(); // cœurs déjà mis en favori
   $("#feed-empty").classList.toggle("hidden", items.length > 0);
-}).catch((err) => { if (err.status === 401) goLogin(); else toast(err.message); });
+};
+feedLoaded.then(paintFeed).catch((err) => { if (err.status === 401) goLogin(); else toast(err.message); });
+// Actualisation automatique (retour dans l'appli, toutes les minutes) : redessiné seulement s'il y a du nouveau.
+export async function reloadFeed() {
+  const r = await api("/api/me/feed").catch(() => null);
+  if (!r || JSON.stringify(r) === JSON.stringify(items)) return false;
+  items = r;
+  paintFeed();
+  return true;
+}
+if (location.pathname === "/fil") autoRefresh(reloadFeed);
 
 document.addEventListener("click", async (e) => {
   if (!e.target.closest(".feed-post")) return;

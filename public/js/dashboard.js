@@ -1,5 +1,5 @@
 // Accueil connecté : ronds des stories, onglets Pour vous / En direct / À venir, cartes des événements.
-import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories, liveAttrs, createSheet, syncFavs, LOCALE, loadInspirations, openByCode } from "./common.js";
+import { api, $, esc, copy, shareSheet, toast, eventUrl, formatDate, dayBadge, tabbar, goLogin, EVENT_TYPES, publicCard, coverOf, openStories, liveAttrs, createSheet, syncFavs, LOCALE, loadInspirations, openByCode, autoRefresh } from "./common.js";
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { inAppView } from "./native.js";
@@ -55,10 +55,19 @@ async function load() {
     return toast(err.message);
   }
   // Ordre du serveur conservé : publics et privés en alternance.
-  try { localStorage.setItem(DASH_KEY, JSON.stringify({ events, discover: discover.slice(0, 30), stories, joined, myId })); } catch { /* plein ou indisponible */ }
+  const snap = JSON.stringify({ events, discover: discover.slice(0, 30), stories, joined, myId });
+  try { localStorage.setItem(DASH_KEY, snap); } catch { /* plein ou indisponible */ }
+  if (snap === lastSnap) return; // rien de nouveau : pas de redessin (la page ne saute pas)
+  lastSnap = snap;
   render();
   quickBar();
 }
+let lastSnap = "";
+// 🔄 Accueil toujours à jour : au retour dans l'appli et toutes les minutes (événements, stories, fil).
+autoRefresh(async () => {
+  await load();
+  if (feedMod && await feedMod.reloadFeed()) { render(); syncFavs(); }
+});
 
 // Raccourcis de mon prochain événement (ou du dernier, jusqu'à 30 jours après) : live, mur photo, film.
 function quickBar() {
