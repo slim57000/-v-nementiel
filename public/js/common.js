@@ -1616,3 +1616,21 @@ if (inAppView() && !isNativeApp) {
     }
   } catch { /* ignoré */ }
 }
+
+// ‹ Flèche de retour sur toutes les pages (sauf l'accueil) : page précédente du site, sinon l'accueil.
+// Pages avec barre du haut : bouton dans la barre ; pages plein écran (connexion, album, mur photo…) : bouton flottant.
+(function backEverywhere() {
+  const home = ["/", "/dashboard"];
+  const has = () => document.querySelector('.top-back, #close, .locked-close, .float-back, [aria-label="Retour"]');
+  const add = () => {
+    if (home.includes(location.pathname) || has()) return;
+    if (document.querySelector(".topbar")) return backButton("/");
+    document.body.insertAdjacentHTML("beforeend", `<a class="float-back" href="/" aria-label="${esc(tr("Retour"))}">‹</a>`);
+    document.querySelector(".float-back").addEventListener("click", (e) => {
+      if (document.referrer.startsWith(location.origin) && history.length > 1) { e.preventDefault(); history.back(); }
+    });
+  };
+  // Après le premier affichage : les pages qui ont déjà leur propre bouton (✕ du live…) l'ont alors posé.
+  const later = () => setTimeout(add, 400);
+  document.readyState === "loading" ? addEventListener("DOMContentLoaded", later) : later();
+})();
