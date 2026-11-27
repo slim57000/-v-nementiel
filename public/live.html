@@ -18,7 +18,7 @@
   <meta name="apple-mobile-web-app-title" content="MaFeliza">
   <title>Live — MaFeliza</title>
 </head>
-<body class="live has-live-tabs">
+<body class="live">
   <header class="live-bar">
     <a href="/" id="live-logo" class="live-logo" aria-label="MaFeliza"><img src="/img/logo.png" alt=""></a>
     <span class="live-badge">LIVE</span>
@@ -39,6 +39,10 @@
   </div>
 
   <main class="live-body">
+    <section id="cams-section" class="hidden">
+      <div class="live-section"><h2>🎥 Caméras <span class="count" id="cam-count"></span></h2></div>
+      <div class="cams" id="cams"></div>
+    </section>
     <div class="chat-list" id="chat-list" aria-live="polite"><p class="chat-empty">Soyez le premier à écrire un message 💬</p></div>
     <form class="chat-input" id="chat">
       <input id="chat-text" placeholder="Écrire un message…" maxlength="200" aria-label="Message">
@@ -53,11 +57,6 @@
       <button data-emoji="🍾"><i>🍾</i>Champagne</button>
       <a class="btn pot-btn hidden" id="pot-btn" target="_blank" rel="noopener" aria-label="Cagnotte">🎁</a>
     </div>
-
-    <section id="cams-section" class="hidden">
-      <div class="live-section"><h2>Changer de caméra</h2></div>
-      <div class="cams" id="cams"></div>
-    </section>
 
     <section>
       <div class="live-section"><h2>Photos des invités<span class="count" id="photo-count"></span></h2></div>
@@ -77,13 +76,6 @@
     </section>
   </main>
 
-  <nav class="live-tabs" aria-label="Sections du live">
-    <a href="#chat-list" data-nav-icon="chat">Chat</a>
-    <a href="#reactions" data-nav-icon="heart">Réactions</a>
-    <a href="#pot-btn" data-nav-icon="gift" id="nav-pot">Cagnotte</a>
-    <a href="#photo-strip" data-nav-icon="camera">Photos</a>
-    <a href="#cams-section" data-nav-icon="video">Caméras</a>
-  </nav>
 
   <script type="module" src="/js/live.js?v=6"></script>
 </body>

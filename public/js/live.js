@@ -82,8 +82,6 @@ async function load() {
     }
   } else {
     $("#reactions").style.gridTemplateColumns = "repeat(5, minmax(0, 1fr))";
-    $("#nav-pot").remove();
-    document.querySelector(".live-tabs").style.gridTemplateColumns = "repeat(4, 1fr)";
   }
 
   isOwner = ev.isOwner;
@@ -177,7 +175,9 @@ async function load() {
   // Photo du faire-part en attente du direct (voile sombre en thème clair seulement, cf. live.css).
   stage.style.setProperty("--cover", `url("${coverOf(ev)}")`);
   stage.classList.add("has-cover");
-  $("#cams-section").classList.toggle("hidden", cameras.length < 2);
+  // Liste des caméras sur la page (toucher = changer d'angle), dès qu'il y en a une.
+  $("#cams-section").classList.toggle("hidden", cameras.length < 1);
+  $("#cam-count").textContent = cameras.length > 1 ? `· ${cameras.length}` : "";
   // On ouvre sur l'angle réellement en direct (le caméraman n'est pas forcément le premier de la liste).
   play(Math.max(0, cameras.findIndex((c) => c.live)));
   // Badge : « LIVE » seulement quand un téléphone diffuse vraiment ; sinon « BIENTÔT » + heure prévue + agenda.
@@ -460,23 +460,6 @@ document.querySelectorAll("[data-nav-icon]").forEach((el) => { el.insertAdjacent
 
 load();
 
-// Barre du bas : chaque onglet agit (et pas seulement un saut d'ancre).
-document.querySelector(".live-tabs").addEventListener("click", (e) => {
-  const tab = e.target.closest("a");
-  if (!tab) return;
-  e.preventDefault();
-  document.querySelectorAll(".live-tabs a").forEach((a) => a.classList.toggle("active", a === tab));
-  const go = (el) => el.scrollIntoView({ behavior: "smooth", block: "center" });
-  const target = tab.getAttribute("href");
-  if (target === "#chat-list") { go($("#chat")); $("#chat-text").focus({ preventScroll: true }); }
-  else if (target === "#reactions") { go($("#reactions")); $("#reactions").animate([{ transform: "scale(1)" }, { transform: "scale(1.04)" }, { transform: "scale(1)" }], 400); }
-  else if (target === "#pot-btn") openPot(slug, $("#pot-btn").href);
-  else if (target === "#photo-strip") { go($("#photo-strip")); if (!photos.length) $("#add-photo").click(); }
-  else if (target === "#cams-section") {
-    if ($("#cams-section").classList.contains("hidden")) toast(cameras.length ? "Une seule caméra pour ce direct 🎥" : "Aucune caméra pour le moment");
-    else go($("#cams-section"));
-  }
-});
 
 // ✂️ Organisateur / administrateur : parties du replay de toutes les caméras, classées par heure.
 // Choisir un moment (de … à …) coche toutes les parties de toutes les caméras dans ce créneau ; une seule confirmation.

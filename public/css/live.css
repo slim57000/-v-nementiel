@@ -127,3 +127,6 @@
 .live-immersive .live-pot { position: fixed; top: calc(6px + env(safe-area-inset-top)); left: 12px; right: auto; padding: 4px 10px; font-size: .72rem; line-height: 1.2; z-index: 6; }
 .live-badge.is-soon { background: #8a7f96; }
 #empty small { display: block; opacity: .85; margin-top: 4px; }
+/* Titre de l'en-tête : sur une ligne, coupé avec « … » (jamais au milieu d'un mot : « Tes / t ») */
+.live-bar h1 { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; word-break: normal; }
+#cams-section { margin-bottom: 10px; }
