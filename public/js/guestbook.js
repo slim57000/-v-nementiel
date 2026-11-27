@@ -54,6 +54,7 @@ export function initGuestbook(ev) {
         <button data-reply>💬 Répondre${e.replies?.length ? ` (${e.replies.length})` : ""}</button>
         <button data-more aria-label="Plus d'actions">⋯</button>
         ${ev.isOwner ? `<button data-pin>${e.pinned ? "Retirer de la une" : "⭐ Mettre en avant"}</button><button data-del class="danger">Supprimer</button>` : ""}
+        ${ev.isAdmin ? `<button data-del class="danger">🛡 Supprimer (admin)</button>` : ""}
       </footer>
     </article>`;
 

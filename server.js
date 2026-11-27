@@ -78,11 +78,12 @@ if (missingConfig.length) {
 
 // Réglages publics lus par le navigateur (identifiant Google Analytics, facultatif).
 // Liens qui s'ouvrent directement dans l'application installée (iPhone : liens universels ; Android : App Links).
+// « /faire-part » exact : les pages Google /faire-part-gratuit, /faire-part-en-ligne restent dans le navigateur.
 // Seules les pages d'événement et de l'espace personnel : jamais l'API, les fichiers ni la page de connexion Google.
 const APP_PATHS = ["/e/", "/live", "/simple", "/mur", "/album", "/faire-part", "/dashboard", "/decouvrir", "/messages", "/profil", "/edit", "/cameraman", "/amis", "/fil"];
 app.get("/.well-known/apple-app-site-association", (req, res) => res.type("application/json").json({
   applinks: { details: [{ appIDs: [`${process.env.APPLE_TEAM_ID || "8BRT65D9VF"}.fr.mafeliza.app`],
-    components: [{ "/": "/" }, ...APP_PATHS.map((p) => ({ "/": p.endsWith("/") ? `${p}*` : `${p}*` }))] }] },
+    components: [{ "/": "/" }, ...APP_PATHS.flatMap((p) => p === "/faire-part" ? [{ "/": p }] : [{ "/": `${p}*` }])] }] },
 }));
 app.get("/.well-known/assetlinks.json", (req, res) => res.json([{
   relation: ["delegate_permission/common.handle_all_urls"],
@@ -215,7 +216,7 @@ async function dailyJob() {
   let pushed = 0;
   for (const [offset, label] of [[0, "aujourd'hui"], [1, "demain"]]) {
     for (const event of await listEventsOnDate(date(offset))) {
-      if (event.suspended) continue;
+      if (event.suspended || event.archived) continue;
       const followers = await listFollowerIds(event.id).catch(() => []);
       const live = offset === 0 && event.cameras?.length;
       pushed += await notify([event.organizerId, ...followers].map(orgOwner), {
@@ -231,7 +232,7 @@ async function dailyJob() {
   // Rattrapage sur 3 jours (serveur arrêté, tâche manquée) ; jamais deux envois pour un même événement.
   const recent = (await Promise.all([-1, -2, -3].map((d) => listEventsOnDate(date(d)).catch(() => [])))).flat();
   for (const event of recent) {
-    if (event.suspended || !event.cameras?.length) continue;
+    if (event.suspended || event.archived || !event.cameras?.length) continue;
     const [off, hide, done] = await Promise.all([getSetting(`replayoff:${event.id}`), getSetting(`replayhide:${event.id}`), getSetting(`replaysent:${event.id}`)].map((p) => p.catch(() => null)));
     if (off || hide || done) continue;
     await setSetting(`replaysent:${event.id}`, new Date().toISOString());
@@ -262,7 +263,7 @@ async function liveSoonTick() {
   const parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(now).map((p) => [p.type, p.value]));
   const today = `${parts.year}-${parts.month}-${parts.day}`, nowMin = Number(parts.hour) * 60 + Number(parts.minute);
   for (const event of await listEventsOnDate(today).catch(() => [])) {
-    if (event.suspended || !event.cameras?.length || !/^\d{2}:\d{2}$/.test(event.time || "")) continue;
+    if (event.suspended || event.archived || !event.cameras?.length || !/^\d{2}:\d{2}$/.test(event.time || "")) continue;
     const [h, m] = event.time.split(":").map(Number), left = h * 60 + m - nowMin;
     if (left < 45 || left > 65) continue;
     if (await getSetting(`livesoon:${event.id}`).catch(() => true)) continue;
@@ -394,7 +395,7 @@ app.get("/e/:slug", async (req, res) => {
       : pic ? (pic.startsWith("/") ? `${host}${pic}` : pic) : `${host}/img/icon-1024.png`;
     image = `<meta property="og:image" content="${escapeHtml(url)}">${OG_ENABLED ? '<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">' : ""}<meta name="twitter:card" content="summary_large_image">`;
   }
-  const isPublic = event?.visibility === "public" && !event.suspended && !(await listUnlistedIds()).has(event.id) && !(await listPendingIds()).has(event.id);
+  const isPublic = event?.visibility === "public" && !event.suspended && !event.archived && !(await listUnlistedIds()).has(event.id) && !(await listPendingIds()).has(event.id);
   const base = (process.env.PUBLIC_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
   const desc = isPublic
     ? `${event.name} — ${event.date.split("-").reverse().join("/")} à ${event.time}, ${event.location}. Suivez l'événement en direct sur MaFeliza.`

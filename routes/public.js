@@ -62,7 +62,7 @@ async function buildList(limit) {
   // Privés (requête dédiée) + non répertoriés (publics en base, masqués de la liste publique), lus en parallèle.
   const hidden = await listUnlistedIds();
   const [priv, unl, pending] = await Promise.all([listAllUpcoming(50).catch(() => []), findEventsByIds([...hidden]).catch(() => []), listPendingIds()]);
-  const shown = [...priv, ...unl.filter((e) => e && !e.suspended && e.date >= today)]
+  const shown = [...priv, ...unl.filter((e) => e && !e.suspended && !e.archived && e.date >= today)]
     .filter((e) => !pending.has(e.id))
     .filter((e, i, arr) => !events.some((x) => x.id === e.id) && arr.findIndex((x) => x.id === e.id) === i)
     .map((e) => withVisibility(e, hidden));
@@ -120,7 +120,7 @@ let memberReels = { at: 0, list: [] };
 async function listMemberReels() {
   if (Date.now() - memberReels.at < 60_000) return memberReels.list; // 1 min
   const [events, hidden] = await Promise.all([listPublicUpcoming(50).catch(() => []), listUnlistedIds().catch(() => new Set())]);
-  const pub = events.filter((e) => e.visibility === "public" && !hidden.has(e.id) && !e.suspended);
+  const pub = events.filter((e) => e.visibility === "public" && !hidden.has(e.id) && !e.suspended && !e.archived);
   const byId = new Map(pub.map((e) => [e.id, e]));
   const photos = await listRecentPhotos([...byId.keys()], 200).catch(() => []);
   const list = photos.filter((p) => !p.story && isVideoFile(p.url)).slice(0, 60).map((p) => {

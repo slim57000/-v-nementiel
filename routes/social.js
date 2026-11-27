@@ -341,9 +341,15 @@ const isOwner = async (req) => (await currentOrganizer(req))?.id === req.event.o
 const canSeeHiddenReplay = async (req) => { const me = await currentOrganizer(req); return Boolean(me && (me.id === req.event.organizerId || await isAdmin(me))); };
 const ownerOnly = async (req, res, next) =>
   (await isOwner(req)) ? next() : res.status(403).json({ error: "Réservé à l'organisateur." });
+// Modération : l'organisateur ou un administrateur MaFeliza.
+const modOnly = async (req, res, next) => {
+  if (await isOwner(req)) return next();
+  const me = await currentOrganizer(req).catch(() => null);
+  return me && (await isAdmin(me).catch(() => false)) ? next() : res.status(403).json({ error: "Réservé à l'organisateur." });
+};
 
 // Modération : seul l'organisateur peut retirer une photo.
-router.delete("/photos/:id", ownerOnly, async (req, res) => {
+router.delete("/photos/:id", modOnly, async (req, res) => {
   const photo = await findPhoto(Number(req.params.id));
   if (!photo || photo.eventId !== req.event.id) return res.status(404).json({ error: "Photo introuvable." });
   await deletePhoto(photo);
@@ -420,7 +426,7 @@ router.patch("/guestbook/:id", ownerOnly, async (req, res) => {
   if (entry) res.json(await updateGuestbookEntry(entry, { pinned: Boolean(req.body?.pinned) }));
 });
 
-router.delete("/guestbook/:id", ownerOnly, async (req, res) => {
+router.delete("/guestbook/:id", modOnly, async (req, res) => {
   const entry = await entryOf(req, res);
   if (!entry) return;
   await deleteGuestbookEntry(entry);
