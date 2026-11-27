@@ -35,6 +35,7 @@ const pink = Color(0xFFE8137A);
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(const MaFelizaApp());
 }
 
@@ -87,6 +88,12 @@ class _HomePageState extends State<HomePage> {
       ..setBackgroundColor(Colors.white)
       ..setNavigationDelegate(NavigationDelegate(
         onPageStarted: (_) => setState(() => _loading = true),
+        // Appli fixe en portrait ; paysage autorisé seulement pour regarder le live / replay et le mur photo.
+        onUrlChange: (change) {
+          final path = Uri.tryParse(change.url ?? '')?.path ?? '';
+          final free = path.startsWith('/live') || path.startsWith('/mur');
+          SystemChrome.setPreferredOrientations(free ? DeviceOrientation.values : [DeviceOrientation.portraitUp]);
+        },
         onPageFinished: (url) {
           setState(() => _loading = false);
           // Jeton envoyé au site (lié au compte connecté) ; tout de suite après une connexion (tableau de bord).
