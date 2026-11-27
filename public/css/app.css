@@ -1936,3 +1936,26 @@ video.film-card-bg { width: 100%; height: 100%; object-fit: cover; }
 .my-quick { margin: 8px 0 4px; text-align: center; justify-items: center; }
 .my-quick-row { width: 100%; }
 
+
+/* Accueil sur ordinateur : héros en deux colonnes (texte à gauche, téléphone à droite). */
+@media (min-width: 960px) {
+  .container.home { max-width: 1120px !important; }
+  .home .hx { display: grid; grid-template-columns: 1.1fr .9fr; grid-template-areas: "nav nav" "text stage" "after stage" "stores stage"; align-content: start; column-gap: 24px; padding: 22px 56px 90px; text-align: left; border-radius: 34px; }
+  .home .hx-nav { grid-area: nav; padding: 0; margin-bottom: 26px; }
+  .home .hx-text { grid-area: text; align-self: end; padding: 0; text-align: left; }
+  .home .hx-text h1 { font-size: clamp(2.8rem, 4.4vw, 4rem); }
+  .home .hx-sub { font-size: 1.15rem; max-width: 30em; margin-left: 0; }
+  .home .hx-pill { margin-left: 0; }
+  .home .hx-stage { grid-area: stage; margin: 0; align-self: center; transform: scale(1.35); transform-origin: center; }
+  .home .hx-after { grid-area: after; padding-top: 22px; }
+  .home .hx-trust { justify-content: flex-start; }
+  .home .hx-ctas { display: flex !important; flex-direction: row; gap: 12px; justify-content: flex-start; max-width: none; margin: 0; }
+  .home .hx-ctas .btn { width: auto; flex: 0 0 auto; margin: 0; padding-inline: 28px; }
+  .home .hx-stores { grid-area: stores; justify-content: flex-start; margin: 18px 0 0; }
+  .home .hx-card { max-width: 560px; margin: -46px auto 0; }
+  .home .hx-types, .home .hp-final { max-width: 860px; margin-inline: auto; }
+  .home .hp-mini { max-width: 640px; }
+  .home .hp-final .btn, .home .hp-final a.btn { max-width: 420px; margin-inline: auto; }
+  .home .hp-mini span { font-size: .85rem; padding: 14px 6px; }
+  .home .hp-mini i { font-size: 1.9rem; }
+}
