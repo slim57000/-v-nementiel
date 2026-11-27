@@ -175,9 +175,7 @@ function card(ev) {
       ${ev.date < new Date().toISOString().slice(0, 10)
         // Événement passé : replay du live et film souvenir à la place de « Lancer le live ».
         ? `<a class="btn btn-block" href="/live?e=${encodeURIComponent(ev.slug)}">▶ Voir le replay</a>`
-        : `<a class="btn btn-sm tool-main btn-golive" href="/cameraman?code=${esc(ev.cameramanCode)}">🔴 Lancer le live</a>`
-          // Jour J, live déjà lancé : accès direct au direct / replay.
-          + (ev.date === new Date().toISOString().slice(0, 10) && ev.cameras?.length ? `<a class="btn btn-sm btn-light tool-main" href="/live?e=${encodeURIComponent(ev.slug)}">▶ Voir le live / replay</a>` : "")}
+        : `<a class="btn btn-sm tool-main btn-golive" href="/cameraman?code=${esc(ev.cameramanCode)}">🔴 Lancer le live</a>`}
       <a class="btn btn-sm tool-main" href="/faire-part?id=${ev.id}">💌 Mes faire-part</a>
       <p class="tools-title">Partager & inviter</p>
       <div class="tools-grid">
