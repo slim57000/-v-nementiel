@@ -29,7 +29,7 @@ router.use(requireOrganizer);
 
 async function findOwned(req) {
   const event = await findEvent(Number(req.params.id));
-  return event?.organizerId === req.organizer.id && !event.archived ? event : null;
+  return event?.organizerId === req.organizer.id ? event : null;
 }
 // Replay : l'organisateur, ou un administrateur MaFeliza (modération).
 async function findOwnedOrAdmin(req) {
@@ -70,7 +70,6 @@ const handle = (fn) => async (req, res) => {
 
 router.get("/", handle(async (req, res) => {
   const [events, hidden] = await Promise.all([listEvents(req.organizer.id), listUnlistedIds()]);
-  events.splice(0, events.length, ...events.filter((e) => !e.archived));
   // Événements créés avant l'espace caméraman : on leur attribue un code.
   for (const event of events.filter((e) => !e.cameramanCode)) {
     Object.assign(event, await saveEvent({ ...event, cameramanCode: randomCode() }));
@@ -235,9 +234,7 @@ router.delete("/:id/replay", handle(async (req, res) => {
 router.delete("/:id", handle(async (req, res) => {
   const event = await findOwned(req);
   if (!event) return res.status(404).json({ error: "Événement introuvable." });
-  // L'organisateur le retire de son espace, mais photos, livre d'or et replay restent visibles
-  // pour les invités (fil, historique). L'admin et la suppression de compte effacent tout (destroyEvent).
-  await saveEvent({ ...event, archived: true, archivedAt: new Date().toISOString() });
+  await destroyEvent(event);
   res.json({ ok: true });
 }));
 
