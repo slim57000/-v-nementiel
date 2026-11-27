@@ -1940,7 +1940,7 @@ video.film-card-bg { width: 100%; height: 100%; object-fit: cover; }
 /* Accueil sur ordinateur : héros en deux colonnes (texte à gauche, téléphone à droite). */
 @media (min-width: 960px) {
   .container.home { max-width: 1120px !important; }
-  .home .hx { display: grid; grid-template-columns: 1.1fr .9fr; grid-template-areas: "nav nav" "text stage" "after stage" "stores stage"; align-content: start; column-gap: 24px; padding: 22px 56px 90px; text-align: left; border-radius: 34px; }
+  .home .hx { display: grid; grid-template-columns: 1.1fr .9fr; grid-template-areas: "nav nav" "text stage" "after stage" "stores stage"; align-content: start; column-gap: 24px; padding: 22px 56px 56px; text-align: left; border-radius: 34px; }
   .home .hx-nav { grid-area: nav; padding: 0; margin-bottom: 26px; }
   .home .hx-text { grid-area: text; align-self: end; padding: 0; text-align: left; }
   .home .hx-text h1 { font-size: clamp(2.8rem, 4.4vw, 4rem); }
@@ -1952,7 +1952,11 @@ video.film-card-bg { width: 100%; height: 100%; object-fit: cover; }
   .home .hx-ctas { display: flex !important; flex-direction: row; gap: 12px; justify-content: flex-start; max-width: none; margin: 0; }
   .home .hx-ctas .btn { width: auto; flex: 0 0 auto; margin: 0; padding-inline: 28px; }
   .home .hx-stores { grid-area: stores; justify-content: flex-start; margin: 18px 0 0; }
-  .home .hx-card { max-width: 560px; margin: -46px auto 0; }
+  .home .hx-card { display: flex; align-items: center; justify-content: center; gap: 14px; max-width: none; margin: 22px auto 0; padding: 0; background: none; border: 0; box-shadow: none; }
+  .home .hx-card .divider { margin: 0; white-space: nowrap; }
+  .home .hx-card .divider::before, .home .hx-card .divider::after { display: none; }
+  .home .hx-card .socials { display: flex; gap: 10px; margin: 0; }
+  .home .hx-card .socials button { width: 52px; height: 44px; flex: 0 0 auto; border-radius: 14px; }
   .home .hx-types, .home .hp-final { max-width: 860px; margin-inline: auto; }
   .home .hp-mini { max-width: 640px; }
   .home .hp-final .btn, .home .hp-final a.btn { max-width: 420px; margin-inline: auto; }
