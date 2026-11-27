@@ -1397,9 +1397,9 @@ main.home + .site-footer::before { content: ""; position: absolute; top: -1px; l
 .hx-text .hx-pill { max-width: none; margin: 0 auto 18px; font-size: .72rem; color: rgba(255,255,255,.9); line-height: 1.2; }
 /* Bloc de conclusion de l'accueil (avant le pied de page). */
 .home .hp-final { margin: 26px 0 0; padding: 22px 18px 20px; }
-.hp-mini { display: flex; justify-content: center; gap: 10px; margin-bottom: 14px; }
-.hp-mini span { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 84px; padding: 10px 8px; border-radius: 16px; font-size: .78rem; font-weight: 700; color: #fff; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25); }
-.hp-mini i { font-style: normal; font-size: 1.3rem; }
+.hp-mini { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 520px; margin: 0 auto 16px; }
+.hp-mini span { display: flex; flex-direction: column; align-items: center; gap: 4px; justify-content: center; text-align: center; line-height: 1.15; padding: 10px 4px; border-radius: 16px; font-size: .74rem; font-weight: 700; color: #fff; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25); }
+.hp-mini i { font-style: normal; font-size: 1.5rem; }
 /* « Se connecter » : décalé vers la droite (près du bouton thème) et plus compact, pour ne pas toucher le logo. */
 .hx-nav { padding-right: 56px; gap: 10px; }
 .hx-login { margin-left: auto; font-size: .78rem; padding: 6px 12px; }
@@ -1936,18 +1936,3 @@ video.film-card-bg { width: 100%; height: 100%; object-fit: cover; }
 .my-quick { margin: 8px 0 4px; text-align: center; justify-items: center; }
 .my-quick-row { width: 100%; }
 
-/* Accueil : « Votre événement, tout un univers » */
-.hx-univers { max-width: 760px; margin: 28px auto 8px; padding: 22px 16px; background: #fff; border-radius: 26px; box-shadow: 0 10px 30px rgba(120,40,120,.08); }
-.hx-univers h2 { display: flex; align-items: center; gap: 14px; justify-content: center; margin: 0 0 18px; font-size: clamp(1.05rem, 4.2vw, 1.6rem); color: #2a0f2e; text-align: center; }
-.hx-univers h2::before, .hx-univers h2::after { content: ""; flex: 1; max-width: 90px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, transparent, #e0338f); }
-.hx-univers h2::after { transform: scaleX(-1); }
-.hx-uni-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-.hx-uni-grid div { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 118px; padding: 12px 6px; border-radius: 20px; text-align: center;
-  background: linear-gradient(145deg, #f6ecff, #fdeef4); box-shadow: inset 0 0 0 1px rgba(255,255,255,.7), 0 4px 14px rgba(150,60,140,.08); transition: transform .2s; }
-.hx-uni-grid div:nth-child(even) { background: linear-gradient(145deg, #fdeef4, #fff3ea); }
-.hx-uni-grid div:hover { transform: translateY(-3px); }
-.hx-uni-grid i { font-style: normal; font-size: 2.6rem; line-height: 1; filter: drop-shadow(0 4px 6px rgba(0,0,0,.15)); }
-.hx-uni-grid .hx-uni-live { font-size: .95rem; font-weight: 800; color: #fff; background: linear-gradient(180deg, #ff3b47, #d8101c); padding: 9px 14px; border-radius: 12px; letter-spacing: .5px; }
-.hx-uni-grid b { font-size: .92rem; color: #1d1d24; line-height: 1.2; }
-@media (max-width: 560px) { .hx-uni-grid { grid-template-columns: repeat(2, 1fr); } .hx-uni-grid div { min-height: 104px; } }
-@media (prefers-color-scheme: dark) { .hx-univers { background: #1e1622; } .hx-univers h2 { color: #f6e8f4; } .hx-uni-grid div { background: linear-gradient(145deg, #2b2034, #33222c); } .hx-uni-grid div:nth-child(even) { background: linear-gradient(145deg, #33222c, #352a22); } .hx-uni-grid b { color: #f1eaf2; } }
