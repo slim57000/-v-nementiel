@@ -93,7 +93,8 @@ router.get("/", async (req, res) => {
     // (ville seule), ni les caméras. Le clic mène à l'écran « entrez votre code » : l'accès passe par le code.
     const city = String(e.location || "").split(",").map((x) => x.trim()).filter((x) => x && !COUNTRIES.test(x)).pop()?.replace(/\b[A-Z]{0,2}\d[\dA-Z -]*\b/g, "").replace(/\s+/g, " ").trim() || null;
     // Photo de couverture d'un événement privé : seulement pour son organisateur ou qui l'a déjà ouvert (emoji sinon).
-    if (e.visibility === "private") return { ...card, ...(!(String(e.organizerId) === String(viewer?.id) || opened.has(Number(e.id))) && { cover: blurredCover(e) }), city, time: "", location: "", cameras: [], viewers: 0 };
+    // Flou = pas d'accès : quiconque peut ouvrir l'événement (code déjà saisi, admin…) le voit en clair, et inversement.
+    if (e.visibility === "private") return { ...card, ...(!(String(e.organizerId) === String(viewer?.id) || opened.has(Number(e.id)) || await hasAccess(req, e).catch(() => false)) && { cover: blurredCover(e) }), city, time: "", location: "", cameras: [], viewers: 0 };
     // Non répertorié : affiché comme un privé, et sans son lien (seul le lien reçu par SMS / WhatsApp y donne accès).
     if (e.visibility === "unlisted" && (String(e.organizerId) === String(viewer?.id) || opened.has(Number(e.id)))) card.visibility = "unlisted";
     else if (e.visibility === "unlisted") {

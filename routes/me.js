@@ -215,7 +215,7 @@ router.get("/circle", async (req, res) => {
   const opened = new Set((await listHistoryIds(me.id).catch(() => [])).map(Number));
   const invitedIds = new Set(invited.map((e) => e.id));
   const tag = (e, c) => (goingIds.has(e.id) || invitedIds.has(e.id) ? { ...c, going: true } : c);
-  res.json(all.map((e) => tag(e, e.visibility === "private" && e.organizerId !== me.id && !opened.has(Number(e.id)) && !invitedIds.has(e.id) ? { ...card(e), cover: blurredCover(e) } : card(e))));
+  res.json(await Promise.all(all.map(async (e) => tag(e, e.visibility === "private" && e.organizerId !== me.id && !opened.has(Number(e.id)) && !invitedIds.has(e.id) && !(await hasAccess(req, e).catch(() => false)) ? { ...card(e), cover: blurredCover(e) } : card(e)))));
 });
 
 router.get("/history", async (req, res) => {
