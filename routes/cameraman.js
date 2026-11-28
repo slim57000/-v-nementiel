@@ -19,7 +19,7 @@ const tooManyTries = (req) => tooFast(`trycam:${req.ip}`, 10, 15 * 60 * 1000);
 // Caméraman connecté : l'événement compte dans ses participations (pas d'ajout automatique en ami).
 async function linkCameraman(req, event) {
   const me = await currentOrganizer(req).catch(() => null);
-  if (!me || me.id === event.organizerId) return;
+  if (!me || String(me.id) === String(event.organizerId)) return;
   await addHistory(me.id, event.id).catch(() => {});
 }
 

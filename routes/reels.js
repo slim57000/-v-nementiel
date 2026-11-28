@@ -85,7 +85,7 @@ router.post("/", requireOrganizer, rejectAbuse("caption"), async (req, res) => {
   // Événement lié : seulement un des siens, et public (le réel est visible de tous).
   let event = null;
   const ev = req.body?.slug ? await findEventBySlug(String(req.body.slug)).catch(() => null) : null;
-  if (ev && ev.organizerId === req.organizer.id && ev.visibility === "public" && !ev.suspended) event = { slug: ev.slug, name: ev.name, cagnotteUrl: ev.cagnotteUrl || "" };
+  if (ev && String(ev.organizerId) === String(req.organizer.id) && ev.visibility === "public" && !ev.suspended) event = { slug: ev.slug, name: ev.name, cagnotteUrl: ev.cagnotteUrl || "" };
   const reel = { id, by: req.organizer.id, name: clean(req.organizer.displayName || req.organizer.email?.split("@")[0], 40), caption: clean(req.body?.caption, 150),
     src: `/uploads/${id}.${EXT[type]}`, thumb, event, at: new Date().toISOString(), reports: 0,
     private: Boolean(req.body?.private) }; // privé : visible seulement par son auteur (« Mes réels »)

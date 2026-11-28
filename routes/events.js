@@ -29,13 +29,13 @@ router.use(requireOrganizer);
 
 async function findOwned(req) {
   const event = await findEvent(Number(req.params.id));
-  return event?.organizerId === req.organizer.id ? event : null;
+  return event && String(event.organizerId) === String(req.organizer.id) ? event : null;
 }
 // Replay : l'organisateur, ou un administrateur MaFeliza (modération).
 async function findOwnedOrAdmin(req) {
   const event = await findEvent(Number(req.params.id));
   if (!event) return null;
-  return event.organizerId === req.organizer.id || (await isAdmin(req.organizer)) ? event : null;
+  return String(event.organizerId) === String(req.organizer.id) || (await isAdmin(req.organizer)) ? event : null;
 }
 
 // Gère les images envoyées : nouvelle couverture et photo propre au faire-part.

@@ -148,7 +148,7 @@ router.get("/stories", async (req, res) => {
   const groups = new Map();
   for (const p of photos.reverse()) {
     const e = byId.get(p.eventId);
-    if (!groups.has(e.id)) groups.set(e.id, { slug: e.slug, name: e.name, cover: e.cover, type: e.type, date: e.date, cameras: e.cameras || [], isOwner: e.organizerId === me.id, items: [] });
+    if (!groups.has(e.id)) groups.set(e.id, { slug: e.slug, name: e.name, cover: e.cover, type: e.type, date: e.date, cameras: e.cameras || [], isOwner: String(e.organizerId) === String(me.id), items: [] });
     groups.get(e.id).items.push({ id: p.id, name: p.name, url: p.url, caption: p.caption, createdAt: p.createdAt, author: p.author, slug: e.slug });
   }
   await Promise.all([...groups.values()].map(async (g) => { g.items = await withReactions(g.items); }));
@@ -215,7 +215,7 @@ router.get("/circle", async (req, res) => {
   const opened = new Set((await listHistoryIds(me.id).catch(() => [])).map(Number));
   const invitedIds = new Set(invited.map((e) => e.id));
   const tag = (e, c) => (goingIds.has(e.id) || invitedIds.has(e.id) ? { ...c, going: true } : c);
-  res.json(await Promise.all(all.map(async (e) => tag(e, e.visibility === "private" && e.organizerId !== me.id && !opened.has(Number(e.id)) && !invitedIds.has(e.id) && !(await hasAccess(req, e).catch(() => false)) ? { ...card(e), cover: blurredCover(e) } : card(e)))));
+  res.json(await Promise.all(all.map(async (e) => tag(e, e.visibility === "private" && String(e.organizerId) !== String(me.id) && !opened.has(Number(e.id)) && !invitedIds.has(e.id) && !(await hasAccess(req, e).catch(() => false)) ? { ...card(e), cover: blurredCover(e) } : card(e)))));
 });
 
 router.get("/history", async (req, res) => {

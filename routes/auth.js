@@ -19,7 +19,7 @@ async function recordReferral(req, organizer) {
   if (!ref) return;
   const { findEventBySlug } = await import("../lib/store.js");
   const ev = await findEventBySlug(ref).catch(() => null);
-  if (!ev || ev.organizerId === organizer.id) return;
+  if (!ev || String(ev.organizerId) === String(organizer.id)) return;
   const key = `refs:${ev.organizerId}`;
   const list = (await getSetting(key).catch(() => null)) || [];
   if (!list.includes(organizer.id)) await setSetting(key, [...list, organizer.id]);

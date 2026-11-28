@@ -29,7 +29,7 @@ export const hasAccess = async (req, event) =>
 async function ownerOrFriend(req, event) {
   const me = await currentOrganizer(req).catch(() => null);
   if (!me) return false;
-  if (me.id === event.organizerId) return true;
+  if (String(me.id) === String(event.organizerId)) return true;
   return isAdmin(me).catch(() => false); // administration : accès à tous les événements (modération)
 }
 
@@ -234,7 +234,7 @@ export async function eventPayload(req, slug) {
   if (!event || event.suspended) return null;
   if (!(await hasAccess(req, event))) return { locked: true, name: event.name, type: event.type, visibility: "private" };
   const me = await currentOrganizer(req);
-  const isOwner = me?.id === event.organizerId;
+  const isOwner = Boolean(me) && String(me.id) === String(event.organizerId);
   // Écritures sans attendre (la page s'affiche tout de suite) : participation mémorisée, compteur de vues.
   if (me && !isOwner) {
     addHistory(me.id, event.id).catch(() => {});

@@ -336,9 +336,9 @@ router.put("/video-file", notBlocked, express.raw({ type: () => true, limit: MAX
   catch (err) { res.status(400).json({ error: err.message }); }
 });
 
-const isOwner = async (req) => (await currentOrganizer(req))?.id === req.event.organizerId;
+const isOwner = async (req) => String((await currentOrganizer(req))?.id) === String(req.event.organizerId);
 // Replay retiré : visible par l'organisateur et par l'administration.
-const canSeeHiddenReplay = async (req) => { const me = await currentOrganizer(req); return Boolean(me && (me.id === req.event.organizerId || await isAdmin(me))); };
+const canSeeHiddenReplay = async (req) => { const me = await currentOrganizer(req); return Boolean(me && (String(me.id) === String(req.event.organizerId) || await isAdmin(me))); };
 const ownerOnly = async (req, res, next) =>
   (await isOwner(req)) ? next() : res.status(403).json({ error: "Réservé à l'organisateur." });
 // Modération : l'organisateur ou un administrateur MaFeliza.
