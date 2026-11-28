@@ -752,8 +752,10 @@ export async function uploadVideo(slug, file) {
   if (file.type !== type) file = new File([file], file.name || "video.mp4", { type }); // type propre aussi pour l'envoi direct
   const target = await api(`/api/public/${encodeURIComponent(slug)}/upload-url`, { method: "POST", body: { type, size: file.size } });
   if (target.mode === "direct") {
-    const res = await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": type }, body: file });
-    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Envoi de la vidéo impossible, réessayez.");
+    const res = await fetch(target.uploadUrl, { method: "PUT", headers: { "Content-Type": type }, body: file })
+      .catch(() => { throw new Error("Connexion interrompue pendant l'envoi de la vidéo, réessayez (Wi-Fi conseillé)."); });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error
+      || (res.status === 413 ? "Vidéo trop lourde (50 Mo max)." : `Envoi de la vidéo impossible (${res.status}), réessayez.`));
     return { videoUrl: target.publicUrl || (await res.json().catch(() => ({}))).publicUrl };
   }
   if (file.size > 4 * 1024 * 1024) throw new Error("Vidéo trop lourde (4 Mo maximum).");

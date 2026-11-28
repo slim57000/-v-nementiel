@@ -535,10 +535,12 @@ if (!ON_VERCEL) {
   }));
   app.use((req, res) => res.status(404).sendFile(`${PUBLIC_DIR}/404.html`));
   const port = process.env.PORT || 3000;
-  app.listen(port, () => {
+  const server = app.listen(port, () => {
     console.log(`Plateforme événementielle : http://localhost:${port}`);
     if (!process.env.LIVEKIT_URL || !process.env.LIVEKIT_API_KEY || !process.env.LIVEKIT_API_SECRET) console.warn("⚠️ LiveKit non configuré : le direct depuis le téléphone est désactivé (LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET).");
   });
+  // Vidéos envoyées en 4G (jusqu'à 50 Mo) : Node coupe sinon toute requête de plus de 5 min.
+  server.requestTimeout = 30 * 60_000;
 }
 
 export default app;
