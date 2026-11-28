@@ -764,7 +764,25 @@ export async function uploadVideo(slug, file) {
 
 // Application : galerie du téléphone (plusieurs photos / vidéos), envoi en arrière-plan qui continue appli fermée.
 // Se termine quand tout est envoyé (la page se met alors à jour) ; l'envoi continue même si on quitte la page.
+// Appli : prendre une photo, filmer ou choisir dans la galerie.
+function pickSource() {
+  return new Promise((resolve, reject) => {
+    const sheet = document.createElement("div");
+    sheet.className = "src-sheet";
+    sheet.innerHTML = `<div class="src-box"><button data-s="photo">📷 ${tr("Prendre une photo")}</button><button data-s="video">🎥 ${tr("Filmer une vidéo")}</button><button data-s="gallery">🖼️ ${tr("Choisir dans la galerie")}</button><button data-s="" class="src-cancel">${tr("Annuler")}</button></div>`;
+    sheet.addEventListener("click", (e) => {
+      const b = e.target.closest("button");
+      if (!b && e.target !== sheet) return;
+      sheet.remove();
+      b?.dataset.s ? resolve(b.dataset.s) : reject(new Error("canceled"));
+    });
+    document.body.append(sheet);
+  });
+}
+
 async function nativeUpload(slug) {
+  // Appareil photo depuis l'appli 1.0.9 ; avant, galerie seule.
+  const source = older(await appVersion(), "1.0.9") ? "gallery" : await pickSource();
   const name = await guestName();
   const { token, url } = await api(`/api/public/${encodeURIComponent(slug)}/upload-token`, { method: "POST", body: { name } });
   return new Promise((resolve, reject) => {
@@ -779,7 +797,7 @@ async function nativeUpload(slug) {
       done ? resolve({ native: true, done }) : reject(new Error("failed"));
     };
     const labels = Object.fromEntries(["Envoi des photos", "Photos envoyées ✔", "Une photo n'a pas pu être envoyée"].map((k) => [k, tr(k)]));
-    window.MaFelizaUpload.postMessage(JSON.stringify({ url: location.origin + url, token, labels }));
+    window.MaFelizaUpload.postMessage(JSON.stringify({ url: location.origin + url, token, labels, source }));
   });
 }
 

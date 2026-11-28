@@ -1,6 +1,7 @@
 // Envoi des photos et vidéos des invités en arrière-plan : choix multiple, envoi qui continue appli fermée
 // (iOS : URLSession en arrière-plan ; Android : WorkManager), nouvel essai automatique, notification de progression.
 // Le site fournit l'adresse et un jeton d'envoi (24 h) : aucun cookie n'est nécessaire pendant l'envoi.
+import 'package:permission_handler/permission_handler.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -29,7 +30,18 @@ class MediaUploader {
     List<XFile> files;
     try {
       // Photos réduites et converties en JPEG par le téléphone (envoi rapide, même en 4G à la fête).
-      files = await ImagePicker().pickMultipleMedia(maxWidth: 2048, maxHeight: 2048, imageQuality: 85);
+      // source : « photo » (appareil photo), « video » (filmer, 30 s), sinon galerie.
+      final source = (data['source'] ?? '').toString();
+      if (source == 'photo' || source == 'video') await Permission.camera.request();
+      if (source == 'video') await Permission.microphone.request();
+      final XFile? one = source == 'photo'
+          ? await ImagePicker().pickImage(source: ImageSource.camera, maxWidth: 2048, maxHeight: 2048, imageQuality: 85)
+          : source == 'video'
+              ? await ImagePicker().pickVideo(source: ImageSource.camera, maxDuration: const Duration(seconds: 30))
+              : null;
+      files = source == 'photo' || source == 'video'
+          ? [if (one != null) one]
+          : await ImagePicker().pickMultipleMedia(maxWidth: 2048, maxHeight: 2048, imageQuality: 85);
     } catch (_) {
       files = [];
     }
